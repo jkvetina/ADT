@@ -114,10 +114,11 @@ And finally some date formats (adjustable in the config file):
 
 ## Config Parameters
 
-The config file can contains either connections info or repo settings or both and it can be stored on several places depending on how much of it would you like to reuse
-(the structure below allows you to set setting for the client and then override what you need for specific projects, schemas or environments).
+The config file can contain either connections info or repo settings or both and it can be stored on several places depending on how much of it would you like to reuse.
+The structure below allows you to set setting for the client and then override what you need for specific projects, schemas or environments.
 You can store the config files either together with your project or in the ATB repo (or you can split them however you like, to keep connections in ATB repo and other settings together with your project).
-Passwords used for connecting to the database are encypted by your key, which can be an command line argument, a runtime prompt or a path to a file. You can store and share your config files safely.
+
+Passwords used for connecting to the database are encrypted by your key, which can be an command line argument, a runtime prompt or a path to a file. You can store and share your config files safely.
 
 The config files are processed in this order:
 

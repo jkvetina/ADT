@@ -1,5 +1,18 @@
 # ATD - APEX Deployment Tool
 
+## Available Actions
+
+- [conn.py](./doc/conn.md) - to manage database connections
+- [recompile.py](./doc/recompile.py) - to recompile invalid objects
+- [export_db.py](./doc/export_db.py) - to export database objects
+- [export_apex.py](./doc/export_apex.py) - to export APEX
+- [export_data.py](./doc/export_data.py) - to export data into CSV files
+- [compare.py](./doc/compare.py) - to compare two databases
+- [patch.py](./doc/patch.py) - to prepare patch files from your changes
+- [deploy.py](./doc/deploy.py) - to deploy your patch files
+
+&nbsp;
+
 ## Main Features
 
 - it can __connect to on-premise and cloud__ Oracle databases
@@ -86,4 +99,5 @@ And finally some date formats (adjustable in the config file):
 - date_time - YYYY-MM-DD_HH24_MI
 - date_custom - whatever you decide...
 
+&nbsp;
 

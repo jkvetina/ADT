@@ -1,6 +1,32 @@
 # ADT - APEX Deployment Tool
 
-## Available Actions
+ADT is an open-source tool written in Python which allows you to connect to your Oracle database, export objects and data and APEX applications, files and individual components into a folder structure.
+It helps you to automate the patching and deploying/migrating your changes to other environments in multiple variants.
+
+And it provides you more benefits when used with other APEX apps:
+
+| Application Name                                              | Description
+| :------------------------------------------------------------ | :----------
+| [Cards](https://github.com/jkvetina/MASTER_TASKS)             | to manage your tasks, bugs...
+| [Roadmap](https://github.com/jkvetina/MASTER_ROADMAPS)        | to plan and track whole projects on higher level
+| [Deployments](https://github.com/jkvetina/MASTER_DEPLOYMENTS) | to track commits, releases and deployments
+| [Reviews](https://github.com/jkvetina/MASTER_REVIEWS)         | to improve quality of your code
+
+&nbsp;
+
+## How to install
+
+- clone this repo
+    - get the [GitHub Desktop](https://desktop.github.com) if needed
+- [install neccessary tools](./doc/install.md) like Python and SQLcl
+- run `python config.py` which will guide you through the setup
+    - read more about config file if needed
+- run `python export.py` to export database and/or APEX into your repo
+- explore other actions
+
+&nbsp;
+
+## Actions
 
 | Filename                                 | Description
 | :--------------------------------------- | :----------
@@ -15,7 +41,7 @@
 
 &nbsp;
 
-## Main Features
+## Main features
 
 - it can __connect to on-premise and cloud__ Oracle databases
 - it can __export database objects__
@@ -54,7 +80,7 @@
 
 &nbsp;
 
-## Folder Structure
+## Folder structure
 
 - `doc/`
     - if you are into documenting things, you will love this folder
@@ -112,7 +138,7 @@ And finally some date formats (adjustable in the config file):
 
 &nbsp;
 
-## Config Parameters
+## Config parameters
 
 The config file can contain either connections info or repo settings or both and it can be stored on several places depending on how much of it would you like to reuse.
 The structure below allows you to set setting for the client and then override what you need for specific projects, schemas or environments.

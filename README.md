@@ -64,7 +64,7 @@
 - `database/grants_made/$schema.sql`
 - `database/grants_received/$schema.sql`
     - made and received grants for each schema involved
-- `apex{\_$app_ws}{\_$app_owner}/$app_id{_$app_alias}/`
+- `apex{_$app_ws}{_$app_owner}/$app_id{_$app_alias}/`
     - for APEX app and related objects
     - optional workspace and app alias in the path
 - `apex{_$app_ws}/workspace_files/`

@@ -49,11 +49,11 @@
 - database/grants_made/$schema.sql
 - database/grants_received/$schema.sql
     - made and received grants for each schema involved
-- apex{\_$ws}{\_$app_owner}/$app_id{_$app_alias}/
+- apex{\_$app_ws}{\_$app_owner}/$app_id{_$app_alias}/
     - for APEX app and related objects
     - optional workspace and app alias in the path
-- apex{_$ws}/workspace_files/
-- apex{_$ws}/rest/
+- apex{_$app_ws}/workspace_files/
+- apex{_$app_ws}/rest/
     - folders and files
 - patch/$env/{$date_today}_{$patch_code}/
     - store snapshot of the files
@@ -63,4 +63,27 @@
 - patch_archive{/$env}/
 - patch_template{/$env}/
 - scripts/
+
+&nbsp;
+
+You can customize all of these paths in the config and there are plenty of variables available to fit your needs.
+
+For APEX these variables will be determined based on requested application id or workspace:
+- app_ws - workspace of the current application
+- app_id - application id
+- app_alias - application alias
+- app_owner - application owner
+- app_schema - application schema
+
+You can use some other variables determined on your request and config file:
+- info_client - client code, to group your projects
+- info_project - project code
+- info_schema - database schema
+- info_env - current environment
+
+And finally some date formats (adjustable in the config file):
+- date_today - YYYY-MM-DD
+- date_time - YYYY-MM-DD_HH24_MI
+- date_custom - whatever you decide...
+
 

@@ -4,7 +4,7 @@
 
 | Filename                                 | Description
 | :--------------------------------------- | :----------
-| [`conn.py`](./doc/conn.md)               | to manage database connections
+| [`config.py`](./doc/config.md)           | to manage database connections and settings
 | [`recompile.py`](./doc/recompile.py)     | to recompile invalid objects
 | [`export_db.py`](./doc/export_db.py)     | to export database objects
 | [`export_apex.py`](./doc/export_apex.py) | to export APEX
@@ -58,25 +58,25 @@
 
 - `doc/`
     - if you are into documenting things, you will love this folder
-- `database{_$schema}/$object_type/`
-- `database{_$schema}/data/`
+- `database_{$info_schema}/{$object_type}/`
+- `database_{$info_schema}/data/`
     - database exports - objects and data
-- `database/grants_made/$schema.sql`
-- `database/grants_received/$schema.sql`
+- `database/grants_made/{$info_schema}.sql`
+- `database/grants_received/{$info_schema}.sql`
     - made and received grants for each schema involved
-- `apex{_$app_ws}{_$app_owner}/$app_id{_$app_alias}/`
+- `apex_{$app_ws}_{$app_owner}/{$app_id}_{$app_alias}/`
     - for APEX app and related objects
     - optional workspace and app alias in the path
-- `apex{_$app_ws}/workspace_files/`
-- `apex{_$app_ws}/rest/`
+- `apex_{$app_ws}/workspace_files/`
+- `apex_{$app_ws}/rest/`
     - folders and files
-- `patch/$env/{$date_today}_{$patch_code}/`
+- `patch/{$info_env}/{$date_today}_{$patch_code}/`
     - store snapshot of the files
     - store install/deploy script here
-- `patch_logs/$env/compare{$datetime}_{$source_env}.log`
+- `patch_logs/{$info_env}/compare{$datetime}_{$source_env}.log`
     - changed objects, APEX components, timings...
-- `patch_archive{/$env}/`
-- `patch_template{/$env}/`
+- `patch_archive/{$info_env}/`
+- `patch_template/{$info_env}/`
 - `scripts/`
 
 &nbsp;
@@ -107,8 +107,32 @@ And finally some date formats (adjustable in the config file):
 | Variable       | Description
 | :------------- | :----------
 | `date_today`   | YYYY-MM-DD
-| `date_time`    | YYYY-MM-DD_HH24_MI
+| `date_time`    | YYYY-MM-DD_HH24-MI
 | `date_custom`  | whatever you decide...
 
 &nbsp;
+
+## Config Parameters
+
+The config file can contains either connections info or repo settings or both and it can be stored on several places depending on how much of it would you like to reuse
+(the structure below allows you to set setting for the client and then override what you need for specific projects, schemas or environments).
+You can store the config files either together with your project or in the ATB repo (or you can split them however you like, to keep connections in ATB repo and other settings together with your project).
+Passwords used for connecting to the database are encypted by your key, which can be an command line argument, a runtime prompt or a path to a file. You can store and share your config files safely.
+
+The config files are processed in this order:
+
+1) your project repository
+    - `config/config_{$info_schema}_{$info_env}.yaml`
+    - `config/config_{$info_schema}.yaml`
+    - `config/config_{$info_env}.yaml`
+    - `config/config.yaml`
+    - `config.yaml`
+2) ADT repository
+    - `config_{$info_client}/config_{$info_project}_{$info_schema}_{$info_env}.yaml`
+    - `config_{$info_client}/config_{$info_project}_{$info_schema}.yaml`
+    - `config_{$info_client}/config_{$info_project}_{$info_env}.yaml`
+    - `config_{$info_client}/config_{$info_project}.yaml`
+    - `config_{$info_client}/config.yaml`
+    - `default_config.yaml`
+
 

@@ -2,16 +2,16 @@
 
 ## Available Actions
 
-| Filename                               | Description
-| :------------------------------------- | :----------
-| [conn.py](./doc/conn.md)               | to manage database connections
-| [recompile.py](./doc/recompile.py)     | to recompile invalid objects
-| [export_db.py](./doc/export_db.py)     | to export database objects
-| [export_apex.py](./doc/export_apex.py) | to export APEX
-| [export_data.py](./doc/export_data.py) | to export data into CSV files
-| [compare.py](./doc/compare.py)         | to compare two databases
-| [patch.py](./doc/patch.py)             | to prepare patch files from your changes
-| [deploy.py](./doc/deploy.py)           | to deploy your patch files
+| Filename                                 | Description
+| :--------------------------------------- | :----------
+| [`conn.py`](./doc/conn.md)               | to manage database connections
+| [`recompile.py`](./doc/recompile.py)     | to recompile invalid objects
+| [`export_db.py`](./doc/export_db.py)     | to export database objects
+| [`export_apex.py`](./doc/export_apex.py) | to export APEX
+| [`export_data.py`](./doc/export_data.py) | to export data into CSV files
+| [`compare.py`](./doc/compare.py)         | to compare two databases
+| [`patch.py`](./doc/patch.py)             | to prepare patch files from your changes
+| [`deploy.py`](./doc/deploy.py)           | to deploy your patch files
 
 &nbsp;
 
@@ -56,28 +56,28 @@
 
 ## Folder Structure
 
-- doc/
+- `doc/`
     - if you are into documenting things, you will love this folder
-- database{_$schema}/$object_type/
-- database{_$schema}/data/
+- `database{_$schema}/$object_type/`
+- `database{_$schema}/data/`
     - database exports - objects and data
-- database/grants_made/$schema.sql
-- database/grants_received/$schema.sql
+- `database/grants_made/$schema.sql`
+- `database/grants_received/$schema.sql`
     - made and received grants for each schema involved
-- apex{\_$app_ws}{\_$app_owner}/$app_id{_$app_alias}/
+- `apex{\_$app_ws}{\_$app_owner}/$app_id{_$app_alias}/`
     - for APEX app and related objects
     - optional workspace and app alias in the path
-- apex{_$app_ws}/workspace_files/
-- apex{_$app_ws}/rest/
+- `apex{_$app_ws}/workspace_files/`
+- `apex{_$app_ws}/rest/`
     - folders and files
-- patch/$env/{$date_today}_{$patch_code}/
+- `patch/$env/{$date_today}_{$patch_code}/`
     - store snapshot of the files
     - store install/deploy script here
-- patch_logs/$env/compare{$datetime}_{$source_env}.log
+- `patch_logs/$env/compare{$datetime}_{$source_env}.log`
     - changed objects, APEX components, timings...
-- patch_archive{/$env}/
-- patch_template{/$env}/
-- scripts/
+- `patch_archive{/$env}/`
+- `patch_template{/$env}/`
+- `scripts/`
 
 &nbsp;
 
@@ -85,30 +85,30 @@ You can customize all of these paths in the config and there are plenty of varia
 
 For APEX these variables will be determined based on requested application id or workspace:
 
-| Variable     | Description
-| :----------- | :----------
-| app_ws       | workspace of the current application
-| app_id       | application id
-| app_alias    | application alias
-| app_owner    | application owner
-| app_schema   | application schema
+| Variable       | Description
+| :------------- | :----------
+| `app_ws`       | workspace of the current application
+| `app_id`       | application id
+| `app_alias`    | application alias
+| `app_owner`    | application owner
+| `app_schema`   | application schema
 
 You can use some other variables determined on your request and config file:
 
-| Variable     | Description
-| :----------- | :----------
-| info_client  | client code, to group your projects
-| info_project | project code
-| info_schema  | database schema
-| info_env     | current environment
+| Variable       | Description
+| :------------- | :----------
+| `info_client`  | client code, to group your projects
+| `info_project` | project code
+| `info_schema`  | database schema
+| `info_env`     | current environment
 
 And finally some date formats (adjustable in the config file):
 
-| Variable     | Description
-| :----------- | :----------
-| date_today   | YYYY-MM-DD
-| date_time    | YYYY-MM-DD_HH24_MI
-| date_custom  | whatever you decide...
+| Variable       | Description
+| :------------- | :----------
+| `date_today`   | YYYY-MM-DD
+| `date_time`    | YYYY-MM-DD_HH24_MI
+| `date_custom`  | whatever you decide...
 
 &nbsp;
 

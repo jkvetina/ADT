@@ -1,4 +1,4 @@
-# ATD - APEX Deployment Tool
+# ADT - APEX Deployment Tool
 
 ## Available Actions
 

@@ -2,14 +2,16 @@
 
 ## Available Actions
 
-- [conn.py](./doc/conn.md) - to manage database connections
-- [recompile.py](./doc/recompile.py) - to recompile invalid objects
-- [export_db.py](./doc/export_db.py) - to export database objects
-- [export_apex.py](./doc/export_apex.py) - to export APEX
-- [export_data.py](./doc/export_data.py) - to export data into CSV files
-- [compare.py](./doc/compare.py) - to compare two databases
-- [patch.py](./doc/patch.py) - to prepare patch files from your changes
-- [deploy.py](./doc/deploy.py) - to deploy your patch files
+| Filename                               | Description
+| :------------------------------------- | :----------
+| [conn.py](./doc/conn.md)               | to manage database connections
+| [recompile.py](./doc/recompile.py)     | to recompile invalid objects
+| [export_db.py](./doc/export_db.py)     | to export database objects
+| [export_apex.py](./doc/export_apex.py) | to export APEX
+| [export_data.py](./doc/export_data.py) | to export data into CSV files
+| [compare.py](./doc/compare.py)         | to compare two databases
+| [patch.py](./doc/patch.py)             | to prepare patch files from your changes
+| [deploy.py](./doc/deploy.py)           | to deploy your patch files
 
 &nbsp;
 
@@ -82,22 +84,31 @@
 You can customize all of these paths in the config and there are plenty of variables available to fit your needs.
 
 For APEX these variables will be determined based on requested application id or workspace:
-- app_ws - workspace of the current application
-- app_id - application id
-- app_alias - application alias
-- app_owner - application owner
-- app_schema - application schema
+
+| Variable     | Description
+| :----------- | :----------
+| app_ws       | workspace of the current application
+| app_id       | application id
+| app_alias    | application alias
+| app_owner    | application owner
+| app_schema   | application schema
 
 You can use some other variables determined on your request and config file:
-- info_client - client code, to group your projects
-- info_project - project code
-- info_schema - database schema
-- info_env - current environment
+
+| Variable     | Description
+| :----------- | :----------
+| info_client  | client code, to group your projects
+| info_project | project code
+| info_schema  | database schema
+| info_env     | current environment
 
 And finally some date formats (adjustable in the config file):
-- date_today - YYYY-MM-DD
-- date_time - YYYY-MM-DD_HH24_MI
-- date_custom - whatever you decide...
+
+| Variable     | Description
+| :----------- | :----------
+| date_today   | YYYY-MM-DD
+| date_time    | YYYY-MM-DD_HH24_MI
+| date_custom  | whatever you decide...
 
 &nbsp;
 

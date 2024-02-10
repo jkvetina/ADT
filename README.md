@@ -27,13 +27,40 @@
     - remote REST app deployment
 - it can __create patch files__ so you can easily deploy your database and APEX changes since last deployment, or based on your features/cards
     - it can connect to Git/BB to create a release notes for you
-    - it can also create a patch file based on a feature/card, it will lookup which files were committed under that name and create a patch based on that (and even for APEX components so you dont have to deploy the whole app)
+    - it can also create a patch file __based on a feature/card__, it will lookup which files were committed under that name and create a patch based on that (and even for APEX components so you dont have to deploy the whole app)
     - it allows you to search Git/BB history
-    - it can compare two databases and show you the differences and what you need to do to sync them, including the data changes
+    - it can __compare two databases__ and show you the differences and what you need to do to sync them, including the data changes
         - no false positives on different column positions, different identity column sequences, whitespaces…
-    - it can also deploy these patches to different environments (basically any database you can reach via direct connection on via a REST service)
+    - it can also __deploy these patches__ to different environments (basically any database you can reach via direct connection on via a REST service)
     - multiple schemas patching dependencies
     - install script for test environments or local developers
 - see config.yaml file for __200+ parameters__ you can customize
     - to use your config.yaml file, just place it in the root of your project/repo
+
+&nbsp;
+
+## Folder Structure
+
+- doc/
+    - if you are into documenting things, you will love this folder
+- database{_$schema}/$object_type/
+- database{_$schema}/data/
+    - database exports - objects and data
+- database/grants_made/$schema.sql
+- database/grants_received/$schema.sql
+    - made and received grants for each schema involved
+- apex{\_$ws}{\_$app_owner}/$app_id{_$app_alias}/
+    - for APEX app and related objects
+    - optional workspace and app alias in the path
+- apex{_$ws}/workspace_files/
+- apex{_$ws}/rest/
+    - folders and files
+- patch/$env/{$date_today}_{$patch_code}/
+    - store snapshot of the files
+    - store install/deploy script here
+- patch_logs/$env/compare{$datetime}_{$source_env}.log
+    - changed objects, APEX components, timings...
+- patch_archive{/$env}/
+- patch_template{/$env}/
+- scripts/
 

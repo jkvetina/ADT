@@ -86,25 +86,23 @@ I have been building these CI/CD tools since 2008 and ADT is the newest version,
 
 - `doc/`
     - if you are into documenting things, you will love this folder
-- `database_{$info_schema}/{$object_type}/`
-- `database_{$info_schema}/data/`
-    - database exports - objects and data
+- `database_{$info_schema}/{$object_type}/` for database objects
+- `database_{$info_schema}/data/` for exported data
 - `database/grants_made/{$info_schema}.sql`
 - `database/grants_received/{$info_schema}.sql`
     - made and received grants for each schema involved
-- `apex_{$app_ws}_{$app_owner}/{$app_id}_{$app_alias}/`
+- `apex_{$app_ws}_{$app_schema}/{$app_id}_{$app_alias}/`
     - for APEX app and related objects
-    - optional workspace and app alias in the path
+    - optional workspace and app alias or group in the path
+- `apex_{$app_ws}_{$app_schema}/rest/`
+    - with folders and files
 - `apex_{$app_ws}/workspace_files/`
-- `apex_{$app_ws}/rest/`
-    - folders and files
-- `patch/{$info_env}/{$date_today}_{$patch_code}/`
-    - store snapshot of the files
-    - store install/deploy script here
-- `patch_logs/{$info_env}/compare{$datetime}_{$source_env}.log`
+- `patch/{$info_env}/{$date_today}_{$patch_code}_{$info_schema|$app_schema}/` to store files snapshot
+- `patch/{$info_env}/{$date_today}_{$patch_code}_{$info_schema|$app_schema}.sql` for generated patch script
+- `patch_logs/{$info_env}/compare{$date_time}_{$source_env}.log`
     - changed objects, APEX components, timings...
-- `patch_archive/{$info_env}/`
-- `patch_template/{$info_env}/`
+- `patch_archive/{$info_env}/` for old patches
+- `patch_template/{$info_env}_{$info_schema|$app_schema}/` for patch templates
 - `scripts/`
 
 &nbsp;
@@ -118,8 +116,8 @@ For APEX these variables will be determined based on requested application id or
 | `app_ws`       | workspace of the current application
 | `app_id`       | application id
 | `app_alias`    | application alias
-| `app_owner`    | application owner
 | `app_schema`   | application schema
+| `app_group`    | application group
 
 You can use some other variables determined on your request and config file:
 
@@ -151,17 +149,27 @@ Passwords used for connecting to the database are encrypted by your key, which c
 The config files are processed in this order:
 
 1) your project repository
-    - `config/config_{$info_schema}_{$info_env}.yaml`
-    - `config/config_{$info_schema}.yaml`
-    - `config/config_{$info_env}.yaml`
-    - `config/config.yaml`
-    - `config.yaml`
+
+- `config/config_{$info_schema}_{$info_env}.yaml`
+- `config/config_{$info_schema}.yaml`
+- `config/config_{$info_env}.yaml`
+- `config/config.yaml`
+- `config.yaml`
+
 2) ADT repository
-    - `config_{$info_client}/config_{$info_project}_{$info_schema}_{$info_env}.yaml`
-    - `config_{$info_client}/config_{$info_project}_{$info_schema}.yaml`
-    - `config_{$info_client}/config_{$info_project}_{$info_env}.yaml`
-    - `config_{$info_client}/config_{$info_project}.yaml`
-    - `config_{$info_client}/config.yaml`
-    - `default_config.yaml`
+
+- `config_{$info_client}/config_{$info_project}_{$info_schema}_{$info_env}.yaml`
+- `config_{$info_client}/config_{$info_project}_{$info_schema}.yaml`
+- `config_{$info_client}/config_{$info_project}_{$info_env}.yaml`
+- `config_{$info_client}/config_{$info_project}.yaml`
+- `config_{$info_client}/config.yaml`
+- `default_config.yaml`
+
+For each connection you will have to provide these:
+
+- project name, client name, environment name, repo branch name (optional)
+- schema and password
+- for on premise - hostname, port, service name or sid
+- for cloud - wallet path, password, service name
 
 

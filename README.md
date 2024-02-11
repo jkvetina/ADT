@@ -3,7 +3,7 @@
 ADT is an open-source tool written in Python which allows you to connect to your Oracle database, export objects and data and APEX applications, files and individual components into a folder structure.
 It helps you to automate the patching and deploying/migrating your changes to other environments in multiple variants.
 
-And it provides you more benefits when used with other APEX apps:
+ADT provides you more benefits when used with other APEX apps:
 
 | Application Name                                              | Description
 | :------------------------------------------------------------ | :----------
@@ -11,6 +11,8 @@ And it provides you more benefits when used with other APEX apps:
 | [Roadmap](https://github.com/jkvetina/MASTER_ROADMAPS)        | to plan and track whole projects on higher level
 | [Deployments](https://github.com/jkvetina/MASTER_DEPLOYMENTS) | to track commits, releases and deployments
 | [Reviews](https://github.com/jkvetina/MASTER_REVIEWS)         | to improve quality of your code
+
+I have been building these CI/CD tools since 2008 and ADT is the newest version, heavily based on the previous [OPY](https://github.com/jkvetina/OPY/tree/master) tool, which unfortunately outgrown to a hefty spaghetti code and became more and more difficult to extend. So, I have decided to start from scratch for like 15th time...
 
 &nbsp;
 

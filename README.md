@@ -72,11 +72,12 @@ I have been building these CI/CD tools since 2008 and ADT is the newest version,
     - it can connect to Git/BB to create a release notes for you
     - it can also create a patch file __based on a feature/card__, it will lookup which files were committed under that name and create a patch based on that (and even for APEX components so you dont have to deploy the whole app)
     - it allows you to search Git/BB history
-    - it can __compare two databases__ and show you the differences and what you need to do to sync them, including the data changes
-        - no false positives on different column positions, different identity column sequences, whitespaces…
     - it can also __deploy these patches__ to different environments (basically any database you can reach via direct connection on via a REST service)
     - multiple schemas patching dependencies
     - install script for test environments or local developers
+- it can __compare two databases__ and show you the differences and what you need to do to sync them, including the data changes
+    - no false positives on different column positions, different identity column sequences, whitespaces...
+    - it can also quickly compare APEX applications based on the signatures
 - see config.yaml file for __200+ parameters__ you can customize
     - to use your config.yaml file, just place it in the root of your project/repo
 
@@ -94,6 +95,7 @@ I have been building these CI/CD tools since 2008 and ADT is the newest version,
 - `apex_{$app_ws}_{$app_schema}/{$app_id}_{$app_alias}/`
     - for APEX app and related objects
     - optional workspace and app alias or group in the path
+    - schema can be also pulled from config
 - `apex_{$app_ws}_{$app_schema}/rest/`
     - with folders and files
 - `apex_{$app_ws}/workspace_files/`

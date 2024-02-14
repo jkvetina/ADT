@@ -33,13 +33,13 @@ I have been building these CI/CD tools since 2008 and ADT is the newest version,
 | Filename                                 | Description
 | :--------------------------------------- | :----------
 | [`config.py`](./doc/config.md)           | to manage database connections and settings
-| [`recompile.py`](./doc/recompile.py)     | to recompile invalid objects
-| [`export_db.py`](./doc/export_db.py)     | to export database objects
-| [`export_apex.py`](./doc/export_apex.py) | to export APEX
-| [`export_data.py`](./doc/export_data.py) | to export data into CSV files
-| [`compare.py`](./doc/compare.py)         | to compare two databases
-| [`patch.py`](./doc/patch.py)             | to prepare patch files from your changes
-| [`deploy.py`](./doc/deploy.py)           | to deploy your patch files
+| [`recompile.py`](./doc/recompile.md)     | to recompile invalid objects
+| [`export_db.py`](./doc/export_db.md)     | to export database objects
+| [`export_apex.py`](./doc/export_apex.md) | to export APEX
+| [`export_data.py`](./doc/export_data.md) | to export data into CSV files
+| [`compare.py`](./doc/compare.md)         | to compare two databases
+| [`patch.py`](./doc/patch.md)             | to prepare patch files from your changes
+| [`deploy.py`](./doc/deploy.md)           | to deploy your patch files
 
 &nbsp;
 

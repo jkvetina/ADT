@@ -9,23 +9,12 @@ def replace_dict(text, translation):
 
 
 #
-# [X] go through all relevant files and create object for each of them to get the schema
-#    + we probably need to store the schema somewhere during export - in the path or in schema.log or config !!!
-# [X] for each relevant schema create separated patch file
+# [_] store the schema somewhere during export - in the path or in schema.log or config !!!
 # [_] follow the patch template + sort relevant files by dependencies
-#    [_] grants (made) should be at the end, also filter them just for relevant objects...
-#    [_] grants (received) should be at the start and probably executed by SYS
-#    [_] ignore grant files in patch
-#    [X] customize template for APEX installs (setup workspace, increase app version, delete relevant pages)
-#    [?] increase app version based on previous version ?
-# [X] create patch files and copy relevant files to snapshot folder
-#     [X] modify version and author for extracted pages, version = patch_code, date = current date/time
 # [_] zip this if we are doing deployment over REST
 # [_] SPOOL on deployment into patch/.../YY-MM-DD.. .log
-#
-# [X] detect which files are APEX files, no matter the repo/schema/template
-# [X] comment out the line with whole app
-# [_] check changed files for upload
+# [_] ADD KEEP SESSIONS ALIVE, APEX_APPLICATION_ADMIN
+# [_] CHECK MORE ISSUES WITH ARGS + SHOW BETTER MESSAGE, def raise_error(''): + exit
 #
 
 
@@ -50,14 +39,7 @@ args = collections.namedtuple('ARG', args.keys())(*args.values())  # convert to 
 #print()
 
 assert args.patch is not None
-#
-# CHECK MORE ISSUES WITH ARGS + SHOW BETTER MESSAGE
-# def raise_error(''): + exit
-#
 
-#
-# @TODO: ADD KEEP SESSIONS ALIVE
-#
 query_apex_version = """
 BEGIN
     APEX_UTIL.SET_WORKSPACE (
@@ -420,9 +402,9 @@ class Patch:
 
         # non APEX schemas first
         for file in sorted(self.patch_files):
-            payload += '@@"./{}"\n'.format(file.replace(root, '').lstrip('/'))
+            payload += '@@"./{}"\n'.format(file.replace(self.repo_path, '').lstrip('/'))
         for file in sorted(self.patch_files_apex):
-            payload += '@@"./{}"\n'.format(file.replace(root, '').lstrip('/'))
+            payload += '@@"./{}"\n'.format(file.replace(self.repo_path, '').lstrip('/'))
         payload += '\n'
         #
         with open(patch_file, 'w', encoding = 'utf-8', newline = '\n') as w:

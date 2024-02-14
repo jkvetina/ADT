@@ -5,12 +5,12 @@ It helps you to automate the patching and deploying/migrating your changes to ot
 
 ADT provides you more benefits when used with other APEX apps:
 
-| Application Name                                              | Description
-| :------------------------------------------------------------ | :----------
-| [Cards](https://github.com/jkvetina/MASTER_TASKS)             | to manage your tasks, bugs...
-| [Roadmap](https://github.com/jkvetina/MASTER_ROADMAPS)        | to plan and track whole projects on higher level
-| [Deployments](https://github.com/jkvetina/MASTER_DEPLOYMENTS) | to track commits, releases and deployments
-| [Reviews](https://github.com/jkvetina/MASTER_REVIEWS)         | to improve quality of your code
+| Application Name                                              | Description                                       | Status
+| :---------------                                              | :----------                                       | :-----
+| [Cards](https://github.com/jkvetina/MASTER_TASKS)             | to manage your tasks, bugs...                     | Done
+| [Roadmap](https://github.com/jkvetina/MASTER_ROADMAPS)        | to plan and track whole projects on higher level  | In Progress
+| [Deployments](https://github.com/jkvetina/MASTER_DEPLOYMENTS) | to track commits, releases and deployments        | Planned
+| [Reviews](https://github.com/jkvetina/MASTER_REVIEWS)         | to improve quality of your code                   | Planned
 
 I have been building these CI/CD tools since 2008 and ADT is the newest version, heavily based on the previous [OPY](https://github.com/jkvetina/OPY/tree/master) tool, which unfortunately outgrown to a hefty spaghetti code and became more and more difficult to extend. So, I have decided to start from scratch for like 15th time...
 
@@ -29,17 +29,16 @@ I have been building these CI/CD tools since 2008 and ADT is the newest version,
 &nbsp;
 
 ## Actions
-
-| Filename                                 | Description
-| :--------------------------------------- | :----------
-| [`config.py`](./doc/config.md)           | to manage database connections and settings
-| [`recompile.py`](./doc/recompile.md)     | to recompile invalid objects
-| [`export_db.py`](./doc/export_db.md)     | to export database objects
-| [`export_apex.py`](./doc/export_apex.md) | to export APEX
-| [`export_data.py`](./doc/export_data.md) | to export data into CSV files
-| [`compare.py`](./doc/compare.md)         | to compare two databases
-| [`patch.py`](./doc/patch.md)             | to prepare patch files from your changes
-| [`deploy.py`](./doc/deploy.md)           | to deploy your patch files
+| Filename                                 | Description                                    | Status
+| :-------                                 | :----------                                    | :-----
+| [`config.py`](./doc/config.md)           | to manage database connections and settings    | In Progress
+| [`export_db.py`](./doc/export_db.md)     | to export database objects                     | OPY
+| [`export_apex.py`](./doc/export_apex.md) | to export APEX                                 | OPY
+| [`export_data.py`](./doc/export_data.md) | to export data into CSV files                  | OPY
+| [`patch.py`](./doc/patch.md)             | to prepare patch files from your changes       | Done
+| [`deploy.py`](./doc/deploy.md)           | to deploy your patch files                     | Planned
+| [`compare.py`](./doc/compare.md)         | to compare two databases                       | Planned
+| [`recompile.py`](./doc/recompile.md)     | to recompile invalid objects                   | Planned
 
 &nbsp;
 

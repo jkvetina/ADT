@@ -9,9 +9,10 @@ There is just one assumption to make this work, you must be using Git for your p
 
 ## Workflow
 
-- you will do your changes on database objects and/or APEX applications as usual
-- you will commit your changes in Git (ideally with the card number and description)
+- you will do your changes on database objects and/or APEX applications as usual in any tool you prefer
+- you will [export](./export.md) and commit your changes in Git (ideally with the card number and meaningful description for release notes)
 - whenever you want to release the changes, you will run patch.py and this little magic script will create a patch file for you
+- if you need to do some data changes you have to write the script for that yourself
 
 &nbsp;
 
@@ -27,7 +28,7 @@ There is just one assumption to make this work, you must be using Git for your p
   - it also creates the release notes based on your commits
 - for APEX add some scripts around to setup workspace properly
   - install shared components first, pages as last
-  - delete installed pages if they exists
+  - delete installed pages if they exist
   - change page creation/audit columns to patch code and date so you know by which patch was the page changed
   - change application version to current date and patch code
   - set requested authentication scheme

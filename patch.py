@@ -1,5 +1,5 @@
 # coding: utf-8
-import sys, os, re, shutil, argparse
+import sys, os, re, shutil, argparse, timeit
 from lib import util
 from lib import app
 from lib import queries_patch as queries
@@ -398,8 +398,7 @@ class Patch(app.App):
 
 
     def fix_apex_pages(self, apex_pages):
-        payload = ''
-        payload += '--\nBEGIN\n'
+        payload = '--\nBEGIN\n'
         for file in apex_pages:
             page_id = int(re.search('/pages/page_(\d+)\.sql', file).group(1))
             #
@@ -407,7 +406,7 @@ class Patch(app.App):
         payload += 'END;\n'
         payload += '/\n'
 
-        # recreate pages
+        # recreate requested pages
         payload += '--\n'
         for file in apex_pages:
             payload += self.file_template.replace('#FILE#', file)
@@ -417,7 +416,8 @@ class Patch(app.App):
 
 
     def get_grants_made(self, diffs):
-        payload = ''
+        payload         = ''
+        grants_found    = False
 
         # grab the file with grants made
         with open(self.grants_made, 'rt', encoding = 'utf-8') as f:
@@ -495,6 +495,10 @@ if __name__ == "__main__":
     parser.add_argument('-b', '-branch',    '--branch',     help = 'To override active branch',                                     default = None)
 
     # create object
+    start_timer = timeit.default_timer()
+    #
     patch = Patch(parser)
     patch.create_patch()
+    #
+    print('TIME: {}\n'.format(round(timeit.default_timer() - start_timer, 2)))
 

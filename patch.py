@@ -59,6 +59,10 @@ class Patch(app.App):
         self.apex_app_id        = ''
         self.apex_workspace     = ''
         self.apex_version       = '{} {}'.format(self.config.today, self.patch_code)
+        self.apex_files_copy    = [ # these files will always be copied to the snapshot folder
+                                    'application/set_environment.sql',
+                                    'application/end_environment.sql',
+        ]
 
         # set current commit to the head and search through recent commits
         self.current_commit_obj = self.repo.commit('HEAD')
@@ -274,6 +278,12 @@ class Patch(app.App):
             if not os.path.exists(self.patch_folder):
                 os.makedirs(self.patch_folder)
 
+            # copy some files even if they did not changed
+            if self.apex_app_id != '':
+                for file in self.apex_files_copy:
+                    file = '{}f{}/{}'.format(self.path_apex, self.apex_app_id, file)
+                    if file not in process_files:
+                        self.create_file_snapshot(file)
 
             # copy changed files
             for file in process_files:

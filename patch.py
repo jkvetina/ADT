@@ -264,6 +264,8 @@ class Patch(app.App):
 
     def create_snapshots(self, diffs, target_schema):
         if len(diffs.keys()) > 0:
+            process_files = diffs.keys()
+
             # create snapshot folder
             self.patch_folder = '{}/patch/{$PATCH_CODE}'  # /snapshot/ ??
             self.patch_folder = self.patch_folder.replace('{$PATCH_CODE}', self.patch_code)
@@ -272,27 +274,10 @@ class Patch(app.App):
             if not os.path.exists(self.patch_folder):
                 os.makedirs(self.patch_folder)
 
-            # copy files
-            for file in diffs.keys():
-                source_file     = '{}/{}'.format(self.config.repo_path, file).replace('//', '/')
-                target_file     = '{}/{}'.format(self.patch_folder, file).replace('//', '/')
-                target_folder   = os.path.dirname(target_file)
-                #
-                if not os.path.exists(target_folder):
-                    os.makedirs(target_folder)
-                shutil.copy2(source_file, target_file)
 
-                # change page audit columns
-                if self.apex_app_id != '' and '/application/pages/page' in file:
-                    file_content = ''
-                    with open(target_file, 'rt', encoding = 'utf-8') as f:
-                        file_content = f.read()
-                    #
-                    file_content = re.sub(r",p_last_updated_by=>'([^']+)'", ",p_last_updated_by=>'{}'".format(self.patch_code), file_content)
-                    file_content = re.sub(r",p_last_upd_yyyymmddhh24miss=>'(\d+)'", ",p_last_upd_yyyymmddhh24miss=>'{}'".format(self.config.today_full_raw), file_content)
-                    #
-                    with open(target_file, 'wt', encoding = 'utf-8') as f:
-                        f.write(file_content)
+            # copy changed files
+            for file in process_files:
+                self.create_file_snapshot(file)
 
 
 
@@ -305,6 +290,30 @@ class Patch(app.App):
             self.patch_files_apex.append(self.patch_file_curr)
         else:
             self.patch_files.append(self.patch_file_curr)
+
+
+
+    def create_file_snapshot(self, file):
+        # create folders and copy files
+        source_file     = '{}/{}'.format(self.config.repo_path, file).replace('//', '/')
+        target_file     = '{}/{}'.format(self.patch_folder, file).replace('//', '/')
+        target_folder   = os.path.dirname(target_file)
+        #
+        if not os.path.exists(target_folder):
+            os.makedirs(target_folder)
+        shutil.copy2(source_file, target_file)
+
+        # change page audit columns
+        if self.apex_app_id != '' and '/application/pages/page' in file:
+            file_content = ''
+            with open(target_file, 'rt', encoding = 'utf-8') as f:
+                file_content = f.read()
+            #
+            file_content = re.sub(r",p_last_updated_by=>'([^']+)'", ",p_last_updated_by=>'{}'".format(self.patch_code), file_content)
+            file_content = re.sub(r",p_last_upd_yyyymmddhh24miss=>'(\d+)'", ",p_last_upd_yyyymmddhh24miss=>'{}'".format(self.config.today_full_raw), file_content)
+            #
+            with open(target_file, 'wt', encoding = 'utf-8') as f:
+                f.write(file_content)
 
 
 

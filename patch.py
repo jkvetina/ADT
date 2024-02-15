@@ -37,10 +37,13 @@ class Patch(app.App):
         self.patch_files        = []
         self.patch_files_apex   = []
         self.patch_code         = self.args.patch
+        self.patch_file         = '{}/patch/{}.sql'.format(self.config.repo_path, self.patch_code)
+        self.patch_file_curr    = ''
         self.search_message     = self.args.search or [self.patch_code]
         self.commits            = self.args.commit
         self.branch             = self.args.branch or self.config.branch or self.repo.active_branch
-        self.file_template      = '@@"../patch/{}/#FILE#"\n'.format(self.patch_code)
+        self.file_template      = '@"./#FILE#"\n'.format(self.patch_code)
+        self.grants_made        = '{}{}grants/{}.sql'.format(self.config.repo_path, self.config.path_objects, self.config.schema)
 
         # pull some variables from config
         self.path_objects       = self.config.path_objects
@@ -53,7 +56,6 @@ class Patch(app.App):
         self.relevant_objects   = {}
 
         # APEX related
-        self.apex_root          = '../' + self.path_apex.rstrip('/')
         self.apex_app_id        = ''
         self.apex_workspace     = ''
         self.apex_version       = '{} {}'.format(self.config.today, self.patch_code)
@@ -138,6 +140,14 @@ class Patch(app.App):
         # process files per schema
         for target_schema, rel_files in self.relevant_files.items():
             self.apex_app_id = ''
+
+            # prepare list of commits and attach it to patch filename for quick/additional patches
+            commits_list = ''
+            if self.commits != None:
+                commits_list = '_{}'.format(max(self.commits))
+
+            # generate patch file name for specific schema
+            self.patch_file_curr = '{}patch/{}/{}{}.sql'.format(self.config.repo_path, self.patch_code, target_schema, commits_list)
 
             # generate patch header
             header = 'PATCH - {} - {}'.format(self.patch_code, target_schema)
@@ -287,48 +297,37 @@ class Patch(app.App):
 
 
     def create_patch_file(self, payload, target_schema):
-        # prepare list of commits and attach it to patch filename for quick/additional patches
-        commits_list = ''
-        if self.commits != None:
-            commits_list = '_{}'.format(max(self.commits))
-
         # save in schema patch file
-        patch_file = util.replace_dict('{}/patch/{$PATCH_CODE}/{$INFO_SCHEMA}{}.sql', {
-            '{$PATCH_CODE}'     : self.patch_code,
-            '{$INFO_SCHEMA}'    : target_schema,
-        }
-        ).format(self.config.repo_path, commits_list)
-        #
-        with open(patch_file, 'w', encoding = 'utf-8', newline = '\n') as w:
+        with open(self.patch_file_curr, 'w', encoding = 'utf-8', newline = '\n') as w:
             w.write(payload)
         #
         if self.apex_app_id != '':
-            self.patch_files_apex.append(patch_file)
+            self.patch_files_apex.append(self.patch_file_curr)
         else:
-            self.patch_files.append(patch_file)
+            self.patch_files.append(self.patch_file_curr)
 
 
 
     def create_summary(self):
         # create overall patch file
-        patch_file = '{}/patch/{$PATCH_CODE}.sql'
-        patch_file = patch_file.replace('{$PATCH_CODE}', self.patch_code)
-        patch_file = patch_file.format(self.config.repo_path)
-        #
-        payload = ''
-        payload += '--\n-- EXECUTE PATCH FILES\n--\n'
+        payload = '--\n-- EXECUTE PATCH FILES\n--\n'
 
         # non APEX schemas first
+        proceed = False
         for file in sorted(self.patch_files):
-            payload += '@@"./{}"\n'.format(file.replace(self.config.repo_path, '').lstrip('/'))
+            payload += '@"./{}"\n'.format(file.replace(self.config.repo_path, '').lstrip('/'))
+            proceed = True
+        #
         for file in sorted(self.patch_files_apex):
-            payload += '@@"./{}"\n'.format(file.replace(self.config.repo_path, '').lstrip('/'))
+            payload += '@"./{}"\n'.format(file.replace(self.config.repo_path, '').lstrip('/'))
+            proceed = True
         payload += '\n'
         #
-        with open(patch_file, 'w', encoding = 'utf-8', newline = '\n') as w:
-            w.write(payload)
-        #
-        print(payload)
+        if proceed:
+            with open(self.patch_file, 'w', encoding = 'utf-8', newline = '\n') as w:
+                w.write(payload)
+            #
+            print(payload)
 
 
 
@@ -343,8 +342,12 @@ class Patch(app.App):
         payload += 'SET DEFINE OFF\n'
         payload += 'SET TIMING OFF\n'
         payload += '--\n'
-        payload += '@@"{}/f{}/application/set_environment.sql"\n'.format(self.apex_root, self.apex_app_id)
-        payload += '--@@"{}/f{}/f{}.sql"\n'.format(self.apex_root, self.apex_app_id, self.apex_app_id)
+
+        # attach starting file
+        payload += '@"./{}f{}/{}"\n'.format(self.path_apex, self.apex_app_id, 'application/set_environment.sql')
+
+        # attach the whole application for full imports
+        payload += '--@"./{}f{}.sql"\n'.format(self.path_apex, self.apex_app_id)
         payload += '--\n'
         #
         return payload
@@ -352,8 +355,11 @@ class Patch(app.App):
 
 
     def fix_apex_end(self):
-        payload = ''
-        payload += '--\n@@"{}/f{}/application/end_environment.sql"\n'.format(self.apex_root, self.apex_app_id)
+        payload = '--\n'
+
+        # attach ending file
+        file = '{}f{}/{}'.format(self.path_apex, self.apex_app_id, 'application/end_environment.sql')
+        payload += '@"./{}"\n'.format(file.replace(self.config.repo_path, '').lstrip('/'))
         #
         return payload
 
@@ -382,10 +388,7 @@ class Patch(app.App):
         payload = ''
 
         # grab the file with grants made
-        grants_made     = '{}{}grants/{}.sql'.format(self.config.repo_path, self.config.path_objects, self.config.schema)
-        grants_found    = False
-        #
-        with open(grants_made, 'rt', encoding = 'utf-8') as f:
+        with open(self.grants_made, 'rt', encoding = 'utf-8') as f:
             file_content = f.readlines()
             for line in file_content:
                 if line.startswith('--'):

@@ -59,6 +59,12 @@ class Patch(app.App):
         self.apex_app_id        = ''
         self.apex_workspace     = ''
         self.apex_version       = '{} {}'.format(self.config.today, self.patch_code)
+        self.apex_files_ignore  = [ # these files will not be in the patch even if they change
+                                    'application/set_environment.sql',
+                                    'application/end_environment.sql',
+                                    'application/create_application.sql',
+                                    'application/delete_application.sql',
+        ]
         self.apex_files_copy    = [ # these files will always be copied to the snapshot folder
                                     'application/set_environment.sql',
                                     'application/end_environment.sql',
@@ -141,6 +147,9 @@ class Patch(app.App):
 
 
     def create_patches(self):
+        # simplify searching for ignored files
+        skip_apex_files = ';'.join(self.apex_files_ignore)
+
         # process files per schema
         for target_schema, rel_files in self.relevant_files.items():
             self.apex_app_id = ''
@@ -234,6 +243,10 @@ class Patch(app.App):
 
                     # ignore full APEX exports
                     if len(re.findall('/f\d+/f\d+\.sql$', file)) > 0:
+                        continue
+
+                    # skip file if it should be ignored in the patch (but keep it in snapshot folder)
+                    if file in skip_apex_files:
                         continue
                 #
                 payload += self.file_template.replace('#FILE#', file)

@@ -337,13 +337,7 @@ class Patch(app.App):
         assert self.apex_workspace is not None
 
         # set proper workspace
-        payload = ''
-        payload += util.replace_dict(queries.query_apex_version, {
-            '{$APEX_WORKSPACE}' : self.apex_workspace,
-            '{$APEX_APP_ID}'    : str(self.apex_app_id),
-            '{$APEX_VERSION}'   : self.apex_version,
-        }
-        ).lstrip() + '\n'
+        payload = self.config.replace_tags(queries.query_apex_version, self).strip() + '\n'
 
         # start APEX import
         payload += 'SET DEFINE OFF\n'

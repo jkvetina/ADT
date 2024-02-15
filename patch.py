@@ -1,66 +1,15 @@
 # coding: utf-8
-import sys, os, re, shutil, datetime, argparse, collections
-from git import Repo
+import sys, os, re, shutil, argparse
+from lib import util
+from lib import app
+from lib import queries_patch as queries
 
-def replace_dict(text, translation):
-    regex = re.compile('|'.join(map(re.escape, translation)))
-    return regex.sub(lambda match: translation[match.group(0)], text)
+class Patch(app.App):
 
+    def __init__(self, args):
+        super().__init__(args)
 
-
-#
-# [_] store the schema somewhere during export - in the path or in schema.log or config !!!
-# [_] follow the patch template + sort relevant files by dependencies
-# [_] zip this if we are doing deployment over REST
-# [_] SPOOL on deployment into patch/.../YY-MM-DD.. .log
-# [_] ADD KEEP SESSIONS ALIVE, APEX_APPLICATION_ADMIN
-# [_] CHECK MORE ISSUES WITH ARGS + SHOW BETTER MESSAGE, def raise_error(''): + exit
-#
-
-
-
-#
-# ARGS
-#
-parser = argparse.ArgumentParser()
-parser.add_argument('-p', '-patch',     '--patch',      help = 'Patch code (name for the patch files)')
-parser.add_argument('-s', '-search',    '--search',     help = 'Search string for Git to search just for relevant commits',     default = None, nargs = '*')
-parser.add_argument('-c', '-commit',    '--commit',     help = 'Process just specific commits',                                 default = None, nargs = '*')
-parser.add_argument('-b', '-branch',    '--branch',     help = 'To override active branch',                                     default = None)
-#parser.add_argument('-u', '-update',    '--update',     help = '',                   default = False,  nargs = '?',  const = True)
-#
-args = vars(parser.parse_args())
-args = collections.namedtuple('ARG', args.keys())(*args.values())  # convert to named tuple
-
-#print('ARGS:')
-#print('-----')
-#for key, value in sorted(zip(args._fields, args)):
-#    print('{:>10} = {}'.format(key, value))
-#print()
-
-assert args.patch is not None
-
-query_apex_version = """
-BEGIN
-    APEX_UTIL.SET_WORKSPACE (
-        p_workspace         => '{$APEX_WORKSPACE}'
-    );
-    APEX_APPLICATION_ADMIN.SET_APPLICATION_VERSION (
-        p_application_id    => {$APEX_APP_ID},
-        p_version           => '{$APEX_VERSION}'
-    );
-    COMMIT;
-END;
-/
-"""
-
-
-
-class Patch:
-
-    def __init__(self, config):
-        self.config     = config
-        self.repo_path  = config['repo_path']
+        assert self.args.patch is not None
 
         # make sure we have a valid repo
         self.open_repo()
@@ -68,9 +17,6 @@ class Patch:
 
 
     def open_repo(self):
-        self.repo       = Repo(self.repo_path)
-        self.repo_url   = self.repo.remotes[0].url
-
         # check that the repository loaded correctly
         assert not self.repo.bare
 
@@ -78,34 +24,6 @@ class Patch:
         with self.repo.config_reader() as git_config:
             self.user_name  = git_config.get_value('user', 'name')
             self.user_mail  = git_config.get_value('user', 'email')
-
-        # show to the user
-        print('ACCOUNT  : {}, {}'.format(self.user_name, self.user_mail))
-        print('REPO     : {}'.format(self.repo_path))
-        print('URL      : {}'.format(self.repo_url))
-        #print('BRANCH   : {}'.format(self.branch))
-        print()
-
-        #print(self.repo.git.status)
-        #print()
-
-        # check changes
-        if self.repo.is_dirty(untracked_files = True):
-            print('CHANGES DETECTED!')
-            print()
-
-            index = self.repo.index
-
-            #print('Untracked files', self.repo.untracked_files)
-
-            #print('Staged files:')
-            #for item in self.repo.index.diff('HEAD'):
-            #    print(item.a_path)
-
-            #for obj in index.diff(None):
-            #    print('  {} | {}'.format(obj.change_type, obj.b_path))  # obj.deleted_file
-            #print()
-            #print()
 
 
 
@@ -115,20 +33,18 @@ class Patch:
 
 
 
-    def create_patch(self, patch_code, search_message = None, commits = None, branch = None):
+    def create_patch(self):
         self.patch_files        = []
         self.patch_files_apex   = []
-        self.patch_code         = patch_code
-        self.search_message     = search_message or [patch_code]
-        self.commits            = commits
-        self.branch             = branch or self.repo.active_branch                     # get current branch
-        self.today              = datetime.datetime.today().strftime('%Y-%m-%d')        # YYYY-MM-DD
-        self.today_full         = datetime.datetime.today().strftime('%Y-%m-%d %H:%M')  # YYYY-MM-DD HH24:MI
+        self.patch_code         = self.args.patch
+        self.search_message     = self.args.search or [self.patch_code]
+        self.commits            = self.args.commit
+        self.branch             = self.args.branch or self.config.branch or self.repo.active_branch
         self.file_template      = '@@"../patch/{}/#FILE#"\n'.format(self.patch_code)
 
         # pull some variables from config
-        self.path_objects       = self.config['path_objects']
-        self.path_apex          = self.config['path_apex']
+        self.path_objects       = self.config.path_objects
+        self.path_apex          = self.config.path_apex
 
         # track changes
         self.all_commits        = {}
@@ -140,11 +56,13 @@ class Patch:
         self.apex_root          = '../' + self.path_apex.rstrip('/')
         self.apex_app_id        = ''
         self.apex_workspace     = ''
-        self.apex_version       = '{} {}'.format(self.today, self.patch_code)
+        self.apex_version       = '{} {}'.format(self.config.today, self.patch_code)
 
         # set current commit to the head and search through recent commits
         self.current_commit_obj = self.repo.commit('HEAD')
         self.current_commit     = self.current_commit_obj.count()
+
+        print('--\n-- PATCH {}\n--\n'.format(self.patch_code))
 
         # workflow
         self.find_commits()
@@ -154,7 +72,7 @@ class Patch:
 
 
     def find_commits(self):
-        for commit in list(self.repo.iter_commits(self.branch, max_count = self.config['git_depth'], skip = 0)):
+        for commit in list(self.repo.iter_commits(self.branch, max_count = self.config.git_depth, skip = 0)):
             self.all_commits[commit.count()] = commit
 
             # skip non requested commits
@@ -339,14 +257,14 @@ class Patch:
             # create snapshot folder
             self.patch_folder = '{}/patch/{$PATCH_CODE}'  # /snapshot/ ??
             self.patch_folder = self.patch_folder.replace('{$PATCH_CODE}', self.patch_code)
-            self.patch_folder = self.patch_folder.format(self.repo_path)
+            self.patch_folder = self.patch_folder.format(self.config.repo_path)
             #
             if not os.path.exists(self.patch_folder):
                 os.makedirs(self.patch_folder)
 
             # copy files
             for file in diffs.keys():
-                source_file     = '{}/{}'.format(self.repo_path, file).replace('//', '/')
+                source_file     = '{}/{}'.format(self.config.repo_path, file).replace('//', '/')
                 target_file     = '{}/{}'.format(self.patch_folder, file).replace('//', '/')
                 target_folder   = os.path.dirname(target_file)
                 #
@@ -361,7 +279,7 @@ class Patch:
                         file_content = f.read()
                     #
                     file_content = re.sub(r",p_last_updated_by=>'([^']+)'", ",p_last_updated_by=>'{}'".format(self.patch_code), file_content)
-                    file_content = re.sub(r",p_last_upd_yyyymmddhh24miss=>'(\d+)'", ",p_last_upd_yyyymmddhh24miss=>'{}00'".format(self.today_full.replace('-', '').replace(' ', '').replace(':', '')), file_content)
+                    file_content = re.sub(r",p_last_upd_yyyymmddhh24miss=>'(\d+)'", ",p_last_upd_yyyymmddhh24miss=>'{}'".format(self.config.today_full_raw), file_content)
                     #
                     with open(target_file, 'wt', encoding = 'utf-8') as f:
                         f.write(file_content)
@@ -375,11 +293,11 @@ class Patch:
             commits_list = '_{}'.format(max(self.commits))
 
         # save in schema patch file
-        patch_file = replace_dict('{}/patch/{$PATCH_CODE}/{$INFO_SCHEMA}{}.sql', {
+        patch_file = util.replace_dict('{}/patch/{$PATCH_CODE}/{$INFO_SCHEMA}{}.sql', {
             '{$PATCH_CODE}'     : self.patch_code,
             '{$INFO_SCHEMA}'    : target_schema,
         }
-        ).format(self.repo_path, commits_list)
+        ).format(self.config.repo_path, commits_list)
         #
         with open(patch_file, 'w', encoding = 'utf-8', newline = '\n') as w:
             w.write(payload)
@@ -395,16 +313,16 @@ class Patch:
         # create overall patch file
         patch_file = '{}/patch/{$PATCH_CODE}.sql'
         patch_file = patch_file.replace('{$PATCH_CODE}', self.patch_code)
-        patch_file = patch_file.format(self.repo_path)
+        patch_file = patch_file.format(self.config.repo_path)
         #
         payload = ''
         payload += '--\n-- EXECUTE PATCH FILES\n--\n'
 
         # non APEX schemas first
         for file in sorted(self.patch_files):
-            payload += '@@"./{}"\n'.format(file.replace(self.repo_path, '').lstrip('/'))
+            payload += '@@"./{}"\n'.format(file.replace(self.config.repo_path, '').lstrip('/'))
         for file in sorted(self.patch_files_apex):
-            payload += '@@"./{}"\n'.format(file.replace(self.repo_path, '').lstrip('/'))
+            payload += '@@"./{}"\n'.format(file.replace(self.config.repo_path, '').lstrip('/'))
         payload += '\n'
         #
         with open(patch_file, 'w', encoding = 'utf-8', newline = '\n') as w:
@@ -420,7 +338,7 @@ class Patch:
 
         # set proper workspace
         payload = ''
-        payload += replace_dict(query_apex_version, {
+        payload += util.replace_dict(queries.query_apex_version, {
             '{$APEX_WORKSPACE}' : self.apex_workspace,
             '{$APEX_APP_ID}'    : str(self.apex_app_id),
             '{$APEX_VERSION}'   : self.apex_version,
@@ -470,7 +388,7 @@ class Patch:
         payload = ''
 
         # grab the file with grants made
-        grants_made     = '{}{}grants/{}.sql'.format(config['repo_path'], config['path_objects'], self.config['schema'])
+        grants_made     = '{}{}grants/{}.sql'.format(self.config.repo_path, self.config.path_objects, self.config.schema)
         grants_found    = False
         #
         with open(grants_made, 'rt', encoding = 'utf-8') as f:
@@ -526,10 +444,10 @@ class Patch:
             'file'              : file,
             'object_type'       : self.get_file_object_type(file),
             'object_name'       : self.get_file_object_name(file),
-            'schema'            : self.config['schema'] if not app_id else self.config['apex_schema'],
+            'schema'            : self.config.schema if not app_id else self.config.apex_schema,
             'apex_app_id'       : app_id,
             'apex_page_id'      : page_id,
-            'apex_workspace'    : self.config['apex_workspace'],
+            'apex_workspace'    : self.config.apex_workspace,
             #'patch_file'  : '',
             #'group'       : '',  subfolders
             #'shortcut'    : '',
@@ -539,21 +457,15 @@ class Patch:
 
 
 
-
-
 if __name__ == "__main__":
-    config = {
-        'repo_path'         : '',
-        'branch'            : args.branch,
-        'schema'            : '',
-        'apex_schema'       : '',
-        'apex_workspace'    : '',
-        'path_objects'      : '',
-        'path_apex'         : '',
-        'git_depth'         : 500,
-    }
+    # parse arguments
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-p', '-patch',     '--patch',      help = 'Patch code (name for the patch files)')
+    parser.add_argument('-s', '-search',    '--search',     help = 'Search string for Git to search just for relevant commits',     default = None, nargs = '*')
+    parser.add_argument('-c', '-commit',    '--commit',     help = 'Process just specific commits',                                 default = None, nargs = '*')
+    parser.add_argument('-b', '-branch',    '--branch',     help = 'To override active branch',                                     default = None)
 
-    # search just for specific commits
-    patch = Patch(config = config)
-    patch.create_patch(patch_code = args.patch, search_message = args.search, commits = args.commit, branch = args.branch)
+    # create object
+    patch = Patch(parser)
+    patch.create_patch()
 

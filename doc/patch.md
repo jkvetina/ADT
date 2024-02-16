@@ -1,9 +1,10 @@
 # Patch
 
-The idea behind is to focus on your job as a developer and don't worry on mundane tasks like creating patch files manually.
-Multiple schemas are supported and there are plenty of config options available to customize this.
+The idea behind this is to focus on your job as a developer and don't worry about mundane tasks like creating patch files manually.
+This feature does not connect to the database, it gets all the information from your Git repo, the folders and the config file.
+So to make this work, you must be using Git. In future the BitBucket will be also supported.
 
-There is just one assumption to make this work, you must be using Git for your project. In future I plan to support also the BitBucket.
+Multiple schemas are supported and there are plenty of config options available to customize patching.
 
 &nbsp;
 
@@ -11,8 +12,8 @@ There is just one assumption to make this work, you must be using Git for your p
 
 - you will do your changes on database objects and/or APEX applications as usual in any tool you prefer
 - you will [export](./export.md) and commit your changes in Git (ideally with the card number and meaningful description for release notes)
-- whenever you want to release the changes, you will run patch.py and this little magic script will create a patch file for you
-- if you need to do some data changes you have to write the script for that yourself
+- whenever you want to release the changes, you will run [patch.py](../patch.py) and this little magic script will create a patch file for you
+- if you need to do some data changes you have to write the script for that yourself, except tracked data files (see [export_data](./export_data.md))
 
 &nbsp;
 
@@ -31,5 +32,14 @@ There is just one assumption to make this work, you must be using Git for your p
   - delete installed pages if they exist
   - change page creation/audit columns to patch code and date so you know by which patch was the page changed
   - change application version to current date and patch code
-  - set requested authentication scheme
+  - set requested authentication scheme, keep sessions alive...
+  - you can set pre/post APEX scripts through patch template folder (see below)
+
+&nbsp;
+
+## Issues
+
+The changes in patch are based on commits, but changed files are copied from the current files (which might include uncommitted changes). So just be aware of that.
+
+Also if you just change the objects grants and not the object itself, the grants will not make it to do patch.
 

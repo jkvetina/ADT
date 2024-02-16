@@ -1,9 +1,18 @@
 # coding: utf-8
-import datetime, re
+import sys, os, re, argparse, collections, datetime, timeit
+from lib import oracle_wrapper
+from git import Repo
 
 class Config(dict):
 
-    def __init__(self):
+    def __init__(self, parser):
+        # arguments from command line
+        self.args = vars(parser.parse_args())
+        self.args = collections.namedtuple('ARG', self.args.keys())(*self.args.values())  # convert to named tuple
+
+        #
+        # load parameters from config file
+        #
         self.repo_path          = ''
         self.branch             = ''
         self.schema             = ''
@@ -13,10 +22,15 @@ class Config(dict):
         self.path_apex          = ''
         self.git_depth          = 500
 
+        # setup Git repo
+        self.repo       = Repo(self.repo_path)
+        self.repo_url   = self.repo.remotes[0].url
         # prepare date formats
         self.today              = datetime.datetime.today().strftime('%Y-%m-%d')        # YYYY-MM-DD
         self.today_full         = datetime.datetime.today().strftime('%Y-%m-%d %H:%M')  # YYYY-MM-DD HH24:MI
         self.today_full_raw     = datetime.datetime.today().strftime('%Y%m%d%H%M') + '00'
+
+
 
     __getattr__ = dict.__getitem__
     __setattr__ = dict.__setitem__
@@ -68,4 +82,31 @@ class Config(dict):
     def replace_dict(self, payload, translation):
         regex = re.compile('|'.join(map(re.escape, translation)))
         return regex.sub(lambda match: translation[match.group(0)], payload)
+
+
+
+if __name__ == "__main__":
+    # parse arguments
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-c',   '--client',       help = 'Client name')
+    parser.add_argument('-p',   '--project',      help = 'Project name')
+    parser.add_argument('-e',   '--env',          help = 'Environment name',            nargs = '*')  # ?
+    parser.add_argument('-r',   '--repo',         help = 'Path to your project repo')
+    parser.add_argument('-u',   '--user',         help = 'User name')
+    parser.add_argument(        '--pwd',          help = 'User password')
+    parser.add_argument('-h',   '--host',         help = 'Host')
+    parser.add_argument('-o',   '--port',         help = 'Port',                        type = int, default = 1521)
+    parser.add_argument('-s',   '--service',      help = 'Service name')
+    parser.add_argument(        '--sid',          help = 'SID')
+    parser.add_argument('-w',   '--wallet',       help = 'Wallet file')
+    parser.add_argument('-wp',  '--wallet_pwd',   help = 'Wallet password')
+
+    # create object
+    start_timer = timeit.default_timer()
+    #
+    config = Config(parser)
+    #
+    config.create_config()
+    #
+    print('TIME: {}\n'.format(round(timeit.default_timer() - start_timer, 2)))
 

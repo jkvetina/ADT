@@ -1,18 +1,18 @@
 # coding: utf-8
-import sys, os, re, shutil, argparse, timeit
-from lib import util
-from lib import app
-from lib import queries_patch as queries
+import sys, os, re, shutil, argparse
+import config
+from lib import queries_patch as queries        # ditch for template folder
 
-class Patch(app.App):
+class Patch(config.Config):
 
-    def __init__(self, args):
-        super().__init__(args)
+    def __init__(self, parser):
+        super().__init__(parser)
 
         assert self.args.patch is not None
 
         # make sure we have a valid repo
         self.open_repo()
+        self.create_patch()
 
 
 
@@ -37,17 +37,17 @@ class Patch(app.App):
         self.patch_files        = []
         self.patch_files_apex   = []
         self.patch_code         = self.args.patch
-        self.patch_file         = '{}/patch/{}.sql'.format(self.config.repo_path, self.patch_code)
+        self.patch_file         = '{}/patch/{}.sql'.format(self.repo_path, self.patch_code)
         self.patch_file_curr    = ''
         self.search_message     = self.args.search or [self.patch_code]
         self.commits            = self.args.commit
-        self.branch             = self.args.branch or self.config.branch or self.repo.active_branch
+        self.branch             = self.args.branch or self.branch or self.repo.active_branch
         self.file_template      = '@"./#FILE#"\n'.format(self.patch_code)
-        self.grants_made        = '{}{}grants/{}.sql'.format(self.config.repo_path, self.config.path_objects, self.config.schema)
+        self.grants_made        = '{}{}grants/{}.sql'.format(self.repo_path, self.path_objects, self.schema)
 
         # pull some variables from config
-        self.path_objects       = self.config.path_objects
-        self.path_apex          = self.config.path_apex
+        self.path_objects       = self.path_objects
+        self.path_apex          = self.path_apex
 
         # track changes
         self.all_commits        = {}
@@ -58,7 +58,7 @@ class Patch(app.App):
         # APEX related
         self.apex_app_id        = ''
         self.apex_workspace     = ''
-        self.apex_version       = '{} {}'.format(self.config.today, self.patch_code)
+        self.apex_version       = '{} {}'.format(self.today, self.patch_code)
         self.apex_files_ignore  = [ # these files will not be in the patch even if they change
                                     'application/set_environment.sql',
                                     'application/end_environment.sql',
@@ -84,7 +84,7 @@ class Patch(app.App):
 
 
     def find_commits(self):
-        for commit in list(self.repo.iter_commits(self.branch, max_count = self.config.git_depth, skip = 0)):
+        for commit in list(self.repo.iter_commits(self.branch, max_count = self.git_depth, skip = 0)):
             self.all_commits[commit.count()] = commit
 
             # skip non requested commits
@@ -160,7 +160,7 @@ class Patch(app.App):
                 commits_list = '_{}'.format(max(self.commits))
 
             # generate patch file name for specific schema
-            self.patch_file_curr = '{}patch/{}/{}{}.sql'.format(self.config.repo_path, self.patch_code, target_schema, commits_list)
+            self.patch_file_curr = '{}patch/{}/{}{}.sql'.format(self.repo_path, self.patch_code, target_schema, commits_list)
 
             # generate patch header
             header = 'PATCH - {} - {}'.format(self.patch_code, target_schema)
@@ -286,7 +286,7 @@ class Patch(app.App):
             # create snapshot folder
             self.patch_folder = '{}/patch/{$PATCH_CODE}'  # /snapshot/ ??
             self.patch_folder = self.patch_folder.replace('{$PATCH_CODE}', self.patch_code)
-            self.patch_folder = self.patch_folder.format(self.config.repo_path)
+            self.patch_folder = self.patch_folder.format(self.repo_path)
             #
             if not os.path.exists(self.patch_folder):
                 os.makedirs(self.patch_folder)
@@ -318,7 +318,7 @@ class Patch(app.App):
 
     def create_file_snapshot(self, file):
         # create folders and copy files
-        source_file     = '{}/{}'.format(self.config.repo_path, file).replace('//', '/')
+        source_file     = '{}/{}'.format(self.repo_path, file).replace('//', '/')
         target_file     = '{}/{}'.format(self.patch_folder, file).replace('//', '/')
         target_folder   = os.path.dirname(target_file)
         #
@@ -333,7 +333,7 @@ class Patch(app.App):
                 file_content = f.read()
             #
             file_content = re.sub(r",p_last_updated_by=>'([^']+)'", ",p_last_updated_by=>'{}'".format(self.patch_code), file_content)
-            file_content = re.sub(r",p_last_upd_yyyymmddhh24miss=>'(\d+)'", ",p_last_upd_yyyymmddhh24miss=>'{}'".format(self.config.today_full_raw), file_content)
+            file_content = re.sub(r",p_last_upd_yyyymmddhh24miss=>'(\d+)'", ",p_last_upd_yyyymmddhh24miss=>'{}'".format(self.today_full_raw), file_content)
             #
             with open(target_file, 'wt', encoding = 'utf-8') as f:
                 f.write(file_content)
@@ -347,11 +347,11 @@ class Patch(app.App):
         # non APEX schemas first
         proceed = False
         for file in sorted(self.patch_files):
-            payload += '@"./{}"\n'.format(file.replace(self.config.repo_path, '').lstrip('/'))
+            payload += '@"./{}"\n'.format(file.replace(self.repo_path, '').lstrip('/'))
             proceed = True
         #
         for file in sorted(self.patch_files_apex):
-            payload += '@"./{}"\n'.format(file.replace(self.config.repo_path, '').lstrip('/'))
+            payload += '@"./{}"\n'.format(file.replace(self.repo_path, '').lstrip('/'))
             proceed = True
         payload += '\n'
         #
@@ -368,7 +368,7 @@ class Patch(app.App):
         assert self.apex_workspace is not None
 
         # set proper workspace
-        payload = self.config.replace_tags(queries.query_apex_version, self).strip() + '\n'
+        payload = self.replace_tags(queries.query_apex_version, self).strip() + '\n'
 
         # start APEX import
         payload += 'SET DEFINE OFF\n'
@@ -391,7 +391,7 @@ class Patch(app.App):
 
         # attach ending file
         file = '{}f{}/{}'.format(self.path_apex, self.apex_app_id, 'application/end_environment.sql')
-        payload += '@"./{}"\n'.format(file.replace(self.config.repo_path, '').lstrip('/'))
+        payload += '@"./{}"\n'.format(file.replace(self.repo_path, '').lstrip('/'))
         #
         return payload
 
@@ -473,10 +473,10 @@ class Patch(app.App):
             'file'              : file,
             'object_type'       : self.get_file_object_type(file),
             'object_name'       : self.get_file_object_name(file),
-            'schema'            : self.config.schema if not app_id else self.config.apex_schema,
+            'schema'            : self.schema if not app_id else self.apex_schema,
             'apex_app_id'       : app_id,
             'apex_page_id'      : page_id,
-            'apex_workspace'    : self.config.apex_workspace,
+            'apex_workspace'    : self.apex_workspace,
             #'patch_file'  : '',
             #'group'       : '',  subfolders
             #'shortcut'    : '',
@@ -498,7 +498,6 @@ if __name__ == "__main__":
     start_timer = timeit.default_timer()
     #
     patch = Patch(parser)
-    patch.create_patch()
     #
     print('TIME: {}\n'.format(round(timeit.default_timer() - start_timer, 2)))
 

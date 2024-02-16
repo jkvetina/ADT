@@ -493,11 +493,6 @@ if __name__ == "__main__":
     parser.add_argument('-s', '-search',    '--search',     help = 'Search string for Git to search just for relevant commits',     default = None, nargs = '*')
     parser.add_argument('-c', '-commit',    '--commit',     help = 'Process just specific commits',                                 default = None, nargs = '*')
     parser.add_argument('-b', '-branch',    '--branch',     help = 'To override active branch',                                     default = None)
-
-    # create object
-    start_timer = timeit.default_timer()
     #
     patch = Patch(parser)
-    #
-    print('TIME: {}\n'.format(round(timeit.default_timer() - start_timer, 2)))
 

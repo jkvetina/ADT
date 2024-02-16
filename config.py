@@ -6,6 +6,8 @@ from git import Repo
 class Config(dict):
 
     def __init__(self, parser):
+        self.start_timer = timeit.default_timer()
+
         # arguments from command line
         self.args = vars(parser.parse_args())
         self.args = collections.namedtuple('ARG', self.args.keys())(*self.args.values())  # convert to named tuple
@@ -35,6 +37,11 @@ class Config(dict):
     __getattr__ = dict.__getitem__
     __setattr__ = dict.__setitem__
     __delattr__ = dict.__delitem__
+
+
+
+    def __del__(self):
+        print('TIME: {}s\n'.format(round(timeit.default_timer() - self.start_timer, 2)))
 
 
 

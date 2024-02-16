@@ -37,6 +37,32 @@ Multiple schemas are supported and there are plenty of config options available 
 
 &nbsp;
 
+## Template
+
+You can create a patch template, which is a list of folders and files which will be added to each your patch at specific point, which depends either on timing or object type. All files and subfolders will be sorted alpabethically.
+
+Proposed folders structure (you can change the order and the content via the patch_map in your config file):
+
+| Object Type | Path                                    | Timing
+| :---------- | :---                                    | :----:
+| * init      | 'patch_template/10_init/'               | Y
+| sequences   | 'patch_template/20_new_sequences/'      |
+| tables      | 'patch_template/25_new_tables/'         |
+| changes     | 'patch_template/30_table+data_changes/' |
+| synonyms    | 'patch_template/35_synonyms/'           |
+| objects     | 'patch_template/40_repeatable_objects/' |
+| triggers    | 'patch_template/45_triggers/'           |
+| mviews      | 'patch_template/50_mviews/'             |
+| indexes     | 'patch_template/55_indexes/'            |
+| data        | 'patch_template/60_data/'               |
+| grants      | 'patch_template/70_grants/'             |
+| jobs        | 'patch_template/80_jobs/'               |
+| * apex_pre  | 'patch_template/85_apex_pre/'           | Y
+| * apex_post | 'patch_template/86_apex_post/'          | Y
+| * finally   | 'patch_template/90_finally/'            | Y
+
+&nbsp;
+
 ## Issues
 
 The changes in patch are based on commits, but changed files are copied from the current files (which might include uncommitted changes). So just be aware of that.

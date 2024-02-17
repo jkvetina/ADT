@@ -89,18 +89,13 @@ class Config(Attributed):
         self.today_full         = datetime.datetime.today().strftime('%Y-%m-%d %H:%M')      # YYYY-MM-DD HH24:MI
         self.today_full_raw     = datetime.datetime.today().strftime('%Y%m%d%H%M') + '00'
 
-        # import OPY connection file
+        # import OPY connection file, basically adjust input arguments and then create a connection
         if self.args.opy:
-            # adjust input arguments
             self.import_connection()
 
-        # create connection file
+        # create or update connection file
         elif self.args.create:
             self.create_connection()
-
-        # update existing connection file
-        elif self.args.update:
-            self.update_connection()
 
         # check connection file and test connectivity
         self.init_connections()
@@ -131,7 +126,6 @@ class Config(Attributed):
                             self.connections[env_name]          = config
                             self.connections[env_name]['file']  = file
                             self.connections[env_name]['desc']  = desc
-                            #setattr(self, key, value)
         #
         if self.debug:
             util.debug_dots(self.connections, 24)
@@ -387,8 +381,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
 
     # actions and flags
-    parser.add_argument(        '-create',      '--create',         help = 'Create new connection',             default = False, nargs = '?', const = True)
-    parser.add_argument(        '-update',      '--update',         help = 'Update existing connection',        default = False, nargs = '?', const = True)
+    parser.add_argument(        '-create',      '--create',         help = 'Create or update connection',       default = False, nargs = '?', const = True)
     parser.add_argument('-d',   '-debug',       '--debug',          help = 'Turn on the debug/verbose mode',    default = False, nargs = '?', const = True)
     parser.add_argument(        '-opy',         '--opy',            help = 'To import connection details from OPY file')
 

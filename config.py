@@ -1,6 +1,7 @@
 # coding: utf-8
 import sys, os, re, argparse, datetime, timeit, yaml, git
 from lib import wrapper
+from lib import util
 
 class Attributed(dict):
 
@@ -20,25 +21,25 @@ class Config(Attributed):
         self.args = Attributed(self.args)
         #
         if self.args.debug:
-            self.header('ARGS:')
-            self.debug_dots(self.args, 24)
+            util.header('ARGS:')
+            util.debug_dots(self.args, 24)
 
         # set project info from arguments
         self.info_client    = self.args.client
         self.info_project   = self.args.project
         self.info_env       = self.args.env
-        self.info_repo      = self.fix_path(self.args.repo or os.path.abspath(os.path.curdir))
+        self.info_repo      = util.fix_path(self.args.repo or os.path.abspath(os.path.curdir))
         self.info_branch    = self.args.branch
 
         # get the platform
         self.platform       = 'unix' if os.path.pathsep == ':' else 'win'
-        self.root           = self.fix_path(os.path.dirname(os.path.realpath(__file__)))
+        self.root           = util.fix_path(os.path.dirname(os.path.realpath(__file__)))
 
         # if we are using ADT repo for connection file, we have to know these too
         if self.info_repo == self.root:
-            assert self.args.client is not None
-            assert self.args.project is not None
-            assert self.args.env is not None
+            util.assert_(self.args.client   is not None, 'MISSING CLIENT ARGUMENT')
+            util.assert_(self.args.project  is not None, 'MISSING PROJECT ARGUMENT')
+            util.assert_(self.args.env      is not None, 'MISSING ENV ARGUMENT')
 
         # list connection files, where to search for DB connections
         self.connection_files = [
@@ -75,7 +76,7 @@ class Config(Attributed):
 
         # create connection file
         if self.args.create:
-            self.create_connection() and self.quit()
+            self.create_connection() and util.quit()
 
         # check connection file
         self.init_connections()
@@ -106,14 +107,11 @@ class Config(Attributed):
                             self.track_connections[file][key] = value
         #
         if self.args.debug:
-            for file in self.config_files:
-                if file in self.track_connections:
-                    self.header('CONNECTION:', file)
-                    self.debug_dots(self.track_connections[file], 24)
+            util.debug_dots(self.connections, 24)
 
         # check presence, at least one file is required
         if len(self.track_connections) == 0:
-            self.header('CONNECTION FILE REQUIRED:')
+            util.header('CONNECTION FILE REQUIRED:')
             for file in self.connection_files:
                 print('   {}'.format(file))
             print()
@@ -158,11 +156,10 @@ class Config(Attributed):
                         print('   - {}'.format(arg))
                     print()
             #
-            self.raise_error('CAN\'T CONTINUE')
+            util.raise_error('CAN\'T CONTINUE')
 
-        self.header('CREATING {} CONNECTION:'.format(found_type.upper()))
-        self.debug_dots(passed_args[found_type], 24)
-        print('')
+        util.header('CREATING {} CONNECTION:'.format(found_type.upper()))
+        util.debug_dots(passed_args[found_type], 24)
 
         # prepare target folder
         file    = self.replace_tags(self.connection_default)
@@ -178,9 +175,9 @@ class Config(Attributed):
         with open(file, 'wt', encoding = 'utf-8') as f:
             # convert dict to yaml string
             payload = yaml.dump(payload, allow_unicode = True, default_flow_style = False, indent = 4) + '\n'
-            payload = self.fix_yaml(payload)
+            payload = util.fix_yaml(payload)
             f.write(payload)
-            self.header('FILE CREATED:')
+            util.header('FILE CREATED:')
             print('   {}\n'.format(file))
 
 
@@ -203,9 +200,8 @@ class Config(Attributed):
         if self.args.debug:
             for file in self.config_files:
                 if file in self.track_config:
-                    self.header('CONFIG:', file)
-                    self.debug_dots(self.track_config[file], 24)
-                    print()
+                    util.header('CONFIG:', file)
+                    util.debug_dots(self.track_config[file], 24)
 
         # connect to repo
         self.init_repo()
@@ -213,7 +209,7 @@ class Config(Attributed):
 
 
     def init_repo(self):
-        self.assert_(self.info_repo is not None, 'MISSING REPO ARGUMENT')
+        util.assert_(self.info_repo is not None, 'MISSING REPO ARGUMENT')
 
         # setup and connect to the repo
         self.info_repo = self.replace_tags(self.info_repo)
@@ -292,94 +288,6 @@ class Config(Attributed):
     def replace_dict(self, payload, translation):
         regex = re.compile('|'.join(map(re.escape, translation)))
         return regex.sub(lambda match: translation[match.group(0)], payload)
-
-
-
-    def fix_path(self, dir):
-        return os.path.normpath(dir).replace('\\', '/').rstrip('/') + '/'
-
-
-
-    def fix_yaml(self, payload):
-        # change yaml formatting
-        recent  = {}
-        lines   = payload.splitlines()
-        #
-        for i, line in enumerate(lines):
-            # calculate indentation for current and next line
-            found = re.search('^(\s*)', line).group(1)
-            if not found:
-                continue
-            #
-            curr_line_indent = len(found)
-            #
-            if i >= len(lines):
-                next_line_indent = 0
-                continue
-            else:
-                next_line_indent = len(re.search('^(\s*)', lines[i + 1]).group(1))
-
-            # split current line
-            found = re.search('^(\s*)([^:]+)[:](.*)$', line)
-            if found and curr_line_indent > 0:
-                recent[i] = [found.group(1), found.group(2), found.group(3)]
-
-            # fix previous lines when end of group is detected
-            if next_line_indent != curr_line_indent:
-                # calculate the width of attributes
-                width = 0
-                for j, split in recent.items():
-                    width = max(width, int(len(split[1]) / 4) * 4 + 4)
-                #
-                for j, split in recent.items():
-                    split[1] = split[1].ljust(width)
-                    lines[j] = '{}{}:{}'.format(*split)
-                #
-                recent = {}
-        #
-        return '\n'.join(lines)
-
-
-    def debug_dots(self, payload, length):
-        for key, value in payload.items():
-            if isinstance(value, dict):
-                print('   {}:'.format(key))
-                for sub_key, sub_value in value.items():
-                    if isinstance(sub_value, list):
-                        sub_value = ' | '.join(sub_value)
-                    print('      {} {} {}'.format(sub_key, '.' * (length - 3 - len(sub_key)), sub_value or ''))
-            #
-            elif isinstance(value, list):
-                print('   {} {} {}'.format(key, '.' * (length - len(key)), ' | '.join(value)))
-            #
-            else:
-                print('   {} {} {}'.format(key, '.' * (length - len(key)), value or ''))
-        print()
-
-
-
-    def header(self, message, append = ''):
-        print('\n{}\n{}'.format(message, '-' * len(message)), append)
-
-
-
-    def quit(self, message = ''):
-        if len(message) > 0:
-            print(message)
-        sys.exit()
-
-
-
-    def raise_error(self, message = ''):
-        message = 'ERROR: {}'.format(message)
-        self.quit('\n{}\n{}'.format(message, '-' * len(message)))
-
-
-
-    def assert_(self, condition, message = ''):
-        if not condition:
-            message = 'ERROR: {}'.format(message)
-            self.quit('\n{}\n{}'.format(message, '-' * len(message)))
 
 
 

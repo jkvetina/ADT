@@ -67,6 +67,13 @@ class Config(Attributed):
 
 
     def replace_tags(self, payload, obj = None):
+        # if payload is a list, process all items individually
+        if isinstance(payload, list):
+            for i, item in enumerate(payload):
+                payload[i] = self.replace_tags(item, obj)
+            return payload
+
+        # check passed argument types
         is_object   = str(type(obj)).startswith("<class '__main__.")
         is_dict     = isinstance(obj, dict)
 
@@ -78,7 +85,7 @@ class Config(Attributed):
             passed_keys = obj.__dict__.keys()  # get object attributes
         #
         if len(passed_keys) > 0:
-            # replace all tags "{$_____}" with values from passed object
+            # replace all tags "{$_____}" with passed object attribute values
             for tag in re.findall('\{\$[A-Z0-9_]+\}', payload):
                 if tag in payload:
                     attribute   = tag.lower().replace('{$', '').replace('}', '')

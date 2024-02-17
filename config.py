@@ -1,16 +1,23 @@
 # coding: utf-8
-import sys, os, re, argparse, collections, datetime, timeit
+import sys, os, re, argparse, datetime, timeit, yaml, git
 from lib import oracle_wrapper
-from git import Repo
 
-class Config(dict):
+class Attributed(dict):
+
+    __getattr__ = dict.__getitem__
+    __setattr__ = dict.__setitem__
+    __delattr__ = dict.__delitem__
+
+
+
+class Config(Attributed):
 
     def __init__(self, parser):
         self.start_timer = timeit.default_timer()
 
         # arguments from command line
         self.args = vars(parser.parse_args())
-        self.args = collections.namedtuple('ARG', self.args.keys())(*self.args.values())  # convert to named tuple
+        self.args = Attributed(self.args)
 
         #
         # load parameters from config file
@@ -34,9 +41,6 @@ class Config(dict):
 
 
 
-    __getattr__ = dict.__getitem__
-    __setattr__ = dict.__setitem__
-    __delattr__ = dict.__delitem__
 
 
 

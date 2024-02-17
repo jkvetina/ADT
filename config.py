@@ -51,7 +51,8 @@ class Config(Attributed):
 
         # default location for new connections
         self.connection_default = '{$INFO_REPO}config/connections.yaml'
-        self.connections = {}
+        self.connections        = {}    # all connections
+        self.connection         = {}    # active connection
 
         # search for config files in current folder
         self.config_files = [
@@ -127,8 +128,11 @@ class Config(Attributed):
             print()
             util.quit()
 
+        # check connection for current env
         if not (self.info_env in self.connections):
             util.raise_error('MISSING CONNECTION FOR {}'.format(self.info_env))
+        #
+        self.connection = self.connections[self.info_env]
 
 
 
@@ -202,7 +206,7 @@ class Config(Attributed):
 
     def test_connection(self):
         # check connectivity
-        wrapper.Oracle(self.connections[self.info_env])
+        wrapper.Oracle(self.connection, self.debug)
 
 
 

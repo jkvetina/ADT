@@ -45,9 +45,7 @@ class Oracle:
 
         # show versions
         util.header('CONNECTED TO {}:'.format(self.tns['desc']))
-        for type, version in self.versions.items():
-            print('  {:>10} | {}'.format(type, version))
-        print()
+        util.debug_table(self.versions)
 
 
 

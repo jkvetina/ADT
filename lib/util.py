@@ -71,6 +71,25 @@ def debug_dots(payload, length, mask_keys = []):
 
 
 
+def debug_table(payload, pattern = '  {:>16} | {}', right = [1], upper = True, mask_keys = ['pwd', 'wallet_pwd']):
+    if isinstance(payload, dict):
+        width = 0
+        for column in payload.keys():
+            width = max(width, int(len(column) / 4) * 4 + 4)
+        #
+        if pattern == '':
+            pattern = '{:' + ('>' if 1 in right else '<') + str(width) + '} | {}'
+        #
+        for col1, col2 in payload.items():
+            print(pattern.format(
+                col1.upper() if upper else col1,
+                '*' * len(col2) if col1 in mask_keys else col2
+            ))
+    #
+    print()
+
+
+
 def header(message, append = ''):
     print('\n{}\n{}'.format(message, '-' * len(message)), append)
 

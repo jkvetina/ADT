@@ -181,7 +181,7 @@ class Config(Attributed):
         passed_args[found_type]['thick']    = ''            # thick mode, instant client path
 
         util.header('CREATING {} CONNECTION:'.format(found_type.upper()))
-        util.debug_dots(passed_args[found_type], 24, ['pwd', 'wallet_pwd'])
+        util.debug_table(passed_args[found_type])
 
         # prepare target folder
         file    = self.replace_tags(self.connection_default)

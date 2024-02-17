@@ -76,6 +76,9 @@ class Config(Attributed):
         self.today_full         = datetime.datetime.today().strftime('%Y-%m-%d %H:%M')      # YYYY-MM-DD HH24:MI
         self.today_full_raw     = datetime.datetime.today().strftime('%Y%m%d%H%M') + '00'
 
+        # create connection file
+        if self.args.create:
+            self.create_connection() and self.quit()
 
         # check connection file
         self.init_connections()
@@ -114,6 +117,68 @@ class Config(Attributed):
             for file in self.connection_files:
                 print('   {}'.format(file))
             print()
+
+
+
+    def create_connection(self):
+        self.init_repo()
+
+        # check required arguments
+        required_args = {
+            'normal'    : ['env', 'user', 'pwd', 'hostname', 'port', 'service'],
+            'legacy'    : ['env', 'user', 'pwd', 'hostname', 'port', 'sid'],
+            'cloud'     : ['env', 'user', 'pwd',                     'service', 'wallet', 'wallet_pwd'],
+        }
+        #
+        passed_args     = {}
+        missing_args    = {}
+        #
+        for type, arguments in required_args.items():
+            passed_args[type]   = {}
+            missing_args[type]  = []
+            #
+            for arg in arguments:
+                if not (arg in self.args) or self.args[arg] == None or self.args[arg] == '':
+                    missing_args[type].append(arg)
+                else:
+                    passed_args[type][arg] = self.args[arg]
+
+        # create guidance for missing args
+        found_type = None
+        for type, arguments in missing_args.items():
+            if len(arguments) == 0:
+                found_type = type
+                break
+        #
+        if not found_type:
+            for type, arguments in missing_args.items():
+                if type != found_type and len(arguments) > 0:
+                    print('MISSING ARGUMENTS FOR {} CONNECTION:'.format(type.upper()))
+                    for arg in arguments:
+                        print('   - {}'.format(arg))
+                    print()
+            #
+            self.raise_error('CAN\'T CONTINUE')
+
+        self.header('CREATING {} CONNECTION:'.format(found_type.upper()))
+        self.debug_dots(passed_args[found_type], 24)
+        print('')
+
+        # prepare target folder
+        file    = self.replace_tags(self.connection_default)
+        dir     = os.path.dirname(file)
+        #
+        if not os.path.exists(dir):
+            os.makedirs(dir)
+        #
+        payload = {}
+        payload[self.info_env] = passed_args[found_type]
+
+        # store connection parameters in the yaml file
+        with open(file, 'wt', encoding = 'utf-8') as f:
+            yaml.dump(payload, f, allow_unicode = True, default_flow_style = False)
+            self.header('FILE CREATED:')
+            print('   {}\n'.format(file))
 
 
 

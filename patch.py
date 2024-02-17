@@ -37,13 +37,14 @@ class Patch(config.Config):
         self.patch_files        = []
         self.patch_files_apex   = []
         self.patch_code         = self.args.patch
-        self.patch_file         = '{}/patch/{}.sql'.format(self.repo_path, self.patch_code)
+        self.patch_file         = '{}/patch/{}.sql'.format(self.info_repo, self.patch_code)
         self.patch_file_curr    = ''
         self.search_message     = self.args.search or [self.patch_code]
         self.commits            = self.args.commit
-        self.branch             = self.args.branch or self.branch or self.repo.active_branch
+        self.info_branch        = self.args.branch or self.info_branch or self.repo.active_branch
         self.file_template      = '@"./#FILE#"\n'.format(self.patch_code)
-        self.grants_made        = '{}{}grants/{}.sql'.format(self.repo_path, self.path_objects, self.schema)
+        self.grants_made        = '{}{}grants/{}.sql'.format(self.info_repo, self.path_objects, self.info_schema)
+        self.spooling           = True
 
         # pull some variables from config
         self.path_objects       = self.path_objects
@@ -84,7 +85,7 @@ class Patch(config.Config):
 
 
     def find_commits(self):
-        for commit in list(self.repo.iter_commits(self.branch, max_count = self.git_depth, skip = 0)):
+        for commit in list(self.repo.iter_commits(self.info_branch, max_count = self.repo_commits, skip = 0)):
             self.all_commits[commit.count()] = commit
 
             # skip non requested commits
@@ -160,7 +161,7 @@ class Patch(config.Config):
                 commits_list = '_{}'.format(max(self.commits))
 
             # generate patch file name for specific schema
-            self.patch_file_curr = '{}patch/{}/{}{}.sql'.format(self.repo_path, self.patch_code, target_schema, commits_list)
+            self.patch_file_curr = '{}patch/{}/{}{}.sql'.format(self.info_repo, self.patch_code, target_schema, commits_list)
 
             # generate patch header
             header = 'PATCH - {} - {}'.format(self.patch_code, target_schema)
@@ -286,7 +287,7 @@ class Patch(config.Config):
             # create snapshot folder
             self.patch_folder = '{}/patch/{$PATCH_CODE}'  # /snapshot/ ??
             self.patch_folder = self.patch_folder.replace('{$PATCH_CODE}', self.patch_code)
-            self.patch_folder = self.patch_folder.format(self.repo_path)
+            self.patch_folder = self.patch_folder.format(self.info_repo)
             #
             if not os.path.exists(self.patch_folder):
                 os.makedirs(self.patch_folder)
@@ -318,7 +319,7 @@ class Patch(config.Config):
 
     def create_file_snapshot(self, file):
         # create folders and copy files
-        source_file     = '{}/{}'.format(self.repo_path, file).replace('//', '/')
+        source_file     = '{}/{}'.format(self.info_repo, file).replace('//', '/')
         target_file     = '{}/{}'.format(self.patch_folder, file).replace('//', '/')
         target_folder   = os.path.dirname(target_file)
         #
@@ -347,11 +348,11 @@ class Patch(config.Config):
         # non APEX schemas first
         proceed = False
         for file in sorted(self.patch_files):
-            payload += '@"./{}"\n'.format(file.replace(self.repo_path, '').lstrip('/'))
+            payload += '@"./{}"\n'.format(file.replace(self.info_repo, '').lstrip('/'))
             proceed = True
         #
         for file in sorted(self.patch_files_apex):
-            payload += '@"./{}"\n'.format(file.replace(self.repo_path, '').lstrip('/'))
+            payload += '@"./{}"\n'.format(file.replace(self.info_repo, '').lstrip('/'))
             proceed = True
         payload += '\n'
         #
@@ -391,7 +392,7 @@ class Patch(config.Config):
 
         # attach ending file
         file = '{}f{}/{}'.format(self.path_apex, self.apex_app_id, 'application/end_environment.sql')
-        payload += '@"./{}"\n'.format(file.replace(self.repo_path, '').lstrip('/'))
+        payload += '@"./{}"\n'.format(file.replace(self.info_repo, '').lstrip('/'))
         #
         return payload
 
@@ -473,7 +474,7 @@ class Patch(config.Config):
             'file'              : file,
             'object_type'       : self.get_file_object_type(file),
             'object_name'       : self.get_file_object_name(file),
-            'schema'            : self.schema if not app_id else self.apex_schema,
+            'schema'            : self.info_schema if not app_id else self.apex_schema,
             'apex_app_id'       : app_id,
             'apex_page_id'      : page_id,
             'apex_workspace'    : self.apex_workspace,

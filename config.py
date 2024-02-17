@@ -77,12 +77,43 @@ class Config(Attributed):
         self.today_full_raw     = datetime.datetime.today().strftime('%Y%m%d%H%M') + '00'
 
 
+        # check connection file
+        self.init_connections()
 
 
 
 
     def __del__(self):
         print('\nTIME: {}s\n'.format(round(timeit.default_timer() - self.start_timer, 2)))
+
+
+
+    def init_connections(self):
+        self.track_connections = {}
+
+        # search for connection file
+        for file in self.replace_tags(list(self.connection_files)):  # copy, dont change original
+            if not ('{$' in file) and os.path.exists(file):
+                with open(file, 'rt', encoding = 'utf-8') as f:
+                    self.track_connections[file] = {}
+                    content = list(yaml.load_all(f, Loader = yaml.loader.SafeLoader))
+                    if len(content) > 0:
+                        for key, value in content[0].items():
+                            setattr(self, key, value)
+                            self.track_connections[file][key] = value
+        #
+        if self.args.debug:
+            for file in self.config_files:
+                if file in self.track_connections:
+                    self.header('CONNECTION:', file)
+                    self.debug_dots(self.track_connections[file], 24)
+
+        # check presence, at least one file is required
+        if len(self.track_connections) == 0:
+            self.header('CONNECTION FILE REQUIRED:')
+            for file in self.connection_files:
+                print('   {}'.format(file))
+            print()
 
 
 

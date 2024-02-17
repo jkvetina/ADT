@@ -145,6 +145,11 @@ class Config(Attributed):
         self.connection         = self.connections[self.info_env]
         self.connection['key']  = self.args.key
 
+        # if key is a file, retrieve content and use it as a key
+        if os.path.exists(self.connection['key']):
+            with open(self.connection['key'], 'rt', encoding = 'utf-8') as f:
+                self.connection['key'] = f.read().strip()
+
 
 
     def create_connection(self, output_file = None):

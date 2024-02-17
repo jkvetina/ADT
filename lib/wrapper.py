@@ -59,6 +59,21 @@ class Oracle:
     def connect(self):
         os.environ['NLS_LANG'] = self.tns['lang']
 
+        # might need to adjust client for classic connections
+        if 'thick' in self.tns and len(self.tns['thick']) > 0:
+            if isinstance(self.tns['thick'], str):
+                client = os.path.abspath(os.path.dirname(self.tns['thick']))
+                if os.path.exists(client):
+                    try:
+                        oracledb.init_oracle_client(lib_dir = client)
+                        print('USING THICK CLIENT...\n{}'.format(client))
+                    except:
+                        try:
+                            oracledb.init_oracle_client()  # for password issues
+                            print('USING THICK CLIENT...')
+                        except:
+                            pass
+
         # use wallet to connect
         if 'wallet' in self.tns and len(self.tns['wallet']) > 0:
             wallet = os.path.abspath(self.tns['wallet']).rstrip('.zip')
@@ -76,7 +91,19 @@ class Oracle:
             )
             return
 
-
+        # classic connect
+        if not 'dsn' in self.tns:
+            if 'sid' in self.tns:
+                self.tns['dsn'] = oracledb.makedsn(self.tns['host'], self.tns['port'], sid = self.tns['sid'])
+            else:
+                self.tns['dsn'] = oracledb.makedsn(self.tns['host'], self.tns['port'], service_name = self.tns['service'])
+        #
+        self.conn = oracledb.connect(
+            user        = self.tns['user'],
+            password    = self.tns['pwd'],
+            dsn         = self.tns['dsn'],
+            encoding    = 'utf8'
+        )
 
 
 

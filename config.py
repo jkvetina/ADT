@@ -177,9 +177,10 @@ class Config(Attributed):
             util.raise_error('CAN\'T CONTINUE')
 
         # append some stuff
-        passed_args[found_type]['lang']     = '.AL32UTF8'   # default language
-        passed_args[found_type]['thick']    = ''            # thick mode, instant client path
+        passed_args[found_type]['lang']     = '.AL32UTF8'       # default language
+        passed_args[found_type]['thick']    = self.args.thick   # thick mode, instant client path
 
+        # show parameters
         util.header('CREATING {} CONNECTION:'.format(found_type.upper()))
         util.debug_table(passed_args[found_type])
 
@@ -347,6 +348,7 @@ if __name__ == "__main__":
     parser.add_argument(        '-sid',         '--sid',            help = 'SID')
     parser.add_argument('-w',   '-wallet',      '--wallet',         help = 'Wallet file')
     parser.add_argument('-wp',  '-wallet_pwd',  '--wallet_pwd',     help = 'Wallet password')
+    parser.add_argument(        '-thick',       '--thick',          help = 'Thick client path, \'Y\' for auto resolve')
     #
     config = Config(parser)
 

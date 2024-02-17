@@ -126,6 +126,16 @@ class Config(Attributed):
                             self.connections[env_name]          = config
                             self.connections[env_name]['file']  = file
                             self.connections[env_name]['desc']  = desc
+                            self.connections[env_name]['plain'] = self.args.decrypt
+
+        # decrypt passwords
+        if self.args.decrypt:
+            for arg in ['pwd', 'wallet_pwd']:
+                if arg in self.connections[self.info_env]:
+                    self.connections[self.info_env][arg] = util.decrypt(self.connections[self.info_env][arg], self.args.key)
+        #
+        self.connection         = self.connections[self.info_env]
+        self.connection['key']  = self.args.key
         #
         if self.debug:
             util.debug_dots(self.connections, 24)
@@ -141,9 +151,6 @@ class Config(Attributed):
         # check connection for current env
         if not (self.info_env in self.connections):
             util.raise_error('MISSING CONNECTION FOR {}'.format(self.info_env))
-        #
-        self.connection         = self.connections[self.info_env]
-        self.connection['key']  = self.args.key
 
         # if key is a file, retrieve content and use it as a key
         if os.path.exists(self.connection['key']):
@@ -197,7 +204,7 @@ class Config(Attributed):
 
         # encrypt passwords
         for arg in ['pwd', 'wallet_pwd']:
-            if arg in passed_args[found_type]:
+            if arg in passed_args[found_type] and not (self.args.decrypt):
                 if not ('key' in self.args) or self.args.key == None:
                     util.raise_error('NEED KEY TO ENCRYPT PASSWORDS!')
                 original = passed_args[found_type][arg]
@@ -212,7 +219,7 @@ class Config(Attributed):
 
         # show parameters
         util.header('CREATING {} CONNECTION:'.format(found_type.upper()))
-        util.debug_table(passed_args[found_type])
+        util.debug_table(passed_args[found_type], mask_keys = [] if self.args.decrypt else ['pwd', 'wallet_pwd'])
 
         # prepare target folder
         file    = self.replace_tags(output_file or self.connection_default)
@@ -389,6 +396,7 @@ if __name__ == "__main__":
     parser.add_argument(        '-create',      '--create',         help = 'Create or update connection',       default = False, nargs = '?', const = True)
     parser.add_argument('-d',   '-debug',       '--debug',          help = 'Turn on the debug/verbose mode',    default = False, nargs = '?', const = True)
     parser.add_argument(        '-opy',         '--opy',            help = 'To import connection details from OPY file')
+    parser.add_argument(        '-decrypt',     '--decrypt',        help = 'Show passwords decypted',           default = False, nargs = '?', const = True, type = bool)
 
     # to specify environment
     parser.add_argument('-c',   '-client',      '--client',         help = 'Client name')

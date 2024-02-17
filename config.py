@@ -59,7 +59,10 @@ class Config(Attributed):
 
 
     def __del__(self):
-        print('TIME: {}s\n'.format(round(timeit.default_timer() - self.start_timer, 2)))
+        print('\nTIME: {}s\n'.format(round(timeit.default_timer() - self.start_timer, 2)))
+
+
+
 
 
 
@@ -157,9 +160,6 @@ if __name__ == "__main__":
     # parse arguments
     parser = argparse.ArgumentParser()
 
-    # create object
-    start_timer = timeit.default_timer()
-
     # actions and flags
     parser.add_argument(        '-create',      '--create',         help = 'Create new connection',             default = False, nargs = '?', const = True)
     parser.add_argument(        '-update',      '--update',         help = 'Update existing connection',        default = False, nargs = '?', const = True)
@@ -186,8 +186,4 @@ if __name__ == "__main__":
     parser.add_argument('-wp',  '-wallet_pwd',  '--wallet_pwd',     help = 'Wallet password')
     #
     config = Config(parser)
-    #
-    config.create_config()
-    #
-    print('TIME: {}\n'.format(round(timeit.default_timer() - start_timer, 2)))
 

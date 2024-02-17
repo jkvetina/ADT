@@ -110,6 +110,49 @@ class Config(Attributed):
 
 
 
+    def fix_path(self, dir):
+        return os.path.normpath(dir).replace('\\', '/').rstrip('/') + '/'
+
+
+
+    def debug_dots(self, payload, length):
+        for key, value in payload.items():
+            if isinstance(value, dict):
+                print('   {}:'.format(key))
+                for sub_key, sub_value in value.items():
+                    if isinstance(sub_value, list):
+                        sub_value = ' | '.join(sub_value)
+                    print('      {} {} {}'.format(sub_key, '.' * (24 - 3 - len(sub_key)), sub_value or ''))
+            #
+            elif isinstance(value, list):
+                print('   {} {} {}'.format(key, '.' * (24 - len(key)), ' | '.join(value)))
+            #
+            else:
+                print('   {} {} {}'.format(key, '.' * (24 - len(key)), value or ''))
+        print()
+
+
+
+    def quit(self, message = ''):
+        if len(message) > 0:
+            print(message)
+        sys.exit()
+
+
+
+    def raise_error(self, message = ''):
+        message = 'ERROR: {}'.format(message)
+        self.quit('\n{}\n{}'.format(message, '-' * len(message)))
+
+
+
+    def assert_(self, condition, message = ''):
+        if not condition:
+            message = 'ERROR: {}'.format(message)
+            self.quit('\n{}\n{}'.format(message, '-' * len(message)))
+
+
+
 if __name__ == "__main__":
     # parse arguments
     parser = argparse.ArgumentParser()

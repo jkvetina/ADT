@@ -24,13 +24,30 @@ class Oracle:
         if not self.debug:
             self.debug = debug
         #
+        self.versions = {}
+
         # temp file for Windows
         self.sqlcl_root         = './'
         self.sqlcl_temp_file    = './sqlcl.{}.tmp'.format('')
 
         # auto connect
         self.connect()
-        self.show_versions()
+        self.get_versions()
+
+        # test SQLcl connectivity
+        output  = self.sqlcl_request('DESC DUAL')
+        lines   = output.splitlines()[:5]
+        #
+        for i, line in enumerate(lines):
+            if line.startswith('Connected.'):
+                self.versions['SQLCL'] = lines[0].split(' ')[2]
+                break
+
+        # show versions
+        util.header('CONNECTED TO {}:'.format(self.tns['desc']))
+        for type, version in self.versions.items():
+            print('  {:>10} | {}'.format(type, version))
+        print()
 
 
 
@@ -62,9 +79,9 @@ class Oracle:
 
 
 
-    def show_versions(self):
-        util.header('CONNECTED TO {}:'.format(self.tns['desc']))
 
+
+    def get_versions(self):
         # get database and apex versions
         version_apex, version_db = '', ''
         try:
@@ -73,10 +90,8 @@ class Oracle:
         except Exception:
             version_db    = self.fetch_value(query.query_version_db_old)
         #
-        #print('        THIN | {}'.format('Y' if oracledb.is_thin_mode() else ''))
-        print('    DATABASE | {}'.format('.'.join(version_db.split('.')[0:2])))
-        print('        APEX | {}'.format('.'.join(version_apex.split('.')[0:2])))
-        print()
+        self.versions['DATABASE']   = '.'.join(version_db.split('.')[0:2])
+        self.versions['APEX']       = '.'.join(version_apex.split('.')[0:2])
 
 
 

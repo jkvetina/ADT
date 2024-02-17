@@ -148,7 +148,8 @@ class Config(Attributed):
         if not (self.info_env in self.connections):
             util.raise_error('MISSING CONNECTION FOR {}'.format(self.info_env))
         #
-        self.connection = self.connections[self.info_env]
+        self.connection         = self.connections[self.info_env]
+        self.connection['key']  = self.args.key
 
 
 
@@ -194,6 +195,17 @@ class Config(Attributed):
 
         # append some stuff
         passed_args[found_type]['lang'] = '.AL32UTF8'   # default language
+
+        # encrypt passwords
+        for arg in ['pwd', 'wallet_pwd']:
+            if arg in passed_args[found_type]:
+                if not ('key' in self.args) or self.args.key == None:
+                    util.raise_error('NEED KEY TO ENCRYPT PASSWORDS!')
+                original = passed_args[found_type][arg]
+                passed_args[found_type][arg] = util.encrypt(original, self.args.key)
+                if original != util.decrypt(passed_args[found_type][arg], self.args.key):
+                    util.raise_error('ENCRYPTION FAILED!')
+                original = ''
 
         # request thick mode, pass instant client path
         if self.args.thick:

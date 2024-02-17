@@ -1,4 +1,48 @@
 import sys, os, re
+import secrets, base64
+
+# for encryptions
+from cryptography.fernet import Fernet
+from cryptography.hazmat.backends import default_backend
+from cryptography.hazmat.primitives import hashes
+from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
+
+
+
+def get_encryption_key(password, salt):
+    kdf = PBKDF2HMAC(
+        algorithm   = hashes.SHA256(),
+        length      = 32,
+        salt        = salt,
+        iterations  = 100000,
+        backend     = default_backend()
+    )
+    return base64.urlsafe_b64encode(kdf.derive(password))
+
+
+
+def encrypt(message, password):
+    iter    = 100000
+    salt    = secrets.token_bytes(16)
+    key     = get_encryption_key(password.encode(), salt)
+    #
+    return base64.urlsafe_b64encode(
+        b'%b%b%b' % (
+            salt,
+            iter.to_bytes(4, 'big'),
+            base64.urlsafe_b64decode(Fernet(key).encrypt(message.encode())),
+        )
+    ).decode('ascii')
+
+
+
+def decrypt(token, password):
+    decoded = base64.urlsafe_b64decode(token.encode('ascii'))
+    salt    = decoded[:16]
+    token   = base64.urlsafe_b64encode(decoded[20:])
+    key     = get_encryption_key(password.encode(), salt)
+    #
+    return Fernet(key).decrypt(token).decode()
 
 
 
@@ -51,7 +95,7 @@ def fix_yaml(payload):
 def debug_dots(payload, length, mask_keys = []):
     for key, value in payload.items():
         if key in mask_keys:
-            value = '*' * len(value)
+            value = '*' * min(len(value), 20)
         #
         if isinstance(value, dict):
             print('   {}:'.format(key))
@@ -59,7 +103,7 @@ def debug_dots(payload, length, mask_keys = []):
                 if isinstance(sub_value, list):
                     sub_value = ' | '.join(sub_value)
                 if sub_key in mask_keys:
-                    sub_value = '*' * len(sub_value)
+                    sub_value = '*' * min(len(sub_value), 20)
                 print('      {} {} {}'.format(sub_key, '.' * (length - 3 - len(sub_key)), sub_value or ''))
         #
         elif isinstance(value, list):
@@ -83,7 +127,7 @@ def debug_table(payload, pattern = '  {:>16} | {}', right = [1], upper = True, m
         for col1, col2 in payload.items():
             print(pattern.format(
                 col1.upper() if upper else col1,
-                '*' * len(col2) if col1 in mask_keys else col2
+                '*' * min(len(col2), 20) if col1 in mask_keys else col2
             ))
     #
     print()

@@ -18,8 +18,12 @@ class Oracle:
         }
         self.tns.update(tns)
         self.tns['host'] = self.tns['hostname'] if 'hostname' in self.tns else None
+
+        # debug mode from config file or from caller
+        self.debug = self.tns['debug'] if 'debug' in self.tns else False
+        if not self.debug:
+            self.debug = debug
         #
-        self.debug = debug or self.tns['debug'] if 'debug' in self.tns else False
 
         # auto connect
         self.connect()

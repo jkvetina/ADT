@@ -307,7 +307,7 @@ class Patch(config.Config):
 
     def create_patch_file(self, payload, target_schema):
         # save in schema patch file
-        with open(self.patch_file_curr, 'w', encoding = 'utf-8', newline = '\n') as w:
+        with open(self.patch_file_curr, 'wt', encoding = 'utf-8', newline = '\n') as w:
             w.write(payload)
         #
         if self.apex_app_id != '':
@@ -343,7 +343,7 @@ class Patch(config.Config):
 
     def create_summary(self):
         # create overall patch file
-        payload = '--\n-- EXECUTE PATCH FILES\n--\n'
+        payload = '--\n-- EXECUTE PATCH FILES\n--\n\n'
 
         # non APEX schemas first
         proceed = False
@@ -374,6 +374,7 @@ class Patch(config.Config):
         # start APEX import
         payload += 'SET DEFINE OFF\n'
         payload += 'SET TIMING OFF\n'
+        payload += 'WHENEVER SQLERROR EXIT ROLLBACK\n'
         payload += '--\n'
 
         # attach starting file
@@ -490,10 +491,10 @@ class Patch(config.Config):
 if __name__ == "__main__":
     # parse arguments
     parser = argparse.ArgumentParser()
-    parser.add_argument('-p', '-patch',     '--patch',      help = 'Patch code (name for the patch files)')
-    parser.add_argument('-s', '-search',    '--search',     help = 'Search string for Git to search just for relevant commits',     default = None, nargs = '*')
-    parser.add_argument('-c', '-commit',    '--commit',     help = 'Process just specific commits',                                 default = None, nargs = '*')
-    parser.add_argument('-b', '-branch',    '--branch',     help = 'To override active branch',                                     default = None)
+    parser.add_argument('-p',   '-patch',       '--patch',      help = 'Patch code (name for the patch files)')
+    parser.add_argument('-s',   '-search',      '--search',     help = 'Search string for Git to search just for relevant commits',     default = None, nargs = '*')
+    parser.add_argument('-c',   '-commit',      '--commit',     help = 'Process just specific commits',                                 default = None, nargs = '*')
+    parser.add_argument('-b',   '-branch',      '--branch',     help = 'To override active branch',                                     default = None)
     #
     patch = Patch(parser)
 

@@ -1,6 +1,7 @@
 # coding: utf-8
 import sys, os, subprocess
-import oracledb
+import oracledb         # pip3 install oracledb     --upgrade
+#
 from lib import util
 from lib import queries_wrapper as query
 
@@ -50,8 +51,8 @@ class Oracle:
 
 
     def __del__(self):
-        # disconnect
-        pass
+        if self.conn:
+            self.conn.close()  # disconnect
 
 
 

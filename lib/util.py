@@ -48,13 +48,18 @@ def fix_yaml(payload):
 
 
 
-def debug_dots(payload, length):
+def debug_dots(payload, length, mask_keys = []):
     for key, value in payload.items():
+        if key in mask_keys:
+            value = '*' * len(value)
+        #
         if isinstance(value, dict):
             print('   {}:'.format(key))
             for sub_key, sub_value in value.items():
                 if isinstance(sub_value, list):
                     sub_value = ' | '.join(sub_value)
+                if sub_key in mask_keys:
+                    sub_value = '*' * len(sub_value)
                 print('      {} {} {}'.format(sub_key, '.' * (length - 3 - len(sub_key)), sub_value or ''))
         #
         elif isinstance(value, list):

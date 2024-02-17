@@ -177,8 +177,11 @@ class Config(Attributed):
             util.raise_error('CAN\'T CONTINUE')
 
         # append some stuff
-        passed_args[found_type]['lang']     = '.AL32UTF8'       # default language
-        passed_args[found_type]['thick']    = self.args.thick   # thick mode, instant client path
+        passed_args[found_type]['lang'] = '.AL32UTF8'   # default language
+
+        # request thick mode, pass instant client path
+        if self.args.thick:
+            passed_args[found_type]['thick'] = self.args.thick
 
         # show parameters
         util.header('CREATING {} CONNECTION:'.format(found_type.upper()))

@@ -1,5 +1,8 @@
 # coding: utf-8
-import sys, os, re, argparse, datetime, timeit, yaml, git
+import sys, os, re, argparse, datetime, timeit, pickle
+import yaml         # pip3 install pyyaml       --upgrade
+import git          # pip3 install GitPython    --upgrade
+#
 from lib import wrapper
 from lib import util
 

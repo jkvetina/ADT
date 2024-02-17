@@ -80,14 +80,21 @@ class Config(Attributed):
         self.today_full         = datetime.datetime.today().strftime('%Y-%m-%d %H:%M')      # YYYY-MM-DD HH24:MI
         self.today_full_raw     = datetime.datetime.today().strftime('%Y%m%d%H%M') + '00'
 
+        # import OPY connection file
+        if self.args.opy:
+            # adjust input arguments
+            self.import_connection()
+
         # create connection file
-        if self.args.create:
-            self.create_connection() and util.quit()
+        elif self.args.create:
+            self.create_connection()
 
-        # check connection file
+        # update existing connection file
+        elif self.args.update:
+            self.update_connection()
+
+        # check connection file and test connectivity
         self.init_connections()
-
-        # test database connection
         self.test_connection()
 
         # check config file, rerun this when specific schema is processed to load schema overrides
@@ -136,7 +143,7 @@ class Config(Attributed):
 
 
 
-    def create_connection(self):
+    def create_connection(self, output_file = None):
         self.init_repo()
 
         # check required arguments
@@ -188,7 +195,7 @@ class Config(Attributed):
         util.debug_table(passed_args[found_type])
 
         # prepare target folder
-        file    = self.replace_tags(self.connection_default)
+        file    = self.replace_tags(output_file or self.connection_default)
         dir     = os.path.dirname(file)
         #
         if not os.path.exists(dir):
@@ -205,6 +212,28 @@ class Config(Attributed):
             f.write(payload)
             util.header('FILE CREATED:')
             print('   {}\n'.format(file))
+
+
+
+    def import_connection(self):
+        # find OPY pickle file
+        pickle_file = self.args.opy
+        if not os.path.exists(pickle_file) and os.path.splitext(pickle_file)[1] != '.conf':
+            util.raise_error('MISSING OPY FILE')
+
+        # import data as arguments
+        with open(pickle_file, 'rb') as f:
+            for (arg, value) in pickle.load(f).items():
+                arg = arg.replace('host',   'hostname')
+                arg = arg.replace('target', 'repo')
+                #
+                self.args[arg] = value
+
+            # need to set the repo to have correct paths
+            self.info_repo = self.args['repo']
+
+        # create new file as user would actually pass these arguments
+        self.create_connection()
 
 
 
@@ -331,6 +360,7 @@ if __name__ == "__main__":
     parser.add_argument(        '-create',      '--create',         help = 'Create new connection',             default = False, nargs = '?', const = True)
     parser.add_argument(        '-update',      '--update',         help = 'Update existing connection',        default = False, nargs = '?', const = True)
     parser.add_argument('-d',   '-debug',       '--debug',          help = 'Turn on the debug/verbose mode',    default = False, nargs = '?', const = True)
+    parser.add_argument(        '-opy',         '--opy',            help = 'To import connection details from OPY file')
 
     # to specify environment
     parser.add_argument('-c',   '-client',      '--client',         help = 'Client name',                               default = None)

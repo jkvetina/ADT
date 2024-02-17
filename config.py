@@ -156,21 +156,34 @@ class Config(Attributed):
 if __name__ == "__main__":
     # parse arguments
     parser = argparse.ArgumentParser()
-    parser.add_argument('-c',   '--client',       help = 'Client name')
-    parser.add_argument('-p',   '--project',      help = 'Project name')
-    parser.add_argument('-e',   '--env',          help = 'Environment name',            nargs = '*')  # ?
-    parser.add_argument('-r',   '--repo',         help = 'Path to your project repo')
-    parser.add_argument('-u',   '--user',         help = 'User name')
-    parser.add_argument(        '--pwd',          help = 'User password')
-    parser.add_argument('-h',   '--host',         help = 'Host')
-    parser.add_argument('-o',   '--port',         help = 'Port',                        type = int, default = 1521)
-    parser.add_argument('-s',   '--service',      help = 'Service name')
-    parser.add_argument(        '--sid',          help = 'SID')
-    parser.add_argument('-w',   '--wallet',       help = 'Wallet file')
-    parser.add_argument('-wp',  '--wallet_pwd',   help = 'Wallet password')
 
     # create object
     start_timer = timeit.default_timer()
+
+    # actions and flags
+    parser.add_argument(        '-create',      '--create',         help = 'Create new connection',             default = False, nargs = '?', const = True)
+    parser.add_argument(        '-update',      '--update',         help = 'Update existing connection',        default = False, nargs = '?', const = True)
+    parser.add_argument('-d',   '-debug',       '--debug',          help = 'Turn on the debug/verbose mode',    default = False, nargs = '?', const = True)
+
+    # to specify environment
+    parser.add_argument('-c',   '-client',      '--client',         help = 'Client name')
+    parser.add_argument('-p',   '-project',     '--project',        help = 'Project name')
+    parser.add_argument('-e',   '-env',         '--env',            help = 'Environment name, like DEV, UAT, LAB1...', default = 'DEV')
+    parser.add_argument('-r',   '-repo',        '--repo',           help = 'Path to your project repo')
+    parser.add_argument('-b',   '-branch',      '--branch',         help = 'Repo branch')
+
+    # key or key location to encrypt passwords
+    parser.add_argument('-k',   '-key',         '--key',            help = 'Key or key location to encypt passwords')
+
+    # for database connections
+    parser.add_argument('-u',   '-user',        '--user',           help = 'User name')
+    parser.add_argument(        '-pwd',         '--pwd',            help = 'User password')
+    parser.add_argument('-m',   '-hostname',    '--hostname',       help = 'Hostname')
+    parser.add_argument('-o',   '-port',        '--port',           help = 'Port',                        type = int, default = 1521)
+    parser.add_argument('-s',   '-service',     '--service',        help = 'Service name')
+    parser.add_argument(        '-sid',         '--sid',            help = 'SID')
+    parser.add_argument('-w',   '-wallet',      '--wallet',         help = 'Wallet file')
+    parser.add_argument('-wp',  '-wallet_pwd',  '--wallet_pwd',     help = 'Wallet password')
     #
     config = Config(parser)
     #

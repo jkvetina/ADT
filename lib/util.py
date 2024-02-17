@@ -91,7 +91,7 @@ def debug_table(payload, pattern = '  {:>16} | {}', right = [1], upper = True, m
 
 
 def header(message, append = ''):
-    print('\n{}\n{}'.format(message, '-' * len(message)), append)
+    print('\n{}{}\n{}'.format(message, (' ' + append).rstrip(), '-' * len(message)))
 
 
 

@@ -171,7 +171,7 @@ class Oracle:
         #
         if self.debug:
             util.header('RESULT:')
-            print(result)
+            print(result.stdout)
             print()
 
         # for Windows remove temp file

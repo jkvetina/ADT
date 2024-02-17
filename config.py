@@ -35,7 +35,7 @@ class Config(Attributed):
         #
         if self.debug:
             util.header('ARGS:')
-            util.debug_dots(self.args, 24)
+            util.debug_table(self.args)
 
         # set project info from arguments
         self.info_client    = self.args.client
@@ -138,7 +138,8 @@ class Config(Attributed):
         self.connection['key']  = self.args.key
         #
         if self.debug:
-            util.debug_dots(self.connections, 24)
+            util.header('CONNECTION:')
+            util.debug_table(self.connection)
 
         # check presence, at least one file is required
         if len(self.connections) == 0:
@@ -255,7 +256,7 @@ class Config(Attributed):
         # find OPY pickle file
         pickle_file = self.args.opy
         if not os.path.exists(pickle_file) and os.path.splitext(pickle_file)[1] != '.conf':
-            util.raise_error('MISSING OPY FILE')
+            util.raise_error('MISSING OPY FILE!')
 
         # import data as arguments
         with open(pickle_file, 'rb') as f:

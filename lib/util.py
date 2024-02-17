@@ -115,16 +115,24 @@ def debug_dots(payload, length, mask_keys = []):
 
 
 
-def debug_table(payload, pattern = '  {:>16} | {}', right = [1], upper = True, mask_keys = ['pwd', 'wallet_pwd']):
+def debug_table(payload, pattern = '  {:>16} | {}', right = [1], upper = True, sort = True, skip_none = True, mask_keys = []):
     if isinstance(payload, dict):
+        keys = payload.keys()
+        if sort:
+            keys = sorted(keys)
+        #
         width = 0
-        for column in payload.keys():
+        for column in keys:
             width = max(width, int(len(column) / 4) * 4 + 4)
         #
         if pattern == '':
             pattern = '{:' + ('>' if 1 in right else '<') + str(width) + '} | {}'
         #
-        for col1, col2 in payload.items():
+        for col1 in keys:
+            col2 = payload[col1]
+            if skip_none and col2 == None:
+                continue
+            #
             print(pattern.format(
                 col1.upper() if upper else col1,
                 '*' * min(len(col2), 20) if col1 in mask_keys else col2

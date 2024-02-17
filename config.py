@@ -17,10 +17,11 @@ class Config(Attributed):
         self.start_timer = timeit.default_timer()
 
         # arguments from command line
-        self.args = vars(parser.parse_args())
-        self.args = Attributed(self.args)
+        self.args   = vars(parser.parse_args())
+        self.args   = Attributed(self.args)
+        self.debug  = self.args.debug
         #
-        if self.args.debug:
+        if self.debug:
             util.header('ARGS:')
             util.debug_dots(self.args, 24)
 
@@ -115,7 +116,7 @@ class Config(Attributed):
                             self.connections[env_name]['desc']  = desc
                             #setattr(self, key, value)
         #
-        if self.args.debug:
+        if self.debug:
             util.debug_dots(self.connections, 24)
 
         # check presence, at least one file is required
@@ -220,7 +221,7 @@ class Config(Attributed):
                     self.apply_config(file)
 
         # show source of the parameters
-        if self.args.debug:
+        if self.debug:
             for file in self.config_files:
                 if file in self.track_config:
                     util.header('CONFIG:', file)

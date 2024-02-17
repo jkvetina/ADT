@@ -110,10 +110,7 @@ class Config(Attributed):
                     if len(content) > 0:
                         for env_name, config in content[0].items():
                             # create description
-                            desc = config['hostname'] if 'hostname' in config else ''
-                            if 'service' in config and 'wallet' in config:
-                                desc = config['service'].split('_')[0].upper()
-                            desc = '{}, {}'.format(desc, env_name)
+                            desc = '{}, {}'.format(config['user'], env_name)
                             #
                             self.connections[env_name]          = config
                             self.connections[env_name]['file']  = file

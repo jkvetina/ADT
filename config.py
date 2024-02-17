@@ -18,25 +18,39 @@ class Config(Attributed):
         # arguments from command line
         self.args = vars(parser.parse_args())
         self.args = Attributed(self.args)
+        #
+        if self.args.debug:
+            print('ARGS:')
+            print('-----')
+            self.debug_dots(self.args, 24)
+
+        # set project info from arguments
+        self.info_client    = self.args.client
+        self.info_project   = self.args.project
+        self.info_env       = self.args.env
+        self.info_repo      = self.fix_path(self.args.repo or os.path.abspath(os.path.curdir))
+        self.info_branch    = self.args.branch
+
+        # get the platform
+        self.platform       = 'unix' if os.path.pathsep == ':' else 'win'
+        self.root           = self.fix_path(os.path.dirname(os.path.realpath(__file__)))
+
+        # if we are using ADT repo for connection file, we have to know these too
+        if self.info_repo == self.root:
+            assert self.args.client is not None
+            assert self.args.project is not None
+            assert self.args.env is not None
 
         #
         # load parameters from config file
         #
-        self.repo_path          = ''
-        self.branch             = ''
-        self.schema             = ''
-        self.apex_schema        = ''
-        self.apex_workspace     = ''
-        self.path_objects       = ''
-        self.path_apex          = ''
-        self.git_depth          = 500
 
         # setup Git repo
         self.repo       = Repo(self.repo_path)
         self.repo_url   = self.repo.remotes[0].url
         # prepare date formats
-        self.today              = datetime.datetime.today().strftime('%Y-%m-%d')        # YYYY-MM-DD
-        self.today_full         = datetime.datetime.today().strftime('%Y-%m-%d %H:%M')  # YYYY-MM-DD HH24:MI
+        self.today              = datetime.datetime.today().strftime('%Y-%m-%d')            # YYYY-MM-DD
+        self.today_full         = datetime.datetime.today().strftime('%Y-%m-%d %H:%M')      # YYYY-MM-DD HH24:MI
         self.today_full_raw     = datetime.datetime.today().strftime('%Y%m%d%H%M') + '00'
 
 

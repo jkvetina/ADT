@@ -20,8 +20,7 @@ class Config(Attributed):
         self.args = Attributed(self.args)
         #
         if self.args.debug:
-            print('ARGS:')
-            print('-----')
+            self.header('ARGS:')
             self.debug_dots(self.args, 24)
 
         # set project info from arguments
@@ -156,14 +155,19 @@ class Config(Attributed):
                 for sub_key, sub_value in value.items():
                     if isinstance(sub_value, list):
                         sub_value = ' | '.join(sub_value)
-                    print('      {} {} {}'.format(sub_key, '.' * (24 - 3 - len(sub_key)), sub_value or ''))
+                    print('      {} {} {}'.format(sub_key, '.' * (length - 3 - len(sub_key)), sub_value or ''))
             #
             elif isinstance(value, list):
-                print('   {} {} {}'.format(key, '.' * (24 - len(key)), ' | '.join(value)))
+                print('   {} {} {}'.format(key, '.' * (length - len(key)), ' | '.join(value)))
             #
             else:
-                print('   {} {} {}'.format(key, '.' * (24 - len(key)), value or ''))
+                print('   {} {} {}'.format(key, '.' * (length - len(key)), value or ''))
         print()
+
+
+
+    def header(self, message, append = ''):
+        print('\n{}\n{}'.format(message, '-' * len(message)), append)
 
 
 

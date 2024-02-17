@@ -324,11 +324,11 @@ if __name__ == "__main__":
     parser.add_argument('-d',   '-debug',       '--debug',          help = 'Turn on the debug/verbose mode',    default = False, nargs = '?', const = True)
 
     # to specify environment
-    parser.add_argument('-c',   '-client',      '--client',         help = 'Client name')
-    parser.add_argument('-p',   '-project',     '--project',        help = 'Project name')
-    parser.add_argument('-e',   '-env',         '--env',            help = 'Environment name, like DEV, UAT, LAB1...', default = 'DEV')
-    parser.add_argument('-r',   '-repo',        '--repo',           help = 'Path to your project repo')
-    parser.add_argument('-b',   '-branch',      '--branch',         help = 'Repo branch')
+    parser.add_argument('-c',   '-client',      '--client',         help = 'Client name',                               default = None)
+    parser.add_argument('-p',   '-project',     '--project',        help = 'Project name',                              default = None)
+    parser.add_argument('-e',   '-env',         '--env',            help = 'Environment name, like DEV, UAT, LAB1...',  default = 'DEV')
+    parser.add_argument('-r',   '-repo',        '--repo',           help = 'Path to your project repo',                 default = None)
+    parser.add_argument('-b',   '-branch',      '--branch',         help = 'Repo branch',                               default = None)
 
     # key or key location to encrypt passwords
     parser.add_argument('-k',   '-key',         '--key',            help = 'Key or key location to encypt passwords')

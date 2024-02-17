@@ -201,16 +201,25 @@ class Config(Attributed):
         if not os.path.exists(dir):
             os.makedirs(dir)
         #
-        payload = {}
-        payload[self.info_env] = passed_args[found_type]
+        connections = {}
+        connections[self.info_env] = passed_args[found_type]
+
+        # merge with current file on env level
+        if os.path.exists(file):
+            with open(file, 'rt', encoding = 'utf-8') as f:
+                data = list(yaml.load_all(f, Loader = yaml.loader.SafeLoader))
+                if len(data) > 0:
+                    for env_name, arguments in data[0].items():
+                        if not (env_name in connections):
+                            connections[env_name] = arguments
 
         # store connection parameters in the yaml file
         with open(file, 'wt', encoding = 'utf-8') as f:
             # convert dict to yaml string
-            payload = yaml.dump(payload, allow_unicode = True, default_flow_style = False, indent = 4) + '\n'
+            payload = yaml.dump(connections, allow_unicode = True, default_flow_style = False, indent = 4) + '\n'
             payload = util.fix_yaml(payload)
             f.write(payload)
-            util.header('FILE CREATED:')
+            util.header('FILE CREATED:', ', '.join(sorted(connections.keys())))
             print('   {}\n'.format(file))
 
 

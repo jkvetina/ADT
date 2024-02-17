@@ -19,9 +19,18 @@ class Config(Attributed):
     def __init__(self, parser):
         self.start_timer = timeit.default_timer()
 
-        # arguments from command line
-        self.args   = vars(parser.parse_args())
-        self.args   = Attributed(self.args)
+        # parse arguments from command line
+        self.args = vars(parser.parse_args())
+
+        # merge with environment variables
+        os_args = ['REPO', 'CLIENT', 'PROJECT', 'ENV', 'BRANCH', 'KEY']
+        for arg in os_args:
+            if not (arg.lower() in self.args) or self.args[arg.lower()] == None:
+                self.args[arg.lower()] = os.getenv('ADT_' + arg.upper())
+        if self.args['env'] == None:
+            self.args['env'] = 'DEV'
+        #
+        self.args   = Attributed(self.args)     # dict with attributes
         self.debug  = self.args.debug
         #
         if self.debug:
@@ -372,11 +381,11 @@ if __name__ == "__main__":
     parser.add_argument(        '-opy',         '--opy',            help = 'To import connection details from OPY file')
 
     # to specify environment
-    parser.add_argument('-c',   '-client',      '--client',         help = 'Client name',                               default = None)
-    parser.add_argument('-p',   '-project',     '--project',        help = 'Project name',                              default = None)
-    parser.add_argument('-e',   '-env',         '--env',            help = 'Environment name, like DEV, UAT, LAB1...',  default = 'DEV')
-    parser.add_argument('-r',   '-repo',        '--repo',           help = 'Path to your project repo',                 default = None)
-    parser.add_argument('-b',   '-branch',      '--branch',         help = 'Repo branch',                               default = None)
+    parser.add_argument('-c',   '-client',      '--client',         help = 'Client name')
+    parser.add_argument('-p',   '-project',     '--project',        help = 'Project name')
+    parser.add_argument('-e',   '-env',         '--env',            help = 'Environment name, like DEV, UAT, LAB1...')
+    parser.add_argument('-r',   '-repo',        '--repo',           help = 'Path to your project repo')
+    parser.add_argument('-b',   '-branch',      '--branch',         help = 'Repo branch')
 
     # key or key location to encrypt passwords
     parser.add_argument('-k',   '-key',         '--key',            help = 'Key or key location to encypt passwords')

@@ -50,6 +50,7 @@ class Config(Attributed):
 
         # default location for new connections
         self.connection_default = '{$INFO_REPO}config/connections.yaml'
+        self.connections = {}
 
         # search for config files in current folder
         self.config_files = [
@@ -81,6 +82,9 @@ class Config(Attributed):
         # check connection file
         self.init_connections()
 
+        # test database connection
+        self.test_connection()
+
         # check config file, rerun this when specific schema is processed to load schema overrides
         self.init_config()
 
@@ -93,28 +97,37 @@ class Config(Attributed):
 
 
     def init_connections(self):
-        self.track_connections = {}
-
         # search for connection file
         for file in self.replace_tags(list(self.connection_files)):  # copy, dont change original
             if not ('{$' in file) and os.path.exists(file):
                 with open(file, 'rt', encoding = 'utf-8') as f:
-                    self.track_connections[file] = {}
                     content = list(yaml.load_all(f, Loader = yaml.loader.SafeLoader))
                     if len(content) > 0:
-                        for key, value in content[0].items():
-                            setattr(self, key, value)
-                            self.track_connections[file][key] = value
+                        for env_name, config in content[0].items():
+                            # create description
+                            desc = config['hostname'] if 'hostname' in config else ''
+                            if 'service' in config and 'wallet' in config:
+                                desc = config['service'].split('_')[0].upper()
+                            desc = '{}, {}'.format(desc, env_name)
+                            #
+                            self.connections[env_name]          = config
+                            self.connections[env_name]['file']  = file
+                            self.connections[env_name]['desc']  = desc
+                            #setattr(self, key, value)
         #
         if self.args.debug:
             util.debug_dots(self.connections, 24)
 
         # check presence, at least one file is required
-        if len(self.track_connections) == 0:
+        if len(self.connections) == 0:
             util.header('CONNECTION FILE REQUIRED:')
             for file in self.connection_files:
                 print('   {}'.format(file))
             print()
+            util.quit()
+
+        if not (self.info_env in self.connections):
+            util.raise_error('MISSING CONNECTION FOR {}'.format(self.info_env))
 
 
 
@@ -158,6 +171,10 @@ class Config(Attributed):
             #
             util.raise_error('CAN\'T CONTINUE')
 
+        # append some stuff
+        passed_args[found_type]['lang']     = '.AL32UTF8'   # default language
+        passed_args[found_type]['thick']    = ''            # thick mode, instant client path
+
         util.header('CREATING {} CONNECTION:'.format(found_type.upper()))
         util.debug_dots(passed_args[found_type], 24)
 
@@ -179,6 +196,12 @@ class Config(Attributed):
             f.write(payload)
             util.header('FILE CREATED:')
             print('   {}\n'.format(file))
+
+
+
+    def test_connection(self):
+        # check connectivity
+        wrapper.Oracle(self.connections[self.info_env])
 
 
 

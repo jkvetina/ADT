@@ -1,6 +1,6 @@
 # coding: utf-8
 import sys, os, re, argparse, datetime, timeit, yaml, git
-from lib import oracle_wrapper
+from lib import wrapper
 
 class Attributed(dict):
 

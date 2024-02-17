@@ -7,6 +7,7 @@ BEGIN
         p_application_id    => {$APEX_APP_ID},
         p_version           => '{$APEX_VERSION}'
     );
+    APEX_APPLICATION_INSTALL.SET_KEEP_SESSIONS(p_keep_sessions => TRUE);
     COMMIT;
 END;
 /

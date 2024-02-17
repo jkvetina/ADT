@@ -24,6 +24,9 @@ class Oracle:
         if not self.debug:
             self.debug = debug
         #
+        # temp file for Windows
+        self.sqlcl_root         = './'
+        self.sqlcl_temp_file    = './sqlcl.{}.tmp'.format('')
 
         # auto connect
         self.connect()
@@ -74,6 +77,67 @@ class Oracle:
         print('    DATABASE | {}'.format('.'.join(version_db.split('.')[0:2])))
         print('        APEX | {}'.format('.'.join(version_apex.split('.')[0:2])))
         print()
+
+
+
+    def sqlcl_request(self, request):
+        if isinstance(request, list):
+            request = '\n'.join(request)
+
+        # prepare connection string
+        if 'wallet' in self.tns:
+            request_conn = 'connect -cloudconfig {}.zip {}/"{}"@{}\n'.format(*[
+                self.tns['wallet'].rstrip('.zip'),
+                self.tns['user'],
+                self.tns['pwd'],
+                self.tns['service']
+            ])
+        else:
+            request_conn = 'connect {}/"{}"@{}:{}/{}\n'.format(*[
+                self.tns['user'],
+                self.tns['pwd'],
+                self.tns['host'],
+                self.tns['port'],
+                self.tns['sid'] if 'sid' in self.tns else self.tns['service']
+            ])
+
+        # prepare process for normal platforms
+        request = '{}\n{}\nexit;\n'.format(request_conn, request)
+        process = 'sql /nolog <<EOF\n{}EOF'.format(request)
+
+        # for Windows we have to use the temp file
+        if os.name == 'nt':
+            process = 'sql /nolog @' + self.sqlcl_temp_file
+            with open(self.sqlcl_temp_file, 'wt', encoding = 'utf-8', newline = '\n') as f:
+                f.write(request)
+
+        # run SQLcl and capture the output
+        command = 'cd "{}"{}{}'.format(
+            os.path.abspath(self.sqlcl_root),
+            ' && ' if os.name == 'nt' else '; ',
+            process
+        )
+        #
+        if self.debug:
+            util.header('REQUEST:')
+            print(command)
+            if os.name == 'nt':
+                print(request)
+            print()
+        #
+        result  = subprocess.run(command, shell = True, capture_output = True, text = True)
+        output  = (result.stdout or '').strip()
+        #
+        if self.debug:
+            util.header('RESULT:')
+            print(result)
+            print()
+
+        # for Windows remove temp file
+        if os.name == 'nt' and os.path.exists(self.sqlcl_temp_file):
+            os.remove(apex_tmp)
+        #
+        return output
 
 
 

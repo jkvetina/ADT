@@ -90,6 +90,9 @@ class Config(Attributed):
 
 
     def replace_tags(self, payload, obj = None):
+        if obj == None:
+            obj = self
+
         # if payload is a list, process all items individually
         if isinstance(payload, list):
             for i, item in enumerate(payload):

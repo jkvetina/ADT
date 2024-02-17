@@ -68,9 +68,6 @@ class Config(Attributed):
             '{$INFO_REPO}config/config_{$INFO_SCHEMA}_{$INFO_ENV}.yaml',
         ]
 
-        # setup Git repo
-        self.repo       = Repo(self.repo_path)
-        self.repo_url   = self.repo.remotes[0].url
         # prepare date formats
         self.today              = datetime.datetime.today().strftime('%Y-%m-%d')            # YYYY-MM-DD
         self.today_full         = datetime.datetime.today().strftime('%Y-%m-%d %H:%M')      # YYYY-MM-DD HH24:MI
@@ -82,6 +79,9 @@ class Config(Attributed):
 
         # check connection file
         self.init_connections()
+
+        # check config file, rerun this when specific schema is processed to load schema overrides
+        self.init_config()
 
 
 
@@ -179,6 +179,56 @@ class Config(Attributed):
             yaml.dump(payload, f, allow_unicode = True, default_flow_style = False)
             self.header('FILE CREATED:')
             print('   {}\n'.format(file))
+
+
+
+    def init_config(self):
+        self.track_config = {}
+
+        # search for config file(s)
+        for file in self.replace_tags(list(self.config_files)):           # copy
+            if not ('{$' in file) and os.path.exists(file):
+                self.apply_config(file)
+
+        # allow schmea overrides
+        if self.info_schema:
+            for file in self.replace_tags(list(self.config_overrides)):   # copy
+                if not ('{$' in file) and os.path.exists(file):
+                    self.apply_config(file)
+
+        # show source of the parameters
+        if self.args.debug:
+            for file in self.config_files:
+                if file in self.track_config:
+                    self.header('CONFIG:', file)
+                    self.debug_dots(self.track_config[file], 24)
+                    print()
+
+        # connect to repo
+        self.init_repo()
+
+
+
+    def init_repo(self):
+        self.assert_(self.info_repo is not None, 'MISSING REPO ARGUMENT')
+
+        # setup and connect to the repo
+        self.info_repo = self.replace_tags(self.info_repo)
+        prev_repo = self.info_repo
+        #
+        if self.info_repo != prev_repo:
+            self.repo           = git.Repo(self.info_repo)
+            self.repo_url       = self.repo.remotes[0].url
+            self.repo_commits   = 200
+
+
+
+    def apply_config(self, file):
+        with open(file, 'rt', encoding = 'utf-8') as f:
+            self.track_config[file] = {}
+            for key, value in list(yaml.load_all(f, Loader = yaml.loader.SafeLoader))[0].items():
+                setattr(self, key, value)
+                self.track_config[file][key] = value
 
 
 

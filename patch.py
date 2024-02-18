@@ -168,6 +168,10 @@ class Patch(config.Config):
             payload = ''
             payload += '--\n-- {}\n-- {}\n--'.format(header, '-' * len(header))
 
+            # spool output to the file
+            if self.spooling:
+                payload += '\nSPOOL {} APPEND\n'.format(self.patch_file_curr.replace('.sql', '.log'))
+
             # get differences in between first and last commits
             diffs           = {}
             new_files       = []
@@ -249,6 +253,11 @@ class Patch(config.Config):
                     # skip file if it should be ignored in the patch (but keep it in snapshot folder)
                     if file in skip_apex_files:
                         continue
+
+                # attach file reference
+                if self.spooling:
+                    payload += 'PROMPT ;\n'
+                    payload += 'PROMPT -- FILE: {}\n'.format(file)
                 #
                 payload += self.file_template.replace('#FILE#', file)
 
@@ -265,6 +274,10 @@ class Patch(config.Config):
             # add grants for non APEX schemas
             if self.apex_app_id == '':
                 payload += self.get_grants_made(diffs)
+
+            # spool output end
+            if self.spooling:
+                payload += '\nSPOOL OFF\n\n'
 
             # store payload in file
             self.create_patch_file(payload, target_schema)

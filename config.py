@@ -48,6 +48,11 @@ class Config(Attributed):
         self.platform       = 'unix' if os.path.pathsep == ':' else 'win'
         self.root           = util.fix_path(os.path.dirname(os.path.realpath(__file__)))
 
+        # repo attributes
+        self.repo           = None      # set through init_repo()
+        self.repo_url       = ''        # set through init_repo()
+        self.repo_commits   = 200       # depth for the commit history
+
         # if we are using ADT repo for connection file, we have to know these too
         if self.info_repo == self.root:
             util.assert_(self.args.client   is not None, 'MISSING CLIENT ARGUMENT')
@@ -133,6 +138,10 @@ class Config(Attributed):
             for arg in ['pwd', 'wallet_pwd']:
                 if arg in self.connections[self.info_env]:
                     self.connections[self.info_env][arg] = util.decrypt(self.connections[self.info_env][arg], self.args.key)
+
+        # check connection
+        if not (self.info_env in self.connections):
+            util.raise_error('UNKNOWN CONNECTION FOR {}'.format(self.info_env))
         #
         self.connection         = self.connections[self.info_env]
         self.connection['key']  = self.args.key
@@ -154,15 +163,14 @@ class Config(Attributed):
             util.raise_error('MISSING CONNECTION FOR {}'.format(self.info_env))
 
         # if key is a file, retrieve content and use it as a key
-        if os.path.exists(self.connection['key']):
-            with open(self.connection['key'], 'rt', encoding = 'utf-8') as f:
-                self.connection['key'] = f.read().strip()
+        if 'key' in self.connection and self.connection['key'] != None:
+            if os.path.exists(self.connection['key']):
+                with open(self.connection['key'], 'rt', encoding = 'utf-8') as f:
+                    self.connection['key'] = f.read().strip()
 
 
 
     def create_connection(self, output_file = None):
-        self.init_repo()
-
         # check required arguments
         required_args = {
             'normal'    : ['env', 'user', 'pwd', 'hostname', 'port', 'service'],
@@ -256,18 +264,27 @@ class Config(Attributed):
         # find OPY pickle file
         pickle_file = self.args.opy
         if not os.path.exists(pickle_file) and os.path.splitext(pickle_file)[1] != '.conf':
-            util.raise_error('MISSING OPY FILE!')
+            util.raise_error('MISSING OR INVALID OPY FILE!')
+
+        # check the file content
+        args = {}
+        try:
+            with open(pickle_file, 'rb') as f:
+                args = pickle.load(f).items()
+        except Exception:
+            util.raise_error('INVALID OPY FILE!',
+                '   - expecting .conf file created by OPY tool\n'
+            )
 
         # import data as arguments
-        with open(pickle_file, 'rb') as f:
-            for (arg, value) in pickle.load(f).items():
-                arg = arg.replace('host',   'hostname')
-                arg = arg.replace('target', 'repo')
-                #
-                self.args[arg] = value
+        for arg, value in args.items():
+            arg = arg.replace('host',   'hostname')
+            arg = arg.replace('target', 'repo')
+            #
+            self.args[arg] = value
 
-            # need to set the repo to have correct paths
-            self.info_repo = self.args['repo']
+        # need to set the repo to have correct paths
+        self.info_repo = self.args['repo']
 
         # create new file as user would actually pass these arguments
         self.create_connection()
@@ -301,7 +318,7 @@ class Config(Attributed):
                     util.header('CONFIG:', file)
                     util.debug_dots(self.track_config[file], 24)
 
-        # connect to repo
+        # reconnect to repo, it could change the location
         self.init_repo()
 
 
@@ -310,13 +327,18 @@ class Config(Attributed):
         util.assert_(self.info_repo is not None, 'MISSING REPO ARGUMENT')
 
         # setup and connect to the repo
-        self.info_repo = self.replace_tags(self.info_repo)
-        prev_repo = self.info_repo
+        self.info_repo  = self.replace_tags(self.info_repo)
+        prev_repo       = self.info_repo
         #
-        if self.info_repo != prev_repo:
-            self.repo           = git.Repo(self.info_repo)
-            self.repo_url       = self.repo.remotes[0].url
-            self.repo_commits   = 200
+        if (self.info_repo != prev_repo or self.repo == None):
+            try:
+                self.repo       = git.Repo(self.info_repo)
+                self.repo_url   = self.repo.remotes[0].url
+            except Exception:
+                util.raise_error('INVALID GIT REPO!',
+                    '   - change current folder to the repo you would like to use.\n' +
+                    '   - or specify repo in args or system arguments\n'
+                )
 
 
 

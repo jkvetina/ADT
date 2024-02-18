@@ -154,9 +154,9 @@ def quit(message = ''):
 
 
 
-def raise_error(message = ''):
+def raise_error(message = '', additional = ''):
     message = 'ERROR: {}'.format(message)
-    quit('\n{}\n{}'.format(message, '-' * len(message)))
+    quit('\n{}\n{}{}'.format(message, '-' * len(message), ('\n' if len(additional) > 0 else '') + additional))
 
 
 

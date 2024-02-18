@@ -4,7 +4,7 @@ The config file can contain either connections info or repo settings or both and
 The structure below allows you to set settings for the client and then override what you need for specific projects, schemas or/and environments.
 You can store the config files either together with your project or in the ADT repo (or you can split them however you like, to keep connections in ADT repo and other settings together with your project).
 
-Passwords used for connecting to the database are encrypted by a key, which can be an command line argument, a runtime prompt or a path to a key file. You can store and share your config files safely.
+Passwords used for connecting to the database are encrypted by a key, which can be an command line argument or OS variable (set via `export ADT_KEY=...`). If value is a valid path to a file, than the file content is used as a key. You can store and share your config files safely.
 
 The config files are processed in this order:
 

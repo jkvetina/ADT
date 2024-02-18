@@ -78,7 +78,7 @@ I have been building these CI/CD tools since 2008 and ADT is the newest version,
     - no false positives on different column positions, different identity column sequences, whitespaces...
     - it can also quickly compare APEX applications based on the signatures
 - see config.yaml file for __200+ parameters__ you can customize
-    - to use your config.yaml file, just place it in the root of your project/repo
+    - to use your config.yaml file, just place it in the config folder in root of your project repo
 
 &nbsp;
 
@@ -122,12 +122,15 @@ For APEX these variables will be determined based on requested application id or
 
 You can use some other variables determined on your request and config file:
 
+These variables can be also set on OS level like `export ADT_ENV=DEV`.
+
 | Variable       | Description
 | :------------- | :----------
 | `info_client`  | client code, to group your projects
 | `info_project` | project code
-| `info_schema`  | database schema
 | `info_env`     | current environment
+| `info_repo`    | current repo
+| `info_branch`  | current branch
 
 And finally some date formats (adjustable in the config file):
 

@@ -50,9 +50,11 @@ class Recompile(config.Config):
         data = self.db.fetch_assoc(query.overview, object_name = self.args.name)
         for row in data:
             objects[row.object_type] = [row.object_count, row.invalid or 0]
+            if self.args.force:
+                objects[row.object_type][1] = 0
 
         # get objects to recompile
-        data_todo = self.db.fetch_assoc(query.objects_to_recompile, object_type = self.args.type, object_name = self.args.name, force = self.args.force)
+        data_todo = self.db.fetch_assoc(query.objects_to_recompile, object_type = self.args.type, object_name = self.args.name, force = 'Y' if self.args.force else '')
         #
         progress_target = len(data_todo)
         progress_done   = 0
@@ -64,6 +66,8 @@ class Recompile(config.Config):
             #
             try:
                 q = 'ALTER {} {} COMPILE{} '.format(type_family, row.object_name, type_body)
+                if self.args.force:
+                    objects[row.object_type][1] += 1
             except Exception:
                 pass
 
@@ -88,7 +92,8 @@ class Recompile(config.Config):
         # calculate difference
         data = self.db.fetch_assoc(query.overview, object_name = self.args.name)
         for row in data:
-            objects[row.object_type][1] = objects[row.object_type][1] - (row.invalid or 0)
+            if not self.args.force:
+                objects[row.object_type][1] = objects[row.object_type][1] - (row.invalid or 0)
             if objects[row.object_type][1] == 0:
                 objects[row.object_type][1] = ''
             objects[row.object_type].append(row.invalid or '')

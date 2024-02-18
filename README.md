@@ -7,7 +7,7 @@ ADT provides you more benefits when used with other APEX apps:
 
 | Application Name                                              | Description                                       | Status
 | :---------------                                              | :----------                                       | :-----
-| [Cards](https://github.com/jkvetina/MASTER_TASKS)             | to manage your tasks, bugs...                     | Done
+| [Cards](https://github.com/jkvetina/MASTER_TASKS)             | to manage your tasks, bugs...                     | __Done__
 | [Roadmap](https://github.com/jkvetina/MASTER_ROADMAPS)        | to plan and track whole projects on higher level  | In Progress
 | [Deployments](https://github.com/jkvetina/MASTER_DEPLOYMENTS) | to track commits, releases and deployments        | Planned
 | [Reviews](https://github.com/jkvetina/MASTER_REVIEWS)         | to improve quality of your code                   | Planned
@@ -31,14 +31,14 @@ I have been building these CI/CD tools since 2008 and ADT is the newest version,
 ## Actions
 | Filename                                 | Description                                    | Status
 | :-------                                 | :----------                                    | :-----
-| [`config.py`](./doc/config.md)           | to manage database connections and settings    | In Progress
+| [`config.py`](./doc/config.md)           | to manage database connections and settings    | __In Progress__
 | [`export_db.py`](./doc/export_db.md)     | to export database objects                     | OPY
 | [`export_apex.py`](./doc/export_apex.md) | to export APEX                                 | OPY
 | [`export_data.py`](./doc/export_data.md) | to export data into CSV files                  | OPY
-| [`patch.py`](./doc/patch.md)             | to prepare patch files from your changes       | Done
+| [`patch.py`](./doc/patch.md)             | to prepare patch files from your changes       | __Done__
 | [`deploy.py`](./doc/deploy.md)           | to deploy your patch files                     | Planned
 | [`compare.py`](./doc/compare.md)         | to compare two databases                       | Planned
-| [`recompile.py`](./doc/recompile.md)     | to recompile invalid objects                   | Done
+| [`recompile.py`](./doc/recompile.md)     | to recompile invalid objects                   | __Done__
 
 &nbsp;
 

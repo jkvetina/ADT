@@ -2,6 +2,7 @@
 import sys, os, subprocess, collections
 import oracledb         # pip3 install oracledb     --upgrade
 #
+import config
 from lib import util
 from lib import queries_wrapper as query
 
@@ -9,7 +10,7 @@ from lib import queries_wrapper as query
 
 class Oracle:
 
-    def __init__(self, tns, debug = False):
+    def __init__(self, tns, debug = False, ping_sqlcl = False):
         self.conn   = None    # recent connection link
         self.curs   = None    # recent cursor
         self.cols   = []      # recent columns mapping (name to position) to avoid associative arrays
@@ -36,13 +37,14 @@ class Oracle:
         self.get_versions()
 
         # test SQLcl connectivity
-        output  = self.sqlcl_request('DESC DUAL')
-        lines   = output.splitlines()[:5]
-        #
-        for i, line in enumerate(lines):
-            if line.startswith('Connected.'):
-                self.versions['SQLCL'] = lines[0].split(' ')[2]
-                break
+        if ping_sqlcl:
+            output  = self.sqlcl_request('DESC DUAL')
+            lines   = output.splitlines()[:5]
+            #
+            for i, line in enumerate(lines):
+                if line.startswith('Connected.'):
+                    self.versions['SQLCL'] = lines[0].split(' ')[2]
+                    break
 
         # show versions
         util.header('CONNECTED TO {}:'.format(self.tns['desc']))

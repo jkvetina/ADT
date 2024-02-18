@@ -29,7 +29,8 @@ WHERE (t.table_name         LIKE :object_name || '%' ESCAPE '\\'
     AND t.index_name        NOT LIKE 'SYS%$$'
     AND t.generated         = 'N'
     AND t.constraint_index  = 'NO'
-ORDER BY 1"""
+ORDER BY 1
+"""
 
 # get database objects to recompile
 objects_to_recompile = """
@@ -59,4 +60,5 @@ ORDER BY CASE o.object_type
     WHEN 'TYPE BODY'            THEN 8
     WHEN 'PACKAGE BODY'         THEN 9
     ELSE                             6 END"""
+"""
 

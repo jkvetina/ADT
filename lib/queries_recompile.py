@@ -59,6 +59,6 @@ ORDER BY CASE o.object_type
     WHEN 'MATERIALIZED VIEW'    THEN 7
     WHEN 'TYPE BODY'            THEN 8
     WHEN 'PACKAGE BODY'         THEN 9
-    ELSE                             6 END"""
+    ELSE                             6 END, o.object_name
 """
 

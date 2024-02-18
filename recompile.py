@@ -43,12 +43,8 @@ class Recompile(config.Config):
         # connect to the database
         self.db_connect()
 
-        #
-        #
-        #
-        #self.db.execute('SELECT * FROM DUAL')
-        #
-        util.header('DATABASE OBJECTS:')
+        # show objects overview
+        print('RECOMPILING')
         #
         objects = {}
         data = self.db.fetch_assoc(query.overview, object_name = self.args.name)
@@ -57,6 +53,10 @@ class Recompile(config.Config):
 
         # get objects to recompile
         data_todo = self.db.fetch_assoc(query.objects_to_recompile, object_type = self.args.type, object_name = self.args.name, force = self.args.force)
+        #
+        progress_target = len(data_todo)
+        progress_done   = 0
+        #
         for row in data_todo:
             obj_type    = row.object_type.split(' ')
             type_body   = ' BODY' if len(obj_type) > 1 and obj_type[1] == 'BODY' else ''
@@ -66,8 +66,24 @@ class Recompile(config.Config):
                 q = 'ALTER {} {} COMPILE{} '.format(type_family, row.object_name, type_body)
             except Exception:
                 pass
-            #
+
+            # show progress
+            if self.debug:
+                print('  - {}'.format(row.object_name))
+            else:
+                progress_done += 1
+                perc = progress_done / progress_target
+                dots = int(70 * perc)
+                sys.stdout.write('\r' + ('.' * dots) + ' ' + str(int(perc * 100)) + '%')
+                sys.stdout.flush()
+
+            # recompile object
             self.db.execute(q)
+        #
+        if not self.debug:
+            print()
+        print()
+        util.header('DATABASE OBJECTS:')
 
         # calculate difference
         data = self.db.fetch_assoc(query.overview, object_name = self.args.name)

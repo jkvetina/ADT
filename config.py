@@ -63,7 +63,9 @@ class Config(util.Attributed):
         self.info_env       = self.args.env
         self.info_repo      = util.fix_path(self.args.repo or os.path.abspath(os.path.curdir))
         self.info_branch    = self.args.branch
+        #
         self.root           = util.fix_path(os.path.dirname(os.path.realpath(__file__)))
+        self.db             = None
 
         # repo attributes
         self.repo           = None      # set through init_repo()
@@ -126,7 +128,7 @@ class Config(util.Attributed):
 
             # check connection file and test connectivity
             self.init_connections()
-            self.test_connection()
+            self.db_connect(ping_sqlcl = True)
 
             # check config file, rerun this when specific schema is processed to load schema overrides
             self.init_config()
@@ -322,9 +324,9 @@ class Config(util.Attributed):
 
 
 
-    def test_connection(self):
+    def db_connect(self, ping_sqlcl = False):
         # check connectivity
-        wrapper.Oracle(self.connection, self.debug)
+        self.db = wrapper.Oracle(self.connection, debug = self.debug, ping_sqlcl = ping_sqlcl)
 
 
 

@@ -9,6 +9,14 @@ from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 
 
 
+class Attributed(dict):
+
+    __getattr__ = dict.__getitem__
+    __setattr__ = dict.__setitem__
+    __delattr__ = dict.__delitem__
+
+
+
 def get_encryption_key(password, salt):
     kdf = PBKDF2HMAC(
         algorithm   = hashes.SHA256(),

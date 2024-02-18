@@ -6,15 +6,8 @@ import git          # pip3 install GitPython    --upgrade
 from lib import wrapper
 from lib import util
 
-class Attributed(dict):
 
-    __getattr__ = dict.__getitem__
-    __setattr__ = dict.__setitem__
-    __delattr__ = dict.__delitem__
-
-
-
-class Config(Attributed):
+class Config(util.Attributed):
 
     def __init__(self, parser):
         self.start_timer = timeit.default_timer()
@@ -32,7 +25,7 @@ class Config(Attributed):
         if self.args['env'] == None:
             self.args['env'] = 'DEV'
         #
-        self.args   = Attributed(self.args)     # dict with attributes
+        self.args   = util.Attributed(self.args)     # dict with attributes
         self.debug  = self.args.debug
         #
         if self.debug:

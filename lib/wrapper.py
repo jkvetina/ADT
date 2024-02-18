@@ -1,5 +1,5 @@
 # coding: utf-8
-import sys, os, subprocess, collections
+import sys, os, subprocess
 import oracledb         # pip3 install oracledb     --upgrade
 #
 import config
@@ -202,6 +202,14 @@ class Oracle:
 
 
 
+    def row_as_dict(self, cursor):
+        columns = [d[0].lower() for d in cursor.description]
+        def row(*args):
+            return util.Attributed(dict(zip(columns, args)))
+        return row
+
+
+
     def fetch_assoc(self, query, limit = 0, **binds):
         self.curs = self.conn.cursor()
         h = self.curs.execute(query.strip(), **binds)
@@ -210,7 +218,7 @@ class Oracle:
         for row in self.curs.description:
             self.desc[row[0].lower()] = row
         #
-        self.curs.rowfactory = collections.namedtuple('ROW', [d[0].lower() for d in self.curs.description])
+        self.curs.rowfactory = self.row_as_dict(self.curs)
         #
         if limit > 0:
             self.curs.arraysize = limit

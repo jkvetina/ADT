@@ -473,5 +473,5 @@ if __name__ == "__main__":
     parser.add_argument('-wp',  '-wallet_pwd',  '--wallet_pwd',     help = 'Wallet password')
     parser.add_argument(        '-thick',       '--thick',          help = 'Thick client path, \'Y\' for auto resolve')
     #
-    config = Config(parser)
+    Config(parser)
 

@@ -36,7 +36,7 @@ class Patch(config.Config):
     def __init__(self, parser):
         super().__init__(parser)
 
-        assert self.args.patch is not None
+        util.assert_(self.args.patch is not None, 'Patch is mandatory')
 
         # make sure we have a valid repo
         self.open_repo()
@@ -46,7 +46,7 @@ class Patch(config.Config):
 
     def open_repo(self):
         # check that the repository loaded correctly
-        assert not self.repo.bare
+        util.assert_(not self.repo.bare, 'Not a valid repo')
 
         # get current account
         with self.repo.config_reader() as git_config:
@@ -260,7 +260,7 @@ class Patch(config.Config):
             #
             payload += '--\n\n'
 
-            # for APEX patches add some queries
+            # for APEX patches add some query
             if self.apex_app_id != '':
                 payload += self.fix_apex_start()
 
@@ -288,7 +288,7 @@ class Patch(config.Config):
                 #
                 payload += self.file_template.replace('#FILE#', file)
 
-            # for APEX patches add some queries
+            # for APEX patches add some query
             if self.apex_app_id != '':
                 # attach APEX pages to the end
                 if len(apex_pages) > 0:
@@ -409,7 +409,7 @@ class Patch(config.Config):
         assert self.apex_workspace is not None
 
         # set proper workspace
-        payload = self.replace_tags(queries.query_apex_version, self).strip() + '\n'
+        payload = self.replace_tags(query.query_apex_version, self).strip() + '\n'
 
         # start APEX import
         payload += 'SET DEFINE OFF\n'
@@ -542,5 +542,5 @@ if __name__ == "__main__":
     # key or key location to encrypt passwords
     parser.add_argument('-k',   '-key',         '--key',        help = 'Key or key location to encypt passwords')
     #
-    patch = Patch(parser)
+    Patch(parser)
 

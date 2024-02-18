@@ -2,7 +2,34 @@
 import sys, os, re, shutil, argparse
 #
 import config
-from lib import queries_patch as queries        # ditch for template folder
+from lib import util
+from lib import queries_patch as query          # ditch for template folder
+
+#
+#                                                      (R)
+#                      ---                  ---
+#                    #@@@@@@              &@@@@@@
+#                    @@@@@@@@     .@      @@@@@@@@
+#          -----      @@@@@@    @@@@@@,   @@@@@@@      -----
+#       &@@@@@@@@@@@    @@@   &@@@@@@@@@.  @@@@   .@@@@@@@@@@@#
+#           @@@@@@@@@@@   @  @@@@@@@@@@@@@  @   @@@@@@@@@@@
+#             \@@@@@@@@@@   @@@@@@@@@@@@@@@   @@@@@@@@@@
+#               @@@@@@@@@   @@@@@@@@@@@@@@@  &@@@@@@@@
+#                 @@@@@@@(  @@@@@@@@@@@@@@@  @@@@@@@@
+#                  @@@@@@(  @@@@@@@@@@@@@@,  @@@@@@@
+#                  .@@@@@,   @@@@@@@@@@@@@   @@@@@@
+#                   @@@@@@  *@@@@@@@@@@@@@   @@@@@@
+#                   @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@.
+#                    @@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+#                    @@@@@@@@@@@@@@@@@@@@@@@@@@@@
+#                     .@@@@@@@@@@@@@@@@@@@@@@@@@
+#                       .@@@@@@@@@@@@@@@@@@@@@
+#                            jankvetina.cz
+#                               -------
+#
+# Copyright (c) Jan Kvetina, 2024
+# https://github.com/jkvetina/ADT
+#
 
 class Patch(config.Config):
 

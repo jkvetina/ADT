@@ -119,14 +119,14 @@ if __name__ == "__main__":
     parser.add_argument('-n',   '-name',        '--name',       help = 'Object name/prefix')
 
     # compilation flags
-    parser.add_argument('-force',           '--force',          help = '', default = '', nargs = '?', const = True)
-    parser.add_argument('-level',           '--level',          help = '', default = '', nargs = '?', const = True)
-    parser.add_argument('-interpreted',     '--interpreted',    help = '', default = '', nargs = '?', const = True)
-    parser.add_argument('-identifiers',     '--identifiers',    help = '', default = '', nargs = '?', const = True)
-    parser.add_argument('-statements',      '--statements',     help = '', default = '', nargs = '?', const = True)
-    parser.add_argument('-severe',          '--severe',         help = '', default = '', nargs = '?', const = True)
-    parser.add_argument('-performance',     '--performance',    help = '', default = '', nargs = '?', const = True)
-    parser.add_argument('-informational',   '--informational',  help = '', default = '', nargs = '?', const = True)
+    parser.add_argument('-force',           '--force',          help = '', default = False, nargs = '?', type = bool, const = True)
+    parser.add_argument('-level',           '--level',          help = '', default = False, nargs = '?', type = bool, const = True)
+    parser.add_argument('-interpreted',     '--interpreted',    help = '', default = False, nargs = '?', type = bool, const = True)
+    parser.add_argument('-identifiers',     '--identifiers',    help = '', default = False, nargs = '?', type = bool, const = True)
+    parser.add_argument('-statements',      '--statements',     help = '', default = False, nargs = '?', type = bool, const = True)
+    parser.add_argument('-severe',          '--severe',         help = '', default = False, nargs = '?', type = bool, const = True)
+    parser.add_argument('-performance',     '--performance',    help = '', default = False, nargs = '?', type = bool, const = True)
+    parser.add_argument('-informational',   '--informational',  help = '', default = False, nargs = '?', type = bool, const = True)
 
     # key or key location to encrypt passwords
     parser.add_argument('-k',   '-key',         '--key',        help = 'Key or key location to encypt passwords')

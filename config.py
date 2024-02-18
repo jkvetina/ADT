@@ -21,6 +21,8 @@ class Config(Attributed):
 
         # parse arguments from command line
         self.args = vars(parser.parse_args())
+        if not ('decrypt' in self.args):
+            self.args['decrypt'] = False
 
         # merge with environment variables
         os_args = ['REPO', 'CLIENT', 'PROJECT', 'ENV', 'BRANCH', 'KEY']
@@ -43,9 +45,6 @@ class Config(Attributed):
         self.info_env       = self.args.env
         self.info_repo      = util.fix_path(self.args.repo or os.path.abspath(os.path.curdir))
         self.info_branch    = self.args.branch
-
-        # get the platform
-        self.platform       = 'unix' if os.path.pathsep == ':' else 'win'
         self.root           = util.fix_path(os.path.dirname(os.path.realpath(__file__)))
 
         # repo attributes
@@ -94,21 +93,35 @@ class Config(Attributed):
         self.today_full         = datetime.datetime.today().strftime('%Y-%m-%d %H:%M')      # YYYY-MM-DD HH24:MI
         self.today_full_raw     = datetime.datetime.today().strftime('%Y%m%d%H%M') + '00'
 
-        # import OPY connection file, basically adjust input arguments and then create a connection
-        if self.args.opy:
-            self.import_connection()
+        # connect to repo, we need valid repo for everything
+        self.init_repo()
 
-        # create or update connection file
-        elif self.args.create:
-            self.create_connection()
+        # different flow for config call
+        if __name__ == "__main__":
+            # import OPY connection file, basically adjust input arguments and then create a connection
+            if 'opy' in self.args and self.args.opy:
+                self.import_connection()
 
-        # check connection file and test connectivity
-        self.init_connections()
-        self.test_connection()
+            # create or update connection file
+            elif self.args.create:
+                self.create_connection()
 
-        # check config file, rerun this when specific schema is processed to load schema overrides
-        self.init_config()
+            # check connection file and test connectivity
+            self.init_connections()
+            self.test_connection()
 
+            # check config file, rerun this when specific schema is processed to load schema overrides
+            self.init_config()
+
+            # create or update config file
+            pass
+
+        else:
+            # check connection file and test connectivity
+            self.init_connections()
+
+            # check config file, rerun this when specific schema is processed to load schema overrides
+            self.init_config()
 
 
 

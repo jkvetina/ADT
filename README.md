@@ -38,7 +38,7 @@ I have been building these CI/CD tools since 2008 and ADT is the newest version,
 | [`patch.py`](./doc/patch.md)             | to prepare patch files from your changes       | Done
 | [`deploy.py`](./doc/deploy.md)           | to deploy your patch files                     | Planned
 | [`compare.py`](./doc/compare.md)         | to compare two databases                       | Planned
-| [`recompile.py`](./doc/recompile.md)     | to recompile invalid objects                   | In Progress
+| [`recompile.py`](./doc/recompile.md)     | to recompile invalid objects                   | Done
 
 &nbsp;
 

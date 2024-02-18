@@ -1,5 +1,6 @@
 # coding: utf-8
 import sys, os, re, shutil, argparse
+#
 import config
 from lib import queries_patch as queries        # ditch for template folder
 
@@ -58,7 +59,6 @@ class Patch(config.Config):
 
         # APEX related
         self.apex_app_id        = ''
-        self.apex_workspace     = ''
         self.apex_version       = '{} {}'.format(self.today, self.patch_code)
         self.apex_files_ignore  = [ # these files will not be in the patch even if they change
                                     'application/set_environment.sql',
@@ -491,10 +491,16 @@ class Patch(config.Config):
 if __name__ == "__main__":
     # parse arguments
     parser = argparse.ArgumentParser()
+
+    # actions and flags
     parser.add_argument('-p',   '-patch',       '--patch',      help = 'Patch code (name for the patch files)')
     parser.add_argument('-s',   '-search',      '--search',     help = 'Search string for Git to search just for relevant commits',     default = None, nargs = '*')
     parser.add_argument('-c',   '-commit',      '--commit',     help = 'Process just specific commits',                                 default = None, nargs = '*')
     parser.add_argument('-b',   '-branch',      '--branch',     help = 'To override active branch',                                     default = None)
+    parser.add_argument('-d',   '-debug',       '--debug',      help = 'Turn on the debug/verbose mode',                                default = False, nargs = '?', const = True)
+
+    # key or key location to encrypt passwords
+    parser.add_argument('-k',   '-key',         '--key',        help = 'Key or key location to encypt passwords')
     #
     patch = Patch(parser)
 

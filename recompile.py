@@ -70,11 +70,11 @@ class Recompile(config.Config):
 
                 # setup optimize level
                 if 'level' in self.args:
-                    if self.args.level >= 1 and self.args.level <= 3:
+                    if self.args.level != None and self.args.level >= 1 and self.args.level <= 3:
                         extras += ' PLSQL_OPTIMIZE_LEVEL = ' + str(self.args.level)
 
                 # setup scope
-                if 'scope' in self.args:
+                if 'scope' in self.args and isinstance(self.args['scope'], list):
                     scope = ''
                     scope += 'IDENTIFIERS:ALL,'  if ('IDENTIFIERS' in self.args.scope or 'ALL' in self.args.scope) else ''
                     scope += 'STATEMENTS:ALL,'   if ('STATEMENTS'  in self.args.scope or 'ALL' in self.args.scope) else ''
@@ -82,7 +82,7 @@ class Recompile(config.Config):
                     extras += ' PLSCOPE_SETTINGS = \'' + scope.rstrip(',') + '\''
 
                 # setup warnings
-                if 'warnings' in self.args:
+                if 'warnings' in self.args and isinstance(self.args['warnings'], list):
                     warnings = ''
                     warnings += 'ENABLE:SEVERE,'        if ('SEVERE'  in self.args.warnings) else ''
                     warnings += 'ENABLE:PERFORMANCE,'   if ('PERF'    in self.args.warnings or 'PERFORMANE'     in self.args.warnings) else ''

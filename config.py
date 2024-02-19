@@ -155,16 +155,15 @@ class Config(util.Attributed):
         for file in self.replace_tags(list(self.connection_files)):  # copy, dont change original
             if not ('{$' in file) and os.path.exists(file):
                 with open(file, 'rt', encoding = 'utf-8') as f:
-                    content = list(yaml.load_all(f, Loader = yaml.loader.SafeLoader))
-                    if len(content) > 0:
-                        for env_name, config in content[0].items():
-                            # create description
-                            desc = '{}, {}'.format(config['user'], env_name)
-                            #
-                            self.connections[env_name]          = config
-                            self.connections[env_name]['file']  = file
-                            self.connections[env_name]['desc']  = desc
-                            self.connections[env_name]['plain'] = self.args.decrypt
+                    data = util.get_yaml(f, file)
+                    for env_name, arguments in data:
+                        # create description
+                        desc = '{}, {}'.format(arguments['user'], env_name)
+                        #
+                        self.connections[env_name]          = arguments
+                        self.connections[env_name]['file']  = file
+                        self.connections[env_name]['desc']  = desc
+                        self.connections[env_name]['plain'] = self.args.decrypt
 
         # decrypt passwords
         if self.args.decrypt:
@@ -276,11 +275,10 @@ class Config(util.Attributed):
         # merge with current file on env level
         if os.path.exists(file):
             with open(file, 'rt', encoding = 'utf-8') as f:
-                data = list(yaml.load_all(f, Loader = yaml.loader.SafeLoader))
-                if len(data) > 0:
-                    for env_name, arguments in data[0].items():
-                        if not (env_name in connections):
-                            connections[env_name] = arguments
+                data = util.get_yaml(f, file)
+                for env_name, arguments in data:
+                    if not (env_name in connections):
+                        connections[env_name] = arguments
 
         # store connection parameters in the yaml file
         with open(file, 'wt', encoding = 'utf-8') as f:
@@ -378,7 +376,8 @@ class Config(util.Attributed):
     def apply_config(self, file):
         with open(file, 'rt', encoding = 'utf-8') as f:
             self.track_config[file] = {}
-            for key, value in list(yaml.load_all(f, Loader = yaml.loader.SafeLoader))[0].items():
+            data = util.get_yaml(f, file)
+            for key, value in data:
                 setattr(self, key, value)
                 self.track_config[file][key] = value
 

@@ -1,4 +1,4 @@
-import sys, os, re
+import sys, os, re, yaml
 import secrets, base64
 
 # for encryptions
@@ -97,6 +97,18 @@ def fix_yaml(payload):
             recent = {}
     #
     return '\n'.join(lines)
+
+
+
+def get_yaml(h, file = ''):
+    try:
+        data = list(yaml.load_all(h, Loader = yaml.loader.SafeLoader))
+    except Exception:
+        raise_error('INVALID YAML FILE!', '{}\n'.format(file) if file != '' else '')
+    #
+    if len(data) > 0:
+        return data[0].items()
+    return {}
 
 
 

@@ -1,5 +1,5 @@
 # coding: utf-8
-import sys, os, re, shutil, argparse
+import sys, argparse
 #
 import config
 from lib import util
@@ -93,12 +93,9 @@ class Recompile(config.Config):
                 extras += ' REUSE SETTINGS'
 
             # build query
-            try:
-                q = 'ALTER {} {} COMPILE{} {}'.format(type_family, row.object_name, type_body, extras)
-                if self.args.force:
-                    objects[row.object_type][1] += 1
-            except Exception:
-                pass
+            q = 'ALTER {} {} COMPILE{} {}'.format(type_family, row.object_name, type_body, extras)
+            if self.args.force:
+                objects[row.object_type][1] += 1
 
             # show progress
             if self.debug:
@@ -111,7 +108,10 @@ class Recompile(config.Config):
                 sys.stdout.flush()
 
             # recompile object
-            self.db.execute(q)
+            try:
+                self.db.execute(q)
+            except Exception:
+                pass
         #
         if not self.debug:
             print()

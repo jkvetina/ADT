@@ -1,5 +1,5 @@
 # coding: utf-8
-import sys, os, subprocess
+import sys, os, subprocess, traceback
 import oracledb         # pip3 install oracledb     --upgrade
 #
 import config
@@ -82,15 +82,18 @@ class Oracle:
             if not os.path.exists(wallet):
                 util.raise_error('INVALID WALLET', wallet)
             #
-            self.conn = oracledb.connect(
-                user            = self.tns['user'],
-                password        = self.tns['pwd'] if self.tns['plain'] else util.decrypt(self.tns['pwd'], self.tns['key']),
-                dsn             = self.tns['service'],
-                config_dir      = wallet,
-                wallet_location = wallet,
-                wallet_password = self.tns['wallet_pwd'] if self.tns['plain'] else util.decrypt(self.tns['wallet_pwd'], self.tns['key']),
-                encoding        = 'utf8'
-            )
+            try:
+                self.conn = oracledb.connect(
+                    user            = self.tns['user'],
+                    password        = self.tns['pwd'] if self.tns['plain'] else util.decrypt(self.tns['pwd'], self.tns['key']),
+                    dsn             = self.tns['service'],
+                    config_dir      = wallet,
+                    wallet_location = wallet,
+                    wallet_password = self.tns['wallet_pwd'] if self.tns['plain'] else util.decrypt(self.tns['wallet_pwd'], self.tns['key']),
+                    encoding        = 'utf8'
+                )
+            except Exception:
+                util.raise_error('CONNECTION FAILED', 'ORA-{}\n'.format(traceback.format_exc().splitlines()[-1:][0].split('ORA-')[1]))
             return
 
         # classic connect
@@ -100,12 +103,15 @@ class Oracle:
             else:
                 self.tns['dsn'] = oracledb.makedsn(self.tns['host'], self.tns['port'], service_name = self.tns['service'])
         #
-        self.conn = oracledb.connect(
-            user        = self.tns['user'],
-            password    = self.tns['pwd'] if self.tns['plain'] else util.decrypt(self.tns['pwd'], self.tns['key']),
-            dsn         = self.tns['dsn'],
-            encoding    = 'utf8'
-        )
+        try:
+            self.conn = oracledb.connect(
+                user        = self.tns['user'],
+                password    = self.tns['pwd'] if self.tns['plain'] else util.decrypt(self.tns['pwd'], self.tns['key']),
+                dsn         = self.tns['dsn'],
+                encoding    = 'utf8'
+            )
+        except Exception:
+            util.raise_error('CONNECTION FAILED', 'ORA-{}\n'.format(traceback.format_exc().splitlines()[-1:][0].split('ORA-')[1]))
 
 
 

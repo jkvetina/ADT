@@ -60,9 +60,8 @@ class Recompile(config.Config):
         progress_done   = 0
         #
         for row in data_todo:
-            obj_type    = row.object_type.split(' ')
-            type_body   = ' BODY' if len(obj_type) > 1 and obj_type[1] == 'BODY' else ''
-            type_family = obj_type[0]
+            type_body   = ' BODY' if 'BODY' in row.object_type else ''
+            type_family = row.object_type.replace(' BODY', '')
             extras      = ''
 
             # extra stuff for code objects

@@ -79,8 +79,8 @@ class Oracle:
         # use wallet to connect
         if 'wallet' in self.tns and len(self.tns['wallet']) > 0:
             wallet = os.path.abspath(self.tns['wallet']).rstrip('.zip')
-            #
-            # @TODO: CHECK IF WALLET EXISTS
+            if not os.path.exists(wallet):
+                util.raise_error('INVALID WALLET', wallet)
             #
             self.conn = oracledb.connect(
                 user            = self.tns['user'],

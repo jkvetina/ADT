@@ -96,7 +96,6 @@ class Config(util.Attributed):
 
         # default location for new connections
         self.connection_default = '{$INFO_REPO}config/connections.yaml'
-        self.connections        = {}    # all connections
         self.connection         = {}    # active connection
 
         # search for config files in current folder
@@ -159,52 +158,64 @@ class Config(util.Attributed):
 
 
 
-    def init_connections(self):
+    def init_connection(self, env_name = '', schema_name = ''):
+        if env_name == '':
+            env_name = self.info_env
+        if schema_name == '':
+            schema_name = self.info_schema or ''
+
         # search for connection file
         for file in self.replace_tags(list(self.connection_files)):  # copy, dont change original
             if not ('{$' in file) and os.path.exists(file):
                 with open(file, 'rt', encoding = 'utf-8') as f:
-                    data = util.get_yaml(f, file)
-                    for env_name, arguments in data:
-                        # create description
-                        desc = '{}, {}'.format(arguments['user'], env_name)
+                    data = dict(util.get_yaml(f, file))
+
+                    # make yaml content more flat
+                    self.connection = {}
+                    self.connection['file'] = file
+                    self.connection['key']  = self.args.key
+                    #
+                    for env, args in data.items():
+                        if env != env_name:
+                            continue
                         #
-                        self.connections[env_name]          = arguments
-                        self.connections[env_name]['file']  = file
-                        self.connections[env_name]['desc']  = desc
-                        self.connections[env_name]['plain'] = self.args.decrypt
+                        for arg, value in args.items():
+                            if not isinstance(value, dict):
+                                self.connection[arg] = value
 
-        # decrypt passwords
-        if self.args.decrypt:
-            for arg in ['pwd', 'wallet_pwd']:
-                if arg in self.connections[self.info_env]:
-                    self.connections[self.info_env][arg] = util.decrypt(self.connections[self.info_env][arg], self.args.key)
+                        # find first schema
+                        if schema_name == '' and 'schemas' in data[env_name]:
+                            schema_name = list(data[env_name]['schemas'].keys())[0]
+                            self.info_schema = schema_name
 
-        # check connection
-        if not (self.info_env in self.connections):
-            util.raise_error('UNKNOWN CONNECTION FOR {}'.format(self.info_env))
-        #
-        self.connection         = self.connections[self.info_env]
-        self.connection['key']  = self.args.key
+                    # process schema overrides
+                    if schema_name != '' and 'schemas' in data[env_name]:
+                        for arg, value in data[env_name]['schemas'].get(schema_name, {}).items():
+                            self.connection[arg] = value
+
+                    # fix wallet paths
+                    if 'wallet' in self.connection:
+                        wallet = self.connection['wallet']
+                        if not os.path.exists(wallet):
+                            wallet = os.path.dirname(file) + '/' + wallet
+                            if os.path.exists(wallet):
+                                self.connection['wallet'] = wallet
+
+                    #
+                    self.connection['desc'] = '{}, {}'.format(self.connection['user'], env_name)
         #
         if self.debug:
             util.header('CONNECTION:')
             util.debug_table(self.connection, skip = self.password_args)
 
         # check presence, at least one file is required
-        if len(self.connections) == 0:
-            util.header('CONNECTION FILE REQUIRED:')
-            for file in self.connection_files:
-                print('   {}'.format(file))
-            print()
-            util.quit()
-
-        # check connection for current env
-        if not (self.info_env in self.connections):
-            util.raise_error('MISSING CONNECTION FOR {}'.format(self.info_env))
+        if self.connection.get('file', '') == '':
+            util.raise_error('CONNECTION FILE REQUIRED:', '\n'.join(self.connection_files))
 
         # if key is a file, retrieve content and use it as a key
-        if 'key' in self.connection and self.connection['key'] != None:
+        if (not ('key' in self.connection) or self.connection['key'] == None):
+            self.connection['key'] = self.args.key or ''
+        if self.connection['key'] != '':
             if os.path.exists(self.connection['key']):
                 with open(self.connection['key'], 'rt', encoding = 'utf-8') as f:
                     self.connection['key'] = f.read().strip()

@@ -10,6 +10,12 @@ from lib import queries_wrapper as query
 
 class Oracle:
 
+    # temp file for Windows
+    sqlcl_root      = './'
+    sqlcl_temp_file = './sqlcl.{}.tmp'.format('')
+
+
+
     def __init__(self, tns, debug = False, ping_sqlcl = False):
         self.conn   = None    # recent connection link
         self.curs   = None    # recent cursor
@@ -20,19 +26,15 @@ class Oracle:
         }
         self.tns.update(tns)
         self.tns['host'] = self.tns['hostname'] if 'hostname' in self.tns else None
+        self.versions = {}
 
         # debug mode from config file or from caller
         self.debug = self.tns['debug'] if 'debug' in self.tns else False
         if not self.debug:
             self.debug = debug
-        #
-        self.versions = {}
-
-        # temp file for Windows
-        self.sqlcl_root         = './'
-        self.sqlcl_temp_file    = './sqlcl.{}.tmp'.format('')
 
         # auto connect
+        util.header('CONNECTING TO {}:'.format(self.tns['desc']))
         self.connect()
         self.get_versions()
 
@@ -47,7 +49,6 @@ class Oracle:
                     break
 
         # show versions
-        util.header('CONNECTED TO {}:'.format(self.tns['desc']))
         util.debug_table(self.versions)
 
 

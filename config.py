@@ -219,6 +219,8 @@ class Config(util.Attributed):
             if os.path.exists(self.connection['key']):
                 with open(self.connection['key'], 'rt', encoding = 'utf-8') as f:
                     self.connection['key'] = f.read().strip()
+        #
+        return dict(self.connection)  # copy
 
 
 
@@ -344,7 +346,8 @@ class Config(util.Attributed):
 
     def db_connect(self, ping_sqlcl = False):
         # check connectivity
-        self.db = wrapper.Oracle(self.connection, debug = self.debug, ping_sqlcl = ping_sqlcl)
+        tns = self.init_connection()
+        self.db = wrapper.Oracle(tns, debug = self.debug, ping_sqlcl = ping_sqlcl)
 
 
 

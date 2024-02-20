@@ -71,6 +71,7 @@ class Config(util.Attributed):
         self.info_project   = self.args.project
         self.info_env       = self.args.env
         self.info_branch    = self.args.branch
+        self.info_schema    = self.args.schema
         #
         self.root           = util.fix_path(os.path.dirname(os.path.realpath(__file__)))
         self.db             = None      # database connection object
@@ -467,6 +468,7 @@ if __name__ == "__main__":
     parser.add_argument('-e',   '-env',         '--env',            help = 'Environment name, like DEV, UAT, LAB1...')
     parser.add_argument('-r',   '-repo',        '--repo',           help = 'Path to your project repo')
     parser.add_argument('-b',   '-branch',      '--branch',         help = 'Repo branch')
+    parser.add_argument(        '-schema',      '--schema',         help = 'Schema/user')
 
     # key or key location to encrypt passwords
     parser.add_argument('-k',   '-key',         '--key',            help = 'Key or key location to encypt passwords')

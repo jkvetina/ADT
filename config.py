@@ -34,6 +34,8 @@ from lib import util
 
 class Config(util.Attributed):
 
+
+    password_args   = ['key', 'pwd', 'wallet_pwd']
     def __init__(self, parser):
         self.start_timer = timeit.default_timer()
 
@@ -180,7 +182,7 @@ class Config(util.Attributed):
         #
         if self.debug:
             util.header('CONNECTION:')
-            util.debug_table(self.connection)
+            util.debug_table(self.connection, skip = self.password_args)
 
         # check presence, at least one file is required
         if len(self.connections) == 0:
@@ -244,7 +246,7 @@ class Config(util.Attributed):
         passed_args[found_type]['lang'] = '.AL32UTF8'   # default language
 
         # encrypt passwords
-        for arg in ['pwd', 'wallet_pwd']:
+        for arg in self.password_args:
             if arg in passed_args[found_type] and not (self.args.decrypt):
                 if not ('key' in self.args) or self.args.key == None:
                     util.raise_error('NEED KEY TO ENCRYPT PASSWORDS!')
@@ -260,7 +262,7 @@ class Config(util.Attributed):
 
         # show parameters
         util.header('CREATING {} CONNECTION:'.format(found_type.upper()))
-        util.debug_table(passed_args[found_type], mask_keys = [] if self.args.decrypt else ['pwd', 'wallet_pwd'])
+        util.debug_table(passed_args[found_type], skip = self.password_args)
 
         # prepare target folder
         file    = self.replace_tags(output_file or self.connection_default)

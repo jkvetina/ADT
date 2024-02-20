@@ -135,7 +135,7 @@ def debug_dots(payload, length, mask_keys = []):
 
 
 
-def debug_table(payload, pattern = '  {:>16} | {}', right = [1], upper = True, sort = True, skip_none = True, mask_keys = []):
+def debug_table(payload, pattern = '  {:>16} | {}', right = [1], upper = True, sort = True, skip_none = True, skip = []):
     if isinstance(payload, dict):
         keys = payload.keys()
         if sort:
@@ -150,12 +150,12 @@ def debug_table(payload, pattern = '  {:>16} | {}', right = [1], upper = True, s
         #
         for col1 in keys:
             col2 = payload[col1]
-            if skip_none and col2 == None:
+            if col1 in skip or (skip_none and col2 == None):
                 continue
             #
             print(pattern.format(
                 col1.upper() if upper else col1,
-                '*' * min(len(col2), 20) if col1 in mask_keys else col2
+                col2
             ))
     #
     print()

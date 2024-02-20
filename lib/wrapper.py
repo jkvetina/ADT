@@ -24,6 +24,9 @@ class Oracle:
         self.tns    = {
           'lang'    : '.AL32UTF8',
         }
+        if not isinstance(tns, dict):
+            util.raise_error('DB_CONNECT EXPECTS DICTIONARY')
+        #
         self.tns.update(tns)
         self.tns['host'] = self.tns['hostname'] if 'hostname' in self.tns else None
         self.versions = {}
@@ -94,7 +97,7 @@ class Oracle:
                     encoding        = 'utf8'
                 )
             except Exception:
-                util.raise_error('CONNECTION FAILED', 'ORA-{}\n'.format(traceback.format_exc().splitlines()[-1:][0].split('ORA-')[1]))
+                util.raise_error('CONNECTION FAILED', self.get_error_code())
             return
 
         # classic connect
@@ -112,7 +115,17 @@ class Oracle:
                 encoding    = 'utf8'
             )
         except Exception:
-            util.raise_error('CONNECTION FAILED', 'ORA-{}\n'.format(traceback.format_exc().splitlines()[-1:][0].split('ORA-')[1]))
+            util.raise_error('CONNECTION FAILED', self.get_error_code())
+
+
+
+    def get_error_code(self):
+        message = ''
+        for line in traceback.format_exc().splitlines():
+            line = line.split(': ORA-')
+            if len(line) > 1:
+                message = 'ORA-{}\n'.format(line[1])
+        return message
 
 
 

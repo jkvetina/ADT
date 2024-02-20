@@ -34,8 +34,14 @@ from lib import util
 
 class Config(util.Attributed):
 
+    # some arguments could be set on the OS level
+    os_prefix       = 'ADT_'
+    os_args         = ['REPO', 'CLIENT', 'PROJECT', 'ENV', 'BRANCH', 'SCHEMA', 'KEY']
 
     password_args   = ['key', 'pwd', 'wallet_pwd']
+
+
+
     def __init__(self, parser):
         self.start_timer = timeit.default_timer()
 
@@ -45,10 +51,10 @@ class Config(util.Attributed):
             self.args['decrypt'] = False
 
         # merge with environment variables
-        os_args = ['REPO', 'CLIENT', 'PROJECT', 'ENV', 'BRANCH', 'KEY']
-        for arg in os_args:
+        for arg in self.os_args:
             if not (arg.lower() in self.args) or self.args[arg.lower()] == None:
-                self.args[arg.lower()] = os.getenv('ADT_' + arg.upper())
+                self.args[arg.lower()] = os.getenv(self.os_prefix + arg.upper())
+        #
         if self.args['env'] == None:
             self.args['env'] = 'DEV'
         #
@@ -60,14 +66,14 @@ class Config(util.Attributed):
             util.debug_table(self.args)
 
         # set project info from arguments
+        self.info_repo      = util.fix_path(self.args.repo or os.path.abspath(os.path.curdir))
         self.info_client    = self.args.client
         self.info_project   = self.args.project
         self.info_env       = self.args.env
-        self.info_repo      = util.fix_path(self.args.repo or os.path.abspath(os.path.curdir))
         self.info_branch    = self.args.branch
         #
         self.root           = util.fix_path(os.path.dirname(os.path.realpath(__file__)))
-        self.db             = None
+        self.db             = None      # database connection object
 
         # repo attributes
         self.repo           = None      # set through init_repo()

@@ -135,7 +135,6 @@ class Config(util.Attributed):
                 self.create_connection()
 
             # check connection file and test connectivity
-            self.init_connections()
             self.db_connect(ping_sqlcl = True)
 
             # check config file, rerun this when specific schema is processed to load schema overrides
@@ -145,9 +144,6 @@ class Config(util.Attributed):
             pass
 
         else:
-            # check connection file and test connectivity
-            self.init_connections()
-
             # check config file, rerun this when specific schema is processed to load schema overrides
             self.init_config()
 
@@ -186,12 +182,16 @@ class Config(util.Attributed):
                         # find first schema
                         if schema_name == '' and 'schemas' in data[env_name]:
                             schema_name = list(data[env_name]['schemas'].keys())[0]
-                            self.info_schema = schema_name
+                        break
 
                     # process schema overrides
-                    if schema_name != '' and 'schemas' in data[env_name]:
-                        for arg, value in data[env_name]['schemas'].get(schema_name, {}).items():
-                            self.connection[arg] = value
+                    if 'schemas' in data[env_name] and self.info_schema != None:
+                        if not (self.info_schema in data[env_name]['schemas']):
+                            util.raise_error('UNKNOWN SCHEMA - {}'.format(schema_name), '{}\n'.format(file))
+                    #
+                    self.info_schema = schema_name
+                    for arg, value in data[env_name]['schemas'].get(schema_name, {}).items():
+                        self.connection[arg] = value
 
                     # fix wallet paths
                     if 'wallet' in self.connection:
@@ -201,8 +201,8 @@ class Config(util.Attributed):
                             if os.path.exists(wallet):
                                 self.connection['wallet'] = wallet
 
-                    #
-                    self.connection['desc'] = '{}, {}'.format(self.connection['user'], env_name)
+                    # description for the screen
+                    self.connection['desc'] = '{}, {}'.format(schema_name or self.connection['user'], env_name)
         #
         if self.debug:
             util.header('CONNECTION:')
@@ -359,7 +359,7 @@ class Config(util.Attributed):
             if not ('{$' in file) and os.path.exists(file):
                 self.apply_config(file)
 
-        # allow schmea overrides
+        # allow schema overrides
         if self.info_schema:
             for file in self.replace_tags(list(self.config_overrides)):   # copy
                 if not ('{$' in file) and os.path.exists(file):
@@ -482,7 +482,7 @@ if __name__ == "__main__":
     parser.add_argument('-e',   '-env',         '--env',            help = 'Environment name, like DEV, UAT, LAB1...')
     parser.add_argument('-r',   '-repo',        '--repo',           help = 'Path to your project repo')
     parser.add_argument('-b',   '-branch',      '--branch',         help = 'Repo branch')
-    parser.add_argument(        '-schema',      '--schema',         help = 'Schema/user')
+    parser.add_argument(        '-schema',      '--schema',         help = 'Schema/connection name')
 
     # key or key location to encrypt passwords
     parser.add_argument('-k',   '-key',         '--key',            help = 'Key or key location to encypt passwords')

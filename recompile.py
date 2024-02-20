@@ -142,6 +142,7 @@ if __name__ == "__main__":
     # limit scope by object type and name (prefix)
     parser.add_argument('-t',   '-type',        '--type',       help = 'Object type')
     parser.add_argument('-n',   '-name',        '--name',       help = 'Object name/prefix')
+    parser.add_argument(        '-schema',      '--schema',     help = 'Schema/connection name')
 
     # compilation flags
     parser.add_argument('-force',           '--force',          help = '', default = False, nargs = '?', type = bool, const = True)

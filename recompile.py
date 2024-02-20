@@ -36,10 +36,6 @@ class Recompile(config.Config):
     def __init__(self, parser):
         super().__init__(parser)
 
-        # parse arguments from command line
-        self.args = vars(parser.parse_args())
-        self.args = util.Attributed(self.args)     # dict with attributes
-
         # connect to the database
         self.db_connect()
 

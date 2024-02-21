@@ -97,6 +97,9 @@ class Oracle:
                     encoding        = 'utf8'
                 )
             except Exception:
+                if self.debug:
+                    print(traceback.format_exc())
+                    print(sys.exc_info()[2])
                 util.raise_error('CONNECTION FAILED', self.get_error_code())
             return
 
@@ -122,9 +125,10 @@ class Oracle:
     def get_error_code(self):
         message = ''
         for line in traceback.format_exc().splitlines():
-            line = line.split(': ORA-')
-            if len(line) > 1:
-                message = 'ORA-{}\n'.format(line[1])
+            for search in (': ORA-', ': DPY-',):
+                chunks = line.split(search)
+                if len(chunks) > 1:
+                    message = '{}{}\n'.format(search.replace(': ', ''), chunks[1])
         return message
 
 

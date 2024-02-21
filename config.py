@@ -221,7 +221,8 @@ class Config(util.Attributed):
 
                     # process schema overrides
                     if 'schemas' in data[env_name] and self.info_schema != None:
-                        if not (self.info_schema in data[env_name]['schemas']):
+                        schema_name = schema_name or self.info_schema
+                        if not (schema_name in data[env_name]['schemas']):
                             util.raise_error('UNKNOWN SCHEMA - {}'.format(schema_name), '{}\n'.format(file))
                     #
                     self.info_schema = schema_name
@@ -260,19 +261,25 @@ class Config(util.Attributed):
 
 
     def create_connection(self, output_file = None):
+        env_name        = self.info_env
+        schema_name     = self.args.schema or self.args.user
         #
-        passed_args     = {}
+        util.assert_(env_name    != None, 'REQUIRED ENV NAME')
+        util.assert_(schema_name != None, 'REQUIRED SCHEMA NAME')
+        #
         missing_args    = {}
-        #
-        for type, arguments in required_args.items():
-            passed_args[type]   = {}
+        passed_args     = {
+            'schemas'   : {schema_name : {}},
+            'lang'      : '.AL32UTF8',          # default lang
+            'thick'     : self.args.thick,
+        }
+
+        # check required arguments
+        for type, arguments in self.required_args.items():
             missing_args[type]  = []
-            #
             for arg in arguments:
                 if not (arg in self.args) or self.args[arg] == None or self.args[arg] == '':
                     missing_args[type].append(arg)
-                else:
-                    passed_args[type][arg] = self.args[arg]
 
         # create guidance for missing args
         found_type = None
@@ -291,27 +298,33 @@ class Config(util.Attributed):
             #
             util.raise_error('CAN\'T CONTINUE')
 
-        # append some stuff
-        passed_args[found_type]['lang'] = '.AL32UTF8'   # default language
+        # create config structure
+        for arg in self.args:
+            value = self.args[arg]
+            if value == '' or value == None:
+                continue
 
-        # encrypt passwords
-        for arg in self.password_args:
-            if arg in passed_args[found_type] and not (self.args.decrypt):
-                if not ('key' in self.args) or self.args.key == None:
-                    util.raise_error('NEED KEY TO ENCRYPT PASSWORDS!')
-                original = passed_args[found_type][arg]
-                passed_args[found_type][arg] = util.encrypt(original, self.args.key)
-                if original != util.decrypt(passed_args[found_type][arg], self.args.key):
-                    util.raise_error('ENCRYPTION FAILED!')
-                original = ''
+            # encrypt passwords and set correct flags
+            flag = ''
+            if arg in self.password_flags:
+                flag = self.password_flags[arg]
+                if not (self.args.decrypt) and arg in self.password_args:
+                    value = self.encrypt_password(value)
 
-        # request thick mode, pass instant client path
-        if self.args.thick:
-            passed_args[found_type]['thick'] = self.args.thick
+            # add to the proper node
+            for arg in [arg, flag]:
+                if arg == flag:
+                    value = 'Y' if not self.args.decrypt else ''
+                if value != '':
+                    if arg in self.common_args:
+                        passed_args[arg] = value
+                    elif arg in self.schema_args:
+                        passed_args['schemas'][schema_name][arg] = value
+                        passed_args.pop(arg, None)
 
         # show parameters
         util.header('CREATING {} CONNECTION:'.format(found_type.upper()))
-        util.debug_table(passed_args[found_type], skip = self.password_args)
+        util.debug_table(passed_args, skip = self.password_args)
 
         # prepare target folder
         file    = self.replace_tags(output_file or self.connection_default)
@@ -319,17 +332,21 @@ class Config(util.Attributed):
         #
         if not os.path.exists(dir):
             os.makedirs(dir)
-        #
-        connections = {}
-        connections[self.info_env] = passed_args[found_type]
 
-        # merge with current file on env level
+        # load current file
+        connections = {}
         if os.path.exists(file):
             with open(file, 'rt', encoding = 'utf-8') as f:
                 data = util.get_yaml(f, file)
-                for env_name, arguments in data:
-                    if not (env_name in connections):
-                        connections[env_name] = arguments
+                for env, arguments in data:
+                    connections[env] = arguments
+
+        # merge = overwrite root attributes, but keep other schemas
+        backup_schemas = connections[env_name].get('schemas', {})
+        connections[env_name] = dict(passed_args)   # copy
+        for schema, data in backup_schemas.items():
+            if schema != schema_name:
+                connections[env_name]['schemas'][schema] = data
 
         # store connection parameters in the yaml file
         with open(file, 'wt', encoding = 'utf-8') as f:

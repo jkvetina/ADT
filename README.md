@@ -10,7 +10,7 @@ ADT provides you more benefits when used with other APEX apps (but it is fully f
 | Application Name                                              | Description                                       | Status
 | :---------------                                              | :----------                                       | :-----
 | [Cards](https://github.com/jkvetina/MASTER_TASKS)             | to manage your tasks, bugs...                     | __Done__
-| [Roadmap](https://github.com/jkvetina/MASTER_ROADMAPS)        | to plan and track whole projects on higher level  | In Progress
+| [Roadmap](https://github.com/jkvetina/MASTER_ROADMAPS)        | to plan and track whole projects on higher level  | __In Progress__
 | [Deployments](https://github.com/jkvetina/MASTER_DEPLOYMENTS) | to track commits, releases and deployments        | Planned
 | [Reviews](https://github.com/jkvetina/MASTER_REVIEWS)         | to improve quality of your code                   | Planned
 
@@ -34,13 +34,15 @@ I have been building these CI/CD tools since 2008 and ADT is the newest version,
 | Filename                                 | Description                                    | Status          | Complexity | Done
 | :-------                                 | :----------                                    | :-----          | ---------: | ---:
 | [`config.py`](./doc/config.md)           | to manage database connections and settings    | __In Progress__ |          5 | 3
-| [`export_db.py`](./doc/export_db.md)     | to export database objects                     | OPY             |          9 |
-| [`export_apex.py`](./doc/export_apex.md) | to export APEX                                 | OPY             |          4 |
-| [`export_data.py`](./doc/export_data.md) | to export data into CSV files                  | OPY             |          2 |
+| [`export_db.py`](./doc/export_db.md)     | to export database objects                     | OPY*            |          9 |
+| [`export_apex.py`](./doc/export_apex.md) | to export APEX                                 | OPY*            |          4 |
+| [`export_data.py`](./doc/export_data.md) | to export data into CSV files                  | OPY*            |          2 |
 | [`patch.py`](./doc/patch.md)             | to prepare patch files from your changes       | __Done__        |          6 | 6
 | [`deploy.py`](./doc/deploy.md)           | to deploy your patch files                     | Planned         |          5 |
 | [`compare.py`](./doc/compare.md)         | to compare two databases                       | Planned         |          8 |
 | [`recompile.py`](./doc/recompile.md)     | to recompile invalid objects                   | __Done__        |          1 | 1
+
+OPY is covered by [OPY](https://github.com/jkvetina/OPY/tree/master) tool, but I will refactor all of that into ADT after I am done with other things.
 
 &nbsp;
 

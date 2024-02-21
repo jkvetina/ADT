@@ -34,12 +34,12 @@ I have been building these CI/CD tools since 2008 and ADT is the newest version,
 | Filename                                 | Description                                    | Status          | Complexity | Done
 | :-------                                 | :----------                                    | :-----          | ---------: | ---:
 | [`config.py`](./doc/config.md)           | to manage database connections and settings    | __In Progress__ |          5 | 3
-| [`export_db.py`](./doc/export_db.md)     | to export database objects                     | OPY             |          8 |
+| [`export_db.py`](./doc/export_db.md)     | to export database objects                     | OPY             |          9 |
 | [`export_apex.py`](./doc/export_apex.md) | to export APEX                                 | OPY             |          4 |
-| [`export_data.py`](./doc/export_data.md) | to export data into CSV files                  | OPY             |          3 |
+| [`export_data.py`](./doc/export_data.md) | to export data into CSV files                  | OPY             |          2 |
 | [`patch.py`](./doc/patch.md)             | to prepare patch files from your changes       | __Done__        |          6 | 6
-| [`deploy.py`](./doc/deploy.md)           | to deploy your patch files                     | Planned         |          4 |
-| [`compare.py`](./doc/compare.md)         | to compare two databases                       | Planned         |          6 |
+| [`deploy.py`](./doc/deploy.md)           | to deploy your patch files                     | Planned         |          5 |
+| [`compare.py`](./doc/compare.md)         | to compare two databases                       | Planned         |          8 |
 | [`recompile.py`](./doc/recompile.md)     | to recompile invalid objects                   | __Done__        |          1 | 1
 
 &nbsp;
@@ -60,14 +60,14 @@ I have been building these CI/CD tools since 2008 and ADT is the newest version,
     - ⭕️ you can also manually create subfolders for objects (so you can put for example views into groups/folders)
     - ⭕️ see supported object types
 - ⭕️ it can __export data__ into CSV files
-    - ⭕️ althought it will skip LOB columns
+    - ⭕️ althought it will skip LOB columns (for now)
     - ⭕️ creates SQL MERGE statements for patching
 - ⭕️ it can __export APEX application(s)__
     - ⭕️ including REST services and workspace files
     - ⭕️ also in YAML/JSON formats
     - ⭕️ possible with embedded code reports
     - ⭕️ you can request specific components based on page or date
-    - ⭕️ upload files to APEX
+    - ⭕️ upload files to APEX + setup a server to upload it live
     - ⭕️ remote REST app deployment
 - ✅ it can __create patch files__ so you can easily deploy your database and APEX changes since last deployment, or based on your features/cards
     - ✅ it can connect to Git/BB to create a release notes for you
@@ -79,6 +79,7 @@ I have been building these CI/CD tools since 2008 and ADT is the newest version,
 - ⭕️ it can __compare two databases__ and show you the differences and what you need to do to sync them, including the data changes
     - ⭕️ no false positives on different column positions, different identity column sequences, whitespaces...
     - ⭕️ it can also quickly compare APEX applications based on the signatures
+    - ⭕️ generate ALTER statements for table changes, align columns order, sync sequences...
 - ✅ it can recompile invalid objects + limit the scope based on type and name
     - ✅ it can also force recompile objects and set specific PL/SQL attributes on them  
 - ⭕️ see config.yaml file for __200+ parameters__ you can customize

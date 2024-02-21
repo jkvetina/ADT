@@ -89,8 +89,8 @@ class Config(util.Attributed):
 
         # list connection files, where to search for DB connections
         self.connection_files = [
-            '{$ROOT}config/{$INFO_CLIENT}/connections.yaml',
-            '{$ROOT}config/{$INFO_CLIENT}/connections_{$INFO_PROJECT}.yaml',
+            #'{$ROOT}config/{$INFO_CLIENT}/connections.yaml',
+            #'{$ROOT}config/{$INFO_CLIENT}/connections_{$INFO_PROJECT}.yaml',
             '{$INFO_REPO}config/connections.yaml',                                      # repo
         ]
 
@@ -100,20 +100,20 @@ class Config(util.Attributed):
 
         # search for config files in current folder
         self.config_files = [
-            '{$ROOT}config/default_config.yaml',
-            '{$ROOT}config/{$INFO_CLIENT}/config.yaml',
-            '{$ROOT}config/{$INFO_CLIENT}/config_{$INFO_PROJECT}.yaml',
-            '{$ROOT}config/{$INFO_CLIENT}/config_{$INFO_PROJECT}_{$INFO_ENV}.yaml',
+            #'{$ROOT}config/default_config.yaml',
+            #'{$ROOT}config/{$INFO_CLIENT}/config.yaml',
+            #'{$ROOT}config/{$INFO_CLIENT}/config_{$INFO_PROJECT}.yaml',
+            #'{$ROOT}config/{$INFO_CLIENT}/config_{$INFO_PROJECT}_{$INFO_ENV}.yaml',
             '{$INFO_REPO}config/config.yaml',                                           # repo
             '{$INFO_REPO}config/config_{$INFO_ENV}.yaml',                               # repo
         ]
 
         # when schema is set, run init_config again to allow wchema overrides
         self.config_overrides = [
-            '{$ROOT}config/{$INFO_CLIENT}/config_{$INFO_PROJECT}_{$INFO_SCHEMA}.yaml',
-            '{$ROOT}config/{$INFO_CLIENT}/config_{$INFO_PROJECT}_{$INFO_SCHEMA}_{$INFO_ENV}.yaml',
+            #'{$ROOT}config/{$INFO_CLIENT}/config_{$INFO_PROJECT}_{$INFO_SCHEMA}.yaml',
+            #'{$ROOT}config/{$INFO_CLIENT}/config_{$INFO_PROJECT}_{$INFO_SCHEMA}_{$INFO_ENV}.yaml',
             '{$INFO_REPO}config/config_{$INFO_SCHEMA}.yaml',
-            '{$INFO_REPO}config/config_{$INFO_SCHEMA}_{$INFO_ENV}.yaml',
+            '{$INFO_REPO}config/config_{$INFO_SCHEMA}_{$INFO_ENV}.yaml',                # repo
         ]
 
         # prepare date formats

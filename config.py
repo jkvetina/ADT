@@ -38,7 +38,42 @@ class Config(util.Attributed):
     os_prefix       = 'ADT_'
     os_args         = ['REPO', 'CLIENT', 'PROJECT', 'ENV', 'BRANCH', 'SCHEMA', 'KEY']
 
-    password_args   = ['key', 'pwd', 'wallet_pwd']
+    # define and categorize arguments
+    required_args = {
+        'normal'    : ['env', 'user', 'pwd', 'hostname', 'port', 'service'],
+        'legacy'    : ['env', 'user', 'pwd', 'hostname', 'port', 'sid'],
+        'cloud'     : ['env', 'user', 'pwd',                     'service', 'wallet', 'wallet_pwd'],
+    }
+    common_args = [
+        'env',
+        'lang',
+        'hostname',
+        'port',
+        'service',
+        'sid',
+        'wallet',
+        'wallet_pwd',
+        'wallet_encrypted',
+    ]
+    schema_args = [
+        'user',
+        'pwd',
+        'pwd_encrypted',
+        'prefix',           # specify the major things (differences) in connections.yaml
+        'ignore',           # but adjust the details in config.yaml
+        'folder',
+        'workspace',
+        'app',
+    ]
+    password_args = [
+        'key',
+        'pwd',
+        'wallet_pwd'
+    ]
+    password_flags = {
+        'pwd'           : 'pwd_encrypted',
+        'wallet_pwd'    : 'wallet_encrypted',
+    }
 
 
 
@@ -225,12 +260,6 @@ class Config(util.Attributed):
 
 
     def create_connection(self, output_file = None):
-        # check required arguments
-        required_args = {
-            'normal'    : ['env', 'user', 'pwd', 'hostname', 'port', 'service'],
-            'legacy'    : ['env', 'user', 'pwd', 'hostname', 'port', 'sid'],
-            'cloud'     : ['env', 'user', 'pwd',                     'service', 'wallet', 'wallet_pwd'],
-        }
         #
         passed_args     = {}
         missing_args    = {}
@@ -482,7 +511,13 @@ if __name__ == "__main__":
     parser.add_argument('-e',   '-env',         '--env',            help = 'Environment name, like DEV, UAT, LAB1...')
     parser.add_argument('-r',   '-repo',        '--repo',           help = 'Path to your project repo')
     parser.add_argument('-b',   '-branch',      '--branch',         help = 'Repo branch')
-    parser.add_argument(        '-schema',      '--schema',         help = 'Schema/connection name')
+    parser.add_argument(        '-schema',      '--schema',         help = 'Schema/connection name (if you are using multiple schemas)')
+    #
+    parser.add_argument(        '-prefix',      '--prefix',         help = 'Export objects with listed prefix(es)')
+    parser.add_argument(        '-ignore',      '--ignore',         help = 'Ignore objects with listed prefix(es)')
+    parser.add_argument(        '-folder',      '--folder',         help = 'Folder for exported objects (for multiple schemas)')
+    parser.add_argument(        '-workspace',   '--workspace',      help = 'APEX workspace')
+    parser.add_argument(        '-app',         '--app',            help = 'APEX app(s) to export as default')
 
     # key or key location to encrypt passwords
     parser.add_argument('-k',   '-key',         '--key',            help = 'Key or key location to encypt passwords')

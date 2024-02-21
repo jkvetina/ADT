@@ -31,56 +31,58 @@ I have been building these CI/CD tools since 2008 and ADT is the newest version,
 &nbsp;
 
 ## Actions
-| Filename                                 | Description                                    | Status
-| :-------                                 | :----------                                    | :-----
-| [`config.py`](./doc/config.md)           | to manage database connections and settings    | __In Progress__
-| [`export_db.py`](./doc/export_db.md)     | to export database objects                     | OPY
-| [`export_apex.py`](./doc/export_apex.md) | to export APEX                                 | OPY
-| [`export_data.py`](./doc/export_data.md) | to export data into CSV files                  | OPY
-| [`patch.py`](./doc/patch.md)             | to prepare patch files from your changes       | __Done__
-| [`deploy.py`](./doc/deploy.md)           | to deploy your patch files                     | Planned
-| [`compare.py`](./doc/compare.md)         | to compare two databases                       | Planned
-| [`recompile.py`](./doc/recompile.md)     | to recompile invalid objects                   | __Done__
+| Filename                                 | Description                                    | Status          | Complexity | Done
+| :-------                                 | :----------                                    | :-----          | ---------: | ---:
+| [`config.py`](./doc/config.md)           | to manage database connections and settings    | __In Progress__ |          5 | 3
+| [`export_db.py`](./doc/export_db.md)     | to export database objects                     | OPY             |          8 |
+| [`export_apex.py`](./doc/export_apex.md) | to export APEX                                 | OPY             |          4 |
+| [`export_data.py`](./doc/export_data.md) | to export data into CSV files                  | OPY             |          3 |
+| [`patch.py`](./doc/patch.md)             | to prepare patch files from your changes       | __Done__        |          6 | 6
+| [`deploy.py`](./doc/deploy.md)           | to deploy your patch files                     | Planned         |          4 |
+| [`compare.py`](./doc/compare.md)         | to compare two databases                       | Planned         |          6 |
+| [`recompile.py`](./doc/recompile.md)     | to recompile invalid objects                   | __Done__        |          1 | 1
 
 &nbsp;
 
 ## Main features
 
-- it can __connect to on-premise and cloud__ Oracle databases
-- it can __export database objects__
-    - you can filter objects by type, name and time (export for example everything starting with XX% and changed in past 3 days)
-        - tables, view, materialized views + logs, indexes, sequences
-        - packages, procedures, functions, triggers, TYPEs**
-        - jobs (resp. schedulers)
-        - grants (made and received)
-    - there are also multiple whitelist and blacklist filters so you can specify which prefixes you want to include or you want to skip
-    - you can create your own list of objects which will be exported (see locked.log), which is handy when you have multiple projects in the same schema; it now even support autolock feature
-        - locked mode vs filter based mode
-    - multiple schemas are supported via subfolders
-    - you can also manually create subfolders for objects (so you can put for example views into groups/folders)
-    - see supported object types
-- it can __export data__ into CSV files
-    - althought it will skip LOB columns
-    - creates SQL MERGE statements for patching
-- it can __export APEX application(s)__
-    - including REST services and workspace files
-    - also in YAML/JSON formats
-    - possible with embedded code reports
-    - you can request specific components based on page or date
-    - upload files to APEX
-    - remote REST app deployment
-- it can __create patch files__ so you can easily deploy your database and APEX changes since last deployment, or based on your features/cards
-    - it can connect to Git/BB to create a release notes for you
-    - it can also create a patch file __based on a feature/card__, it will lookup which files were committed under that name and create a patch based on that (and even for APEX components so you dont have to deploy the whole app)
-    - it allows you to search Git/BB history
-    - it can also __deploy these patches__ to different environments (basically any database you can reach via direct connection on via a REST service)
-    - multiple schemas patching dependencies
-    - install script for test environments or local developers
-- it can __compare two databases__ and show you the differences and what you need to do to sync them, including the data changes
-    - no false positives on different column positions, different identity column sequences, whitespaces...
-    - it can also quickly compare APEX applications based on the signatures
-- see config.yaml file for __200+ parameters__ you can customize
-    - to use your config.yaml file, just place it in the config folder in root of your project repo
+- ✅ it can __connect to on-premise and cloud__ Oracle databases
+- ⭕️ it can __export database objects__
+    - ⭕️ you can filter objects by type, name and time (export for example everything starting with XX% and changed in past 3 days)
+        - ⭕️ tables, view, materialized views + logs, indexes, sequences
+        - ⭕️ packages, procedures, functions, triggers, TYPEs**
+        - ⭕️ jobs (resp. schedulers)
+        - ⭕️ grants (made and received)
+    - ⭕️ there are also multiple whitelist and blacklist filters so you can specify which prefixes you want to include or you want to skip
+    - ⭕️ you can create your own list of objects which will be exported (see locked.log), which is handy when you have multiple projects in the same schema; it now even support autolock feature
+        - ⭕️ locked mode vs filter based mode
+    - ⭕️ multiple schemas are supported via subfolders
+    - ⭕️ you can also manually create subfolders for objects (so you can put for example views into groups/folders)
+    - ⭕️ see supported object types
+- ⭕️ it can __export data__ into CSV files
+    - ⭕️ althought it will skip LOB columns
+    - ⭕️ creates SQL MERGE statements for patching
+- ⭕️ it can __export APEX application(s)__
+    - ⭕️ including REST services and workspace files
+    - ⭕️ also in YAML/JSON formats
+    - ⭕️ possible with embedded code reports
+    - ⭕️ you can request specific components based on page or date
+    - ⭕️ upload files to APEX
+    - ⭕️ remote REST app deployment
+- ✅ it can __create patch files__ so you can easily deploy your database and APEX changes since last deployment, or based on your features/cards
+    - ✅ it can connect to Git/BB to create a release notes for you
+    - ✅ it can also create a patch file __based on a feature/card__, it will lookup which files were committed under that name and create a patch based on that (and even for APEX components so you dont have to deploy the whole app)
+    - ✅ it allows you to search Git/BB history for specific string
+    - ⭕️ it can also __deploy these patches__ to different environments (basically any database you can reach via direct connection on via a REST service)
+    - ⭕️ multiple schemas patching dependencies
+    - ⭕️ install script for test or local environments
+- ⭕️ it can __compare two databases__ and show you the differences and what you need to do to sync them, including the data changes
+    - ⭕️ no false positives on different column positions, different identity column sequences, whitespaces...
+    - ⭕️ it can also quickly compare APEX applications based on the signatures
+- ✅ it can recompile invalid objects + limit the scope based on type and name
+    - ✅ it can also force recompile objects and set specific PL/SQL attributes on them  
+- ⭕️ see config.yaml file for __200+ parameters__ you can customize
+    - ✅ to use your config.yaml file, just place it in the config folder in root of your project repo
 
 &nbsp;
 

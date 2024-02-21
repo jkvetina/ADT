@@ -64,6 +64,10 @@ def fix_yaml(payload):
     recent  = {}
     lines   = payload.splitlines()
     #
+    curr_line_indent = 0
+    prev_line_indent = 0
+    next_line_indent = 0
+    #
     for i, line in enumerate(lines):
         # calculate indentation for current and next line
         found = re.search('^(\s*)', line).group(1)
@@ -74,6 +78,7 @@ def fix_yaml(payload):
         #
         if i >= len(lines):
             next_line_indent = 0
+            prev_line_indent = curr_line_indent
             continue
         else:
             next_line_indent = len(re.search('^(\s*)', lines[i + 1]).group(1))
@@ -90,11 +95,16 @@ def fix_yaml(payload):
             for j, split in recent.items():
                 width = max(width, int(len(split[1]) / 4) * 4 + 4)
             #
+            if next_line_indent > curr_line_indent and prev_line_indent != curr_line_indent:
+                width = 0
+            #
             for j, split in recent.items():
                 split[1] = split[1].ljust(width)
                 lines[j] = '{}{}:{}'.format(*split)
             #
             recent = {}
+        #
+        prev_line_indent = curr_line_indent
     #
     return '\n'.join(lines)
 

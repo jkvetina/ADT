@@ -5,15 +5,6 @@ It helps you to automate the patching and deploying/migrating your changes to ot
 
 It does not store anything in your database.
 
-ADT provides you more benefits when used with other APEX apps (but it is fully functional without these apps):
-
-| Application Name                                              | Description                                       | Status
-| :---------------                                              | :----------                                       | :-----
-| [Cards](https://github.com/jkvetina/MASTER_TASKS)             | to manage your tasks, bugs...                     | __Done__
-| [Roadmap](https://github.com/jkvetina/MASTER_ROADMAPS)        | to plan and track whole projects on higher level  | __In Progress__
-| [Deployments](https://github.com/jkvetina/MASTER_DEPLOYMENTS) | to track commits, releases and deployments        | Planned
-| [Reviews](https://github.com/jkvetina/MASTER_REVIEWS)         | to improve quality of your code                   | Planned
-
 I have been building these CI/CD tools since 2008 and ADT is the newest version, heavily based on the previous [OPY](https://github.com/jkvetina/OPY/tree/master) tool, which unfortunately outgrown to a hefty spaghetti code and became more and more difficult to extend. So, I have decided to start from scratch for like 15th time...
 
 &nbsp;
@@ -70,14 +61,15 @@ OPY is covered by [OPY](https://github.com/jkvetina/OPY/tree/master) tool, but I
     - ⭕️ possible with embedded code reports
     - ⭕️ you can request specific components based on page or date
     - ⭕️ upload files to APEX + setup a server to upload it live
-    - ⭕️ remote REST app deployment
 - ✅ it can __create patch files__ so you can easily deploy your database and APEX changes since last deployment, or based on your features/cards
     - ✅ it can connect to Git/BB to create a release notes for you
     - ✅ it can also create a patch file __based on a feature/card__, it will lookup which files were committed under that name and create a patch based on that (and even for APEX components so you dont have to deploy the whole app)
     - ✅ it allows you to search Git/BB history for specific string
-    - ⭕️ it can also __deploy these patches__ to different environments (basically any database you can reach via direct connection on via a REST service)
+- ⭕️ it can also __deploy these patches__ to different environments (basically any database you can reach via direct connection on via a REST service)
     - ⭕️ multiple schemas patching dependencies
     - ⭕️ install script for test or local environments
+    - ⭕️ remote REST app deployment
+    - ⭕️ quick (dirty) export and import objects or APEX components/pages in between environment
 - ⭕️ it can __compare two databases__ and show you the differences and what you need to do to sync them, including the data changes
     - ⭕️ no false positives on different column positions, different identity column sequences, whitespaces...
     - ⭕️ it can also quickly compare APEX applications based on the signatures
@@ -116,3 +108,17 @@ OPY is covered by [OPY](https://github.com/jkvetina/OPY/tree/master) tool, but I
 &nbsp;
 
 You can customize all of these paths through the [`config.py`](./doc/config.md) and there are plenty of variables available to fit your needs.
+
+&nbsp;
+
+## Supporting apps
+
+ADT provides you more benefits when used with other APEX apps (but it is fully functional without these apps):
+
+| Application Name                                              | Description                                       | Status
+| :---------------                                              | :----------                                       | :-----
+| [Cards](https://github.com/jkvetina/MASTER_TASKS)             | to manage your tasks, bugs...                     | __Done__
+| [Roadmap](https://github.com/jkvetina/MASTER_ROADMAPS)        | to plan and track whole projects on higher level  | __In Progress__
+| [Deployments](https://github.com/jkvetina/MASTER_DEPLOYMENTS) | to track commits, releases and deployments        | Planned
+| [Reviews](https://github.com/jkvetina/MASTER_REVIEWS)         | to improve quality of your code                   | Planned
+

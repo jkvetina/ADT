@@ -107,6 +107,15 @@ class Patch(config.Config):
 
         # workflow
         self.find_commits()
+
+        # create snapshot folder
+        if not os.path.exists(self.patch_folder):
+            os.makedirs(self.patch_folder)
+
+        # delete previous logs
+        for file in glob.glob('{}/*.log'.format(self.patch_folder)):
+            os.remove(file)
+
         self.create_patches()
 
 
@@ -188,22 +197,14 @@ class Patch(config.Config):
         for target_schema, rel_files in self.relevant_files.items():
             self.apex_app_id = ''
 
-            # prepare list of commits and attach it to patch filename for quick/additional patches
-            commits_list = ''
-            if self.commits != None:
-                commits_list = '_{}'.format(max(self.commits))
-
             # generate patch file name for specific schema
-            self.patch_file_curr = '{}patch/{}/{}{}.sql'.format(self.info_repo, self.patch_code, target_schema, commits_list)
+            self.patch_file      = '{}/{}.sql'.format(self.patch_folder, target_schema)
+            self.patch_spool_log = './{}.log'.format(target_schema)
 
             # generate patch header
             header = 'PATCH - {} - {}'.format(self.patch_code, target_schema)
             payload = ''
-            payload += '--\n-- {}\n-- {}\n--'.format(header, '-' * len(header))
-
-            # spool output to the file
-            if self.spooling:
-                payload += '\nSPOOL {} APPEND\n'.format(self.patch_file_curr.replace('.sql', '.log'))
+            payload += '--\n-- {}\n-- {}\n--\n'.format(header, '-' * len(header))
 
             # get differences in between first and last commits
             diffs           = {}
@@ -349,17 +350,9 @@ class Patch(config.Config):
 
 
 
-    def create_snapshots(self, diffs, target_schema):
-        if len(diffs.keys()) > 0:
-            process_files = diffs.keys()
-
-            # create snapshot folder
-            self.patch_folder = '{}/patch/{$PATCH_CODE}'  # /snapshot/ ??
-            self.patch_folder = self.patch_folder.replace('{$PATCH_CODE}', self.patch_code)
-            self.patch_folder = self.patch_folder.format(self.info_repo)
-            #
-            if not os.path.exists(self.patch_folder):
-                os.makedirs(self.patch_folder)
+    def create_snapshots(self, target_schema):
+        if len(self.diffs.keys()) > 0:
+            process_files = self.diffs.keys()
 
             # copy some files even if they did not changed
             if self.apex_app_id != '':
@@ -376,13 +369,13 @@ class Patch(config.Config):
 
     def create_patch_file(self, payload, target_schema):
         # save in schema patch file
-        with open(self.patch_file_curr, 'wt', encoding = 'utf-8', newline = '\n') as w:
+        with open(self.patch_file, 'wt', encoding = 'utf-8', newline = '\n') as w:
             w.write(payload)
         #
         if self.apex_app_id != '':
-            self.patch_files_apex.append(self.patch_file_curr)
+            self.patch_files_apex.append(self.patch_file)
         else:
-            self.patch_files.append(self.patch_file_curr)
+            self.patch_files.append(self.patch_file)
 
 
 
@@ -405,8 +398,8 @@ class Patch(config.Config):
             file_content = re.sub(r",p_last_updated_by=>'([^']+)'", ",p_last_updated_by=>'{}'".format(self.patch_code), file_content)
             file_content = re.sub(r",p_last_upd_yyyymmddhh24miss=>'(\d+)'", ",p_last_upd_yyyymmddhh24miss=>'{}'".format(self.today_full_raw), file_content)
             #
-            with open(target_file, 'wt', encoding = 'utf-8') as f:
-                f.write(file_content)
+            with open(target_file, 'wt', encoding = 'utf-8') as w:
+                w.write(file_content)
 
 
 
@@ -456,13 +449,13 @@ class Patch(config.Config):
         # recreate requested pages
         payload += '--\n'
         for file in apex_pages:
-            payload += self.file_template.replace('#FILE#', file)
+            payload += self.patch_file_link.replace('{$FILE}', file)
         #
         return payload
 
 
 
-    def get_grants_made(self, diffs):
+    def get_grants_made(self):
         payload         = ''
         grants_found    = False
 
@@ -478,7 +471,7 @@ class Patch(config.Config):
                 if find_name:
                     find_name = find_name.group(1).lower()
                 #
-                for file in diffs:
+                for file in self.diffs:
                     object_name = self.get_file_object_name(file).lower()
                     if object_name == find_name:
                         payload += line
@@ -543,6 +536,7 @@ if __name__ == "__main__":
     parser.add_argument('-c',   '-commit',      '--commit',     help = 'Process just specific commits',                                 default = None, nargs = '*')
     parser.add_argument('-b',   '-branch',      '--branch',     help = 'To override active branch',                                     default = None)
     parser.add_argument('-d',   '-debug',       '--debug',      help = 'Turn on the debug/verbose mode',                                default = False, nargs = '?', const = True)
+    parser.add_argument(        '-seq',         '--seq',        help = 'Sequence in patch folder, {$PATCH_SEQ}')
 
     # key or key location to encrypt passwords
     parser.add_argument('-k',   '-key',         '--key',        help = 'Key or key location to encypt passwords')

@@ -108,7 +108,6 @@ class Patch(config.Config):
         # workflow
         self.find_commits()
         self.create_patches()
-        self.create_summary()
 
 
 
@@ -408,29 +407,6 @@ class Patch(config.Config):
             #
             with open(target_file, 'wt', encoding = 'utf-8') as f:
                 f.write(file_content)
-
-
-
-    def create_summary(self):
-        # create overall patch file
-        payload = '--\n-- EXECUTE PATCH FILES\n--\n\n'
-
-        # non APEX schemas first
-        proceed = False
-        for file in sorted(self.patch_files):
-            payload += '@"./{}"\n'.format(file.replace(self.info_repo, '').lstrip('/'))
-            proceed = True
-        #
-        for file in sorted(self.patch_files_apex):
-            payload += '@"./{}"\n'.format(file.replace(self.info_repo, '').lstrip('/'))
-            proceed = True
-        payload += '\n'
-        #
-        if proceed:
-            with open(self.patch_file, 'w', encoding = 'utf-8', newline = '\n') as w:
-                w.write(payload)
-            #
-            print(payload)
 
 
 

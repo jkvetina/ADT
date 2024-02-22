@@ -1,5 +1,5 @@
 # coding: utf-8
-import sys, os, re, shutil, argparse
+import sys, os, re, shutil, argparse, datetime, glob
 #
 import config
 from lib import util
@@ -207,65 +207,10 @@ class Patch(config.Config):
             payload += '--\n-- {}\n-- {}\n--\n'.format(header, '-' * len(header))
 
             # get differences in between first and last commits
-            diffs           = {}
-            new_files       = []
-            deleted_files   = []
-            modifed_files   = []
-            #
-            for diff in self.first_commit_obj.diff(self.last_commit_obj):
-                file = diff.b_path.replace('\\', '/').replace('//', '/')
-                # 'a_blob', 'a_mode', 'a_path', 'a_rawpath', 'b_blob', 'b_mode', 'b_path', 'b_rawpath', 'change_type',
-                # 'copied_file', 'deleted_file', 'diff', 'new_file', 'raw_rename_from', 'raw_rename_to', 're_header',
-                # 'rename_from', 'rename_to', 'renamed', 'renamed_file', 'score'
-                #print(dir(x))
-                if file in rel_files and not (file in diffs):
-                    diffs[file] = diff
-                    if diff.new_file:
-                        new_files.append(file)
-                    elif diff.deleted_file:
-                        deleted_files.append(file)
-                    else:
-                        modifed_files.append(file)
-
-                    # detect APEX application
-                    if self.path_apex in file and self.apex_app_id == '':
-                        obj = self.get_file_object(file)
-                        #
-                        self.apex_app_id    = obj['apex_app_id']
-                        self.apex_workspace = obj['apex_workspace']
+            payload += self.get_differences(rel_files, target_schema)
 
             # create snapshot files
-            self.create_snapshots(diffs, target_schema)
-
-            # show commits only with relevant files
-            payload += '\n-- COMMITS:\n'
-            for _, commit in self.relevant_commits.items():
-                files_found = False
-                for file in commit.stats.files:
-                    if file in rel_files:
-                        files_found = True
-                        break
-                #
-                if files_found:
-                    payload += '--   {}\n'.format(commit.summary)
-
-            # split files by the change type
-            if len(new_files) > 0:
-                payload += '--\n-- NEW FILES:\n'
-                for file in sorted(new_files):
-                    payload += '--   {}\n'.format(file)  # diffs[file].change_type
-            #
-            if len(deleted_files) > 0:
-                payload += '--\n-- DELETED FILES:\n'
-                for file in sorted(deleted_files):
-                    payload += '--   {}\n'.format(file)  # diffs[file].change_type
-            #
-            if len(modifed_files) > 0:
-                payload += '--\n-- MODIFIED FILES:\n'
-                for file in sorted(modifed_files):
-                    payload += '--   {}\n'.format(file)  # diffs[file].change_type
-            #
-            payload += '--\n\n'
+            self.create_snapshots(target_schema)
 
             payload += 'SET DEFINE OFF\n'
             payload += 'SET TIMING OFF\n'
@@ -285,7 +230,7 @@ class Patch(config.Config):
 
             # add properly sorted files (objects by dependencies) to the patch
             apex_pages = []
-            for file in self.dependencies_sorted(diffs.keys()):
+            for file in self.dependencies_sorted():
                 if self.apex_app_id != '':
                     # move APEX pages to the end + create script to delete them in patch
                     if '/application/pages/page' in file:
@@ -341,7 +286,71 @@ class Patch(config.Config):
 
 
 
-    def dependencies_sorted(self, files):
+    def get_differences(self, rel_files, target_schema):
+        self.diffs      = {}    # cleanup
+        payload         = ''
+        new_files       = []
+        deleted_files   = []
+        modifed_files   = []
+        #
+        for diff in self.first_commit_obj.diff(self.last_commit_obj):
+            file = diff.b_path.replace('\\', '/').replace('//', '/')
+            # 'a_blob', 'a_mode', 'a_path', 'a_rawpath', 'b_blob', 'b_mode', 'b_path', 'b_rawpath', 'change_type',
+            # 'copied_file', 'deleted_file', 'diff', 'new_file', 'raw_rename_from', 'raw_rename_to', 're_header',
+            # 'rename_from', 'rename_to', 'renamed', 'renamed_file', 'score'
+            #print(dir(x))
+            if file in rel_files and not (file in self.diffs):
+                self.diffs[file] = diff
+                if diff.new_file:
+                    new_files.append(file)
+                elif diff.deleted_file:
+                    deleted_files.append(file)
+                else:
+                    modifed_files.append(file)
+
+                # detect APEX application
+                if self.path_apex in file and self.apex_app_id == '':
+                    obj = self.get_file_object(file)
+                    #
+                    self.apex_app_id    = obj['apex_app_id']
+                    self.apex_workspace = obj['apex_workspace']
+
+        # show commits only with relevant files
+        payload += '-- COMMITS:\n'
+        for _, commit in self.relevant_commits.items():
+            files_found = False
+            for file in commit.stats.files:
+                if file in rel_files:
+                    files_found = True
+                    break
+            #
+            if files_found:
+                payload += '--   {}\n'.format(commit.summary)
+
+        # split files by the change type
+        if len(new_files) > 0:
+            payload += '--\n-- NEW FILES:\n'
+            for file in sorted(new_files):
+                payload += '--   {}\n'.format(file)  # self.diffs[file].change_type
+        #
+        if len(deleted_files) > 0:
+            payload += '--\n-- DELETED FILES:\n'
+            for file in sorted(deleted_files):
+                payload += '--   {}\n'.format(file)  # self.diffs[file].change_type
+        #
+        if len(modifed_files) > 0:
+            payload += '--\n-- MODIFIED FILES:\n'
+            for file in sorted(modifed_files):
+                payload += '--   {}\n'.format(file)  # self.diffs[file].change_type
+        #
+        payload += '--\n\n'
+        #
+        return payload
+
+
+
+    def dependencies_sorted(self):
+        files = self.diffs.keys()
         #
         # @TODO:
         #
@@ -395,7 +404,7 @@ class Patch(config.Config):
             with open(target_file, 'rt', encoding = 'utf-8') as f:
                 file_content = f.read()
             #
-            file_content = re.sub(r",p_last_updated_by=>'([^']+)'", ",p_last_updated_by=>'{}'".format(self.patch_code), file_content)
+            file_content = re.sub(r",p_last_updated_by=>'([^']+)'",         ",p_last_updated_by=>'{}'".format(self.patch_code), file_content)
             file_content = re.sub(r",p_last_upd_yyyymmddhh24miss=>'(\d+)'", ",p_last_upd_yyyymmddhh24miss=>'{}'".format(self.today_full_raw), file_content)
             #
             with open(target_file, 'wt', encoding = 'utf-8') as w:

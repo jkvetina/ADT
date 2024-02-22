@@ -267,6 +267,18 @@ class Patch(config.Config):
             #
             payload += '--\n\n'
 
+            payload += 'SET DEFINE OFF\n'
+            payload += 'SET TIMING OFF\n'
+            payload += 'SET SQLBLANKLINES ON\n'
+            payload += '--\n'
+            payload += 'WHENEVER OSERROR EXIT ROLLBACK;\n'
+            payload += 'WHENEVER SQLERROR EXIT ROLLBACK;\n'
+            payload += '--\n'
+
+            # spool output to the file
+            if self.spooling:
+                payload += 'SPOOL "{}" APPEND;\n\n'.format(self.patch_spool_log)
+
             # for APEX patches add some query
             if self.apex_app_id != '':
                 payload += self.fix_apex_start()
@@ -290,10 +302,13 @@ class Patch(config.Config):
 
                 # attach file reference
                 if self.spooling:
-                    payload += 'PROMPT ;\n'
-                    payload += 'PROMPT -- FILE: {}\n'.format(file)
+                    payload += 'PROMPT --;\n'
+                    payload += 'PROMPT -- FILE: {};\n'.format(file)
+                    payload += 'PROMPT --;\n'
                 #
-                payload += self.file_template.replace('#FILE#', file)
+                payload += self.patch_file_link.replace('{$FILE}', file)
+                if self.spooling:
+                    payload += 'PROMPT ;\n'
 
             # for APEX patches add some query
             if self.apex_app_id != '':
@@ -307,11 +322,19 @@ class Patch(config.Config):
 
             # add grants for non APEX schemas
             if self.apex_app_id == '':
-                payload += self.get_grants_made(diffs)
+                if self.spooling:
+                    payload += 'PROMPT --;\n'
+                    payload += 'PROMPT -- GRANTS;\n'
+                    payload += 'PROMPT --;\n'
+                #
+                payload += self.get_grants_made()
 
             # spool output end
             if self.spooling:
-                payload += '\nSPOOL OFF\n\n'
+                payload += 'PROMPT --;\n'
+                payload += 'PROMPT -- SUCCESS;\n'
+                payload += 'PROMPT --;\n'
+                payload += 'SPOOL OFF;\n'
 
             # store payload in file
             self.create_patch_file(payload, target_schema)
@@ -421,7 +444,6 @@ class Patch(config.Config):
         # start APEX import
         payload += 'SET DEFINE OFF\n'
         payload += 'SET TIMING OFF\n'
-        payload += 'WHENEVER SQLERROR EXIT ROLLBACK\n'
         payload += '--\n'
 
         # attach starting file

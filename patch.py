@@ -102,7 +102,8 @@ class Patch(config.Config):
         self.current_commit_obj = self.repo.commit('HEAD')
         self.current_commit     = self.current_commit_obj.count()
 
-        print('--\n-- PATCH {}\n--\n'.format(self.patch_code))
+        util.header('CREATING PATCH ' + self.patch_code)
+        print('{}\n\n'.format(self.patch_folder.replace(self.info_repo, './')))
 
         # workflow
         self.find_commits()
@@ -131,6 +132,8 @@ class Patch(config.Config):
 
             # store relevant commit
             self.relevant_commits[commit.count()] = commit
+            if self.debug:
+                print(commit.summary)
 
             # process files in commit
             files_found = []
@@ -138,6 +141,10 @@ class Patch(config.Config):
                 # process just the listed extensions (in the config)
                 if os.path.splitext(file)[1] != '.sql':
                     continue
+
+                if self.debug:
+                    print('  - {}'.format(os.path.splitext(file)))
+                    print('', self.path_objects)
 
                 # process just database and APEX exports
                 if not (file.startswith(self.path_objects)) and not (file.startswith(self.path_apex)):

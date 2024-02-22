@@ -62,27 +62,27 @@ class Patch(config.Config):
 
 
     def create_patch(self):
+        # internal variables
+        self.patch_code         = self.args.patch
         self.patch_files        = []
         self.patch_files_apex   = []
-        self.patch_code         = self.args.patch
-        self.patch_file         = '{}/patch/{}.sql'.format(self.info_repo, self.patch_code)
-        self.patch_file_curr    = ''
-        self.search_message     = self.args.search or [self.patch_code]
+        self.patch_file         = ''
+        self.patch_prefix       = self.patch_prefix.replace('{$TODAY_PATCH}', self.today_patch)
+        self.patch_prefix       = self.patch_prefix.replace('{$PATCH_SEQ}', self.args.get('seq', ''))
+        self.patch_prefix       = self.patch_prefix.rstrip('-').rstrip('_')
+        self.patch_folder       = self.patch_file_pattern.format(self.info_repo, self.patch_root, self.patch_prefix, self.patch_code)
         self.commits            = self.args.commit
+        self.search_message     = self.args.search or [self.patch_code]
         self.info_branch        = self.args.branch or self.info_branch or self.repo.active_branch
-        self.file_template      = '@"./#FILE#"\n'.format(self.patch_code)
-        self.grants_made        = '{}{}grants/{}.sql'.format(self.info_repo, self.path_objects, self.info_schema)
+        self.grants_made        = self.grants_pattern.format(self.info_repo, self.path_objects, self.info_schema)
         self.spooling           = True
-
-        # pull some variables from config
-        self.path_objects       = self.path_objects
-        self.path_apex          = self.path_apex
 
         # track changes
         self.all_commits        = {}
         self.relevant_commits   = {}
         self.relevant_files     = {}
         self.relevant_objects   = {}
+        self.diffs              = {}
 
         # APEX related
         self.apex_app_id        = ''

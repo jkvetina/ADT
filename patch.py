@@ -68,7 +68,7 @@ class Patch(config.Config):
         self.patch_files_apex   = []
         self.patch_file         = ''
         self.patch_prefix       = self.patch_prefix.replace('{$TODAY_PATCH}', self.today_patch)
-        self.patch_prefix       = self.patch_prefix.replace('{$PATCH_SEQ}', self.args.get('seq', ''))
+        self.patch_prefix       = self.patch_prefix.replace('{$PATCH_SEQ}', self.args.get('seq', '') or '')
         self.patch_prefix       = self.patch_prefix.rstrip('-').rstrip('_')
         self.patch_folder       = self.patch_file_pattern.format(self.info_repo, self.patch_root, self.patch_prefix, self.patch_code)
         self.commits            = self.args.commit
@@ -541,11 +541,11 @@ if __name__ == "__main__":
 
     # actions and flags
     parser.add_argument('-p',   '-patch',       '--patch',      help = 'Patch code (name for the patch files)')
+    parser.add_argument(        '-seq',         '--seq',        help = 'Sequence in patch folder, {$PATCH_SEQ}')
     parser.add_argument('-s',   '-search',      '--search',     help = 'Search string for Git to search just for relevant commits',     default = None, nargs = '*')
     parser.add_argument('-c',   '-commit',      '--commit',     help = 'Process just specific commits',                                 default = None, nargs = '*')
     parser.add_argument('-b',   '-branch',      '--branch',     help = 'To override active branch',                                     default = None)
     parser.add_argument('-d',   '-debug',       '--debug',      help = 'Turn on the debug/verbose mode',                                default = False, nargs = '?', const = True)
-    parser.add_argument(        '-seq',         '--seq',        help = 'Sequence in patch folder, {$PATCH_SEQ}')
 
     # key or key location to encrypt passwords
     parser.add_argument('-k',   '-key',         '--key',        help = 'Key or key location to encypt passwords')

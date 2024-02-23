@@ -65,20 +65,19 @@ class Oracle:
     def connect(self):
         os.environ['NLS_LANG'] = self.tns['lang']
 
-        # might need to adjust client for classic connections
-        if len(self.tns.get('thick', '') or '') > 0:
-            if isinstance(self.tns['thick'], str):
-                client = os.path.abspath(os.path.dirname(self.tns['thick']))
-                if os.path.exists(client):
-                    try:
-                        oracledb.init_oracle_client(lib_dir = client)
-                        print('USING THICK CLIENT...\n{}'.format(client))
-                    except:
-                        try:
-                            oracledb.init_oracle_client()  # for password issues
-                            print('USING THICK CLIENT...')
-                        except:
-                            pass
+        # might need to adjust client for classic connections or for DPY-3015 password issues
+        client = self.tns.get('thick', '')
+        if client == 'Y':
+            client = os.environ.get('CLIENT_HOME')
+        #
+        if client != '':
+            util.assert_(os.path.exists(client), 'CLIENT NOT VALID')
+            try:
+                oracledb.init_oracle_client(lib_dir = client)
+            except:
+                oracledb.init_oracle_client()
+            #
+            print('USING THICK CLIENT: {}\n'.format(client))
 
         # use wallet to connect
         if 'wallet' in self.tns and len(self.tns['wallet']) > 0:
@@ -202,7 +201,7 @@ class Oracle:
 
         # for Windows remove temp file
         if os.name == 'nt' and os.path.exists(self.sqlcl_temp_file):
-            os.remove(apex_tmp)
+            os.remove(self.sqlcl_temp_file)
         #
         return output
 

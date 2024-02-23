@@ -342,7 +342,9 @@ class Config(util.Attributed):
                     connections[env] = arguments
 
         # merge = overwrite root attributes, but keep other schemas
-        backup_schemas = connections[env_name].get('schemas', {})
+        backup_schemas = {}
+        if env_name in connections:
+            backup_schemas = connections[env_name].get('schemas', {})
         connections[env_name] = dict(passed_args)   # copy
         for schema, data in backup_schemas.items():
             if schema != schema_name:

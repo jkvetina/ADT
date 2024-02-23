@@ -172,6 +172,10 @@ class Config(util.Attributed):
             # check connection file and test connectivity
             self.conn = self.db_connect()
 
+            # check APEX args (show matching apps)
+            if self.connection.get('app') != None or self.connection.get('workspace'):
+                self.check_apex()
+
             # check config file, rerun this when specific schema is processed to load schema overrides
             self.init_config()
 
@@ -395,6 +399,27 @@ class Config(util.Attributed):
         # check connectivity
         tns = self.init_connection()
         return wrapper.Oracle(tns, debug = self.debug, ping_sqlcl = ping_sqlcl)
+
+
+
+    def check_apex(self):
+        args = {
+            'workspace' : self.connection.get('workspace'),
+            'apps'      : ',{},'.format(self.connection.get('app')).replace(',,', ''),
+        }
+        data = self.conn.fetch_assoc("""
+            SELECT a.workspace, a.owner, a.application_id AS app_id, a.alias, a.version
+            FROM apex_applications a
+            WHERE (a.workspace = :workspace OR :workspace IS NULL)
+                AND (:apps LIKE '%,' || TO_CHAR(a.application_id) || ',%' OR :apps IS NULL)
+        """, **args)
+        #
+        if len(data) > 0:
+            util.header('APEX APPLICATIONS:')
+            util.show_table(data,
+                columns     = self.conn.cols,
+                right_align = ['app_id'],
+            )
 
 
 

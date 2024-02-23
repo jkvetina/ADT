@@ -146,16 +146,38 @@ def debug_dots(payload, length, mask_keys = []):
 
 
 
-def show_table(data, columns, right_align = [], spacer = 3, start = 2):
+def show_table(data, columns = [], right_align = [], spacer = 3, start = 2):
+    # exception for 1 line dictionary
+    if isinstance(data, dict) and columns == []:
+        columns = list(data.keys())
+        data    = [data]
+
+    # all columns align to right
+    if isinstance(right_align, bool) and right_align:
+        right_align = columns
+
     # get column widths from headers and data
-    widths  = []
-    align   = []
-    for name in columns:
+    widths      = []
+    align       = []
+    auto_align  = {}
+    #
+    for i, name in enumerate(columns):
         widths.append(len(name))
         align.append('R' if (name.upper() in right_align or name.lower() in right_align) else 'L')
+        auto_align[i] = True
+    #
     for row in data:
-        for i, col in enumerate(row):
-            widths[i] = max(widths[i], len(str(row[col])))
+        for i, name in enumerate(row):
+            value       = str(row[name])
+            widths[i]   = max(widths[i], len(value))
+            #
+            if not value.isnumeric():
+                auto_align[i] = False
+
+    # auto align numeric columns to the right
+    for i, numeric in auto_align.items():
+        if numeric:
+            align[i] = 'R'
 
     # create pattern for line replacement
     pattern     = start * ' '

@@ -416,10 +416,7 @@ class Config(util.Attributed):
         #
         if len(data) > 0:
             util.header('APEX APPLICATIONS:')
-            util.show_table(data,
-                columns     = self.conn.cols,
-                right_align = ['app_id'],
-            )
+            util.show_table(data, self.conn.cols)
 
 
 

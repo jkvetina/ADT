@@ -43,7 +43,7 @@ class Oracle:
         self.get_versions()
 
         # test SQLcl connectivity
-        if ping_sqlcl:
+        if (ping_sqlcl or self.tns.get('workspace', None) != None):
             output  = self.sqlcl_request('DESC DUAL')
             lines   = output.splitlines()[:5]
             #

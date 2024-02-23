@@ -170,7 +170,7 @@ class Config(util.Attributed):
                 self.create_connection()
 
             # check connection file and test connectivity
-            self.db_connect(ping_sqlcl = True)
+            self.conn = self.db_connect()
 
             # check config file, rerun this when specific schema is processed to load schema overrides
             self.init_config()

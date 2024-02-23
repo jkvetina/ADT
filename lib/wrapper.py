@@ -28,16 +28,17 @@ class Oracle:
             util.raise_error('DB_CONNECT EXPECTS DICTIONARY')
         #
         self.tns.update(tns)
-        self.tns['host'] = self.tns['hostname'] if 'hostname' in self.tns else None
-        self.versions = {}
+        self.tns        = util.Attributed(self.tns)
+        self.tns.host   = self.tns.hostname if 'hostname' in self.tns else None
+        self.versions   = {}
 
         # debug mode from config file or from caller
-        self.debug = self.tns['debug'] if 'debug' in self.tns else False
+        self.debug = self.tns.debug if 'debug' in self.tns else False
         if not self.debug:
             self.debug = debug
 
         # auto connect
-        util.header('CONNECTING TO {}:'.format(self.tns['desc']))
+        util.header('CONNECTING TO {}:'.format(self.tns.desc))
         self.connect()
         self.get_versions()
 
@@ -63,25 +64,24 @@ class Oracle:
 
 
     def connect(self):
-        os.environ['NLS_LANG'] = self.tns['lang']
+        os.environ['NLS_LANG'] = self.tns.lang
 
         # might need to adjust client for classic connections or for DPY-3015 password issues
-        client = self.tns.get('thick', '')
+        client = self.tns.get('thick', None)
         if client == 'Y':
-            client = os.environ.get('CLIENT_HOME')
+            client = os.environ.get('CLIENT_HOME') or 'Y'
         #
-        if client != '':
-            util.assert_(os.path.exists(client), 'CLIENT NOT VALID')
-            try:
+        if client != None and client != '':
+            if os.path.exists(client):
                 oracledb.init_oracle_client(lib_dir = client)
-            except:
+            else:
                 oracledb.init_oracle_client()
             #
             print('USING THICK CLIENT: {}\n'.format(client))
 
         # use wallet to connect
-        if 'wallet' in self.tns and len(self.tns['wallet']) > 0:
-            wallet = os.path.abspath(self.tns['wallet']).rstrip('.zip')
+        if 'wallet' in self.tns and len(self.tns.wallet) > 0:
+            wallet = os.path.abspath(self.tns.wallet).rstrip('.zip')
             if not os.path.exists(wallet):
                 util.raise_error('INVALID WALLET', wallet)
             #

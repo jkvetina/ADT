@@ -117,6 +117,9 @@ class Oracle:
                 encoding    = 'utf8'
             )
         except Exception:
+            if self.debug:
+                print(traceback.format_exc())
+                print(sys.exc_info()[2])
             util.raise_error('CONNECTION FAILED', self.get_error_code())
 
 

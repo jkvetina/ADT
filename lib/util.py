@@ -18,39 +18,34 @@ class Attributed(dict):
 
 
 def get_encryption_key(password, salt):
-    kdf = PBKDF2HMAC(
+    k = PBKDF2HMAC(
         algorithm   = hashes.SHA256(),
         length      = 32,
-        salt        = salt,
+        salt        = salt.encode(),
         iterations  = 100000,
         backend     = default_backend()
     )
-    return base64.urlsafe_b64encode(kdf.derive(password))
+    return Fernet(base64.urlsafe_b64encode(k.derive((7 * password).encode())))
 
 
 
-def encrypt(message, password):
-    iter    = 100000
-    salt    = secrets.token_bytes(16)
-    key     = get_encryption_key(password.encode(), salt)
-    #
-    return base64.urlsafe_b64encode(
-        b'%b%b%b' % (
-            salt,
-            iter.to_bytes(4, 'big'),
-            base64.urlsafe_b64decode(Fernet(key).encrypt(message.encode())),
-        )
-    ).decode('ascii')
+def encrypt(message, password, salt = ''):
+    key     = get_encryption_key(password, salt)
+    token   = key.encrypt(message.encode())
+
+    # check decryption of encrypted password
+    if message != decrypt(token, password, salt):
+        raise_error('ENCRYPTION FAILED!')
+    return token
 
 
 
-def decrypt(token, password):
-    decoded = base64.urlsafe_b64decode(token.encode('ascii'))
-    salt    = decoded[:16]
-    token   = base64.urlsafe_b64encode(decoded[20:])
-    key     = get_encryption_key(password.encode(), salt)
-    #
-    return Fernet(key).decrypt(token).decode()
+def decrypt(token, password, salt = ''):
+    key = get_encryption_key(password, salt)
+    try:
+        return key.decrypt(token).decode()
+    except:
+        raise_error('PASSWORD DECRYPTION FAILED')
 
 
 

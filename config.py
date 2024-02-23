@@ -365,15 +365,7 @@ class Config(util.Attributed):
         if not ('key' in self.args) or self.args.key == None:
             util.raise_error('NEED KEY TO ENCRYPT PASSWORDS!')
         #
-        original    = pwd
-        encrypted   = util.encrypt(original, self.args.key)
-
-        # check decryption of encrypted password
-        if original != util.decrypt(encrypted, self.args.key):
-            util.raise_error('ENCRYPTION FAILED!')
-        original, pwd = '', ''
-        #
-        return encrypted
+        return util.encrypt(pwd, self.args.key)
 
 
 

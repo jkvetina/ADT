@@ -43,14 +43,18 @@ class Recompile(config.Config):
         print('RECOMPILING')
         #
         objects = {}
-        data = self.db.fetch_assoc(query.overview, object_name = self.args.name)
+        args = {
+            'object_name'   : self.args.name,
+            'object_type'   : self.args.type,
+        }
+        data = self.conn.fetch_assoc(query.overview, **args)
         for row in data:
-            objects[row.object_type] = [row.object_count, row.invalid or 0]
+            objects[row.object_type] = [row.total, row.invalid or 0]
             if self.args.force:
                 objects[row.object_type][1] = 0
 
         # get objects to recompile
-        data_todo = self.db.fetch_assoc(query.objects_to_recompile, object_type = self.args.type, object_name = self.args.name, force = 'Y' if self.args.force else '')
+        data_todo = self.conn.fetch_assoc(query.objects_to_recompile, force = 'Y' if self.args.force else '', **args)
         #
         progress_target = len(data_todo)
         progress_done   = 0
@@ -112,10 +116,9 @@ class Recompile(config.Config):
         if not self.debug:
             print()
         print()
-        util.header('DATABASE OBJECTS:')
 
         # calculate difference
-        data = self.db.fetch_assoc(query.overview, object_name = self.args.name)
+        data = self.conn.fetch_assoc(query.overview, **args)
         for row in data:
             if not self.args.force:
                 objects[row.object_type][1] = objects[row.object_type][1] - (row.invalid or 0)

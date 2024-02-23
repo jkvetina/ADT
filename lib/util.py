@@ -30,6 +30,9 @@ def get_encryption_key(password, salt):
 
 
 def encrypt(message, password, salt = ''):
+    if (password == None or password == ''):
+        raise_error('NEED KEY TO ENCRYPT PASSWORDS!')
+    #
     key     = get_encryption_key(password, salt)
     token   = key.encrypt(message.encode())
 
@@ -41,6 +44,9 @@ def encrypt(message, password, salt = ''):
 
 
 def decrypt(token, password, salt = ''):
+    if (password == None or password == ''):
+        raise_error('NEED KEY TO DECRYPT PASSWORDS!')
+    #
     key = get_encryption_key(password, salt)
     try:
         return key.decrypt(token).decode()

@@ -309,7 +309,7 @@ class Config(util.Attributed):
             if arg in self.password_flags:
                 flag = self.password_flags[arg]
                 if not (self.args.decrypt) and arg in self.password_args:
-                    value = self.encrypt_password(value)
+                    value = util.encrypt(value, self.args.key)
 
             # add to the proper node
             for arg in [arg, flag]:
@@ -357,14 +357,6 @@ class Config(util.Attributed):
             payload = yaml.dump(connections, allow_unicode = True, default_flow_style = False, indent = 4) + '\n'
             payload = util.fix_yaml(payload)
             f.write(payload)
-
-
-
-    def encrypt_password(self, pwd):
-        if not ('key' in self.args) or self.args.key == None:
-            util.raise_error('NEED KEY TO ENCRYPT PASSWORDS!')
-        #
-        return util.encrypt(pwd, self.args.key)
 
 
 

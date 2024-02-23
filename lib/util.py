@@ -148,9 +148,12 @@ def debug_dots(payload, length, mask_keys = []):
 
 def show_table(data, columns = [], right_align = [], spacer = 3, start = 2):
     # exception for 1 line dictionary
-    if isinstance(data, dict) and columns == []:
-        columns = list(data.keys())
-        data    = [data]
+    if columns == []:
+        if isinstance(data, dict):
+            columns = list(data.keys())         # get from dictionary keys
+            data    = [data]
+        elif isinstance(data, list):
+            columns = list(data[0].keys())      # get from first row
 
     # all columns align to right
     if isinstance(right_align, bool) and right_align:

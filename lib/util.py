@@ -140,6 +140,37 @@ def debug_dots(payload, length, mask_keys = []):
 
 
 
+def show_table(data, columns, right_align = [], spacer = 3, start = 2):
+    # get column widths from headers and data
+    widths  = []
+    align   = []
+    for name in columns:
+        widths.append(len(name))
+        align.append('R' if (name.upper() in right_align or name.lower() in right_align) else 'L')
+    for row in data:
+        for i, col in enumerate(row):
+            widths[i] = max(widths[i], len(str(row[col])))
+
+    # create pattern for line replacement
+    pattern     = start * ' '
+    splitter    = []
+    for i, w in enumerate(widths):
+        pattern += '{:' + align[i].replace('L', '<').replace('R', '>') + str(w) + '}' + (' ' * spacer)
+        splitter.append(w * '-')
+
+    # show data
+    print()
+    print(pattern.format(*columns).upper().replace('_', ' '))
+    print(pattern.format(*splitter))
+    for i, row in enumerate(data):
+        args = []
+        for name in columns:
+            args.append(row.get(name.lower(), '') or '')
+        print(pattern.format(*args))
+    print()
+
+
+
 def debug_table(payload, pattern = '  {:>16} | {}', right = [1], upper = True, sort = True, skip_none = True, skip = []):
     if isinstance(payload, dict):
         keys = payload.keys()

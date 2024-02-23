@@ -72,6 +72,7 @@ class Patch(config.Config):
         self.patch_prefix       = self.patch_prefix.rstrip('-').rstrip('_')
         self.patch_folder       = self.patch_file_pattern.format(self.info_repo, self.patch_root, self.patch_prefix, self.patch_code)
         self.commits            = self.args.commit
+        self.commits_count      = {}
         self.search_message     = self.args.search or [self.patch_code]
         self.info_branch        = self.args.branch or self.info_branch or self.repo.active_branch
         self.grants_made        = self.grants_pattern.format(self.info_repo, self.path_objects, self.info_schema)
@@ -82,7 +83,6 @@ class Patch(config.Config):
         self.relevant_commits   = {}
         self.relevant_files     = {}
         self.relevant_objects   = {}
-        self.relevant_uq_files  = {}
         self.diffs              = {}
 
         # APEX related
@@ -111,11 +111,14 @@ class Patch(config.Config):
 
         # show summary
         util.header('PATCH CREATED:', self.patch_folder.replace(self.info_repo, './'))
-        util.show_table({
-            'schemas'   : ', '.join(sorted(self.relevant_files.keys())),
-            'commits'   : len(self.relevant_commits),
-            'files'     : len(self.relevant_uq_files),
-        })
+        summary = []
+        for target_schema in sorted(self.relevant_files.keys()):
+            summary.append({
+                'schema_name'   : target_schema,
+                'commits'       : len(self.commits_count[target_schema]),
+                'files'         : len(self.relevant_files[target_schema]),
+            })
+        util.show_table(summary)
 
         # create snapshot folder
         if not os.path.exists(self.patch_folder):
@@ -173,10 +176,14 @@ class Patch(config.Config):
                 #
                 if not (schema in self.relevant_files):
                     self.relevant_files[schema] = []
-                self.relevant_files[schema].append(file)
+                if not (file in self.relevant_files[schema]):
+                    self.relevant_files[schema].append(file)
+                if not (schema in self.commits_count):
+                    self.commits_count[schema] = []
+                if not (commit.count() in self.commits_count[schema]):
+                    self.commits_count[schema].append(commit.count())
                 #
                 files_found.append(file)
-                self.relevant_uq_files[file] = (self.relevant_uq_files.get(file, 0) or 0) + 1
 
             # show commits and files
             if len(files_found) > 0:

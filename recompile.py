@@ -127,11 +127,11 @@ class Recompile(config.Config):
             objects[row.object_type].append(row.invalid or '')
 
         # show to user
-        pattern = ' {:<21} | {:>7} | {:>7} | {:>7}'
-        print(pattern.format('OBJECT TYPE', 'TOTAL', 'FIXED', 'INVALID'))
-        for object_type, data in objects.items():
-            print(pattern.format(object_type, *data))
-        print()
+        util.header('OBJECTS OVERVIEW:')
+        util.show_table(data,
+            columns     = self.conn.cols,
+            right_align = ['total', 'fixed', 'invalid'],
+        )
 
 
 

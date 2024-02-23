@@ -82,6 +82,7 @@ class Patch(config.Config):
         self.relevant_commits   = {}
         self.relevant_files     = {}
         self.relevant_objects   = {}
+        self.relevant_uq_files  = {}
         self.diffs              = {}
 
         # APEX related
@@ -103,10 +104,18 @@ class Patch(config.Config):
         self.current_commit     = self.current_commit_obj.count()
 
         util.header('CREATING PATCH ' + self.patch_code)
-        print('{}\n\n'.format(self.patch_folder.replace(self.info_repo, './')))
+        print()
 
         # workflow
         self.find_commits()
+
+        # show summary
+        util.header('PATCH CREATED:', self.patch_folder.replace(self.info_repo, './'))
+        util.show_table({
+            'schemas'   : ', '.join(sorted(self.relevant_files.keys())),
+            'commits'   : len(self.relevant_commits),
+            'files'     : len(self.relevant_uq_files),
+        })
 
         # create snapshot folder
         if not os.path.exists(self.patch_folder):
@@ -167,6 +176,7 @@ class Patch(config.Config):
                 self.relevant_files[schema].append(file)
                 #
                 files_found.append(file)
+                self.relevant_uq_files[file] = (self.relevant_uq_files.get(file, 0) or 0) + 1
 
             # show commits and files
             if len(files_found) > 0:
@@ -178,8 +188,7 @@ class Patch(config.Config):
         # check number of commits
         found_commits = self.relevant_commits.keys()
         if len(found_commits) == 0:
-            print('No commits found!\n\n')
-            return
+            util.raise_error('NO COMMITS FOUND!')
 
         # get last version (max) and version before first change (min)
         self.first_commit       = min(self.relevant_commits) - 1

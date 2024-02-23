@@ -37,7 +37,7 @@ class Recompile(config.Config):
         super().__init__(parser)
 
         # connect to the database
-        self.db_connect()
+        self.conn = self.db_connect()
 
         # show objects overview
         print('RECOMPILING')
@@ -105,7 +105,7 @@ class Recompile(config.Config):
 
             # recompile object
             try:
-                self.db.execute(q)
+                self.conn.execute(q)
             except Exception:
                 pass
         #

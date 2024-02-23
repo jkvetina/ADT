@@ -109,7 +109,7 @@ class Config(util.Attributed):
         self.info_schema    = self.args.schema
         #
         self.root           = util.fix_path(os.path.dirname(os.path.realpath(__file__)))
-        self.db             = None      # database connection object
+        self.conn           = None      # database connection object
 
         # repo attributes
         self.repo           = None      # set through init_repo()
@@ -322,10 +322,6 @@ class Config(util.Attributed):
                         passed_args['schemas'][schema_name][arg] = value
                         passed_args.pop(arg, None)
 
-        # show parameters
-        util.header('CREATING {} CONNECTION:'.format(found_type.upper()))
-        util.debug_table(passed_args, skip = self.password_args)
-
         # prepare target folder
         file    = self.replace_tags(output_file or self.connection_default)
         dir     = os.path.dirname(file)
@@ -350,14 +346,17 @@ class Config(util.Attributed):
             if schema != schema_name:
                 connections[env_name]['schemas'][schema] = data
 
+        # show parameters
+        util.header('CREATING {} CONNECTION:'.format(found_type.upper()))
+        print('{}\n'.format(file))
+        #util.debug_table(passed_args, skip = self.password_args)
+
         # store connection parameters in the yaml file
         with open(file, 'wt', encoding = 'utf-8') as f:
             # convert dict to yaml string
             payload = yaml.dump(connections, allow_unicode = True, default_flow_style = False, indent = 4) + '\n'
             payload = util.fix_yaml(payload)
             f.write(payload)
-            util.header('FILE CREATED:', ', '.join(sorted(connections.keys())))
-            print('   {}\n'.format(file))
 
 
 
@@ -403,7 +402,7 @@ class Config(util.Attributed):
     def db_connect(self, ping_sqlcl = False):
         # check connectivity
         tns = self.init_connection()
-        self.db = wrapper.Oracle(tns, debug = self.debug, ping_sqlcl = ping_sqlcl)
+        return wrapper.Oracle(tns, debug = self.debug, ping_sqlcl = ping_sqlcl)
 
 
 

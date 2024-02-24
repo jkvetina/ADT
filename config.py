@@ -152,11 +152,6 @@ class Config(util.Attributed):
             util.assert_(self.args.project  is not None, 'MISSING PROJECT ARGUMENT')
             util.assert_(self.args.env      is not None, 'MISSING ENV ARGUMENT')
 
-        # prepare date formats
-        self.today              = datetime.datetime.today().strftime('%Y-%m-%d')            # YYYY-MM-DD
-        self.today_full         = datetime.datetime.today().strftime('%Y-%m-%d %H:%M')      # YYYY-MM-DD HH24:MI
-        self.today_full_raw     = datetime.datetime.today().strftime('%Y%m%d%H%M') + '00'
-
         # connect to repo, we need valid repo for everything
         self.init_repo()
 
@@ -429,6 +424,14 @@ class Config(util.Attributed):
                 if not ('{$' in file) and os.path.exists(file):
                     self.apply_config(file)
 
+        # prepare dates
+        for attr, value in self.config.items():
+            if attr.startswith('today'):
+                try:
+                    self.config[attr] = datetime.datetime.today().strftime(value)
+                    print(attr, value, self.config[attr])
+                except:
+                    util.raise_error('INVALID DATE FORMAT', attr + '=' + value)
 
         # reconnect to repo, it could change the location
         self.init_repo()

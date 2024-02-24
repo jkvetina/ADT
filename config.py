@@ -438,14 +438,6 @@ class Config(util.Attributed):
                 if not ('{$' in file) and os.path.exists(file):
                     self.apply_config(file)
 
-        # prepare dates
-        for attr, value in self.config.items():
-            if attr.startswith('today'):
-                try:
-                    self.config[attr] = datetime.datetime.today().strftime(value)
-                except:
-                    util.raise_error('INVALID DATE FORMAT', attr + '=' + value)
-
         # reconnect to repo, it could change the location
         if self.debug:
             print()
@@ -463,6 +455,13 @@ class Config(util.Attributed):
                 #setattr(self.config, key, value)
                 self.config[key]                = self.replace_tags(value)
                 self.track_config[file][key]    = self.config[key]
+
+                # convert date formats to dates
+                if key.startswith('today'):
+                    try:
+                        self.config[key] = datetime.datetime.today().strftime(value)
+                    except:
+                        util.raise_error('INVALID DATE FORMAT', key + '=' + value)
 
         # one more loop to fix possible issues with wrong order
         if file in self.track_config:

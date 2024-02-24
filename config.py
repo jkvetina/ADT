@@ -427,13 +427,13 @@ class Config(util.Attributed):
             util.print_header('SEARCHING FOR CONFIG FILE')
 
         # search for config file(s)
-        for file in self.replace_tags(list(self.config_files)):           # copy
+        for file in self.replace_tags(list(self.config_files), ignore_missing = True):  # copy
             if not ('{$' in file) and os.path.exists(file):
                 self.apply_config(file)
 
         # allow schema overrides
-            for file in self.replace_tags(list(self.config_overrides)):   # copy
         if self.info.schema:
+            for file in self.replace_tags(list(self.config_overrides), ignore_missing = True):  # copy
                 if not ('{$' in file) and os.path.exists(file):
                     self.apply_config(file)
 
@@ -460,8 +460,8 @@ class Config(util.Attributed):
             self.track_config[file] = {}
             for key, value in util.get_yaml(f, file):
                 #setattr(self.config, key, value)
-                self.config[key] = value
-                self.track_config[file][key] = self.config[key]
+                self.config[key]                = self.replace_tags(value, ignore_missing = True)
+                self.track_config[file][key]    = self.config[key]
 
 
 
@@ -488,14 +488,18 @@ class Config(util.Attributed):
 
 
 
-    def replace_tags(self, payload, obj = None):
+    def replace_tags(self, payload, obj = None, ignore_missing = False):
         if obj == None:
             obj = self
 
         # if payload is a list, process all items individually
         if isinstance(payload, list):
             for i, item in enumerate(payload):
-                payload[i] = self.replace_tags(item, obj)
+                payload[i] = self.replace_tags(item, obj = obj, ignore_missing = ignore_missing)
+            return payload
+
+        # replace just strings
+        if not isinstance(payload, str):
             return payload
 
         # check passed argument types
@@ -533,7 +537,7 @@ class Config(util.Attributed):
                     payload = payload.replace(tag, value)
 
         # verify left over tags
-        if '{$' in payload:
+        if '{$' in payload and not ignore_missing:
             util.raise_error('LEFTOVER TAGS', payload)
         #
         return payload.strip().rstrip('-').rstrip('_').strip()

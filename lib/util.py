@@ -1,4 +1,4 @@
-import sys, os, re, yaml
+import sys, os, re, yaml, traceback
 import secrets, base64
 
 # for encryptions
@@ -114,7 +114,7 @@ def fix_yaml(payload):
 def get_yaml(h, file = ''):
     try:
         data = list(yaml.load_all(h, Loader = yaml.loader.SafeLoader))
-    except Exception:
+    except:
         raise_error('INVALID YAML FILE!', '{}\n'.format(file) if file != '' else '')
     #
     if len(data) > 0:
@@ -237,18 +237,31 @@ def print_pipes(payload, pattern = '  {:>16} | {}', right = [1], upper = True, s
 def quit(message = ''):
     if len(message) > 0:
         print(message)
+        print()
     sys.exit()
 
 
 
 def raise_error(message = '', additional = ''):
+    # print exception to screen
+    splitter    = 80 * '#'
+    exception   = traceback.format_exc().rstrip()
+    if exception != 'NoneType: None':
+        print('\n{}{}\n{}'.format(splitter, exception, splitter))
+
+    # show more friendly message at the end
     message = 'ERROR: {}'.format(message)
-    quit('\n{}\n{}{}'.format(message, '-' * len(message), ('\n' if len(additional) > 0 else '') + additional))
+    print('\n{}\n{}'.format(message, '-' * len(message)))
+    if len(additional) > 0:
+        print(additional)
+    print()
+    sys.exit()
 
 
 
-def assert_(condition, message = ''):
+def assert_(condition, message):
     if (not condition or condition == None or condition == ''):
-        message = 'ERROR: {}'.format(message)
-        quit('\n{}\n{}'.format(message, '-' * len(message)))
+        message = 'ASSERT: {}'.format(message)
+        print('\n{}\n{}'.format(message, '-' * len(message)))
+        sys.exit()
 

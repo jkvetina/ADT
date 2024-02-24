@@ -1,5 +1,5 @@
 # coding: utf-8
-import sys, os, re, shutil, argparse, datetime, glob
+import sys, os, re, shutil, argparse, glob
 #
 import config
 from lib import util
@@ -88,10 +88,10 @@ class Patch(config.Config):
         for target_schema in sorted(self.relevant_files.keys()):
             summary.append({
                 'schema_name'   : target_schema,
-                'commits'       : len(self.relevant_count[targhema]),
+                'commits'       : len(self.relevant_count[target_schema]),
                 'files'         : len(self.relevant_files[target_schema]),
             })
-        util.show_table(summary)
+        util.print_table(summary)
 
         # create snapshot folder
         if not os.path.exists(self.patch_folder):
@@ -149,10 +149,9 @@ class Patch(config.Config):
                 #
                 if not (schema in self.relevant_files):
                     self.relevant_files[schema] = []
+                    self.relevant_count[schema] = []
                 if not (file in self.relevant_files[schema]):
                     self.relevant_files[schema].append(file)
-                if not (schema in self.relevant_count):
-                    self.relevant_count[schema] = []
                 if not (commit.count() in self.relevant_count[schema]):
                     self.relevant_count[schema].append(commit.count())
                 #
@@ -240,7 +239,7 @@ class Patch(config.Config):
                     payload += 'PROMPT -- FILE: {};\n'.format(file)
                     payload += 'PROMPT --;\n'
                 #
-                payload += self.config.patch_file_link.replace('{$FILE}', file)
+                payload += self.config.patch_file_link.replace('{$FILE}', file) + '\n'
                 if self.config.spooling:
                     payload += 'PROMPT ;\n'
 
@@ -402,12 +401,12 @@ class Patch(config.Config):
 
 
     def fix_apex_start(self):
-        assert self.apex_app_id != ''
-        assert self.config.apex_workspace is not None
+        util.assert_(self.apex_app_id,              'MISSING ARGUMENT: APEX APP')
+        util.assert_(self.config.apex_workspace,    'MISSING ARGUMENT: APEX WORKSPACE')
         payload = ''
 
         # set proper workspace
-        payload += self.replace_tags(query.query_apex_version) + '\n'
+        payload += self.replace_tags(query.query_apex_version, ignore_missing = False) + '\n'
 
         # start APEX import
         payload += 'SET DEFINE OFF\n'
@@ -448,7 +447,7 @@ class Patch(config.Config):
         # recreate requested pages
         payload += '--\n'
         for file in apex_pages:
-            payload += self.config.patch_file_link.replace('{$FILE}', file)
+            payload += self.config.patch_file_link.replace('{$FILE}', file) + '\n'
         #
         return payload
 

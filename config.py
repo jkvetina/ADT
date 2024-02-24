@@ -449,7 +449,7 @@ class Config(util.Attributed):
             self.track_config[file] = {}
             for key, value in util.get_yaml(f, file):
                 #setattr(self.config, key, value)
-                self.config[key]                = self.replace_tags(value)
+                self.config[key]                = value
                 self.track_config[file][key]    = self.config[key]
 
                 # convert date formats to dates
@@ -459,14 +459,8 @@ class Config(util.Attributed):
                     except:
                         util.raise_error('INVALID DATE FORMAT', key + '=' + value)
 
-        # one more loop to fix possible issues with wrong order
-        if file in self.track_config:
-            for key, value in self.track_config[file].items():
-                self.config[key]                = self.replace_tags(value)
-                self.track_config[file][key]    = self.config[key]
-            #
-            if self.debug:
-                util.print_args(self.track_config[file])
+            # translate tags in multiple loops to fix possible issues with wrong order and inner tags
+            self.config = self.replace_tags(self.config, loops = 3)
 
 
 
@@ -505,10 +499,15 @@ class Config(util.Attributed):
         if obj == None:
             obj = self
 
-        # if payload is a list, process all items individually
+        # if payload is a list/dict, process all items individually
         if isinstance(payload, list):
             for i, item in enumerate(payload):
                 payload[i] = self.replace_tags(item, obj = obj, ignore_missing = ignore_missing)
+            return payload
+        #
+        elif isinstance(payload, dict):
+            for key, value in payload.items():
+                payload[key] = self.replace_tags(value, obj = obj, ignore_missing = ignore_missing)
             return payload
 
         # replace just strings

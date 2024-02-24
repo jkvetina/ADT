@@ -36,20 +36,21 @@ class Patch(config.Config):
     def __init__(self, parser):
         super().__init__(parser)
 
+        # process arguments and reinitiate config
         util.assert_(self.args.patch, 'MISSING ARGUMENT: PATCH_CODE')
         #
-        self.create_patch()
-
-
-
-    def create_patch(self):
-        # sanitize arguments
         self.patch_code         = self.args.patch
         self.patch_seq          = self.args.seq or ''
         self.search_message     = self.args.search or [self.patch_code]
         self.info.branch        = self.args.branch or self.info.branch or self.repo.active_branch
         self.commits            = self.args.commit
+        #
+        self.init_config()
+        self.create_patch()
 
+
+
+    def create_patch(self):
         # prepare internal variables
         self.patch_files        = []
         self.patch_files_apex   = []

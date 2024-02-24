@@ -435,25 +435,6 @@ class Config(util.Attributed):
 
 
 
-    def init_repo(self):
-        util.assert_(self.info_repo is not None, 'MISSING REPO ARGUMENT')
-
-        # setup and connect to the repo
-        self.info_repo  = self.replace_tags(self.info_repo)
-        prev_repo       = self.info_repo
-        #
-        if (self.info_repo != prev_repo or self.repo == None):
-            try:
-                self.repo       = git.Repo(self.info_repo)
-                self.repo_url   = self.repo.remotes[0].url
-            except Exception:
-                util.raise_error('INVALID GIT REPO!',
-                    '   - change current folder to the repo you would like to use.\n' +
-                    '   - or specify repo in args or system arguments\n'
-                )
-
-
-
     def apply_config(self, file):
         with open(file, 'rt', encoding = 'utf-8') as f:
             self.track_config[file] = {}
@@ -464,6 +445,26 @@ class Config(util.Attributed):
 
 
 
+    def init_repo(self):
+        util.assert_(self.info_repo, 'MISSING ARGUMENT: REPO')
+        if self.debug:
+            util.print_header('SEARCHING FOR GIT REPO')
+
+        # setup and connect to the repo
+        try:
+            self.repo       = git.Repo(self.info_repo)
+            self.repo_url   = self.repo.remotes[0].url
+        except Exception:
+            util.raise_error('INVALID GIT REPO!',
+                '   - change current folder to the repo you would like to use.\n' +
+                '   - or specify repo in args or system arguments\n'
+            )
+        #
+        if self.debug:
+            util.print_args({
+                'REPO'      : self.repo_url,
+                'BRANCH'    : self.repo.active_branch,
+            })
 
 
 

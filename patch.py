@@ -51,20 +51,18 @@ class Patch(config.Config):
     def create_patch(self):
         # sanitize arguments
         self.patch_code         = self.args.patch
+        self.patch_seq          = self.args.seq or ''
         self.search_message     = self.args.search or [self.patch_code]
-        self.info_branch        = self.args.branch or self.info_branch or self.repo.active_branch
+        self.info.branch        = self.args.branch or self.info.branch or self.repo.active_branch
         self.commits            = self.args.commit
 
         # prepare internal variables
         self.patch_files        = []
         self.patch_files_apex   = []
         self.patch_file         = ''
-        self.patch_prefix       = self.patch_prefix.replace('{$TODAY_PATCH}', self.today_patch)
-        self.patch_prefix       = self.patch_prefix.replace('{$PATCH_SEQ}', self.args.get('seq', '') or '')
-        self.patch_prefix       = self.patch_prefix.rstrip('-').rstrip('_')
-        self.patch_folder       = self.patch_file_pattern.format(self.info_repo, self.patch_root, self.patch_prefix, self.patch_code)
-        self.grants_made        = self.grants_pattern.format(self.info_repo, self.path_objects, self.info_schema)
-        self.spooling           = True
+        self.patch_folder       = self.repo_root + self.config.patch_root   + self.config.patch_folder
+        self.patch_grants       = self.repo_root + self.config.path_objects + self.config.patch_grants
+        self.apex_app_id        = ''
 
         # track changes
         self.all_commits        = {}
@@ -73,20 +71,6 @@ class Patch(config.Config):
         self.relevant_files     = {}
         self.relevant_objects   = {}
         self.diffs              = {}
-
-        # APEX related
-        self.apex_app_id        = ''
-        self.apex_version       = '{} {}'.format(self.today, self.patch_code)
-        self.apex_files_ignore  = [ # these files will not be in the patch even if they change
-                                    'application/set_environment.sql',
-                                    'application/end_environment.sql',
-                                    'application/create_application.sql',
-                                    'application/delete_application.sql',
-        ]
-        self.apex_files_copy    = [ # these files will always be copied to the snapshot folder
-                                    'application/set_environment.sql',
-                                    'application/end_environment.sql',
-        ]
 
         # set current commit to the head and search through recent commits
         self.current_commit_obj = self.repo.commit('HEAD')
@@ -122,7 +106,7 @@ class Patch(config.Config):
 
 
     def find_commits(self):
-        for commit in list(self.repo.iter_commits(self.info_branch, max_count = self.repo_commits, skip = 0)):
+        for commit in list(self.repo.iter_commits(self.info.branch, max_count = self.config.repo_commits, skip = 0)):
             self.all_commits[commit.count()] = commit
 
             # skip non requested commits
@@ -395,7 +379,7 @@ class Patch(config.Config):
 
     def create_file_snapshot(self, file):
         # create folders and copy files
-        source_file     = '{}/{}'.format(self.info_repo, file).replace('//', '/')
+        source_file     = '{}/{}'.format(self.repo_root, file).replace('//', '/')
         target_file     = '{}/{}'.format(self.patch_folder, file).replace('//', '/')
         target_folder   = os.path.dirname(target_file)
         #
@@ -410,7 +394,7 @@ class Patch(config.Config):
                 file_content = f.read()
             #
             file_content = re.sub(r",p_last_updated_by=>'([^']+)'",         ",p_last_updated_by=>'{}'".format(self.patch_code), file_content)
-            file_content = re.sub(r",p_last_upd_yyyymmddhh24miss=>'(\d+)'", ",p_last_upd_yyyymmddhh24miss=>'{}'".format(self.today_full_raw), file_content)
+            file_content = re.sub(r",p_last_upd_yyyymmddhh24miss=>'(\d+)'", ",p_last_upd_yyyymmddhh24miss=>'{}'".format(self.config.today_full_raw), file_content)
             #
             with open(target_file, 'wt', encoding = 'utf-8') as w:
                 w.write(file_content)
@@ -446,7 +430,7 @@ class Patch(config.Config):
 
         # attach ending file
         file = '{}f{}/{}'.format(self.config.path_apex, self.apex_app_id, 'application/end_environment.sql')
-        payload += '@"./{}"\n'.format(file.replace(self.info_repo, '').lstrip('/'))
+        payload += '@"./{}"\n'.format(file.replace(self.repo_root, '').lstrip('/'))
         #
         return payload
 
@@ -475,7 +459,7 @@ class Patch(config.Config):
         grants_found    = False
 
         # grab the file with grants made
-        with open(self.grants_made, 'rt', encoding = 'utf-8') as f:
+        with open(self.patch_grants, 'rt', encoding = 'utf-8') as f:
             file_content = f.readlines()
             for line in file_content:
                 if line.startswith('--'):
@@ -528,7 +512,7 @@ class Patch(config.Config):
             'file'              : file,
             'object_type'       : self.get_file_object_type(file),
             'object_name'       : self.get_file_object_name(file),
-            'schema'            : self.info_schema if not app_id else self.config.apex_schema,
+            'schema'            : self.info.schema if not app_id else self.config.apex_schema,
             'apex_app_id'       : app_id,
             'apex_page_id'      : page_id,
             'apex_workspace'    : self.config.apex_workspace,

@@ -127,8 +127,8 @@ class Config(util.Attributed):
         self.debug  = self.args.debug
         #
         if self.debug:
-            util.header('ARGS:')
-            util.debug_table(self.args)
+            util.print_header('ARGS:')
+            util.print_args(self.args, skip_keys = self.password_args)
 
         # set project info from arguments
         self.info_repo      = util.fix_path(self.args.repo or os.path.abspath(os.path.curdir))
@@ -235,8 +235,8 @@ class Config(util.Attributed):
                     self.connection['desc'] = '{}, {}'.format(schema_name or self.connection['user'], env_name)
         #
         if self.debug:
-            util.header('CONNECTION:')
-            util.debug_table(self.connection, skip = self.password_args)
+            util.print_header('CONNECTION:')
+            util.print_args(self.connection, skip_keys = self.password_args)
 
         # check presence, at least one file is required
         if self.connection.get('file', '') == '':
@@ -341,9 +341,8 @@ class Config(util.Attributed):
                 connections[env_name]['schemas'][schema] = data
 
         # show parameters
-        util.header('CREATING {} CONNECTION:'.format(found_type.upper()))
+        util.print_header('CREATING {} CONNECTION:'.format(found_type.upper()))
         print('{}\n'.format(file))
-        #util.debug_table(passed_args, skip = self.password_args)
 
         # store connection parameters in the yaml file
         with open(file, 'wt', encoding = 'utf-8') as f:
@@ -405,8 +404,8 @@ class Config(util.Attributed):
         """, **args)
         #
         if len(data) > 0:
-            util.header('APEX APPLICATIONS:')
-            util.show_table(data, self.conn.cols)
+            util.print_header('APEX APPLICATIONS:')
+            util.print_table(data, self.conn.cols)
 
 
 

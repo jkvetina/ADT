@@ -411,6 +411,8 @@ class Config(util.Attributed):
 
     def init_config(self):
         self.track_config = {}
+        if self.debug:
+            util.print_header('SEARCHING FOR CONFIG FILE')
 
         # search for config file(s)
         for file in self.replace_tags(list(self.config_files)):           # copy
@@ -428,16 +430,20 @@ class Config(util.Attributed):
             if attr.startswith('today'):
                 try:
                     self.config[attr] = datetime.datetime.today().strftime(value)
-                    print(attr, value, self.config[attr])
                 except:
                     util.raise_error('INVALID DATE FORMAT', attr + '=' + value)
 
         # reconnect to repo, it could change the location
+        if self.debug:
+            print()
         self.init_repo()
 
 
 
     def apply_config(self, file):
+        if self.debug:
+            print(file)
+        #
         with open(file, 'rt', encoding = 'utf-8') as f:
             self.track_config[file] = {}
             for key, value in util.get_yaml(f, file):

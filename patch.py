@@ -559,15 +559,15 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
 
     # actions and flags
-    parser.add_argument('-p',   '-patch',       '--patch',      help = 'Patch code (name for the patch files)')
-    parser.add_argument(        '-seq',         '--seq',        help = 'Sequence in patch folder, {$PATCH_SEQ}')
-    parser.add_argument('-s',   '-search',      '--search',     help = 'Search string for Git to search just for relevant commits',     default = None, nargs = '*')
-    parser.add_argument('-c',   '-commit',      '--commit',     help = 'Process just specific commits',                                 default = None, nargs = '*')
-    parser.add_argument('-b',   '-branch',      '--branch',     help = 'To override active branch',                                     default = None)
-    parser.add_argument('-d',   '-debug',       '--debug',      help = 'Turn on the debug/verbose mode',                                default = False, nargs = '?', const = True)
-
-    # key or key location to encrypt passwords
-    parser.add_argument('-k',   '-key',         '--key',        help = 'Key or key location to encypt passwords')
+    parser.add_argument('-debug',       '--debug',          help = 'Turn on the debug/verbose mode',    default = False, nargs = '?', const = True)
+    parser.add_argument('-key',         '--key',            help = 'Key or key location to encypt passwords')
+    parser.add_argument('-schema',      '--schema',         help = 'Schema/connection name')
+    #
+    parser.add_argument('-patch',       '--patch',          help = 'Patch code (name for the patch files)')
+    parser.add_argument('-seq',         '--seq',            help = 'Sequence in patch folder, {$PATCH_SEQ}')
+    parser.add_argument('-search',      '--search',         help = 'Search string for Git to search just for relevant commits',     default = None, nargs = '*')
+    parser.add_argument('-commit',      '--commit',         help = 'Process just specific commits',                                 default = None, nargs = '*')
+    parser.add_argument('-branch',      '--branch',         help = 'To override active branch',                                     default = None)
     #
     Patch(parser)
 

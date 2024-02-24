@@ -521,12 +521,15 @@ class Config(util.Attributed):
                     attribute   = tag.lower().replace('{$', '').replace('}', '')    # just the name
                     value       = tag                                               # keep original as fallback
 
-                    # search in config first
-                    if 'config' in obj and attribute in obj['config']:
-                        # find value in config first
-                        if attribute in obj['config']:
-                            value = obj['config'][attribute]
-                    else:
+                    # search in info & config first
+                    for group in ['info', 'config']:
+                        attr = attribute.replace('info_', '')
+                        if group in obj and attr in obj[group]:
+                            # find value in config first
+                            if attr in obj[group]:
+                                value = obj[group][attr]
+                    #
+                    if value != tag:
                         # find value in passed object
                         if is_object and attribute in passed_keys:
                             value = str(getattr(obj, attribute))

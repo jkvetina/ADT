@@ -135,6 +135,8 @@ def print_table(data, columns = [], right_align = [], spacer = 3, start = 2):
             columns = list(data.keys())         # get from dictionary keys
             data    = [data]
         elif isinstance(data, list):
+            if len(data) == 0:
+                return
             columns = list(data[0].keys())      # get from first row
 
     # all columns align to right

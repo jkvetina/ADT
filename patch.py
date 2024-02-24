@@ -42,12 +42,6 @@ class Patch(config.Config):
 
 
 
-    def fetch_changes(self):
-        self.repo.git.checkout()
-        self.repo.git.pull()
-
-
-
     def create_patch(self):
         # sanitize arguments
         self.patch_code         = self.args.patch
@@ -484,6 +478,12 @@ class Patch(config.Config):
             payload += '\n'
         #
         return payload
+
+
+
+    def fetch_changes(self):
+        self.repo.git.checkout()
+        self.repo.git.pull()
 
 
 

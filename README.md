@@ -24,12 +24,12 @@ I have been building these CI/CD tools since 2008 and ADT is the newest version,
 ## Actions
 | Filename                                 | Description                                    | Status          | Complexity | Done
 | :-------                                 | :----------                                    | :-----          | ---------: | ---:
-| [`config.py`](./doc/config.md)           | to manage database connections and settings    | __In Progress__ |          5 | 3
+| [`config.py`](./doc/config.md)           | to manage database connections and settings    | __In Progress__ |          5 | 4
 | [`export_db.py`](./doc/export_db.md)     | to export database objects                     | OPY*            |          9 |
 | [`export_apex.py`](./doc/export_apex.md) | to export APEX                                 | OPY*            |          4 |
 | [`export_data.py`](./doc/export_data.md) | to export data into CSV files                  | OPY*            |          2 |
 | [`patch.py`](./doc/patch.md)             | to prepare patch files from your changes       | __Done__        |          6 | 6
-| [`deploy.py`](./doc/deploy.md)           | to deploy your patch files                     | Planned         |          5 |
+| [`deploy.py`](./doc/deploy.md)           | to deploy your patch files                     | Planned         |          8 | 1
 | [`compare.py`](./doc/compare.md)         | to compare two databases                       | Planned         |          8 |
 | [`recompile.py`](./doc/recompile.md)     | to recompile invalid objects                   | __Done__        |          1 | 1
 

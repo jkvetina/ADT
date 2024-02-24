@@ -506,7 +506,7 @@ class Config(util.Attributed):
 
 
 
-    def replace_tags(self, payload, obj = None, ignore_missing = True):
+    def replace_tags(self, payload, obj = None, ignore_missing = True, loops = 2):
         if obj == None:
             obj = self
 
@@ -558,10 +558,14 @@ class Config(util.Attributed):
                     payload = payload.replace(tag, value)
 
         # verify left over tags
-        if '{$' in payload and not ignore_missing:
-            util.raise_error('LEFTOVER TAGS', payload)
+        payload = payload.strip().rstrip('-').rstrip('_').strip()
+        if '{$' in payload:
+            if loops > 0:
+                return self.replace_tags(payload, obj = obj, ignore_missing = ignore_missing, loops = loops - 1)
+            if not ignore_missing:
+                util.raise_error('LEFTOVER TAGS', payload)
         #
-        return payload.strip().rstrip('-').rstrip('_').strip()
+        return payload
 
 
 

@@ -76,14 +76,18 @@ class Patch(config.Config):
         self.current_commit_obj = self.repo.commit('HEAD')
         self.current_commit     = self.current_commit_obj.count()
 
-        util.header('CREATING PATCH ' + self.patch_code)
+        # replace tags in folder
+        self.patch_folder = self.replace_tags(self.patch_folder)
+        util.print_header('CREATING PATCH:', self.patch_code + (' (' + self.patch_seq + ')').replace(' ()', ''))
         print()
 
         # workflow
         self.find_commits()
 
         # show summary
-        util.header('PATCH CREATED:', self.patch_folder.replace(self.info_repo, './'))
+        short = self.patch_folder.replace(self.repo_root, './')
+        util.assert_(not ('{$' in self.patch_folder), 'LEFOVER TAGS IN FOLDER', short)
+        util.print_header('PATCH CREATED:', short)
         summary = []
         for target_schema in sorted(self.relevant_files.keys()):
             summary.append({

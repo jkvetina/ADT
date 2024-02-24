@@ -164,10 +164,10 @@ class Patch(config.Config):
 
                 if self.debug:
                     print('  - {}'.format(os.path.splitext(file)))
-                    print('', self.path_objects)
+                    print('', self.config.path_objects)
 
                 # process just database and APEX exports
-                if not (file.startswith(self.path_objects)) and not (file.startswith(self.path_apex)):
+                if not (file.startswith(self.config.path_objects)) and not (file.startswith(self.config.path_apex)):
                     continue
 
                 # get info about the file
@@ -207,7 +207,7 @@ class Patch(config.Config):
 
     def create_patches(self):
         # simplify searching for ignored files
-        skip_apex_files = ';'.join(self.apex_files_ignore)
+        skip_apex_files = ';'.join(self.config.apex_files_ignore)
 
         # process files per schema
         for target_schema, rel_files in self.relevant_files.items():
@@ -237,7 +237,7 @@ class Patch(config.Config):
             payload += '--\n'
 
             # spool output to the file
-            if self.spooling:
+            if self.config.spooling:
                 payload += 'SPOOL "{}" APPEND;\n\n'.format(self.patch_spool_log)
 
             # for APEX patches add some query
@@ -262,13 +262,13 @@ class Patch(config.Config):
                         continue
 
                 # attach file reference
-                if self.spooling:
+                if self.config.spooling:
                     payload += 'PROMPT --;\n'
                     payload += 'PROMPT -- FILE: {};\n'.format(file)
                     payload += 'PROMPT --;\n'
                 #
-                payload += self.patch_file_link.replace('{$FILE}', file)
-                if self.spooling:
+                payload += self.config.patch_file_link.replace('{$FILE}', file)
+                if self.config.spooling:
                     payload += 'PROMPT ;\n'
 
             # for APEX patches add some query
@@ -283,7 +283,7 @@ class Patch(config.Config):
 
             # add grants for non APEX schemas
             if self.apex_app_id == '':
-                if self.spooling:
+                if self.config.spooling:
                     payload += 'PROMPT --;\n'
                     payload += 'PROMPT -- GRANTS;\n'
                     payload += 'PROMPT --;\n'
@@ -291,7 +291,7 @@ class Patch(config.Config):
                 payload += self.get_grants_made()
 
             # spool output end
-            if self.spooling:
+            if self.config.spooling:
                 payload += 'PROMPT --;\n'
                 payload += 'PROMPT -- SUCCESS;\n'
                 payload += 'PROMPT --;\n'
@@ -325,11 +325,11 @@ class Patch(config.Config):
                     modifed_files.append(file)
 
                 # detect APEX application
-                if self.path_apex in file and self.apex_app_id == '':
+                if self.config.path_apex in file and self.apex_app_id == '':
                     obj = self.get_file_object(file)
                     #
                     self.apex_app_id    = obj['apex_app_id']
-                    self.apex_workspace = obj['apex_workspace']
+                    self.config.apex_workspace = obj['apex_workspace']
 
         # show commits only with relevant files
         payload += '-- COMMITS:\n'
@@ -381,8 +381,8 @@ class Patch(config.Config):
 
             # copy some files even if they did not changed
             if self.apex_app_id != '':
-                for file in self.apex_files_copy:
-                    file = '{}f{}/{}'.format(self.path_apex, self.apex_app_id, file)
+                for file in self.config.apex_files_copy:
+                    file = '{}f{}/{}'.format(self.config.path_apex, self.apex_app_id, file)
                     if file not in process_files:
                         self.create_file_snapshot(file)
 
@@ -415,7 +415,7 @@ class Patch(config.Config):
         shutil.copy2(source_file, target_file)
 
         # change page audit columns
-        if self.apex_app_id != '' and '/application/pages/page' in file:
+        if self.config.replace_audit and self.apex_app_id != '' and '/application/pages/page' in file:
             file_content = ''
             with open(target_file, 'rt', encoding = 'utf-8') as f:
                 file_content = f.read()
@@ -430,7 +430,7 @@ class Patch(config.Config):
 
     def fix_apex_start(self):
         assert self.apex_app_id != ''
-        assert self.apex_workspace is not None
+        assert self.config.apex_workspace is not None
 
         # set proper workspace
         payload = self.replace_tags(query.query_apex_version, self).strip() + '\n'
@@ -441,10 +441,10 @@ class Patch(config.Config):
         payload += '--\n'
 
         # attach starting file
-        payload += '@"./{}f{}/{}"\n'.format(self.path_apex, self.apex_app_id, 'application/set_environment.sql')
+        payload += '@"./{}f{}/{}"\n'.format(self.config.path_apex, self.apex_app_id, 'application/set_environment.sql')
 
         # attach the whole application for full imports
-        payload += '--@"./{}f{}.sql"\n'.format(self.path_apex, self.apex_app_id)
+        payload += '--@"./{}f{}.sql"\n'.format(self.config.path_apex, self.apex_app_id)
         payload += '--\n'
         #
         return payload
@@ -455,7 +455,7 @@ class Patch(config.Config):
         payload = '--\n'
 
         # attach ending file
-        file = '{}f{}/{}'.format(self.path_apex, self.apex_app_id, 'application/end_environment.sql')
+        file = '{}f{}/{}'.format(self.config.path_apex, self.apex_app_id, 'application/end_environment.sql')
         payload += '@"./{}"\n'.format(file.replace(self.info_repo, '').lstrip('/'))
         #
         return payload
@@ -474,7 +474,7 @@ class Patch(config.Config):
         # recreate requested pages
         payload += '--\n'
         for file in apex_pages:
-            payload += self.patch_file_link.replace('{$FILE}', file)
+            payload += self.config.patch_file_link.replace('{$FILE}', file)
         #
         return payload
 
@@ -538,10 +538,10 @@ class Patch(config.Config):
             'file'              : file,
             'object_type'       : self.get_file_object_type(file),
             'object_name'       : self.get_file_object_name(file),
-            'schema'            : self.info_schema if not app_id else self.apex_schema,
+            'schema'            : self.info_schema if not app_id else self.config.apex_schema,
             'apex_app_id'       : app_id,
             'apex_page_id'      : page_id,
-            'apex_workspace'    : self.apex_workspace,
+            'apex_workspace'    : self.config.apex_workspace,
             #'patch_file'  : '',
             #'group'       : '',  subfolders
             #'shortcut'    : '',

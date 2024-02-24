@@ -36,22 +36,9 @@ class Patch(config.Config):
     def __init__(self, parser):
         super().__init__(parser)
 
-        util.assert_(self.args.patch is not None, 'Patch is mandatory')
-
-        # make sure we have a valid repo
-        self.open_repo()
+        util.assert_(self.args.patch, 'MISSING ARGUMENT: PATCH_CODE')
+        #
         self.create_patch()
-
-
-
-    def open_repo(self):
-        # check that the repository loaded correctly
-        util.assert_(not self.repo.bare, 'Not a valid repo')
-
-        # get current account
-        with self.repo.config_reader() as git_config:
-            self.user_name  = git_config.get_value('user', 'name')
-            self.user_mail  = git_config.get_value('user', 'email')
 
 
 

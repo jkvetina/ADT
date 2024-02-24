@@ -150,8 +150,6 @@ class Config(util.Attributed):
         self.root           = util.fix_path(os.path.dirname(os.path.realpath(__file__)))
         self.repo_root      = util.fix_path(self.args.repo or os.path.abspath(os.path.curdir))
         self.repo           = None      # set through init_repo()
-        self.repo_url       = ''        # set through init_repo()
-        self.repo_commits   = 200       # depth for the commit history
         self.conn           = None      # database connection object
 
         # if we are using ADT repo for connection file, we have to know these too
@@ -486,16 +484,24 @@ class Config(util.Attributed):
         try:
             self.repo       = git.Repo(self.repo_root)
             self.repo_url   = self.repo.remotes[0].url
-        except Exception:
+            if self.repo.bare:
+                raise Exception()
+        except:
             util.raise_error('INVALID GIT REPO!',
                 '   - change current folder to the repo you would like to use.\n' +
                 '   - or specify repo in args or system arguments\n'
             )
+
+        # get current account
+        with self.repo.config_reader() as git_config:
+            self.repo_user_name = git_config.get_value('user', 'name')
+            self.repo_user_mail = git_config.get_value('user', 'email')
         #
         if self.debug:
             util.print_args({
                 'REPO'      : self.repo_url,
                 'BRANCH'    : self.repo.active_branch,
+                'USER'      : self.repo_user_name,
             })
 
 

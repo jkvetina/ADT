@@ -122,7 +122,8 @@ class Config(util.Attributed):
         if self.args['env'] == None:
             self.args['env'] = 'DEV'
         #
-        self.args   = util.Attributed(self.args)     # dict with attributes
+        self.args   = util.Attributed(self.args)    # for passed attributes
+        self.config = util.Attributed({})           # for user config
         self.debug  = self.args.debug
         #
         if self.debug:
@@ -159,7 +160,10 @@ class Config(util.Attributed):
         # connect to repo, we need valid repo for everything
         self.init_repo()
 
-        # different flow for config call
+        # check config file, rerun this when specific schema is processed to load schema overrides
+        self.init_config()
+
+        # different flow for direct call
         if __name__ == "__main__":
             # import OPY connection file, basically adjust input arguments and then create a connection
             if 'opy' in self.args and self.args.opy:
@@ -176,15 +180,6 @@ class Config(util.Attributed):
             if self.connection.get('app') != None or self.connection.get('workspace'):
                 self.check_apex()
 
-            # check config file, rerun this when specific schema is processed to load schema overrides
-            self.init_config()
-
-            # create or update config file
-            pass
-
-        else:
-            # check config file, rerun this when specific schema is processed to load schema overrides
-            self.init_config()
 
 
 
@@ -434,12 +429,6 @@ class Config(util.Attributed):
                 if not ('{$' in file) and os.path.exists(file):
                     self.apply_config(file)
 
-        # show source of the parameters
-        if self.debug:
-            for file in self.config_files:
-                if file in self.track_config:
-                    util.header('CONFIG:', file)
-                    util.debug_dots(self.track_config[file], 24)
 
         # reconnect to repo, it could change the location
         self.init_repo()
@@ -468,10 +457,10 @@ class Config(util.Attributed):
     def apply_config(self, file):
         with open(file, 'rt', encoding = 'utf-8') as f:
             self.track_config[file] = {}
-            data = util.get_yaml(f, file)
-            for key, value in data:
-                setattr(self, key, value)
-                self.track_config[file][key] = value
+            for key, value in util.get_yaml(f, file):
+                #setattr(self.config, key, value)
+                self.config[key] = value
+                self.track_config[file][key] = self.config[key]
 
 
 
@@ -492,40 +481,41 @@ class Config(util.Attributed):
         is_object   = str(type(obj)).startswith("<class '__main__.")
         is_dict     = isinstance(obj, dict)
 
-        # extract keys from payload
+        # extract keys from replacement object/dict (possible tags)
         passed_keys = []
         if is_dict:
-            passed_keys = obj.keys()
+            passed_keys = obj.keys()                # get dictionary keys
         elif is_object:
-            passed_keys = obj.__dict__.keys()  # get object attributes
-        #
-        if len(passed_keys) > 0:
-            # replace all tags "{$_____}" with passed object attribute values
-            for tag in re.findall('\{\$[A-Z0-9_]+\}', payload):
+            passed_keys = obj.__dict__.keys()       # get object attributes
+
+        # extract tags
+        found_tags = re.findall('\{\$[A-Z0-9_]+\}', payload)
+        if len(found_tags) > 0:
+            for tag in found_tags:
                 if tag in payload:
-                    attribute   = tag.lower().replace('{$', '').replace('}', '')
-                    value       = tag
-                    #
-                    if is_object and attribute in passed_keys:
-                        value = str(getattr(obj, attribute))
-                    elif is_dict and attribute in passed_keys:
-                        value = obj[attribute]
-                    #
+                    attribute   = tag.lower().replace('{$', '').replace('}', '')    # just the name
+                    value       = tag                                               # keep original as fallback
+
+                    # search in config first
+                    if 'config' in obj and attribute in obj['config']:
+                        # find value in config first
+                        if attribute in obj['config']:
+                            value = obj['config'][attribute]
+                    else:
+                        # find value in passed object
+                        if is_object and attribute in passed_keys:
+                            value = str(getattr(obj, attribute))
+                        elif is_dict and attribute in passed_keys:
+                            value = obj[attribute]
+
+                    # replace all tags "{$...}" with passed object attribute values
                     payload = payload.replace(tag, value)
 
-            # if there are tags left, try to fill them from the config
-            if '{$' in payload:
-                for tag in re.findall('\{\$[A-Z0-9_]+\}', payload):
-                    if tag in payload:
-                        attribute = tag.lower().replace('{$', '').replace('}', '')
-                        try:
-                            value = str(getattr(self, attribute))
-                        except Exception:
-                            value = tag
-                        #
-                        payload = payload.replace(tag, value)
+        # verify left over tags
+        if '{$' in payload:
+            util.raise_error('LEFTOVER TAGS', payload)
         #
-        return payload
+        return payload.strip().rstrip('-').rstrip('_').strip()
 
 
 

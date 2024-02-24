@@ -62,8 +62,13 @@ class Patch(config.Config):
 
 
     def create_patch(self):
-        # internal variables
+        # sanitize arguments
         self.patch_code         = self.args.patch
+        self.search_message     = self.args.search or [self.patch_code]
+        self.info_branch        = self.args.branch or self.info_branch or self.repo.active_branch
+        self.commits            = self.args.commit
+
+        # prepare internal variables
         self.patch_files        = []
         self.patch_files_apex   = []
         self.patch_file         = ''
@@ -71,16 +76,13 @@ class Patch(config.Config):
         self.patch_prefix       = self.patch_prefix.replace('{$PATCH_SEQ}', self.args.get('seq', '') or '')
         self.patch_prefix       = self.patch_prefix.rstrip('-').rstrip('_')
         self.patch_folder       = self.patch_file_pattern.format(self.info_repo, self.patch_root, self.patch_prefix, self.patch_code)
-        self.commits            = self.args.commit
-        self.commits_count      = {}
-        self.search_message     = self.args.search or [self.patch_code]
-        self.info_branch        = self.args.branch or self.info_branch or self.repo.active_branch
         self.grants_made        = self.grants_pattern.format(self.info_repo, self.path_objects, self.info_schema)
         self.spooling           = True
 
         # track changes
         self.all_commits        = {}
         self.relevant_commits   = {}
+        self.relevant_count     = {}
         self.relevant_files     = {}
         self.relevant_objects   = {}
         self.diffs              = {}
@@ -115,7 +117,7 @@ class Patch(config.Config):
         for target_schema in sorted(self.relevant_files.keys()):
             summary.append({
                 'schema_name'   : target_schema,
-                'commits'       : len(self.commits_count[target_schema]),
+                'commits'       : len(self.relevant_count[targhema]),
                 'files'         : len(self.relevant_files[target_schema]),
             })
         util.show_table(summary)
@@ -178,10 +180,10 @@ class Patch(config.Config):
                     self.relevant_files[schema] = []
                 if not (file in self.relevant_files[schema]):
                     self.relevant_files[schema].append(file)
-                if not (schema in self.commits_count):
-                    self.commits_count[schema] = []
-                if not (commit.count() in self.commits_count[schema]):
-                    self.commits_count[schema].append(commit.count())
+                if not (schema in self.relevant_count):
+                    self.relevant_count[schema] = []
+                if not (commit.count() in self.relevant_count[schema]):
+                    self.relevant_count[schema].append(commit.count())
                 #
                 files_found.append(file)
 
@@ -431,9 +433,10 @@ class Patch(config.Config):
     def fix_apex_start(self):
         assert self.apex_app_id != ''
         assert self.config.apex_workspace is not None
+        payload = ''
 
         # set proper workspace
-        payload = self.replace_tags(query.query_apex_version, self).strip() + '\n'
+        payload += self.replace_tags(query.query_apex_version) + '\n'
 
         # start APEX import
         payload += 'SET DEFINE OFF\n'

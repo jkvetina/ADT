@@ -104,6 +104,17 @@ class Config(util.Attributed):
         'wallet_pwd'    : 'wallet_encrypted',
     }
 
+    # move some command line args to info group
+    info_attributes = [
+        'repo',
+        'client',
+        'project',
+        'env',
+        'branch',
+        'schema',
+        'workspace',
+    ]
+
 
 
     def __init__(self, parser):
@@ -124,33 +135,34 @@ class Config(util.Attributed):
         #
         self.args   = util.Attributed(self.args)    # for passed attributes
         self.config = util.Attributed({})           # for user config
+        self.info   = util.Attributed({})           # for info group
         self.debug  = self.args.debug
         #
         if self.debug:
             util.print_header('ARGS:')
             util.print_args(self.args, skip_keys = self.password_args)
 
-        # set project info from arguments
-        self.info_repo      = util.fix_path(self.args.repo or os.path.abspath(os.path.curdir))
-        self.info_client    = self.args.client
-        self.info_project   = self.args.project
-        self.info_env       = self.args.env
-        self.info_branch    = self.args.branch
-        self.info_schema    = self.args.schema
-        #
-        self.root           = util.fix_path(os.path.dirname(os.path.realpath(__file__)))
-        self.conn           = None      # database connection object
+        # set info group from command line arguments
+        for arg in self.info_attributes:
+            setattr(self.info, arg, self.args.get(arg, '') or '')
 
         # repo attributes
+        self.root           = util.fix_path(os.path.dirname(os.path.realpath(__file__)))
+        self.repo_root      = util.fix_path(self.args.repo or os.path.abspath(os.path.curdir))
         self.repo           = None      # set through init_repo()
         self.repo_url       = ''        # set through init_repo()
         self.repo_commits   = 200       # depth for the commit history
+        self.conn           = None      # database connection object
 
         # if we are using ADT repo for connection file, we have to know these too
-        if self.info_repo == self.root:
+        if self.repo_root == self.root:
             util.assert_(self.args.client,  'MISSING ARGUMENT: CLIENT')
             util.assert_(self.args.project, 'MISSING ARGUMENT: PROJECT')
             util.assert_(self.args.env,     'MISSING ARGUMENT: ENV')
+        #
+        if self.debug:
+            util.print_header('INFO GROUP:')
+            util.print_args(self.info)
 
         # connect to repo, we need valid repo for everything
         self.init_repo()
@@ -185,9 +197,9 @@ class Config(util.Attributed):
 
     def init_connection(self, env_name = '', schema_name = ''):
         if env_name == '':
-            env_name = self.info_env
+            env_name = self.info.env
         if schema_name == '':
-            schema_name = self.info_schema or ''
+            schema_name = self.info.schema or ''
 
         # search for connection file
         for file in self.replace_tags(list(self.connection_files)):  # copy, dont change original
@@ -214,12 +226,12 @@ class Config(util.Attributed):
                         break
 
                     # process schema overrides
-                    if 'schemas' in data[env_name] and self.info_schema != None:
-                        schema_name = schema_name or self.info_schema
+                    if 'schemas' in data[env_name] and self.info.schema != None:
+                        schema_name = schema_name or self.info.schema
                         if not (schema_name in data[env_name]['schemas']):
                             util.raise_error('UNKNOWN SCHEMA - {}'.format(schema_name), '{}\n'.format(file))
                     #
-                    self.info_schema = schema_name
+                    self.info.schema = schema_name
                     for arg, value in data[env_name]['schemas'].get(schema_name, {}).items():
                         self.connection[arg] = value
 
@@ -255,7 +267,7 @@ class Config(util.Attributed):
 
 
     def create_connection(self, output_file = None):
-        env_name        = self.info_env
+        env_name        = self.info.env
         schema_name     = self.args.schema or self.args.user
         #
         util.assert_(env_name,      'MISSING ARGUMENT: ENV')
@@ -377,7 +389,7 @@ class Config(util.Attributed):
             self.args[arg] = value
 
         # need to set the repo to have correct paths
-        self.info_repo = self.args['repo']
+        self.repo_root = self.args['repo']
 
         # create new file as user would actually pass these arguments
         self.create_connection()
@@ -420,8 +432,8 @@ class Config(util.Attributed):
                 self.apply_config(file)
 
         # allow schema overrides
-        if self.info_schema:
             for file in self.replace_tags(list(self.config_overrides)):   # copy
+        if self.info.schema:
                 if not ('{$' in file) and os.path.exists(file):
                     self.apply_config(file)
 
@@ -454,13 +466,13 @@ class Config(util.Attributed):
 
 
     def init_repo(self):
-        util.assert_(self.info_repo, 'MISSING ARGUMENT: REPO')
+        util.assert_(self.repo_root, 'MISSING ARGUMENT: REPO')
         if self.debug:
             util.print_header('SEARCHING FOR GIT REPO')
 
         # setup and connect to the repo
         try:
-            self.repo       = git.Repo(self.info_repo)
+            self.repo       = git.Repo(self.repo_root)
             self.repo_url   = self.repo.remotes[0].url
         except Exception:
             util.raise_error('INVALID GIT REPO!',

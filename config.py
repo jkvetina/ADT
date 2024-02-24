@@ -203,48 +203,51 @@ class Config(util.Attributed):
 
         # search for connection file
         for file in self.replace_tags(list(self.connection_files)):  # copy, dont change original
-            if not ('{$' in file) and os.path.exists(file):
-                with open(file, 'rt', encoding = 'utf-8') as f:
-                    data = dict(util.get_yaml(f, file))
+            if ('{$' in file or not os.path.exists(file)):
+                continue
+            #
+            with open(file, 'rt', encoding = 'utf-8') as f:
+                data = dict(util.get_yaml(f, file))
 
-                    # make yaml content more flat
-                    self.connection = {}
-                    self.connection['file'] = file
-                    self.connection['key']  = self.args.key
+                # make yaml content more flat
+                self.connection = {}
+                self.connection['file'] = file
+                self.connection['key']  = self.args.key
+                #
+                for env, args in data.items():
+                    if env != env_name:
+                        continue
                     #
-                    for env, args in data.items():
-                        if env != env_name:
-                            continue
-                        #
-                        for arg, value in args.items():
-                            if not isinstance(value, dict):
-                                self.connection[arg] = value
+                    for arg, value in args.items():
+                        if not isinstance(value, dict):
+                            self.connection[arg] = value
 
-                        # find first schema
-                        if schema_name == '' and 'schemas' in data[env_name]:
-                            schema_name = list(data[env_name]['schemas'].keys())[0]
-                        break
+                    # find first schema
+                    if schema_name == '' and 'schemas' in data[env_name]:
+                        schema_name = list(data[env_name]['schemas'].keys())[0]
+                        self.info.schema = schema_name
+                    break
 
-                    # process schema overrides
-                    if 'schemas' in data[env_name] and self.info.schema != None:
-                        schema_name = schema_name or self.info.schema
-                        if not (schema_name in data[env_name]['schemas']):
-                            util.raise_error('UNKNOWN SCHEMA - {}'.format(schema_name), '{}\n'.format(file))
-                    #
-                    self.info.schema = schema_name
-                    for arg, value in data[env_name]['schemas'].get(schema_name, {}).items():
-                        self.connection[arg] = value
+                # process schema overrides
+                if 'schemas' in data[env_name] and self.info.schema != None:
+                    schema_name = schema_name or self.info.schema
+                    if not (schema_name in data[env_name]['schemas']):
+                        util.raise_error('UNKNOWN SCHEMA - {}'.format(schema_name), '{}\n'.format(file))
+                #
+                self.info.schema = schema_name
+                for arg, value in data[env_name]['schemas'].get(schema_name, {}).items():
+                    self.connection[arg] = value
 
-                    # fix wallet paths
-                    if 'wallet' in self.connection:
-                        wallet = self.connection['wallet']
-                        if not os.path.exists(wallet):
-                            wallet = os.path.dirname(file) + '/' + wallet
-                            if os.path.exists(wallet):
-                                self.connection['wallet'] = wallet
+                # fix wallet paths
+                if 'wallet' in self.connection:
+                    wallet = self.connection['wallet']
+                    if not os.path.exists(wallet):
+                        wallet = os.path.dirname(file) + '/' + wallet
+                        if os.path.exists(wallet):
+                            self.connection['wallet'] = wallet
 
-                    # description for the screen
-                    self.connection['desc'] = '{}, {}'.format(schema_name or self.connection['user'], env_name)
+                # description for the screen
+                self.connection['desc'] = '{}, {}'.format(schema_name or self.connection['user'], env_name)
         #
         if self.debug:
             util.print_header('CONNECTION:')

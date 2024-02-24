@@ -157,16 +157,17 @@ class Config(util.Attributed):
             util.assert_(self.args.client,  'MISSING ARGUMENT: CLIENT')
             util.assert_(self.args.project, 'MISSING ARGUMENT: PROJECT')
             util.assert_(self.args.env,     'MISSING ARGUMENT: ENV')
+
+        # connect to repo, we need valid repo for everything
+        # check connections before config, since we can change schema here
+        # check config file, rerun this when specific schema is processed to load schema overrides
+        self.init_repo()
+        self.init_connection()
+        self.init_config()
         #
         if self.debug:
             util.print_header('INFO GROUP:')
             util.print_args(self.info)
-
-        # connect to repo, we need valid repo for everything
-        self.init_repo()
-
-        # check config file, rerun this when specific schema is processed to load schema overrides
-        self.init_config()
 
         # different flow for direct call
         if __name__ == "__main__":
@@ -262,8 +263,6 @@ class Config(util.Attributed):
             if os.path.exists(self.connection['key']):
                 with open(self.connection['key'], 'rt', encoding = 'utf-8') as f:
                     self.connection['key'] = f.read().strip()
-        #
-        return dict(self.connection)  # copy
 
 
 
@@ -398,9 +397,7 @@ class Config(util.Attributed):
 
 
     def db_connect(self, ping_sqlcl = False):
-        # check connectivity
-        tns = self.init_connection()
-        return wrapper.Oracle(tns, debug = self.debug, ping_sqlcl = ping_sqlcl)
+        return wrapper.Oracle(dict(self.connection), debug = self.debug, ping_sqlcl = ping_sqlcl)
 
 
 
@@ -441,7 +438,6 @@ class Config(util.Attributed):
         # reconnect to repo, it could change the location
         if self.debug:
             print()
-        self.init_repo()
 
 
 

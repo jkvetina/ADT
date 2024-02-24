@@ -547,12 +547,12 @@ class Config(util.Attributed):
                             if attr in obj[group]:
                                 value = obj[group][attr]
                     #
-                    if value != tag:
+                    if value == tag:
                         # find value in passed object
-                        if is_object and attribute in passed_keys:
-                            value = str(getattr(obj, attribute))
-                        elif is_dict and attribute in passed_keys:
-                            value = obj[attribute]
+                        if is_object and attribute.lower() in passed_keys:
+                            value = str(getattr(obj, attribute.lower()))
+                        elif is_dict and attribute.lower() in passed_keys:
+                            value = obj[attribute.lower()]
 
                     # replace all tags "{$...}" with passed object attribute values
                     payload = payload.replace(tag, value)

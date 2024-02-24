@@ -242,7 +242,7 @@ def quit(message = ''):
 
 
 
-def raise_error(message = '', additional = ''):
+def raise_error(message = '', extra = ''):
     # print exception to screen
     splitter    = 80 * '#'
     exception   = traceback.format_exc().rstrip()
@@ -252,16 +252,19 @@ def raise_error(message = '', additional = ''):
     # show more friendly message at the end
     message = 'ERROR: {}'.format(message)
     print('\n{}\n{}'.format(message, '-' * len(message)))
-    if len(additional) > 0:
-        print(additional)
+    if len(extra) > 0:
+        print(extra)
     print()
     sys.exit()
 
 
 
-def assert_(condition, message):
+def assert_(condition, message, extra = ''):
     if (not condition or condition == None or condition == ''):
         message = 'ASSERT: {}'.format(message)
         print('\n{}\n{}'.format(message, '-' * len(message)))
+        if len(extra) > 0:
+            print(extra)
+        print()
         sys.exit()
 

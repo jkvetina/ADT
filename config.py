@@ -454,7 +454,7 @@ class Config(util.Attributed):
 
     def apply_config(self, file):
         if self.debug:
-            print(file)
+            print(file, '\n')
         #
         with open(file, 'rt', encoding = 'utf-8') as f:
             self.track_config[file] = {}
@@ -462,6 +462,15 @@ class Config(util.Attributed):
                 #setattr(self.config, key, value)
                 self.config[key]                = self.replace_tags(value, ignore_missing = True)
                 self.track_config[file][key]    = self.config[key]
+
+        # one more loop to fix possible issues with wrong order
+        if file in self.track_config:
+            for key, value in self.track_config[file].items():
+                self.config[key]                = self.replace_tags(value)
+                self.track_config[file][key]    = self.config[key]
+            #
+            if self.debug:
+                util.print_args(self.track_config[file])
 
 
 

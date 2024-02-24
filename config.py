@@ -531,8 +531,8 @@ class Config(util.Attributed):
         elif is_object:
             passed_keys = obj.__dict__.keys()       # get object attributes
 
-        # extract tags
-        found_tags = re.findall('\{\$[A-Z0-9_]+\}', payload)
+        # extract unique tags
+        found_tags = list(dict.fromkeys(re.findall('\{\$[A-Z0-9_]+\}', payload)))
         if len(found_tags) > 0:
             for tag in found_tags:
                 if tag in payload:

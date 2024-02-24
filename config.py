@@ -148,9 +148,9 @@ class Config(util.Attributed):
 
         # if we are using ADT repo for connection file, we have to know these too
         if self.info_repo == self.root:
-            util.assert_(self.args.client   is not None, 'MISSING CLIENT ARGUMENT')
-            util.assert_(self.args.project  is not None, 'MISSING PROJECT ARGUMENT')
-            util.assert_(self.args.env      is not None, 'MISSING ENV ARGUMENT')
+            util.assert_(self.args.client,  'MISSING ARGUMENT: CLIENT')
+            util.assert_(self.args.project, 'MISSING ARGUMENT: PROJECT')
+            util.assert_(self.args.env,     'MISSING ARGUMENT: ENV')
 
         # connect to repo, we need valid repo for everything
         self.init_repo()
@@ -258,8 +258,8 @@ class Config(util.Attributed):
         env_name        = self.info_env
         schema_name     = self.args.schema or self.args.user
         #
-        util.assert_(env_name    != None, 'REQUIRED ENV NAME')
-        util.assert_(schema_name != None, 'REQUIRED SCHEMA NAME')
+        util.assert_(env_name,      'MISSING ARGUMENT: ENV')
+        util.assert_(schema_name,   'MISSING ARGUMENT: SCHEMA')
         #
         missing_args    = {}
         passed_args     = {

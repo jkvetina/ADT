@@ -38,6 +38,35 @@ class Config(util.Attributed):
     os_prefix       = 'ADT_'
     os_args         = ['REPO', 'CLIENT', 'PROJECT', 'ENV', 'BRANCH', 'SCHEMA', 'KEY']
 
+    # list connection files, where to search for DB connections
+    connection_files = [
+        #'{$ROOT}config/{$INFO_CLIENT}/connections.yaml',
+        #'{$ROOT}config/{$INFO_CLIENT}/connections_{$INFO_PROJECT}.yaml',
+        '{$INFO_REPO}config/connections.yaml',                                      # repo
+    ]
+
+    # default location for new connections
+    connection_default = '{$INFO_REPO}config/connections.yaml'
+    connection         = {}    # active connection
+
+    # search for config files in current folder
+    config_files = [
+        #'{$ROOT}config/default_config.yaml',
+        #'{$ROOT}config/{$INFO_CLIENT}/config.yaml',
+        #'{$ROOT}config/{$INFO_CLIENT}/config_{$INFO_PROJECT}.yaml',
+        #'{$ROOT}config/{$INFO_CLIENT}/config_{$INFO_PROJECT}_{$INFO_ENV}.yaml',
+        '{$INFO_REPO}config/config.yaml',                                           # repo
+        '{$INFO_REPO}config/config_{$INFO_ENV}.yaml',                               # repo
+    ]
+
+    # when schema is set, run init_config again to allow wchema overrides
+    config_overrides = [
+        #'{$ROOT}config/{$INFO_CLIENT}/config_{$INFO_PROJECT}_{$INFO_SCHEMA}.yaml',
+        #'{$ROOT}config/{$INFO_CLIENT}/config_{$INFO_PROJECT}_{$INFO_SCHEMA}_{$INFO_ENV}.yaml',
+        '{$INFO_REPO}config/config_{$INFO_SCHEMA}.yaml',
+        '{$INFO_REPO}config/config_{$INFO_SCHEMA}_{$INFO_ENV}.yaml',                # repo
+    ]
+
     # define and categorize arguments
     required_args = {
         'normal'    : ['env', 'user', 'pwd', 'hostname', 'port', 'service'],
@@ -121,35 +150,6 @@ class Config(util.Attributed):
             util.assert_(self.args.client   is not None, 'MISSING CLIENT ARGUMENT')
             util.assert_(self.args.project  is not None, 'MISSING PROJECT ARGUMENT')
             util.assert_(self.args.env      is not None, 'MISSING ENV ARGUMENT')
-
-        # list connection files, where to search for DB connections
-        self.connection_files = [
-            #'{$ROOT}config/{$INFO_CLIENT}/connections.yaml',
-            #'{$ROOT}config/{$INFO_CLIENT}/connections_{$INFO_PROJECT}.yaml',
-            '{$INFO_REPO}config/connections.yaml',                                      # repo
-        ]
-
-        # default location for new connections
-        self.connection_default = '{$INFO_REPO}config/connections.yaml'
-        self.connection         = {}    # active connection
-
-        # search for config files in current folder
-        self.config_files = [
-            #'{$ROOT}config/default_config.yaml',
-            #'{$ROOT}config/{$INFO_CLIENT}/config.yaml',
-            #'{$ROOT}config/{$INFO_CLIENT}/config_{$INFO_PROJECT}.yaml',
-            #'{$ROOT}config/{$INFO_CLIENT}/config_{$INFO_PROJECT}_{$INFO_ENV}.yaml',
-            '{$INFO_REPO}config/config.yaml',                                           # repo
-            '{$INFO_REPO}config/config_{$INFO_ENV}.yaml',                               # repo
-        ]
-
-        # when schema is set, run init_config again to allow wchema overrides
-        self.config_overrides = [
-            #'{$ROOT}config/{$INFO_CLIENT}/config_{$INFO_PROJECT}_{$INFO_SCHEMA}.yaml',
-            #'{$ROOT}config/{$INFO_CLIENT}/config_{$INFO_PROJECT}_{$INFO_SCHEMA}_{$INFO_ENV}.yaml',
-            '{$INFO_REPO}config/config_{$INFO_SCHEMA}.yaml',
-            '{$INFO_REPO}config/config_{$INFO_SCHEMA}_{$INFO_ENV}.yaml',                # repo
-        ]
 
         # prepare date formats
         self.today              = datetime.datetime.today().strftime('%Y-%m-%d')            # YYYY-MM-DD

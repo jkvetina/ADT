@@ -123,30 +123,12 @@ def get_yaml(h, file = ''):
 
 
 
-def debug_dots(payload, length, mask_keys = []):
-    for key, value in payload.items():
-        if key in mask_keys:
-            value = '*' * min(len(value), 20)
-        #
-        if isinstance(value, dict):
-            print('   {}:'.format(key))
-            for sub_key, sub_value in value.items():
-                if isinstance(sub_value, list):
-                    sub_value = ' | '.join(sub_value)
-                if sub_key in mask_keys:
-                    sub_value = '*' * min(len(sub_value), 20)
-                print('      {} {} {}'.format(sub_key, '.' * (length - 3 - len(sub_key)), sub_value or ''))
-        #
-        elif isinstance(value, list):
-            print('   {} {} {}'.format(key, '.' * (length - len(key)), ' | '.join(value)))
-        #
-        else:
-            print('   {} {} {}'.format(key, '.' * (length - len(key)), value or ''))
-    print()
+def print_header(message, append = ''):
+    print('\n{}{}\n{}'.format(message, (' ' + append).rstrip(), '-' * len(message)))
 
 
 
-def show_table(data, columns = [], right_align = [], spacer = 3, start = 2):
+def print_table(data, columns = [], right_align = [], spacer = 3, start = 2):
     # exception for 1 line dictionary
     if columns == []:
         if isinstance(data, dict):
@@ -202,6 +184,29 @@ def show_table(data, columns = [], right_align = [], spacer = 3, start = 2):
 
 
 
+def print_args(payload, length = 18, skip_keys = []):
+    for key, value in payload.items():
+        if (key in skip_keys or value == None or value == ''):
+            continue
+        #
+        if isinstance(value, dict):
+            print('   {}:'.format(key))
+            for sub_key, sub_value in value.items():
+                if isinstance(sub_value, list):
+                    sub_value = ' | '.join(sub_value)
+                if (sub_key in skip_keys or sub_value == None or sub_value == ''):
+                    continue
+                print('      {} {} {}'.format(sub_key, '.' * (length - 3 - len(sub_key)), sub_value or ''))
+        #
+        elif isinstance(value, list):
+            print('   {} {} {}'.format(key, '.' * (length - len(key)), ' | '.join(value)))
+        #
+        else:
+            print('   {} {} {}'.format(key, '.' * (length - len(key)), value or ''))
+    print()
+
+
+
 def debug_table(payload, pattern = '  {:>16} | {}', right = [1], upper = True, sort = True, skip_none = True, skip = []):
     if isinstance(payload, dict):
         keys = payload.keys()
@@ -229,11 +234,6 @@ def debug_table(payload, pattern = '  {:>16} | {}', right = [1], upper = True, s
 
 
 
-def header(message, append = ''):
-    print('\n{}{}\n{}'.format(message, (' ' + append).rstrip(), '-' * len(message)))
-
-
-
 def quit(message = ''):
     if len(message) > 0:
         print(message)
@@ -248,7 +248,7 @@ def raise_error(message = '', additional = ''):
 
 
 def assert_(condition, message = ''):
-    if not condition:
+    if (not condition or condition == None or condition == ''):
         message = 'ERROR: {}'.format(message)
         quit('\n{}\n{}'.format(message, '-' * len(message)))
 

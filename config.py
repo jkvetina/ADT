@@ -430,13 +430,13 @@ class Config(util.Attributed):
             util.print_header('SEARCHING FOR CONFIG FILE')
 
         # search for config file(s)
-        for file in self.replace_tags(list(self.config_files), ignore_missing = True):  # copy
+        for file in self.replace_tags(list(self.config_files)):  # copy
             if not ('{$' in file) and os.path.exists(file):
                 self.apply_config(file)
 
         # allow schema overrides
         if self.info.schema:
-            for file in self.replace_tags(list(self.config_overrides), ignore_missing = True):  # copy
+            for file in self.replace_tags(list(self.config_overrides)):  # copy
                 if not ('{$' in file) and os.path.exists(file):
                     self.apply_config(file)
 
@@ -463,7 +463,7 @@ class Config(util.Attributed):
             self.track_config[file] = {}
             for key, value in util.get_yaml(f, file):
                 #setattr(self.config, key, value)
-                self.config[key]                = self.replace_tags(value, ignore_missing = True)
+                self.config[key]                = self.replace_tags(value)
                 self.track_config[file][key]    = self.config[key]
 
         # one more loop to fix possible issues with wrong order
@@ -500,7 +500,7 @@ class Config(util.Attributed):
 
 
 
-    def replace_tags(self, payload, obj = None, ignore_missing = False):
+    def replace_tags(self, payload, obj = None, ignore_missing = True):
         if obj == None:
             obj = self
 

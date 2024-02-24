@@ -140,21 +140,21 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
 
     # actions and flags
-    parser.add_argument('-debug',       '--debug',          help = 'Turn on the debug/verbose mode',    default = False, nargs = '?', const = True)
-    parser.add_argument('-key',         '--key',            help = 'Key or key location to encypt passwords')
-    parser.add_argument('-schema',      '--schema',         help = 'Schema/connection name')
+    parser.add_argument('-debug',       help = 'Turn on the debug/verbose mode',    default = False, nargs = '?', const = True)
+    parser.add_argument('-key',         help = 'Key or key location to encypt passwords')
+    parser.add_argument('-schema',      help = 'Schema/connection name')
 
     # limit scope by object type and name (prefix)
-    parser.add_argument('-type',        '--type',           help = 'Object type')
-    parser.add_argument('-name',        '--name',           help = 'Object name/prefix')
+    parser.add_argument('-type',        help = 'Object type')
+    parser.add_argument('-name',        help = 'Object name/prefix')
 
     # compilation flags
-    parser.add_argument('-force',       '--force',          help = '', default = False, nargs = '?', type = bool, const = True)
-    parser.add_argument('-level',       '--level',          help = '',                  nargs = '?', type = int)
-    parser.add_argument('-interpreted', '--interpreted',    help = '', default = False, nargs = '?', type = bool, const = True)
-    parser.add_argument('-native',      '--native',         help = '', default = False, nargs = '?', type = bool, const = True)
-    parser.add_argument('-scope',       '--scope',          help = '',                  nargs = '*')
-    parser.add_argument('-warnings',    '--warnings',       help = '',                  nargs = '*')
+    parser.add_argument('-force',       help = '', default = False, nargs = '?', type = bool, const = True)
+    parser.add_argument('-level',       help = '',                  nargs = '?', type = int)
+    parser.add_argument('-interpreted', help = '', default = False, nargs = '?', type = bool, const = True)
+    parser.add_argument('-native',      help = '', default = False, nargs = '?', type = bool, const = True)
+    parser.add_argument('-scope',       help = '',                  nargs = '*')
+    parser.add_argument('-warnings',    help = '',                  nargs = '*')
     #
     Recompile(parser)
 

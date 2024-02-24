@@ -127,8 +127,8 @@ class Recompile(config.Config):
             objects[row.object_type].append(row.invalid or '')
 
         # show to user
-        util.header('OBJECTS OVERVIEW:')
-        util.show_table(data,
+        util.print_header('OBJECTS OVERVIEW:')
+        util.print_table(data,
             columns     = self.conn.cols,
             right_align = ['total', 'fixed', 'invalid'],
         )

@@ -38,7 +38,7 @@ class Oracle:
             self.debug = debug
 
         # auto connect
-        util.header('CONNECTING TO {}:'.format(self.tns.desc))
+        util.print_header('CONNECTING TO {}:'.format(self.tns.desc))
         self.connect()
         self.get_versions()
 
@@ -53,7 +53,7 @@ class Oracle:
                     break
 
         # show versions
-        util.debug_table(self.versions)
+        util.print_pipes(self.versions)
 
 
 
@@ -188,7 +188,7 @@ class Oracle:
         )
         #
         if self.debug:
-            util.header('REQUEST:')
+            util.print_header('REQUEST:')
             print(command)
             if os.name == 'nt':
                 print(request)
@@ -198,7 +198,7 @@ class Oracle:
         output  = (result.stdout or '').strip()
         #
         if self.debug:
-            util.header('RESULT:')
+            util.print_header('RESULT:')
             print(result.stdout)
             print()
 

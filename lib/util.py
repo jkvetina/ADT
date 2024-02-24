@@ -207,7 +207,7 @@ def print_args(payload, length = 18, skip_keys = []):
 
 
 
-def debug_table(payload, pattern = '  {:>16} | {}', right = [1], upper = True, sort = True, skip_none = True, skip = []):
+def print_pipes(payload, pattern = '  {:>16} | {}', right = [1], upper = True, sort = True, skip_none = True, skip = []):
     if isinstance(payload, dict):
         keys = payload.keys()
         if sort:

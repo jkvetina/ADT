@@ -186,7 +186,7 @@ class Patch(config.Config):
 
             # generate patch file name for specific schema
             self.patch_file      = '{}/{}.sql'.format(self.patch_folder, target_schema)
-            self.patch_spool_log = './{}.log'.format(target_schema)
+            self.patch_spool_log = './{}.log'.format(target_schema)     # must start with ./ and ends with .log for proper function
 
             # generate patch header
             header = 'PATCH - {} - {}'.format(self.patch_code, target_schema)

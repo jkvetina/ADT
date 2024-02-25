@@ -66,13 +66,30 @@ class Deploy(config.Config):
         print(template.pop(0))  # headers
         print(template.pop(0))  # splitter
         #
-        for order, plan in enumerate(self.deploy_plan):
+        for plan in self.deploy_plan:
             schema  = plan['schema']
             file    = plan['file']
             full    = self.patch_path + file
             conn    = self.deploy_conn[schema]
 
-            #conn.execute()
+            # cleanup the script from comments, fix prompts
+            log_file    = ''    # to extract log name from spool line
+            payload     = []    # for cleaned lines
+            splitter    = '__'
+            #
+            with open(full, 'rt') as f:
+                for line in f.readlines():
+                    line = line.strip()
+                    if line.startswith('--') or line == '':
+                        continue
+                    if line.startswith('PROMPT'):
+                        line = line.replace('PROMPT --;', 'PROMPT ---;')
+                    #
+                    payload.append(line)
+            payload = '\n'.join(payload)
+
+            # execute the script
+            output = conn.sqlcl_request(payload)
 
             # prep results for the template
             results = {

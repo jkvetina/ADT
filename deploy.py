@@ -57,15 +57,7 @@ class Deploy(config.Config):
     def deploy_patch(self):
         self.find_folder()
         self.create_plan()
-
-        # connect to all target schemas first so we know we can deploy all scripts
-        util.print_header('CONNECTING TO {}:'.format(self.patch_env))
-        for schema in self.deploy_schemas.keys():
-            self.init_connection(env_name = self.patch_env, schema_name = schema)
-            print('  {} '.format(schema).ljust(72, '.') + ' ', end = '', flush = True)
-            self.deploy_conn[schema] = self.db_connect(ping_sqlcl = True, silent = True)
-            print('OK')
-        print()
+        self.check_connections()
 
         # run the target script(s) and spool the logs
         util.print_header('PATCHING PROGRESS AND RESULTS:')
@@ -159,6 +151,18 @@ class Deploy(config.Config):
         #
         util.print_header('PATCH FOUND:', self.patch_short)
         util.print_table(self.deploy_plan, columns = ['order', 'schema', 'file'])
+
+
+
+    def check_connections(self):
+        # connect to all target schemas first so we know we can deploy all scripts
+        util.print_header('CONNECTING TO {}:'.format(self.patch_env))
+        for schema in self.deploy_schemas.keys():
+            self.init_connection(env_name = self.patch_env, schema_name = schema)
+            print('  {} '.format(schema).ljust(72, '.') + ' ', end = '', flush = True)
+            self.deploy_conn[schema] = self.db_connect(ping_sqlcl = True, silent = True)
+            print('OK')
+        print()
 
 
 

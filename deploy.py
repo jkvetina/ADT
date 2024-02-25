@@ -32,40 +32,133 @@ from lib import util
 
 class Deploy(config.Config):
 
-    # show the list of undeployed patches
-    # identify patch folder
-    # verify that previous patches were deployed -> show warning/confirm
-    # it would be supercool to check if (and which) files overlaps !!!
-    # verify if requested patch was deployed to that env or not, ignore if -force = Y
-    # stop if other deploy is in progress - HOW ??? commit to branch ?
-    # lock env for simultaneous patching
-    # connect to target env, to each schema
-    # run the target script(s) and spool the logs
-    # check TEMPLATE for pre/post deploy folders/files
-    # recompile invalid objects
-    # unlock env
-    # store the results - rename the log files ?
-    # requested deployed objects for quick compare
-    # check APEX hashes for APEX files ?
-    # store the record of deployment: patch, env name, date, author (email)
-    # commit the logs automatically ? which branch ?
-    # create tag in repo ?
-
     def __init__(self, parser):
         super().__init__(parser)
 
         # process arguments and reinitiate config
+        util.assert_(self.args.target, 'MISSING ARGUMENT: TARGET ENV')
+        #
+        self.patch_env          = self.args.target
         self.patch_code         = self.args.patch
-        self.patch_seq          = self.args.seq or ''
+        self.patch_folder       = self.args.folder
         self.info.branch        = self.args.branch or self.info.branch or self.repo.active_branch
         #
         self.init_config()
+
+        #
+        self.deploy_plan        = []
+        self.deploy_schemas     = {}
+        #
         self.deploy_patch()
 
 
 
     def deploy_patch(self):
-        pass
+        self.find_folder()
+        self.create_plan()
+
+        # connect to all target schemas first so we know we can deploy all scripts
+        self.deploy_conn = {}
+        for schema in self.deploy_schemas.keys():
+            self.init_connection(env_name = self.patch_env, schema_name = schema)
+            info = 'CONNECTING TO {} '.format(self.connection['desc'])
+            print(info.ljust(72, '.') + ' ', end = '', flush = True)
+            self.deploy_conn[schema] = self.db_connect(ping_sqlcl = True, silent = True)
+            print('OK')
+        print()
+
+        # run the target script(s) and spool the logs
+        util.print_header('PATCHING PROGRESS AND RESULTS:')
+        template = util.print_table(self.deploy_plan, right_align = ['logs'], capture = True).splitlines()
+        print(template.pop(0))  # empty line
+        print(template.pop(0))  # headers
+        print(template.pop(0))  # splitter
+        #
+        for order, plan in enumerate(self.deploy_plan):
+            schema  = plan['schema']
+            file    = plan['file']
+            full    = self.patch_path + file
+            conn    = self.deploy_conn[schema]
+
+            #conn.execute()
+
+            # prep results for the template
+            results = {
+                'logs'      : 0,
+                'status'    : 'SUCCESS',
+                'timer'     : '00:00:00',
+            }
+
+            # show progress
+            out = template.pop(0)
+            for column, content in self.template_hack:
+                width   = len(content)
+                value   = results[column]
+                out     = out.replace(content, value.ljust(width) if isinstance(value, str) else str(value).rjust(width))
+            print(out)
+        print()
+
+
+
+    def find_folder(self):
+        # identify patch folder
+        found_folders = []
+        patches = sorted(glob.glob(self.repo_root + self.config.patch_root + '**'))
+        for patch in patches:
+            if self.patch_folder != None and patch == self.patch_path:
+                found_folders.append(patch)
+            elif self.patch_code in patch:
+                found_folders.append(patch)
+        #
+        folders_count = len(found_folders)
+        if folders_count == 1:
+            self.patch_folder = found_folders[0].replace(self.repo_root + self.config.patch_root, '')
+        #
+        else:
+            util.print_header('AVBAILABLE PATCHES:')
+            for patch in patches:
+                print('  - {}'.format(patch))
+            print()
+            #
+            if len(found_folders) > 1:
+                util.raise_error('TOO MANY PATCHES FOUND!', '  - add specific folder name\n')
+            else:
+                util.raise_error('NO PATCH FOUND!')
+
+        # set values
+        self.patch_full     = found_folders[0]
+        self.patch_short    = self.patch_full.replace(self.repo_root + self.config.patch_root, '')
+        self.patch_path     = self.repo_root + self.config.patch_root + self.patch_folder + '/'
+
+
+
+    def create_plan(self):
+        self.template_hack = [
+            ['logs',    '{1}___'],
+            ['status',  '{2}____'],
+            ['timer',   '{3}_____']
+        ]
+
+        # create deployment plan
+        for order, file in enumerate(sorted(glob.glob(self.patch_full + '/*.sql'))):
+            file    = os.path.basename(file.replace(self.patch_full, ''))
+            schema  = util.replace(os.path.splitext(file)[0], '^[0-9]+[_-]*', '')
+            #
+            if not (schema in self.deploy_schemas):
+                self.deploy_schemas[schema] = []
+            self.deploy_schemas[schema].append(order)
+            #
+            plan = {
+                'order'     : order + 1,
+                'schema'    : schema,
+                'file'      : file,
+            }
+            for column, content in self.template_hack:
+                plan[column] = content
+            self.deploy_plan.append(plan)
+        #
+        util.print_header('PATCH FOUND:', self.patch_short)
+        util.print_table(self.deploy_plan, columns = ['order', 'schema', 'file'])
 
 
 
@@ -79,7 +172,7 @@ if __name__ == "__main__":
     parser.add_argument('-schema',      help = 'Schema/connection name')
     #
     parser.add_argument('-patch',       help = 'Patch code (name for the patch files)')
-    parser.add_argument('-seq',         help = 'Sequence in patch folder, {$PATCH_SEQ}')
+    parser.add_argument('-folder',      help = 'Patch folder, for cases when patch code is not unique')
     parser.add_argument('-target',      help = 'Target environment')
     parser.add_argument('-force',       help = 'Force deployment',                          default = False, nargs = '?', const = True)
     #

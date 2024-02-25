@@ -104,12 +104,17 @@ class Deploy(config.Config):
                 'timer'     : '00:00:00',
             }
 
+            # rename log to reflect the result in the file name
+            log_file = log_file.replace('./', self.patch_path)
+            os.rename(log_file, log_file.replace('.log', '{}{}.log'.format(splitter, results['status'])))
+
             # show progress
             out = template.pop(0)
             for column, content in self.template_hack:
                 width   = len(content)
                 value   = results[column]
                 out     = out.replace(content, value.ljust(width) if isinstance(value, str) else str(value).rjust(width))
+            #
             print(out)
         print()
 

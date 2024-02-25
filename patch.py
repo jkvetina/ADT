@@ -95,11 +95,11 @@ class Patch(config.Config):
         # create snapshot folder
         if not os.path.exists(self.patch_folder):
             os.makedirs(self.patch_folder)
+        else:
+            # delete everything in patch folder
+            shutil.rmtree(self.patch_folder, ignore_errors = True, onerror = None)
 
-        # delete previous logs
-        for file in glob.glob('{}/*.log'.format(self.patch_folder)):
-            os.remove(file)
-
+        # create patch files
         self.create_patches()
 
 

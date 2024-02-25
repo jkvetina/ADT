@@ -190,7 +190,7 @@ class Config(util.Attributed):
 
 
     def __del__(self):
-        print('\nTIME: {}s\n'.format(round(timeit.default_timer() - self.start_timer, 2)))
+        print('\nTIMER: {}s\n'.format(int(round(timeit.default_timer() - self.start_timer + 0.5, 0))))
 
 
 

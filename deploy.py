@@ -84,6 +84,12 @@ class Deploy(config.Config):
                         continue
                     if line.startswith('PROMPT'):
                         line = line.replace('PROMPT --;', 'PROMPT ---;')
+
+                    # change log name
+                    if line.startswith('SPOOL "'):
+                        split = line.split('"')
+                        log_file = split[1].replace('./', './{}{}{}{}'.format(self.patch_env, splitter, self.config.today_deploy, splitter))
+                        line = '{}"{}"{}'.format(split[0], log_file, split[2])
                     #
                     payload.append(line)
             payload = '\n'.join(payload)

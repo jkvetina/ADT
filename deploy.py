@@ -210,6 +210,7 @@ class Deploy(config.Config):
             self.init_connection(env_name = self.patch_env, schema_name = schema)
             print('  {} '.format(schema).ljust(72, '.') + ' ', end = '', flush = True)
             self.deploy_conn[schema] = self.db_connect(ping_sqlcl = True, silent = True)
+            self.deploy_conn[schema].sqlcl_root = self.patch_path
             print('OK')
         print()
 

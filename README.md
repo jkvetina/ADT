@@ -29,7 +29,7 @@ I have been building these CI/CD tools since 2008 and ADT is the newest version,
 | [`export_apex.py`](./doc/export_apex.md) | to export APEX                                 | OPY*            |          4 |
 | [`export_data.py`](./doc/export_data.md) | to export data into CSV files                  | OPY*            |          2 |
 | [`patch.py`](./doc/patch.md)             | to prepare patch files from your changes       | __Done__        |          6 | 6
-| [`deploy.py`](./doc/deploy.md)           | to deploy your patch files                     | Planned         |          8 | 1
+| [`deploy.py`](./doc/deploy.md)           | to deploy your patch files                     | Planned         |          8 | 4
 | [`compare.py`](./doc/compare.md)         | to compare two databases                       | Planned         |          8 |
 | [`recompile.py`](./doc/recompile.md)     | to recompile invalid objects                   | __Done__        |          1 | 1
 
@@ -65,8 +65,10 @@ OPY is covered by [OPY](https://github.com/jkvetina/OPY/tree/master) tool, but I
     - ✅ it can connect to Git/BB to create a release notes for you
     - ✅ it can also create a patch file __based on a feature/card__, it will lookup which files were committed under that name and create a patch based on that (and even for APEX components so you dont have to deploy the whole app)
     - ✅ it allows you to search Git/BB history for specific string
-- ⭕️ it can also __deploy these patches__ to different environments (basically any database you can reach via direct connection on via a REST service)
-    - ⭕️ multiple schemas patching dependencies
+    - ✅ you can use sequences to sort patches created on same day, it checks for clashes
+- ✅ it can also __deploy these patches__ to different environments (basically any database you can reach via direct connection on via a REST service)
+    - ✅ multiple schemas patching (so far you manually specify order with numeric prefix on each patch file)
+    - ✅ show progress, results and save output in customized log files
     - ⭕️ install script for test or local environments
     - ⭕️ remote REST app deployment
     - ⭕️ quick (dirty) export and import objects or APEX components/pages in between environment

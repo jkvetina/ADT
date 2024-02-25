@@ -17,6 +17,11 @@ class Attributed(dict):
 
 
 
+def replace(subject, pattern, replacement, flags = 0):
+    return re.compile(pattern, flags).sub(replacement, subject)
+
+
+
 def get_encryption_key(password, salt):
     k = PBKDF2HMAC(
         algorithm   = hashes.SHA256(),

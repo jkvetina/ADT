@@ -76,7 +76,7 @@ class Deploy(config.Config):
 
             # prep results for the template
             results = {
-                'logs'      : 0,
+                'output'    : 0,
                 'status'    : 'SUCCESS',
                 'timer'     : '00:00:00',
             }
@@ -126,15 +126,16 @@ class Deploy(config.Config):
 
     def create_plan(self):
         self.template_hack = [
-            ['logs',    '{1}___'],
+            ['output',  '{1}___'],
             ['status',  '{2}____'],
             ['timer',   '{3}_____']
         ]
 
         # create deployment plan
         for order, file in enumerate(sorted(glob.glob(self.patch_full + '/*.sql'))):
+            full    = file
             file    = os.path.basename(file.replace(self.patch_full, ''))
-            schema  = util.replace(os.path.splitext(file)[0], '^[0-9]+[_-]*', '')
+            schema  = util.replace(os.path.splitext(file)[0], '^[0-9]+[_-]*', '')       # remove leading numbers
             #
             if not (schema in self.deploy_schemas):
                 self.deploy_schemas[schema] = []
@@ -144,13 +145,24 @@ class Deploy(config.Config):
                 'order'     : order + 1,
                 'schema'    : schema,
                 'file'      : file,
+                'files'     : self.get_file_references(full),
             }
             for column, content in self.template_hack:
                 plan[column] = content
             self.deploy_plan.append(plan)
         #
         util.print_header('PATCH FOUND:', self.patch_short)
-        util.print_table(self.deploy_plan, columns = ['order', 'schema', 'file'])
+        util.print_table(self.deploy_plan, columns = ['order', 'schema', 'file', 'files'])
+
+
+
+    def get_file_references(self, file):
+        files = 0
+        with open(file, 'rt') as f:
+            for line in f.readlines():
+                if line.startswith('@'):
+                    files += 1
+        return files
 
 
 

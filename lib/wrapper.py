@@ -16,11 +16,12 @@ class Oracle:
 
 
 
-    def __init__(self, tns, debug = False, ping_sqlcl = False):
+    def __init__(self, tns, debug = False, ping_sqlcl = False, silent = False):
         self.conn   = None    # recent connection link
         self.curs   = None    # recent cursor
         self.cols   = []      # recent columns mapping (name to position) to avoid associative arrays
         self.desc   = {}      # recent columns description (name, type, display_size, internal_size, precision, scale, null_ok)
+        self.silent = silent
         self.tns    = {
           'lang'    : '.AL32UTF8',
         }
@@ -38,7 +39,9 @@ class Oracle:
             self.debug = debug
 
         # auto connect
-        util.print_header('CONNECTING TO {}:'.format(self.tns.desc))
+        if not self.silent:
+            util.print_header('CONNECTING TO {}:'.format(self.tns.desc))
+        #
         self.connect()
         self.get_versions()
 
@@ -53,7 +56,8 @@ class Oracle:
                     break
 
         # show versions
-        util.print_pipes(self.versions)
+        if not self.silent:
+            util.print_pipes(self.versions)
 
 
 
@@ -77,7 +81,8 @@ class Oracle:
             else:
                 oracledb.init_oracle_client()
             #
-            print('USING THICK CLIENT: {}\n'.format(client))
+            if not self.silent:
+                print('USING THICK CLIENT: {}\n'.format(client))
 
         # use wallet to connect
         if 'wallet' in self.tns and len(self.tns.wallet) > 0:

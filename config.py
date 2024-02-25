@@ -396,8 +396,8 @@ class Config(util.Attributed):
 
 
 
-    def db_connect(self, ping_sqlcl = False):
-        return wrapper.Oracle(dict(self.connection), debug = self.debug, ping_sqlcl = ping_sqlcl)
+    def db_connect(self, ping_sqlcl = False, silent = False):
+        return wrapper.Oracle(dict(self.connection), debug = self.debug, ping_sqlcl = ping_sqlcl, silent = silent)
 
 
 

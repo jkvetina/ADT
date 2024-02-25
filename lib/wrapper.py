@@ -71,6 +71,7 @@ class Oracle:
         os.environ['NLS_LANG'] = self.tns.lang
 
         # might need to adjust client for classic connections or for DPY-3015 password issues
+        # https://python-oracledb.readthedocs.io/en/latest/user_guide/troubleshooting.html#dpy-3015
         client = self.tns.get('thick', None)
         if client == 'Y':
             client = os.environ.get('CLIENT_HOME') or 'Y'

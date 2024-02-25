@@ -49,6 +49,7 @@ class Deploy(config.Config):
         self.deploy_plan        = []
         self.deploy_schemas     = {}
         self.deploy_conn        = {}
+        self.splitter           = '__'
         #
         self.deploy_patch()
 
@@ -76,7 +77,6 @@ class Deploy(config.Config):
             # cleanup the script from comments, fix prompts
             log_file    = ''    # to extract log name from spool line
             payload     = []    # for cleaned lines
-            splitter    = '__'
             #
             with open(full, 'rt') as f:
                 for line in f.readlines():
@@ -89,7 +89,7 @@ class Deploy(config.Config):
                     # change log name
                     if line.startswith('SPOOL "'):
                         split = line.split('"')
-                        log_file = split[1].replace('./', './{}{}{}{}'.format(self.patch_env, splitter, self.config.today_deploy, splitter))
+                        log_file = split[1].replace('./', './{}{}{}{}'.format(self.patch_env, self.splitter, self.config.today_deploy, self.splitter))
                         line = '{}"{}"{}'.format(split[0], log_file, split[2])
                     #
                     payload.append(line)
@@ -115,7 +115,7 @@ class Deploy(config.Config):
 
             # rename log to reflect the result in the file name
             log_file = log_file.replace('./', self.patch_path)
-            os.rename(log_file, log_file.replace('.log', '{}{}.log'.format(splitter, results['status'])))
+            os.rename(log_file, log_file.replace('.log', '{}{}.log'.format(self.splitter, results['status'])))
 
             # show progress
             out = template.pop(0)
@@ -136,7 +136,7 @@ class Deploy(config.Config):
         for patch in patches:
             if self.patch_folder != None and patch == self.patch_path:
                 found_folders.append(patch)
-            elif self.patch_code in patch:
+            elif self.patch_code != None and self.patch_code in patch:
                 found_folders.append(patch)
         #
         folders_count = len(found_folders)
@@ -144,10 +144,34 @@ class Deploy(config.Config):
             self.patch_folder = found_folders[0].replace(self.repo_root + self.config.patch_root, '')
         #
         else:
-            util.print_header('AVBAILABLE PATCHES:')
+            data = []
             for patch in patches:
-                print('  - {}'.format(patch.replace(self.repo_root + self.config.patch_root, '')))
-            print()
+                deployed    = ''
+                result      = ''
+                schemas     = []
+
+                # find more details from log names
+                for file in glob.glob(patch + '/*.log'):
+                    info = os.path.splitext(os.path.basename(file))[0].split(self.splitter)
+                    if len(info) == 4:
+                        env, date, schema, status = info
+                        if env != self.patch_env:
+                            continue
+                        deployed    = date.replace('_', ' ')
+                        result      = status if (result == '' or status == 'ERROR') else result
+                        #
+                        if not (schema in schemas):
+                            schemas.append(schema)
+                #
+                data.append({
+                    'patch_name'    : patch.replace(self.repo_root + self.config.patch_root, ''),
+                    'schemas'       : len(schemas),
+                    'deployed_at'   : deployed,
+                    'result'        : result,
+                })
+            #
+            util.print_header('AVAILABLE PATCHES:', self.patch_env)
+            util.print_table(data)
             #
             if len(found_folders) > 1:
                 util.raise_error('TOO MANY PATCHES FOUND!', '  - add specific folder name\n')

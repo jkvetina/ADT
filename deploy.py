@@ -48,6 +48,7 @@ class Deploy(config.Config):
         #
         self.deploy_plan        = []
         self.deploy_schemas     = {}
+        self.deploy_conn        = {}
         #
         self.deploy_patch()
 
@@ -58,11 +59,10 @@ class Deploy(config.Config):
         self.create_plan()
 
         # connect to all target schemas first so we know we can deploy all scripts
-        self.deploy_conn = {}
+        util.print_header('CONNECTING TO {}:'.format(self.patch_env))
         for schema in self.deploy_schemas.keys():
             self.init_connection(env_name = self.patch_env, schema_name = schema)
-            info = 'CONNECTING TO {} '.format(self.connection['desc'])
-            print(info.ljust(72, '.') + ' ', end = '', flush = True)
+            print('  {} '.format(schema).ljust(72, '.') + ' ', end = '', flush = True)
             self.deploy_conn[schema] = self.db_connect(ping_sqlcl = True, silent = True)
             print('OK')
         print()

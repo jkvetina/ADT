@@ -1,5 +1,5 @@
 # coding: utf-8
-import sys, os, re, argparse, glob
+import sys, os, re, argparse, glob, timeit
 #
 import config
 from lib import util
@@ -67,6 +67,7 @@ class Deploy(config.Config):
         print(template.pop(0))  # splitter
         #
         for plan in self.deploy_plan:
+            start   = timeit.default_timer()
             schema  = plan['schema']
             file    = plan['file']
             full    = self.patch_path + file
@@ -97,11 +98,19 @@ class Deploy(config.Config):
             # execute the script
             output = conn.sqlcl_request(payload)
 
+            # search for the success prompt at last few lines
+            lines = output.splitlines()
+            success = ''
+            for line in lines[-10:]:                # last 10 lines
+                if line.startswith('-- SUCCESS'):   # this is in patch.py
+                    success = True
+                    break
+
             # prep results for the template
             results = {
-                'output'    : 0,
-                'status'    : 'SUCCESS',
-                'timer'     : '00:00:00',
+                'output'    : len(lines),
+                'status'    : 'SUCCESS' if success else 'ERROR',
+                'timer'     : int(round(timeit.default_timer() - start + 0.5, 0)),  # ceil
             }
 
             # rename log to reflect the result in the file name

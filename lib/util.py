@@ -1,4 +1,4 @@
-import sys, os, re, yaml, traceback
+import sys, os, re, yaml, traceback, io
 import secrets, base64
 
 # for encryptions
@@ -128,7 +128,11 @@ def print_header(message, append = ''):
 
 
 
-def print_table(data, columns = [], right_align = [], spacer = 3, start = 2):
+def print_table(data, columns = [], right_align = [], spacer = 3, start = 2, capture = False):
+    if capture:
+        buffer = io.StringIO()
+        sys.stdout = buffer
+
     # exception for 1 line dictionary
     if columns == []:
         if isinstance(data, dict):
@@ -183,6 +187,12 @@ def print_table(data, columns = [], right_align = [], spacer = 3, start = 2):
             args.append(row.get(name.lower(), '') or '')
         print(pattern.format(*args))
     print()
+
+    # instead of printing to screen return content as string
+    if capture:
+        buffer      = buffer.getvalue()
+        sys.stdout  = sys.__stdout__
+        return buffer
 
 
 

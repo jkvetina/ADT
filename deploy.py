@@ -61,7 +61,7 @@ class Deploy(config.Config):
 
         # run the target script(s) and spool the logs
         util.print_header('PATCHING PROGRESS AND RESULTS:')
-        template = util.print_table(self.deploy_plan, right_align = ['logs'], capture = True).splitlines()
+        template = util.print_table(self.deploy_plan, capture = True).splitlines()
         print(template.pop(0))  # empty line
         print(template.pop(0))  # headers
         print(template.pop(0))  # splitter
@@ -146,7 +146,7 @@ class Deploy(config.Config):
         else:
             util.print_header('AVBAILABLE PATCHES:')
             for patch in patches:
-                print('  - {}'.format(patch))
+                print('  - {}'.format(patch.replace(self.repo_root + self.config.patch_root, '')))
             print()
             #
             if len(found_folders) > 1:
@@ -165,7 +165,7 @@ class Deploy(config.Config):
         self.template_hack = [
             ['output',  '{1}___'],
             ['status',  '{2}____'],
-            ['timer',   '{3}_____']
+            ['timer',   '{3}__']
         ]
 
         # create deployment plan

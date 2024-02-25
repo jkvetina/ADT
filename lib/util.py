@@ -159,11 +159,12 @@ def print_table(data, columns = [], right_align = [], spacer = 3, start = 2, cap
     #
     for row in data:
         for i, name in enumerate(row):
-            value       = str(row[name])
-            widths[i]   = max(widths[i], len(value))
-            #
-            if not value.isnumeric():
-                auto_align[i] = False
+            if name in columns:
+                value       = str(row[name])
+                widths[i]   = max(widths[i], len(value))
+                #
+                if not value.isnumeric():
+                    auto_align[i] = False
 
     # auto align numeric columns to the right
     for i, numeric in auto_align.items():

@@ -76,6 +76,14 @@ class Patch(config.Config):
         util.print_header('CREATING PATCH:', self.patch_code + (' (' + self.patch_seq + ')').replace(' ()', ''))
         print()
 
+        # check clash on patch sequence
+        if not (os.path.exists(self.patch_folder)) and self.patch_seq != '':
+            splitter    = '-'
+            name        = self.patch_folder.replace(self.repo_root + self.config.patch_root, '').split(splitter, maxsplit = 2)
+            #
+            for folder in glob.glob(self.repo_root + self.config.patch_root + name[0] + splitter + name[1] + '*'):
+                util.raise_error('CLASH ON PATCH SEQUENCE', folder.replace(self.repo_root + self.config.patch_root, ''))
+
         # workflow
         self.find_commits()
 

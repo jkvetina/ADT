@@ -165,13 +165,14 @@ class Deploy(config.Config):
     def get_available_patches(self):
         for ref in sorted(self.patches.keys(), reverse = True):
             patch       = self.patches[ref]
-            files       = 0
+            files       = []
             deployed    = ''
             result      = ''
 
             # get number of files referenced in the patch root files
             for file in glob.glob(patch + '/*.sql'):
-                files += self.get_file_references(file)
+                files.extend(self.get_file_references(file))
+            files = list(set(files))    # deduplicate
 
             # find more details from log names
             for file in glob.glob(patch + '/*.log'):
@@ -188,7 +189,7 @@ class Deploy(config.Config):
             self.available.append({
                 'ref'           : ref,
                 'patch_name'    : patch.replace(self.repo_root + self.config.patch_root, ''),
-                'files'         : files,
+                'files'         : len(files),
                 'deployed_at'   : deployed,
                 'result'        : result,
             })
@@ -216,7 +217,7 @@ class Deploy(config.Config):
                 'order'     : order + 1,
                 'schema'    : schema,
                 'file'      : file,
-                'files'     : self.get_file_references(full),
+                'files'     : len(self.get_file_references(full)),
             }
             for column, content in self.template_hack:
                 plan[column] = content
@@ -228,11 +229,15 @@ class Deploy(config.Config):
 
 
     def get_file_references(self, file):
-        files = 0
+        files = []
         with open(file, 'rt') as f:
             for line in f.readlines():
                 if line.startswith('@'):
-                    files += 1
+                    if '"' in line:
+                        file = line.split('"', maxsplit = 2)[1]
+                    else:
+                        file = line.replace('@', '').split(' ')[0]
+                    files.append(file)
         return files
 
 

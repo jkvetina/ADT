@@ -1,5 +1,5 @@
 # coding: utf-8
-import sys, os, re, shutil, argparse, glob
+import sys, os, re, shutil, subprocess, argparse, glob
 #
 import config
 from lib import util
@@ -388,22 +388,18 @@ class Patch(config.Config):
         source_file     = '{}/{}'.format(self.repo_root, file).replace('//', '/')
         target_file     = '{}/{}'.format(self.patch_folder, file).replace('//', '/')
         target_folder   = os.path.dirname(target_file)
-        #
-        if not os.path.exists(target_folder):
-            os.makedirs(target_folder)
-        shutil.copy2(source_file, target_file)
+        file_content    = self.get_file_from_commit(file, commit = str(self.last_commit_obj))
 
         # change page audit columns
         if self.config.replace_audit and self.apex_app_id != '' and '/application/pages/page' in file:
-            file_content = ''
-            with open(target_file, 'rt', encoding = 'utf-8') as f:
-                file_content = f.read()
-            #
             file_content = re.sub(r",p_last_updated_by=>'([^']+)'",         ",p_last_updated_by=>'{}'".format(self.patch_code), file_content)
             file_content = re.sub(r",p_last_upd_yyyymmddhh24miss=>'(\d+)'", ",p_last_upd_yyyymmddhh24miss=>'{}'".format(self.config.today_full_raw), file_content)
-            #
-            with open(target_file, 'wt', encoding = 'utf-8') as w:
-                w.write(file_content)
+
+        # save file
+        if not os.path.exists(target_folder):
+            os.makedirs(target_folder)
+        with open(target_file, 'wt', encoding = 'utf-8') as w:
+            w.write(file_content)
 
 
 
@@ -487,6 +483,17 @@ class Patch(config.Config):
             payload += '\n'
         #
         return payload
+
+
+
+    def get_file_from_commit(self, file, commit):
+        # run command line and capture the output, text file is expected
+        command = 'git show {$REV}:{$FILE}'
+        command = command.replace('{$REV}',  commit)
+        command = command.replace('{$FILE}', file)
+        #
+        result  = subprocess.run(command, shell = True, capture_output = True, text = True)
+        return (result.stdout or '')
 
 
 

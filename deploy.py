@@ -163,9 +163,20 @@ class Deploy(config.Config):
 
         # check if there is a newer patch deployed than requested one
         found_newer = False
+        conflicted  = []
         #
         for i in reversed(range(1, ref)):
             found_newer = True
+            for file in self.available_ref[i]['files']:
+                if file in self.available_ref[ref]['files'] and not (file in conflicted):
+                    conflicted.append(file)
+
+        # show list of conflicted files
+        if len(conflicted) > 0:
+            util.print_header('CONFLICTED FILES:')
+            for file in conflicted:
+                print('  - {}'.format(file))
+            print()
         #
         if found_newer:
             util.raise_error('REQUESTED PATCH TOO OLD',

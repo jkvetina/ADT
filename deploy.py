@@ -140,40 +140,6 @@ class Deploy(config.Config):
             elif self.patch_code != None and self.patch_code in patch:
                 patch_found.append(patch)
         #
-        else:
-            data = []
-            for patch in patches:
-                deployed    = ''
-                result      = ''
-                schemas     = []
-
-                # find more details from log names
-                for file in glob.glob(patch + '/*.log'):
-                    info = os.path.splitext(os.path.basename(file))[0].split(self.splitter)
-                    if len(info) == 4:
-                        env, date, schema, status = info
-                        if env != self.patch_env:
-                            continue
-                        deployed    = date.replace('_', ' ')
-                        result      = status if (result == '' or status == 'ERROR') else result
-                        #
-                        if not (schema in schemas):
-                            schemas.append(schema)
-                #
-                data.append({
-                    'patch_name'    : patch.replace(self.repo_root + self.config.patch_root, ''),
-                    'schemas'       : len(schemas),
-                    'deployed_at'   : deployed,
-                    'result'        : result,
-                })
-            #
-            util.print_header('AVAILABLE PATCHES:', self.patch_env)
-            util.print_table(data)
-            #
-            if len(found_folders) > 1:
-                util.raise_error('TOO MANY PATCHES FOUND!', '  - add specific folder name\n')
-            else:
-                util.raise_error('NO PATCH FOUND!')
         if len(patch_found) != 1:
             self.show_available_patches()
             util.quit()
@@ -183,6 +149,48 @@ class Deploy(config.Config):
         self.patch_full     = patch_found[0]
         self.patch_short    = self.patch_full.replace(self.repo_root + self.config.patch_root, '')
         self.patch_path     = self.repo_root + self.config.patch_root + self.patch_folder + '/'
+
+
+
+    def show_available_patches(self):
+        data = []
+        for ref in sorted(self.patches.keys(), reverse = True):
+            patch       = self.patches[ref]
+            files       = 0
+            deployed    = ''
+            result      = ''
+
+            # get number of files referenced in the patch root files
+            for file in glob.glob(patch + '/*.sql'):
+                files += self.get_file_references(file)
+
+            # find more details from log names
+            for file in glob.glob(patch + '/*.log'):
+                info = os.path.splitext(os.path.basename(file))[0].split(self.splitter)
+                if len(info) == 4:
+                    env, date, schema, status = info
+                    if env != self.patch_env:
+                        continue
+                    #
+                    deployed    = util.replace(date.replace('_', ' '), '( \d\d)[-](\d\d)$', '\\1:\\2')  # fix time
+                    result      = status if (result == '' or status == 'ERROR') else result
+
+            # create a row in table
+            data.append({
+                'ref'           : ref,
+                'patch_name'    : patch.replace(self.repo_root + self.config.patch_root, ''),
+                'files'         : files,
+                'deployed_at'   : deployed,
+                'result'        : result,
+            })
+        #
+        util.print_header('AVAILABLE PATCHES:', self.patch_env)
+        util.print_table(data)
+        #
+        util.print_header('SELECT PATCH YOU WANT TO DEPLOY')
+        print('  - use can either use       : -patch NAME')
+        print('  - or pass reference number : -ref #')
+        print()
 
 
 

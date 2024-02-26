@@ -133,6 +133,21 @@ class Recompile(config.Config):
             right_align = ['total', 'fixed', 'invalid'],
         )
 
+        # show invalid objects
+        errors  = self.conn.fetch_assoc(query.objects_errors_summary, **args)
+        data    = self.conn.fetch_assoc(query.objects_to_recompile, force = '', **args)
+        if len(data) > 0:
+            # enrich the original list with some numbers
+            for i, row in enumerate(data):
+                data[i]['errors'] = 0
+                for row in errors:
+                    if data[i]['object_name'] == row['object_name'] and data[i]['object_type'] == row['object_type']:
+                        data[i] = {**data[i], **row}  # merge dictionaries
+                        break
+            #
+            util.print_header('INVALID OBJECTS:')
+            util.print_table(data)
+
 
 
 if __name__ == "__main__":

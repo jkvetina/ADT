@@ -161,6 +161,17 @@ class Deploy(config.Config):
         if self.available_ref[ref]['result'] == 'SUCCESS' and not self.args.force:
             util.raise_error('PATCH ALREADY DEPLOYED', '  - use -force flag if you want to redeploy anyway')
 
+        # check if there is a newer patch deployed than requested one
+        found_newer = False
+        #
+        for i in reversed(range(1, ref)):
+            found_newer = True
+        #
+        if found_newer:
+            util.raise_error('REQUESTED PATCH TOO OLD',
+                '  - there is a newer patch deployed, you might lose things...\n' +
+                '  - use -force flag if you want to redeploy anyway')
+
         # set values
         self.patch_folder   = patch_found[0].replace(self.repo_root + self.config.patch_root, '')
         self.patch_full     = patch_found[0]

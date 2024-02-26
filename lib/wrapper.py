@@ -62,8 +62,7 @@ class Oracle:
 
 
     def __del__(self):
-        if self.conn:
-            self.conn.close()  # disconnect
+        self.disconnect()
 
 
 
@@ -127,6 +126,15 @@ class Oracle:
                 print(traceback.format_exc())
                 print(sys.exc_info()[2])
             util.raise_error('CONNECTION FAILED', self.get_error_code())
+
+
+
+    def disconnect(self):
+        if self.conn:
+            try:
+                self.conn.close()
+            except:
+                pass
 
 
 

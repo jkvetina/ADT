@@ -250,7 +250,7 @@ if __name__ == "__main__":
     parser.add_argument('-schema',      help = 'Schema/connection name')
     #
     parser.add_argument('-patch',       help = 'Patch code (name for the patch files)')
-    parser.add_argument('-folder',      help = 'Patch folder, for cases when patch code is not unique')
+    parser.add_argument('-ref',         help = 'Reference number (see list of available patches)', type = int)
     parser.add_argument('-target',      help = 'Target environment')
     parser.add_argument('-force',       help = 'Force deployment',                          default = False, nargs = '?', const = True)
     #

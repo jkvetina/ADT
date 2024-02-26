@@ -158,7 +158,7 @@ class Deploy(config.Config):
         # check status of requested patch, search for ref#
         ref = self.args.ref or list(self.patches.keys())[list(self.patches.values()).index(patch_found[0])]
         #
-        if self.available_ref[ref]['result'] == 'SUCCESS':
+        if self.available_ref[ref]['result'] == 'SUCCESS' and not self.args.force:
             util.raise_error('PATCH ALREADY DEPLOYED', '  - use -force flag if you want to redeploy anyway')
 
         # set values

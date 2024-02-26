@@ -47,11 +47,12 @@ class Deploy(config.Config):
 
         # internal variables
         self.patches            = {}
-        self.available          = []
+        self.available_ref      = {}
+        self.available_show     = []
         self.deploy_plan        = []
         self.deploy_schemas     = {}
         self.deploy_conn        = {}
-        self.splitter           = '__'
+        self.splitter           = '__'      # in deploy logs in between env, date, schema, status
         #
         self.deploy_patch()
 
@@ -146,13 +147,19 @@ class Deploy(config.Config):
         #
         if len(patch_found) != 1:
             util.print_header('AVAILABLE PATCHES:', self.patch_env)
-            util.print_table(self.available)
+            util.print_table(self.available_show)
             #
             util.print_header('SELECT PATCH YOU WANT TO DEPLOY')
             print('  - use can either use       : -patch NAME')
             print('  - or pass reference number : -ref #')
             print()
             util.quit()
+
+        # check status of requested patch, search for ref#
+        ref = self.args.ref or list(self.patches.keys())[list(self.patches.values()).index(patch_found[0])]
+        #
+        if self.available_ref[ref]['result'] == 'SUCCESS':
+            util.raise_error('PATCH ALREADY DEPLOYED', '  - use -force flag if you want to redeploy anyway')
 
         # set values
         self.patch_folder   = patch_found[0].replace(self.repo_root + self.config.patch_root, '')
@@ -186,13 +193,14 @@ class Deploy(config.Config):
                     result      = status if (result == '' or status == 'ERROR') else result
 
             # create a row in table
-            self.available.append({
+            self.available_ref[ref] = {
                 'ref'           : ref,
                 'patch_name'    : patch.replace(self.repo_root + self.config.patch_root, ''),
-                'files'         : len(files),
+                'files'         : files,
                 'deployed_at'   : deployed,
                 'result'        : result,
-            })
+            }
+            self.available_show.append({**self.available_ref[ref], **{'files': len(files)}})
 
 
 

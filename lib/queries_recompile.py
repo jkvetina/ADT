@@ -28,16 +28,22 @@ ORDER BY 1
 
 # get database objects to recompile
 objects_to_recompile = """
-SELECT o.*
+SELECT
+    o.object_type,
+    o.object_name
 FROM (
-    SELECT o.object_name, o.object_type
+    SELECT
+        o.object_type,
+        o.object_name
     FROM user_objects o
     WHERE o.status              != 'VALID'
         AND o.object_type       NOT IN ('SEQUENCE')
         AND (o.object_type      LIKE :object_type ESCAPE '\\' OR :object_type IS NULL)
         AND (o.object_name      LIKE :object_name ESCAPE '\\' OR :object_name IS NULL)
     UNION ALL
-    SELECT o.object_name, o.object_type
+    SELECT
+        o.object_type,
+        o.object_name
     FROM user_objects o
     WHERE :force                = 'Y'
         AND o.object_type       IN ('PACKAGE', 'PACKAGE BODY', 'PROCEDURE', 'FUNCTION', 'TRIGGER', 'VIEW', 'MATERIALIZED VIEW', 'SYNONYM', 'TYPE', 'TYPE BODY')
@@ -54,5 +60,26 @@ ORDER BY CASE o.object_type
     WHEN 'TYPE BODY'            THEN 8
     WHEN 'PACKAGE BODY'         THEN 9
     ELSE                             6 END, o.object_name
+"""
+
+# get summary of errors
+objects_errors_summary = """
+SELECT
+    e.type          AS object_type,
+    e.name          AS object_name,
+    COUNT(e.line)   AS errors,
+    COALESCE(
+        MIN(REGEXP_SUBSTR(e.text, 'ORA-\d+')),
+        MIN(REGEXP_SUBSTR(e.text, 'PLS-\d+'))
+    ) AS error
+FROM user_errors e
+WHERE 1 = 1
+    AND (e.type     LIKE :object_type ESCAPE '\\' OR :object_type IS NULL)
+    AND (e.name     LIKE :object_name ESCAPE '\\' OR :object_name IS NULL)
+    AND e.text      NOT LIKE 'PLW%'     -- skip warnings
+GROUP BY
+    e.type,
+    e.name
+ORDER BY 1, 2
 """
 

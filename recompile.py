@@ -133,6 +133,10 @@ class Recompile(config.Config):
             right_align = ['total', 'fixed', 'invalid'],
         )
 
+        # reconnect due to some unforseen recompilation issues
+        self.conn.disconnect()
+        self.conn = self.db_connect(ping_sqlcl = False, silent = True)
+
         # show invalid objects
         errors  = self.conn.fetch_assoc(query.objects_errors_summary, **args)
         data    = self.conn.fetch_assoc(query.objects_to_recompile, force = '', **args)

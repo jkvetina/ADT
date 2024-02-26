@@ -40,12 +40,13 @@ class Deploy(config.Config):
         #
         self.patch_env          = self.args.target
         self.patch_code         = self.args.patch
-        self.patch_folder       = self.args.folder
+        self.patch_folder       = ''
         self.info.branch        = self.args.branch or self.info.branch or self.repo.active_branch
         #
         self.init_config()
 
-        #
+        # internal variables
+        self.patches            = {}
         self.deploy_plan        = []
         self.deploy_schemas     = {}
         self.deploy_conn        = {}
@@ -131,17 +132,13 @@ class Deploy(config.Config):
 
     def find_folder(self):
         # identify patch folder
-        found_folders = []
-        patches = sorted(glob.glob(self.repo_root + self.config.patch_root + '**'))
-        for patch in patches:
-            if self.patch_folder != None and patch == self.patch_path:
-                found_folders.append(patch)
+        patch_found = []
+        for ref, patch in enumerate(sorted(glob.glob(self.repo_root + self.config.patch_root + '**'), reverse = True), start = 1):
+            self.patches[ref] = patch
+            if self.args.ref != None and self.args.ref == ref:
+                patch_found.append(patch)
             elif self.patch_code != None and self.patch_code in patch:
-                found_folders.append(patch)
-        #
-        folders_count = len(found_folders)
-        if folders_count == 1:
-            self.patch_folder = found_folders[0].replace(self.repo_root + self.config.patch_root, '')
+                patch_found.append(patch)
         #
         else:
             data = []
@@ -177,9 +174,13 @@ class Deploy(config.Config):
                 util.raise_error('TOO MANY PATCHES FOUND!', '  - add specific folder name\n')
             else:
                 util.raise_error('NO PATCH FOUND!')
+        if len(patch_found) != 1:
+            self.show_available_patches()
+            util.quit()
 
         # set values
-        self.patch_full     = found_folders[0]
+        self.patch_folder   = patch_found[0].replace(self.repo_root + self.config.patch_root, '')
+        self.patch_full     = patch_found[0]
         self.patch_short    = self.patch_full.replace(self.repo_root + self.config.patch_root, '')
         self.patch_path     = self.repo_root + self.config.patch_root + self.patch_folder + '/'
 

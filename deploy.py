@@ -47,6 +47,7 @@ class Deploy(config.Config):
 
         # internal variables
         self.patches            = {}
+        self.available          = []
         self.deploy_plan        = []
         self.deploy_schemas     = {}
         self.deploy_conn        = {}
@@ -139,9 +140,18 @@ class Deploy(config.Config):
                 patch_found.append(patch)
             elif self.patch_code != None and self.patch_code in patch:
                 patch_found.append(patch)
+
+        # get patches for checks
+        self.get_available_patches()
         #
         if len(patch_found) != 1:
-            self.show_available_patches()
+            util.print_header('AVAILABLE PATCHES:', self.patch_env)
+            util.print_table(self.available)
+            #
+            util.print_header('SELECT PATCH YOU WANT TO DEPLOY')
+            print('  - use can either use       : -patch NAME')
+            print('  - or pass reference number : -ref #')
+            print()
             util.quit()
 
         # set values
@@ -152,8 +162,7 @@ class Deploy(config.Config):
 
 
 
-    def show_available_patches(self):
-        data = []
+    def get_available_patches(self):
         for ref in sorted(self.patches.keys(), reverse = True):
             patch       = self.patches[ref]
             files       = 0
@@ -176,27 +185,19 @@ class Deploy(config.Config):
                     result      = status if (result == '' or status == 'ERROR') else result
 
             # create a row in table
-            data.append({
+            self.available.append({
                 'ref'           : ref,
                 'patch_name'    : patch.replace(self.repo_root + self.config.patch_root, ''),
                 'files'         : files,
                 'deployed_at'   : deployed,
                 'result'        : result,
             })
-        #
-        util.print_header('AVAILABLE PATCHES:', self.patch_env)
-        util.print_table(data)
-        #
-        util.print_header('SELECT PATCH YOU WANT TO DEPLOY')
-        print('  - use can either use       : -patch NAME')
-        print('  - or pass reference number : -ref #')
-        print()
 
 
 
     def create_plan(self):
         self.template_hack = [
-            ['output',  '{1}___'],
+            ['output',  '{1}___'],      # to block the minimum column width
             ['status',  '{2}____'],
             ['timer',   '{3}__']
         ]

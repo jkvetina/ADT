@@ -37,7 +37,7 @@ class Recompile(config.Config):
         super().__init__(parser)
 
         # connect to the database
-        self.conn = self.db_connect()
+        self.conn = self.db_connect(ping_sqlcl = False)
 
         # show objects overview
         print('RECOMPILING')
@@ -143,6 +143,7 @@ if __name__ == "__main__":
     parser.add_argument('-debug',       help = 'Turn on the debug/verbose mode',    default = False, nargs = '?', const = True)
     parser.add_argument('-key',         help = 'Key or key location to encypt passwords')
     parser.add_argument('-schema',      help = 'Schema/connection name')
+    parser.add_argument('-env',         help = 'Target environment')
 
     # limit scope by object type and name (prefix)
     parser.add_argument('-type',        help = 'Object type')

@@ -79,7 +79,7 @@ class Patch(config.Config):
             # get through commits for specific patch name/code
             self.get_patch_commits()
             #
-            if self.patch_seq != '' and self.patch_seq >= 0:
+            if self.patch_seq != '':
                 # create patch for requested name and seq
                 self.create_patch()
             else:
@@ -489,7 +489,7 @@ class Patch(config.Config):
         payload += '@"./{}f{}/{}";\n'.format(self.config.path_apex, self.apex_app_id, 'application/set_environment.sql')
 
         # attach the whole application for full imports
-        payload += '--@"./{}f{}/f{}.sql;"\n'.format(self.config.path_apex, self.apex_app_id)
+        payload += '--@"./{}f{}/f{}.sql;"\n'.format(self.config.path_apex, self.apex_app_id, self.apex_app_id)
         payload += '--\n'
         #
         return payload

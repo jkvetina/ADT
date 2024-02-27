@@ -137,10 +137,9 @@ class Patch(config.Config):
                 self.patch_folders[info['day']] = {}
             self.patch_folders[info['day']][folder] = info
 
-
-
-    def check_clash_seq(self):
-        pass
+        # check clash on patch sequence
+        if self.patch_current['patch_code'] != self.patch_code and self.patch_current['seq'] in self.patch_sequences:
+            util.raise_error('CLASH ON PATCH SEQUENCE', )
 
 
 
@@ -148,8 +147,11 @@ class Patch(config.Config):
         util.print_header('CREATING PATCH:', self.patch_code + (' (' + self.patch_seq + ')').replace(' ()', ''))
         print()
 
-        # check clash on patch sequence
-        self.check_clash_seq()
+        # show commits and files
+        for commit in sorted(self.relevant_commits.keys()):
+            data = self.relevant_commits[commit]
+            print('  {}) {}'.format(commit, data.summary))  # data.author.email, data.authored_datetime
+        print()
 
         # show summary
         short = self.patch_folder.replace(self.repo_root, './')

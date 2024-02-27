@@ -37,29 +37,25 @@ class Patch(config.Config):
         super().__init__(parser)
 
         # process arguments and reinitiate config
-        util.assert_(self.args.patch, 'MISSING ARGUMENT: PATCH_CODE')
-        #
         self.patch_code         = self.args.patch
         self.patch_seq          = self.args.seq or ''
         self.search_message     = self.args.search or [self.patch_code]
         self.info.branch        = self.args.branch or self.info.branch or self.repo.active_branch
-        self.commits            = self.args.commit
+        self.add_commits        = self.args.add
+        self.ignore_commits     = self.args.ignore
         #
         self.init_config()
-        self.create_patch()
 
-
-
-    def create_patch(self):
         # prepare internal variables
         self.patch_files        = []
         self.patch_files_apex   = []
         self.patch_file         = ''
-        self.patch_folder       = self.repo_root + self.config.patch_root   + self.config.patch_folder
         self.patch_grants       = self.repo_root + self.config.path_objects + self.config.patch_grants
+        self.patch_folder       = self.repo_root + self.config.patch_root   + self.config.patch_folder
+        self.patch_folders      = {}
+        self.patch_sequences    = []
+        self.patch_current      = {}
         self.apex_app_id        = ''
-
-        # track changes
         self.all_commits        = {}
         self.relevant_commits   = {}
         self.relevant_count     = {}
@@ -70,10 +66,29 @@ class Patch(config.Config):
         # set current commit to the head and search through recent commits
         self.current_commit_obj = self.repo.commit('HEAD')
         self.current_commit     = self.current_commit_obj.count()
+        self.patch_folder       = self.replace_tags(self.patch_folder)  # replace tags in folder
 
-        # replace tags in folder
-        self.patch_folder = self.replace_tags(self.patch_folder)
-        util.print_header('CREATING PATCH:', self.patch_code + (' (' + self.patch_seq + ')').replace(' ()', ''))
+        #
+        self.patch_folder_splitter = '-'
+        self.get_patch_folders()
+
+        # create patch
+        if self.patch_code != None and len(self.patch_code) > 0:
+            util.print_header('BUILDING PATCH {}'.format(self.patch_code))
+
+            # get through commits for specific patch name/code
+            self.get_patch_commits()
+            #
+            if self.patch_seq != '' and self.patch_seq >= 0:
+                # create patch for requested name and seq
+                self.create_patch()
+            else:
+                # show recent commits for selected patch
+                # show more details if we have them
+                self.show_recent_commits()
+
+
+
         print()
 
         # check clash on patch sequence
@@ -557,7 +572,8 @@ if __name__ == "__main__":
     parser.add_argument('-patch',       help = 'Patch code (name for the patch files)')
     parser.add_argument('-seq',         help = 'Sequence in patch folder, {$PATCH_SEQ}')
     parser.add_argument('-search',      help = 'Search string for Git to search just for relevant commits',     default = None, nargs = '*')
-    parser.add_argument('-commit',      help = 'Process just specific commits',                                 default = None, nargs = '*')
+    parser.add_argument('-add',         help = 'Process just specific commits',                                 default = [],   nargs = '*')
+    parser.add_argument('-ignore',      help = 'Ignore specific commits',                                       default = [],   nargs = '*')
     parser.add_argument('-branch',      help = 'To override active branch',                                     default = None)
     #
     Patch(parser)

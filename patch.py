@@ -417,10 +417,10 @@ class Patch(config.Config):
         payload += '--\n'
 
         # attach starting file
-        payload += '@"./{}f{}/{}"\n'.format(self.config.path_apex, self.apex_app_id, 'application/set_environment.sql')
+        payload += '@"./{}f{}/{}";\n'.format(self.config.path_apex, self.apex_app_id, 'application/set_environment.sql')
 
         # attach the whole application for full imports
-        payload += '--@"./{}f{}.sql"\n'.format(self.config.path_apex, self.apex_app_id)
+        payload += '--@"./{}f{}/f{}.sql;"\n'.format(self.config.path_apex, self.apex_app_id)
         payload += '--\n'
         #
         return payload
@@ -432,7 +432,7 @@ class Patch(config.Config):
 
         # attach ending file
         file = '{}f{}/{}'.format(self.config.path_apex, self.apex_app_id, 'application/end_environment.sql')
-        payload += '@"./{}"\n'.format(file.replace(self.repo_root, '').lstrip('/'))
+        payload += '@"./{}";\n'.format(file.replace(self.repo_root, '').lstrip('/'))
         #
         return payload
 

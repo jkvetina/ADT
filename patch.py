@@ -108,7 +108,7 @@ class Patch(config.Config):
             shutil.rmtree(self.patch_folder, ignore_errors = True, onerror = None)
 
         # create patch files
-        self.create_patches()
+        self.create_patch_files()
 
 
 
@@ -184,7 +184,7 @@ class Patch(config.Config):
 
 
 
-    def create_patches(self):
+    def create_patch_files(self):
         # simplify searching for ignored files
         skip_apex_files = ';'.join(self.config.apex_files_ignore)
 
@@ -307,8 +307,8 @@ class Patch(config.Config):
                 if self.config.path_apex in file and self.apex_app_id == '':
                     obj = self.get_file_object(file)
                     #
-                    self.apex_app_id    = obj['apex_app_id']
-                    self.config.apex_workspace = obj['apex_workspace']
+                    self.apex_app_id            = obj['apex_app_id']
+                    self.config.apex_workspace  = obj['apex_workspace']
 
         # show commits only with relevant files
         payload += '-- COMMITS:\n'

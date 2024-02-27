@@ -441,9 +441,10 @@ class Patch(config.Config):
     def fix_apex_pages(self, apex_pages):
         payload = '--\nBEGIN\n'
         for file in apex_pages:
-            page_id = int(re.search('/pages/page_(\d+)\.sql', file).group(1))
-            #
-            payload += '    wwv_flow_imp_page.remove_page(p_flow_id => wwv_flow.g_flow_id, p_page_id => {});\n'.format(page_id)
+            search = re.search('/pages/page_(\d+)\.sql', file)
+            if search:
+                page_id = int(search.group(1))
+                payload += '    wwv_flow_imp_page.remove_page(p_flow_id => wwv_flow.g_flow_id, p_page_id => {});\n'.format(page_id)
         payload += 'END;\n'
         payload += '/\n'
 

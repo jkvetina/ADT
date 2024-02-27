@@ -101,11 +101,7 @@ class Recompile(config.Config):
             if self.debug:
                 print('  - {}'.format(row.object_name))
             else:
-                progress_done += 1
-                perc = progress_done / progress_target
-                dots = int(70 * perc)
-                sys.stdout.write('\r' + ('.' * dots) + ' ' + str(int(perc * 100)) + '%')
-                sys.stdout.flush()
+                progress_done = util.print_progress(progress_done, progress_target)
 
             # recompile object
             try:

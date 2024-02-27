@@ -258,6 +258,15 @@ def print_pipes(payload, pattern = '  {:>16} | {}', right = [1], upper = True, s
 
 
 
+def print_progress(done, target = 100):
+    perc = min(done + 1, target) / target
+    dots = int(70 * perc)
+    sys.stdout.write('\r' + ('.' * dots) + ' ' + str(int(perc * 100)) + '%')
+    sys.stdout.flush()
+    return done + 1
+
+
+
 def quit(message = ''):
     if len(message) > 0:
         print(message)

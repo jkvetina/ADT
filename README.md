@@ -7,21 +7,11 @@ It does not store anything in your database.
 
 I have been building these CI/CD tools since 2008 and ADT is the newest version, heavily based on the previous [OPY](https://github.com/jkvetina/OPY/tree/master) tool, which unfortunately outgrown to a hefty spaghetti code and became more and more difficult to extend. So, I have decided to start from scratch for like 15th time...
 
-&nbsp;
-
-## How to install
-
-- clone this repo
-    - get the [GitHub Desktop](https://desktop.github.com) if needed
-- [install neccessary tools](./doc/install.md) like Python and SQLcl
-- run `python config.py` which will guide you through the setup
-    - read more about config file if needed
-- run `python export.py` to export database and/or APEX into your repo
-- explore other actions
+Checkout the [install guide](./doc/install.md) and <ins>quick start guide</ins>.
 
 &nbsp;
 
-## Actions (progress 19/45, 42%)
+## Actions (progress 21/52, 40%)
 
 | Filename                                 | Description                                    | Status          | Complexity | Done
 | :-------                                 | :----------                                    | :-----          | ---------: | ---:
@@ -29,11 +19,12 @@ I have been building these CI/CD tools since 2008 and ADT is the newest version,
 | [`export_db.py`](./doc/export_db.md)     | to export database objects                     | OPY **          |          9 |
 | [`export_apex.py`](./doc/export_apex.md) | to export APEX & REST services                 | OPY **          |          4 |
 | [`export_data.py`](./doc/export_data.md) | to export data into CSV files                  | OPY **          |          2 |
-| [`patch.py`](./doc/patch.md)             | to prepare patch files from your changes       | __In Progress__ |          7 | 6
+| [`patch.py`](./doc/patch.md)             | to prepare patch files from your changes       | __In Progress__ |          8 | 7
 | [`deploy.py`](./doc/deploy.md)           | to deploy your patch files                     | __In Progress__ |          8 | 6
 | [`compare.py`](./doc/compare.md)         | to compare two databases                       | Planned         |          9 |
 | [`recompile.py`](./doc/recompile.md)     | to recompile invalid objects                   | __Done__        |          1 | 1
 | [`install.py`](./doc/install.md)         | to create install script for tests             | Planned         |          1 | 1
+|                                          | documentation                                  | Planned         |          5 | 1
 
 \* Almost done, need some final adjustments.\
 \** OPY is covered by [OPY](https://github.com/jkvetina/OPY/tree/master) tool, but I will refactor all of that into ADT after I am done with other things.

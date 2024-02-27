@@ -169,9 +169,16 @@ def print_table(data, columns = [], right_align = [], spacer = 3, start = 2, cap
         auto_align[i] = True
     #
     for row in data:
-        for i, name in enumerate(row):
+        # remove non printed columns
+        filtered = {}
+        for name, value in row.items():
             if name in columns:
-                value       = str(row[name])
+                filtered[name] = value
+
+        # calculate column widths based on values from all rows
+        for i, name in enumerate(filtered):
+            if name in columns:
+                value       = str(filtered[name])
                 widths[i]   = max(widths[i], len(value))
                 #
                 if not value.isnumeric():

@@ -1,4 +1,4 @@
-import sys, os, re, yaml, traceback, io
+import sys, os, re, yaml, traceback, inspect, io
 import secrets, base64
 
 # for encryptions
@@ -14,6 +14,12 @@ class Attributed(dict):
     __getattr__ = dict.__getitem__
     __setattr__ = dict.__setitem__
     __delattr__ = dict.__delitem__
+
+
+
+def get_linenumber():
+    cf = inspect.currentframe()
+    return cf.f_back.f_lineno
 
 
 

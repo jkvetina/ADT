@@ -89,60 +89,6 @@ class Patch(config.Config):
 
 
 
-    def show_recent_commits(self):
-        # show relevant recent commits
-        util.print_header('RECENT COMMITS FOR "{}":'.format(' '.join(self.search_message)))
-        print()
-        for commit in sorted(self.relevant_commits.keys(), reverse = True):
-            print('  {}) {}'.format(commit, self.relevant_commits[commit].summary))
-        print()
-
-        # show help for processing specific commits
-        if self.patch_seq == '':
-            if self.patch_current['day'] in self.patch_folders:
-                data = []
-                for folder, info in self.patch_folders[self.patch_current['day']].items():
-                    data.append({'seq' : info['seq'], 'folder' : folder})
-                #
-                util.print_header('CURRENT FOLDERS:')
-                util.print_table(data)
-
-            # offer next available sequence
-            try:
-                next = min(self.patch_sequences)
-                next = str(int(next) + 1) if next.isnumeric() else '#'
-            except:
-                next = '#'
-            #
-            util.print_header('SPECIFY PATCH SEQUENCE:', next)
-            print('  - use -seq {:<7} to actually create a new patch files'.format(next))
-            print()
-
-
-
-    def get_patch_folders(self):
-        # split current folder
-        curr_folder         = self.patch_folder.replace(self.repo_root + self.config.patch_root, '')
-        self.patch_current  = dict(zip(['day', 'seq', 'patch_code'], curr_folder.split(self.patch_folder_splitter, maxsplit = 2)))
-
-        # get more ifno from folder name
-        for folder in glob.glob(self.repo_root + self.config.patch_root + '*'):
-            folder  = folder.replace(self.repo_root + self.config.patch_root, '')
-            info    = dict(zip(['day', 'seq', 'patch_code'], folder.split(self.patch_folder_splitter, maxsplit = 2)))
-            #
-            if info['day'] == self.patch_current['day'] and not (info['seq'] in self.patch_sequences):
-                self.patch_sequences.append(info['seq'])
-            #
-            if not (info['day'] in self.patch_folders):
-                self.patch_folders[info['day']] = {}
-            self.patch_folders[info['day']][folder] = info
-
-        # check clash on patch sequence
-        if self.patch_current['patch_code'] != self.patch_code and self.patch_current['seq'] in self.patch_sequences:
-            util.raise_error('CLASH ON PATCH SEQUENCE', )
-
-
-
     def create_patch(self):
         util.print_header('CREATING PATCH:', self.patch_code + (' (' + self.patch_seq + ')').replace(' ()', ''))
         print()
@@ -177,6 +123,29 @@ class Patch(config.Config):
 
         # create patch files
         self.create_patch_files()
+
+
+
+    def get_patch_folders(self):
+        # split current folder
+        curr_folder         = self.patch_folder.replace(self.repo_root + self.config.patch_root, '')
+        self.patch_current  = dict(zip(['day', 'seq', 'patch_code'], curr_folder.split(self.patch_folder_splitter, maxsplit = 2)))
+
+        # get more ifno from folder name
+        for folder in glob.glob(self.repo_root + self.config.patch_root + '*'):
+            folder  = folder.replace(self.repo_root + self.config.patch_root, '')
+            info    = dict(zip(['day', 'seq', 'patch_code'], folder.split(self.patch_folder_splitter, maxsplit = 2)))
+            #
+            if info['day'] == self.patch_current['day'] and not (info['seq'] in self.patch_sequences):
+                self.patch_sequences.append(info['seq'])
+            #
+            if not (info['day'] in self.patch_folders):
+                self.patch_folders[info['day']] = {}
+            self.patch_folders[info['day']][folder] = info
+
+        # check clash on patch sequence
+        if self.patch_current['patch_code'] != self.patch_code and self.patch_current['seq'] in self.patch_sequences:
+            util.raise_error('CLASH ON PATCH SEQUENCE', )
 
 
 
@@ -257,6 +226,37 @@ class Patch(config.Config):
         self.first_commit_obj   = self.all_commits[self.first_commit]
         self.last_commit        = max(self.relevant_commits)
         self.last_commit_obj    = self.all_commits[self.last_commit]
+
+
+
+    def show_recent_commits(self):
+        # show relevant recent commits
+        util.print_header('RECENT COMMITS FOR "{}":'.format(' '.join(self.search_message)))
+        print()
+        for commit in sorted(self.relevant_commits.keys(), reverse = True):
+            print('  {}) {}'.format(commit, self.relevant_commits[commit].summary))
+        print()
+
+        # show help for processing specific commits
+        if self.patch_seq == '':
+            if self.patch_current['day'] in self.patch_folders:
+                data = []
+                for folder, info in self.patch_folders[self.patch_current['day']].items():
+                    data.append({'seq' : info['seq'], 'folder' : folder})
+                #
+                util.print_header('CURRENT FOLDERS:')
+                util.print_table(data)
+
+            # offer next available sequence
+            try:
+                next = min(self.patch_sequences)
+                next = str(int(next) + 1) if next.isnumeric() else '#'
+            except:
+                next = '#'
+            #
+            util.print_header('SPECIFY PATCH SEQUENCE:', next)
+            print('  - use -seq {:<7} to actually create a new patch files'.format(next))
+            print()
 
 
 

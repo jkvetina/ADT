@@ -159,12 +159,14 @@ class Patch(config.Config):
         util.print_header('PATCH CREATED:', short)
         summary = []
         for target_schema in sorted(self.relevant_files.keys()):
+            schema, app_id, _ = (target_schema + '..').split('.', maxsplit = 2)
             summary.append({
-                'schema_name'   : target_schema,
+                'schema_name'   : schema,
+                'app_id'        : int(app_id) if app_id.isnumeric() else '',
                 'commits'       : len(self.relevant_count[target_schema]),
                 'files'         : len(self.relevant_files[target_schema]),
             })
-        util.print_table(summary)
+        util.print_table(summary, right_align = ['app_id'])
 
         # create snapshot folder
         if not os.path.exists(self.patch_folder):
@@ -234,6 +236,9 @@ class Patch(config.Config):
                 # get info about the file
                 self.relevant_objects[file] = self.get_file_object(file)
                 schema = self.relevant_objects[file]['schema']
+                app_id = self.relevant_objects[file]['apex_app_id']
+                if app_id != None:
+                    schema += '.{}'.format(app_id)      # append app_id to separate APEX files
                 #
                 if not (schema in self.relevant_files):
                     self.relevant_files[schema] = []

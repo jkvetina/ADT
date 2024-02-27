@@ -89,18 +89,67 @@ class Patch(config.Config):
 
 
 
+    def show_recent_commits(self):
+        # show relevant recent commits
+        util.print_header('RECENT COMMITS FOR "{}":'.format(' '.join(self.search_message)))
+        print()
+        for commit in sorted(self.relevant_commits.keys(), reverse = True):
+            print('  {}) {}'.format(commit, self.relevant_commits[commit].summary))
+        print()
+
+        # show help for processing specific commits
+        if self.patch_seq == '':
+            if self.patch_current['day'] in self.patch_folders:
+                data = []
+                for folder, info in self.patch_folders[self.patch_current['day']].items():
+                    data.append({'seq' : info['seq'], 'folder' : folder})
+                #
+                util.print_header('CURRENT FOLDERS:')
+                util.print_table(data)
+
+            # offer next available sequence
+            try:
+                next = min(self.patch_sequences)
+                next = str(int(next) + 1) if next.isnumeric() else '#'
+            except:
+                next = '#'
+            #
+            util.print_header('SPECIFY PATCH SEQUENCE:', next)
+            print('  - use -seq {:<7} to actually create a new patch files'.format(next))
+            print()
+
+
+
+    def get_patch_folders(self):
+        # split current folder
+        curr_folder         = self.patch_folder.replace(self.repo_root + self.config.patch_root, '')
+        self.patch_current  = dict(zip(['day', 'seq', 'patch_code'], curr_folder.split(self.patch_folder_splitter, maxsplit = 2)))
+
+        # get more ifno from folder name
+        for folder in glob.glob(self.repo_root + self.config.patch_root + '*'):
+            folder  = folder.replace(self.repo_root + self.config.patch_root, '')
+            info    = dict(zip(['day', 'seq', 'patch_code'], folder.split(self.patch_folder_splitter, maxsplit = 2)))
+            #
+            if info['day'] == self.patch_current['day'] and not (info['seq'] in self.patch_sequences):
+                self.patch_sequences.append(info['seq'])
+            #
+            if not (info['day'] in self.patch_folders):
+                self.patch_folders[info['day']] = {}
+            self.patch_folders[info['day']][folder] = info
+
+
+
+    def check_clash_seq(self):
+        pass
+
+
+
+    def create_patch(self):
+        util.print_header('CREATING PATCH:', self.patch_code + (' (' + self.patch_seq + ')').replace(' ()', ''))
         print()
 
         # check clash on patch sequence
-        if not (os.path.exists(self.patch_folder)) and self.patch_seq != '':
-            splitter    = '-'
-            name        = self.patch_folder.replace(self.repo_root + self.config.patch_root, '').split(splitter, maxsplit = 2)
-            #
-            for folder in glob.glob(self.repo_root + self.config.patch_root + name[0] + splitter + name[1] + '*'):
-                util.raise_error('CLASH ON PATCH SEQUENCE', folder.replace(self.repo_root + self.config.patch_root, ''))
-
-        # workflow
-        self.find_commits()
+        self.check_clash_seq()
 
         # show summary
         short = self.patch_folder.replace(self.repo_root, './')
@@ -127,39 +176,54 @@ class Patch(config.Config):
 
 
 
-    def find_commits(self):
+    def get_patch_commits(self):
+        # loop through all recent commits
+        print('\nSEARCHING REPO:')
+        progress_target = self.config.repo_commits
+        progress_done   = 0
+        #
         for commit in list(self.repo.iter_commits(self.info.branch, max_count = self.config.repo_commits, skip = 0)):
             self.all_commits[commit.count()] = commit
+            progress_done = util.print_progress(progress_done, progress_target)
+        progress_done = util.print_progress(progress_target, progress_target)
+        print('\n')
 
+        # add or remove specific commits from the queue
+        for _, commit in self.all_commits.items():
             # skip non requested commits
-            if self.commits != None:
-                if not (str(commit) in self.commits) and not (str(commit.count()) in self.commits):
+            if len(self.add_commits) > 0:
+                commits     = '|{}|'.format('|'.join(self.add_commits))
+                search_for  = '|{}|'.format(commit.count())
+                #
+                if not (search_for in commits):
+                    continue
+
+            # skip ignored commits
+            if len(self.ignore_commits) > 0:
+                commits     = '|{}|'.format('|'.join(self.ignore_commits))
+                search_for  = '|{}|'.format(commit.count())
+                #
+                if search_for in commits:
                     continue
 
             # skip non relevant commits
-            found_match = False
-            for word in [word for word in self.search_message if word is not None]:
-                if word in commit.summary:
-                    found_match = True
-                    break
-            if not found_match:
-                continue
+            if self.search_message != '':
+                found_match = False
+                for word in [word for word in self.search_message if word is not None]:
+                    if word in commit.summary:
+                        found_match = True
+                        break
+                if not found_match:
+                    continue
 
             # store relevant commit
             self.relevant_commits[commit.count()] = commit
-            if self.debug:
-                print(commit.summary)
 
             # process files in commit
-            files_found = []
             for file in commit.stats.files.keys():
                 # process just the listed extensions (in the config)
                 if os.path.splitext(file)[1] != '.sql':
                     continue
-
-                if self.debug:
-                    print('  - {}'.format(os.path.splitext(file)))
-                    print('', self.config.path_objects)
 
                 # process just database and APEX exports
                 if not (file.startswith(self.config.path_objects)) and not (file.startswith(self.config.path_apex)):
@@ -176,19 +240,9 @@ class Patch(config.Config):
                     self.relevant_files[schema].append(file)
                 if not (commit.count() in self.relevant_count[schema]):
                     self.relevant_count[schema].append(commit.count())
-                #
-                files_found.append(file)
-
-            # show commits and files
-            if len(files_found) > 0:
-                print('{}) {}'.format(commit.count(), commit.summary))  # commit.author.email, commit.authored_datetime
-                for file in files_found:
-                    print('  {}'.format(file))
-                print()
 
         # check number of commits
-        found_commits = self.relevant_commits.keys()
-        if len(found_commits) == 0:
+        if len(self.relevant_commits.keys()) == 0:
             util.raise_error('NO COMMITS FOUND!')
 
         # get last version (max) and version before first change (min)

@@ -90,6 +90,9 @@ class Patch(config.Config):
                 # show recent commits for selected patch
                 # show more details if we have them
                 self.show_recent_commits()
+        else:
+            # show recent commits, resp. parse card numbers ???
+            util.assert_(self.patch_code,           'MISSING ARGUMENT: PATCH CODE')
 
 
 
@@ -264,7 +267,7 @@ class Patch(config.Config):
                 next = min(self.patch_sequences)
                 next = str(int(next) + 1) if next.isnumeric() else '#'
             except:
-                next = '#'
+                next = '1'
             #
             util.print_header('SPECIFY PATCH SEQUENCE:', next)
             print('  - use -seq {:<7} to actually create a new patch files'.format(next))
@@ -274,7 +277,7 @@ class Patch(config.Config):
 
     def create_patch_files(self):
         # simplify searching for ignored files
-        skip_apex_files = ';'.join(self.config.apex_files_ignore)
+        skip_apex_files = '|{}|'.format('|'.join(self.config.apex_files_ignore))
 
         # process files per schema
         for target_schema, rel_files in self.relevant_files.items():
@@ -473,7 +476,6 @@ class Patch(config.Config):
 
     def create_file_snapshot(self, file):
         # create folders and copy files
-        source_file     = '{}/{}'.format(self.repo_root, file).replace('//', '/')
         target_file     = '{}/{}'.format(self.patch_folder, file).replace('//', '/')
         target_folder   = os.path.dirname(target_file)
         file_content    = self.get_file_from_commit(file, commit = str(self.last_commit_obj))

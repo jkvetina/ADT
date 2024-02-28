@@ -319,6 +319,11 @@ class Patch(config.Config):
             for file in self.dependencies_sorted():
                 # modify list of APEX files
                 if app_id != '':
+                    try:
+                        short_file = '/application/' + file.split('/application/')[1]
+                    except:
+                        short_file = ''
+
                     # move APEX pages to the end + create script to delete them in patch
                     if '/application/pages/page' in file:
                         apex_pages.append(file)
@@ -329,7 +334,7 @@ class Patch(config.Config):
                         continue
 
                     # skip file if it should be ignored in the patch (but keep it in snapshot folder)
-                    if file in skip_apex_files:
+                    if short_file in skip_apex_files:
                         continue
 
                 # attach file reference

@@ -43,6 +43,7 @@ class Patch(config.Config):
         self.info.branch        = self.args.branch or self.info.branch or self.repo.active_branch
         self.add_commits        = self.args.add
         self.ignore_commits     = self.args.ignore
+        self.search_depth       = self.args.depth or self.config.repo_commits
         #
         self.init_config()
 
@@ -152,10 +153,10 @@ class Patch(config.Config):
     def get_patch_commits(self):
         # loop through all recent commits
         print('\nSEARCHING REPO:')
-        progress_target = self.config.repo_commits
+        progress_target = self.search_depth
         progress_done   = 0
         #
-        for commit in list(self.repo.iter_commits(self.info.branch, max_count = self.config.repo_commits, skip = 0)):
+        for commit in list(self.repo.iter_commits(self.info.branch, max_count = self.search_depth, skip = 0)):
             self.all_commits[commit.count()] = commit
             progress_done = util.print_progress(progress_done, progress_target)
         progress_done = util.print_progress(progress_target, progress_target)
@@ -231,7 +232,8 @@ class Patch(config.Config):
 
     def show_recent_commits(self):
         # show relevant recent commits
-        util.print_header('RECENT COMMITS FOR "{}":'.format(' '.join(self.search_message)))
+        depth = 'DEPTH: {}/{}'.format(self.head_commit - self.first_commit + 1, self.search_depth) if self.args.get('depth') else ''
+        util.print_header('RECENT COMMITS FOR "{}":'.format(' '.join(self.search_message)), depth)
         print()
         for commit in sorted(self.relevant_commits.keys(), reverse = True):
             print('  {}) {}'.format(commit, self.relevant_commits[commit].summary))
@@ -636,6 +638,7 @@ if __name__ == "__main__":
     parser.add_argument('-add',         help = 'Process just specific commits',                                 default = [],   nargs = '*')
     parser.add_argument('-ignore',      help = 'Ignore specific commits',                                       default = [],   nargs = '*')
     parser.add_argument('-branch',      help = 'To override active branch',                                     default = None)
+    parser.add_argument('-depth',       help = 'Number of recent commits to search',                            default = None, type = int)
     #
     Patch(parser)
 

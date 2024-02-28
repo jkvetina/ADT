@@ -227,7 +227,9 @@ class Deploy(config.Config):
                 deployed    = util.replace(' '.join(info).replace('_', ' '), '( \d\d)[-](\d\d)$', '\\1:\\2')  # fix time
                 #
                 if not (deployed in buckets):
-                    buckets[deployed] = result if result == 'ERROR' else (buckets[deployed] or result)
+                    buckets[deployed] = result
+                else:
+                    buckets[deployed] = result if result == 'ERROR' else min(buckets[deployed], result)
             #
             last_deployed   = max(buckets.keys())     if buckets != {} else ''
             last_result     = buckets[last_deployed]  if buckets != {} else ''

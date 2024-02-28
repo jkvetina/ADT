@@ -280,12 +280,12 @@ class Patch(config.Config):
         skip_apex_files = '|{}|'.format('|'.join(self.config.apex_files_ignore))
 
         # process files per schema
-        for target_schema, rel_files in self.relevant_files.items():
-            self.apex_app_id = ''
+        for schema_with_app, rel_files in self.relevant_files.items():
+            target_schema, app_id, _ = (schema_with_app + '..').split('.', maxsplit = 2)
 
             # generate patch file name for specific schema
-            self.patch_file      = '{}/{}.sql'.format(self.patch_folder, target_schema)
-            self.patch_spool_log = './{}.log'.format(target_schema)     # must start with ./ and ends with .log for proper function
+            self.patch_file      = '{}/{}.sql'.format(self.patch_folder, schema_with_app)
+            self.patch_spool_log = './{}.log'.format(schema_with_app)  # must start with ./ and ends with .log for proper function
 
             # generate patch header
             header = 'PATCH - {} - {}'.format(self.patch_code, target_schema)
@@ -296,7 +296,7 @@ class Patch(config.Config):
             payload += self.get_differences(rel_files, target_schema)
 
             # create snapshot files
-            self.create_snapshots(target_schema)
+            self.create_snapshots(app_id)
 
             payload += 'SET DEFINE OFF\n'
             payload += 'SET TIMING OFF\n'
@@ -311,13 +311,14 @@ class Patch(config.Config):
                 payload += 'SPOOL "{}" APPEND;\n\n'.format(self.patch_spool_log)
 
             # for APEX patches add some query
-            if self.apex_app_id != '':
-                payload += self.fix_apex_start()
+            if app_id != '':
+                payload += self.fix_apex_start(app_id)
 
             # add properly sorted files (objects by dependencies) to the patch
             apex_pages = []
             for file in self.dependencies_sorted():
-                if self.apex_app_id != '':
+                # modify list of APEX files
+                if app_id != '':
                     # move APEX pages to the end + create script to delete them in patch
                     if '/application/pages/page' in file:
                         apex_pages.append(file)
@@ -342,13 +343,12 @@ class Patch(config.Config):
                     payload += 'PROMPT ;\n'
 
             # for APEX patches add some query
-            if self.apex_app_id != '':
+            if app_id != '':
                 # attach APEX pages to the end
                 if len(apex_pages) > 0:
                     payload += self.fix_apex_pages(apex_pages)
                 #
-                payload += self.fix_apex_end()
-            #
+                payload += self.fix_apex_end(app_id)
             payload += '\n'
 
             # add grants for non APEX schemas
@@ -445,20 +445,20 @@ class Patch(config.Config):
 
 
 
-    def create_snapshots(self, target_schema):
+    def create_snapshots(self, app_id):
+        # copy changed files
+        process_files = list(self.diffs.keys())
         if len(self.diffs.keys()) > 0:
-            process_files = self.diffs.keys()
-
-            # copy some files even if they did not changed
-            if self.apex_app_id != '':
-                for file in self.config.apex_files_copy:
-                    file = '{}f{}/{}'.format(self.config.path_apex, self.apex_app_id, file)
-                    if file not in process_files:
-                        self.create_file_snapshot(file)
-
-            # copy changed files
             for file in process_files:
                 self.create_file_snapshot(file)
+
+        # copy some files even if they did not changed
+        if app_id != None and str(app_id) != '':
+            path = '{}f{}/'.format(self.config.path_apex, app_id).replace('//', '/')
+            for file in self.config.apex_files_copy:
+                file = path + file
+                if not (file in process_files):
+                    self.create_file_snapshot(file)
 
 
 
@@ -493,8 +493,8 @@ class Patch(config.Config):
 
 
 
-    def fix_apex_start(self):
-        util.assert_(self.apex_app_id,              'MISSING ARGUMENT: APEX APP')
+    def fix_apex_start(self, app_id):
+        util.assert_(app_id,                        'MISSING ARGUMENT: APEX APP')
         util.assert_(self.config.apex_workspace,    'MISSING ARGUMENT: APEX WORKSPACE')
         payload = ''
 
@@ -507,21 +507,21 @@ class Patch(config.Config):
         payload += '--\n'
 
         # attach starting file
-        payload += '@"./{}f{}/{}";\n'.format(self.config.path_apex, self.apex_app_id, 'application/set_environment.sql')
+        payload += '@"./{}f{}/{}";\n'.format(self.config.path_apex, app_id, 'application/set_environment.sql')
 
         # attach the whole application for full imports
-        payload += '--@"./{}f{}/f{}.sql;"\n'.format(self.config.path_apex, self.apex_app_id, self.apex_app_id)
+        payload += '--@"./{}f{}/f{}.sql";\n'.format(self.config.path_apex, app_id, app_id)
         payload += '--\n'
         #
         return payload
 
 
 
-    def fix_apex_end(self):
+    def fix_apex_end(self, app_id):
         payload = '--\n'
 
         # attach ending file
-        file = '{}f{}/{}'.format(self.config.path_apex, self.apex_app_id, 'application/end_environment.sql')
+        file = '{}f{}/{}'.format(self.config.path_apex, app_id, 'application/end_environment.sql')
         payload += '@"./{}";\n'.format(file.replace(self.repo_root, '').lstrip('/'))
         #
         return payload

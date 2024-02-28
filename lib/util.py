@@ -144,54 +144,68 @@ def print_table(data, columns = [], right_align = [], spacer = 3, start = 2, no_
         buffer = io.StringIO()
         sys.stdout = buffer
 
+    # lists to align table columns
+    align       = []
+    auto_align  = {}
+    widths      = []
+
     # exception for 1 line dictionary
     if columns == []:
         if isinstance(data, dict):
-            columns = list(data.keys())         # get from dictionary keys
+            columns = list(data.keys())             # get from dictionary keys
             data    = [data]
         elif isinstance(data, list):
-            if len(data) == 0:
+            if len(data) == 0 and widths == []:
                 return
-            columns = list(data[0].keys())      # get from first row
+            if widths == []:
+                columns = list(data[0].keys())      # get from first row
+            else:
+                columns = []
+                for col in widths:
+                    columns.append('')
+
+    # if we pass the whole map...
+    if isinstance(columns, dict):
+        for name, width in columns.items():
+            widths.append(width)
+            align.append('R' if (name.upper() in right_align or name.lower() in right_align) else 'L')
 
     # all columns align to right
     if isinstance(right_align, bool) and right_align:
         right_align = columns
 
     # get column widths from headers and data
-    widths      = []
-    align       = []
-    auto_align  = {}
-    #
-    for i, name in enumerate(columns):
-        widths.append(len(name))
-        align.append('R' if (name.upper() in right_align or name.lower() in right_align) else 'L')
-        auto_align[i] = True
-    #
-    for row in data:
-        # remove non printed columns
-        filtered = {}
-        for name, value in row.items():
-            if name in columns:
-                filtered[name] = value
+    if widths == []:
+        for i, name in enumerate(columns):
+            widths.append(len(name))
+            align.append('R' if (name.upper() in right_align or name.lower() in right_align) else 'L')
+            auto_align[i] = True
+        #
+        for row in data:
+            # remove non printed columns
+            filtered = {}
+            for name, value in row.items():
+                if name in columns:
+                    filtered[name] = value
 
-        # calculate column widths based on values from all rows
-        for i, name in enumerate(filtered):
-            if name in columns:
-                value       = str(filtered[name])
-                widths[i]   = max(widths[i], len(value))
-                #
-                if not (value.isnumeric() or value == None):
-                    auto_align[i] = False
+            # calculate column widths based on values from all rows
+            for i, name in enumerate(filtered):
+                if name in columns:
+                    value       = str(filtered[name])
+                    widths[i]   = max(widths[i], len(value))
+                    #
+                    if not (value.isnumeric() or value == None):
+                        auto_align[i] = False
 
-    # auto align numeric columns to the right
-    for i, numeric in auto_align.items():
-        if numeric:
-            align[i] = 'R'
+        # auto align numeric columns to the right
+        for i, numeric in auto_align.items():
+            if numeric:
+                align[i] = 'R'
 
     # create pattern for line replacement
     pattern     = start * ' '
     splitter    = []
+    #
     for i, w in enumerate(widths):
         pattern += '{:' + align[i].replace('L', '<').replace('R', '>') + str(w) + '}' + (' ' * spacer)
         splitter.append(w * '-')

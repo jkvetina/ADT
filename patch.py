@@ -466,6 +466,10 @@ class Patch(config.Config):
                 if not (file in process_files):
                     self.create_file_snapshot(file)
 
+            # attach full export
+            file = '{}f{}.sql'.format(path, app_id)
+            self.create_file_snapshot(file)
+
 
 
     def create_patch_file(self, payload, target_schema):

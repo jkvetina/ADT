@@ -181,7 +181,7 @@ def print_table(data, columns = [], right_align = [], spacer = 3, start = 2, cap
                 value       = str(filtered[name])
                 widths[i]   = max(widths[i], len(value))
                 #
-                if not value.isnumeric():
+                if not (value.isnumeric() or value == None):
                     auto_align[i] = False
 
     # auto align numeric columns to the right
@@ -275,7 +275,7 @@ def print_progress(done, target = 100):
 
 
 def quit(message = ''):
-    if len(message) > 0:
+    if message != None and len(str(message)) > 0:
         print(message)
         print()
     sys.exit()

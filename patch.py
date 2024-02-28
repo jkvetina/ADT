@@ -72,7 +72,7 @@ class Patch(config.Config):
         self.current_commit     = self.current_commit_obj.count()
         self.patch_folder       = self.replace_tags(self.patch_folder)  # replace tags in folder
 
-        #
+        # go through patch folders
         self.patch_folder_splitter = '-'
         self.get_patch_folders()
 
@@ -111,13 +111,15 @@ class Patch(config.Config):
         util.assert_(not ('{$' in self.patch_folder), 'LEFOVER TAGS IN FOLDER', short)
         util.print_header('PATCH CREATED:', short)
         summary = []
-        for target_schema in sorted(self.relevant_files.keys()):
-            schema, app_id, _ = (target_schema + '..').split('.', maxsplit = 2)
+        for order, schema_with_app in enumerate(sorted(self.relevant_files.keys())):
+            schema, app_id, _ = (schema_with_app + '..').split('.', maxsplit = 2)
             summary.append({
-                'schema_name'   : schema,
-                'app_id'        : int(app_id) if app_id.isnumeric() else '',
-                'commits'       : len(self.relevant_count[target_schema]),
-                'files'         : len(self.relevant_files[target_schema]),
+                'order'     : order + 1,
+                'file'      : schema_with_app + '.sql',
+                'schema'    : schema,
+                'app_id'    : int(app_id) if app_id.isnumeric() else '',
+                'commits'   : len(self.relevant_count[schema_with_app]),
+                'files'     : len(self.relevant_files[schema_with_app]),
             })
         util.print_table(summary, right_align = ['app_id'])
 

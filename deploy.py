@@ -238,16 +238,21 @@ class Deploy(config.Config):
         for order, file in enumerate(sorted(glob.glob(self.patch_full + '/*.sql'))):
             full    = file
             file    = os.path.basename(file.replace(self.patch_full, ''))
-            schema  = util.replace(os.path.splitext(file)[0], '^[0-9]+[_-]*', '')       # remove leading numbers
             #
-            if not (schema in self.deploy_schemas):
-                self.deploy_schemas[schema] = []
-            self.deploy_schemas[schema].append(order)
+            schema_with_app  = os.path.splitext(file)[0]
+            schema_with_app  = util.replace(schema_with_app, '^[0-9]+[_-]*', '')    # remove leading numbers
+            #
+            target_schema, app_id, _ = (schema_with_app + '..').split('.', maxsplit = 2)
+            #
+            if not (target_schema in self.deploy_schemas):
+                self.deploy_schemas[target_schema] = []
+            self.deploy_schemas[target_schema].append(order)
             #
             plan = {
                 'order'     : order + 1,
-                'schema'    : schema,
                 'file'      : file,
+                'schema'    : target_schema,
+                'app_id'    : app_id,
                 'files'     : len(self.get_file_references(full)),
             }
             for column, content in self.template_hack:
@@ -255,7 +260,7 @@ class Deploy(config.Config):
             self.deploy_plan.append(plan)
         #
         util.print_header('PATCH FOUND:', self.patch_short)
-        util.print_table(self.deploy_plan, columns = ['order', 'schema', 'file', 'files'])
+        util.print_table(self.deploy_plan, columns = ['order', 'file', 'schema', 'app_id', 'files'], right_align = ['app_id'])
 
 
 

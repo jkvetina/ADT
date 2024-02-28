@@ -66,17 +66,32 @@ class Deploy(config.Config):
 
         # run the target script(s) and spool the logs
         util.print_header('PATCHING PROGRESS AND RESULTS:')
-        template = util.print_table(self.deploy_plan, capture = True).splitlines()
-        print(template.pop(0))  # empty line
-        print(template.pop(0))  # headers
-        print(template.pop(0))  # splitter
-        #
+
+
+        # generate table headers before we know size of the data
+        max_file_len = 0
         for plan in self.deploy_plan:
-            start   = timeit.default_timer()
-            schema  = plan['schema']
-            file    = plan['file']
-            full    = self.patch_path + file
-            conn    = self.deploy_conn[schema]
+            max_file_len = max(max_file_len, len(plan['file']))
+        #
+        map = {
+            'order'     : 5,
+            'file'      : max_file_len,
+            'output'    : 6,
+            'status'    : 7,
+            'timer'     : 5,
+        }
+        util.print_table([], columns = map)
+        #
+        for order, plan in enumerate(self.deploy_plan):
+            start       = timeit.default_timer()
+            schema      = plan['schema']
+            file        = plan['file']
+            full        = self.patch_path + file
+            conn        = self.deploy_conn[schema]
+
+            # check if file exists
+            if not os.path.exists(full):
+                util.raise_error('FILE MISSING', full)
 
             # cleanup the script from comments, fix prompts
             payload = []
@@ -104,6 +119,8 @@ class Deploy(config.Config):
 
             # prep results for the template
             results = {
+                'order'     : order + 1,
+                'file'      : file,
                 'output'    : len(lines),
                 'status'    : 'SUCCESS' if success else 'ERROR',
                 'timer'     : int(round(timeit.default_timer() - start + 0.5, 0)),  # ceil
@@ -118,13 +135,7 @@ class Deploy(config.Config):
                 os.rename(original, renamed)
 
             # show progress
-            out = template.pop(0)
-            for column, content in self.template_hack:
-                width   = len(content)
-                value   = results[column]
-                out     = out.replace(content, value.ljust(width) if isinstance(value, str) else str(value).rjust(width))
-            #
-            print(out)
+            util.print_table([results], columns = map, right_align = ['order', 'output', 'timer'], no_header = True)
         print()
 
 
@@ -229,12 +240,6 @@ class Deploy(config.Config):
 
 
     def create_plan(self):
-        self.template_hack = [
-            ['output',  '{1}___'],      # to block the minimum column width
-            ['status',  '{2}____'],
-            ['timer',   '{3}__']
-        ]
-
         # create deployment plan
         for order, file in enumerate(sorted(glob.glob(self.patch_full + '/*.sql'))):
             full    = file
@@ -249,16 +254,13 @@ class Deploy(config.Config):
                 self.deploy_schemas[target_schema] = []
             self.deploy_schemas[target_schema].append(order)
             #
-            plan = {
+            self.deploy_plan.append({
                 'order'     : order + 1,
                 'file'      : file,
                 'schema'    : target_schema,
                 'app_id'    : app_id,
                 'files'     : len(self.get_file_references(full)),
-            }
-            for column, content in self.template_hack:
-                plan[column] = content
-            self.deploy_plan.append(plan)
+            })
         #
         util.print_header('PATCH FOUND:', self.patch_short)
         util.print_table(self.deploy_plan, columns = ['order', 'file', 'schema', 'app_id', 'files'], right_align = ['app_id'])

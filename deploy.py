@@ -137,11 +137,16 @@ class Deploy(config.Config):
         # identify patch folder
         patch_found = []
         for ref, patch in enumerate(sorted(glob.glob(self.repo_root + self.config.patch_root + '**'), reverse = True), start = 1):
+            if self.patch_code != '' and not (self.patch_code in patch):
+                continue
+            #
             self.patches[ref] = patch
-            if self.args.ref != None and self.args.ref == ref:
-                patch_found.append(patch)
-            elif self.patch_code != None and self.patch_code in patch:
-                patch_found.append(patch)
+            if self.args.ref != None:
+                if self.args.ref == ref:
+                    patch_found.append(patch)
+            elif self.patch_code != '':
+                if self.patch_code in patch:
+                    patch_found.append(patch)
 
         # get patches for checks
         self.get_available_patches()

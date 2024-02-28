@@ -44,7 +44,7 @@ class Recompile(config.Config):
         #
         objects = {}
         args = {
-            'object_name'   : self.args.name,
+            'object_name'   : self.args.name or self.connection.get('prefix', '') + '%',
             'object_type'   : self.args.type,
         }
         data = self.conn.fetch_assoc(query.overview, **args)

@@ -325,7 +325,8 @@ class Patch(config.Config):
                         short_file = ''
 
                     # move APEX pages to the end + create script to delete them in patch
-                    if '/application/pages/page' in file:
+                    search = re.search('/pages/page_(\d+)\.sql', file)
+                    if search:
                         apex_pages.append(file)
                         continue
 

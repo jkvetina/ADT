@@ -56,9 +56,9 @@ ORDER BY CASE o.object_type
     WHEN 'PROCEDURE'            THEN 3
     WHEN 'FUNCTION'             THEN 4
     WHEN 'TRIGGER'              THEN 5
-    WHEN 'MATERIALIZED VIEW'    THEN 7
+    WHEN 'PACKAGE BODY'         THEN 7
     WHEN 'TYPE BODY'            THEN 8
-    WHEN 'PACKAGE BODY'         THEN 9
+    WHEN 'MATERIALIZED VIEW'    THEN 9
     ELSE                             6 END, o.object_name
 """
 

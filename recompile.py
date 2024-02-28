@@ -44,7 +44,7 @@ class Recompile(config.Config):
         #
         objects = {}
         args = {
-            'object_name'   : self.args.name,
+            'object_name'   : self.args.name or self.connection.get('prefix', '') + '%',
             'object_type'   : self.args.type,
         }
         data = self.conn.fetch_assoc(query.overview, **args)
@@ -113,6 +113,10 @@ class Recompile(config.Config):
             print()
         print()
 
+        # reconnect due to some unforseen recompilation issues
+        self.conn.disconnect()
+        self.conn = self.db_connect(ping_sqlcl = False, silent = True)
+
         # calculate difference
         data = self.conn.fetch_assoc(query.overview, **args)
         for row in data:
@@ -128,10 +132,6 @@ class Recompile(config.Config):
             columns     = self.conn.cols,
             right_align = ['total', 'fixed', 'invalid'],
         )
-
-        # reconnect due to some unforseen recompilation issues
-        self.conn.disconnect()
-        self.conn = self.db_connect(ping_sqlcl = False, silent = True)
 
         # show invalid objects
         errors  = self.conn.fetch_assoc(query.objects_errors_summary, **args)

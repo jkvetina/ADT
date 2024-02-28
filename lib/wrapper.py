@@ -40,7 +40,7 @@ class Oracle:
 
         # auto connect
         if not self.silent:
-            util.print_header('CONNECTING TO {}:'.format(self.tns.desc))
+            util.print_header('CONNECTING TO {}:'.format(self.tns.get('desc', '') or self.tns.get('user', '')))
         #
         self.connect()
         self.get_versions()

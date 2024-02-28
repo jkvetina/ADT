@@ -288,9 +288,12 @@ class Patch(config.Config):
             self.patch_spool_log = './{}.log'.format(schema_with_app)  # must start with ./ and ends with .log for proper function
 
             # generate patch header
-            header = 'PATCH - {} - {}'.format(self.patch_code, target_schema)
-            payload = ''
-            payload += '--\n-- {}\n-- {}\n--\n'.format(header, '-' * len(header))
+            payload = '--\n'
+            payload += '-- {:>16} | {}\n'.format('PATCH CODE', self.patch_code)
+            payload += '-- {:>16} | {}\n'.format('SCHEMA', target_schema)
+            if app_id:
+                payload += '-- {:>16} | {}\n'.format('APP ID', app_id)
+            payload += '--\n'
 
             # get differences in between first and last commits
             payload += self.get_differences(rel_files, target_schema)
@@ -339,14 +342,11 @@ class Patch(config.Config):
                         continue
 
                 # attach file reference
-                if self.config.spooling:
-                    payload += 'PROMPT --;\n'
-                    payload += 'PROMPT -- FILE: {};\n'.format(file)
-                    payload += 'PROMPT --;\n'
-                #
+                payload += 'PROMPT --;\n'
+                payload += 'PROMPT -- FILE: {};\n'.format(file)
+                payload += 'PROMPT --;\n'
                 payload += self.config.patch_file_link.replace('{$FILE}', file) + '\n'
-                if self.config.spooling:
-                    payload += 'PROMPT ;\n'
+                payload += 'PROMPT ;\n'
 
             # for APEX patches add some query
             if app_id != '':
@@ -357,20 +357,19 @@ class Patch(config.Config):
                 payload += self.fix_apex_end(app_id)
             payload += '\n'
 
-            # add grants for non APEX schemas
-            if self.apex_app_id == '':
-                if self.config.spooling:
-                    payload += 'PROMPT --;\n'
-                    payload += 'PROMPT -- GRANTS;\n'
-                    payload += 'PROMPT --;\n'
-                #
-                payload += self.get_grants_made()
+            # add grants
+            payload += 'PROMPT --;\n'
+            payload += 'PROMPT -- GRANTS;\n'
+            payload += 'PROMPT --;\n'
+            payload += self.get_grants_made()
+
+            # add flag so deploy script can evaluate it as successful
+            payload += 'PROMPT --;\n'
+            payload += 'PROMPT -- SUCCESS;\n'
+            payload += 'PROMPT --;\n'
 
             # spool output end
             if self.config.spooling:
-                payload += 'PROMPT --;\n'
-                payload += 'PROMPT -- SUCCESS;\n'
-                payload += 'PROMPT --;\n'
                 payload += 'SPOOL OFF;\n'
 
             # store payload in file
@@ -409,7 +408,8 @@ class Patch(config.Config):
 
         # show commits only with relevant files
         payload += '-- COMMITS:\n'
-        for _, commit in self.relevant_commits.items():
+        payload += '-- --------\n'
+        for commit_number, commit in self.relevant_commits.items():
             files_found = False
             for file in commit.stats.files:
                 if file in rel_files:
@@ -417,21 +417,27 @@ class Patch(config.Config):
                     break
             #
             if files_found:
-                payload += '--   {}\n'.format(commit.summary)
+                payload += '--   {}) {}\n'.format(commit_number, commit.summary)
 
         # split files by the change type
         if len(new_files) > 0:
-            payload += '--\n-- NEW FILES:\n'
+            payload += '--\n'
+            payload += '-- NEW FILES:\n'
+            payload += '-- ----------\n'
             for file in sorted(new_files):
                 payload += '--   {}\n'.format(file)  # self.diffs[file].change_type
         #
         if len(deleted_files) > 0:
-            payload += '--\n-- DELETED FILES:\n'
+            payload += '--\n'
+            payload += '-- DELETED FILES:\n'
+            payload += '-- --------------\n'
             for file in sorted(deleted_files):
                 payload += '--   {}\n'.format(file)  # self.diffs[file].change_type
         #
         if len(modifed_files) > 0:
-            payload += '--\n-- MODIFIED FILES:\n'
+            payload += '--\n'
+            payload += '-- MODIFIED FILES:\n'
+            payload += '-- ---------------\n'
             for file in sorted(modifed_files):
                 payload += '--   {}\n'.format(file)  # self.diffs[file].change_type
         #
@@ -539,7 +545,12 @@ class Patch(config.Config):
 
 
     def fix_apex_pages(self, apex_pages):
-        payload = '--\nBEGIN\n'
+        payload = '\n'
+        payload += 'PROMPT --;\n'
+        payload += 'PROMPT -- APEX PAGES\n'
+        payload += 'PROMPT --;\n'
+        payload += 'BEGIN\n'
+        #
         for file in apex_pages:
             search = re.search('/pages/page_(\d+)\.sql', file)
             if search:

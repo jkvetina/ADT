@@ -139,7 +139,7 @@ def print_header(message, append = ''):
 
 
 
-def print_table(data, columns = [], right_align = [], spacer = 3, start = 2, capture = False):
+def print_table(data, columns = [], right_align = [], spacer = 3, start = 2, no_header = False, capture = False):
     if capture:
         buffer = io.StringIO()
         sys.stdout = buffer
@@ -197,15 +197,20 @@ def print_table(data, columns = [], right_align = [], spacer = 3, start = 2, cap
         splitter.append(w * '-')
 
     # show data
-    print()
-    print(pattern.format(*columns).upper().replace('_', ' '))
-    print(pattern.format(*splitter))
-    for i, row in enumerate(data):
-        args = []
-        for name in columns:
-            args.append(row.get(name.lower(), '') or '')
-        print(pattern.format(*args))
-    print()
+    if not no_header:
+        print()
+        print(pattern.format(*columns).upper().replace('_', ' '))
+        print(pattern.format(*splitter))
+    #
+    if len(data) > 0:
+        for i, row in enumerate(data):
+            args = []
+            for name in columns:
+                args.append(row.get(name.lower(), '') or '')
+            print(pattern.format(*args))
+        #
+        if not no_header:   # no footer if no header
+            print()
 
     # instead of printing to screen return content as string
     if capture:

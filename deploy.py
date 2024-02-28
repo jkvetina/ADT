@@ -44,6 +44,7 @@ class Deploy(config.Config):
         self.info.branch        = self.args.branch or self.info.branch or self.repo.active_branch
         #
         self.init_config()
+        self.init_connection(env_name = self.patch_env)
 
         # internal variables
         self.patches            = {}

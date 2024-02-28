@@ -79,9 +79,7 @@ class Deploy(config.Config):
             conn    = self.deploy_conn[schema]
 
             # cleanup the script from comments, fix prompts
-            log_file    = ''    # to extract log name from spool line
-            payload     = []    # for cleaned lines
-            #
+            payload = []
             with open(full, 'rt') as f:
                 for line in f.readlines():
                     line = line.strip()
@@ -89,12 +87,6 @@ class Deploy(config.Config):
                         continue
                     if line.startswith('PROMPT'):
                         line = line.replace('PROMPT --;', 'PROMPT ---;')
-
-                    # change log name
-                    if line.startswith('SPOOL "'):
-                        split = line.split('"')
-                        log_file = split[1].replace('./', './{}{}{}{}'.format(self.patch_env, self.splitter, self.config.today_deploy, self.splitter))
-                        line = '{}"{}"{}'.format(split[0], log_file, split[2])
                     #
                     payload.append(line)
             payload = '\n'.join(payload)
@@ -118,8 +110,12 @@ class Deploy(config.Config):
             }
 
             # rename log to reflect the result in the file name
-            log_file = log_file.replace('./', self.patch_path)
-            os.rename(log_file, log_file.replace('.log', '{}{}.log'.format(self.splitter, results['status'])))
+            original    = full.replace('.sql', '.log')
+            renamed     = full.replace('.sql', '|{}|{}|{}.log'.format(self.patch_env, self.config.today_deploy, results['status']))
+            renamed     = renamed.replace('|', self.splitter)
+            #
+            if os.path.exists(original):
+                os.rename(original, renamed)
 
             # show progress
             out = template.pop(0)

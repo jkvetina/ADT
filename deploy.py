@@ -54,6 +54,7 @@ class Deploy(config.Config):
         self.deploy_schemas     = {}
         self.deploy_conn        = {}
         self.splitter           = '__'      # in deploy logs in between env, date, schema, status
+        self.logs_prefix        = '{}/LOGS_{}'
         #
         self.deploy_patch()
 
@@ -67,6 +68,9 @@ class Deploy(config.Config):
         # run the target script(s) and spool the logs
         util.print_header('PATCHING PROGRESS AND RESULTS:')
 
+        # create folder for logs
+        if not os.path.exists(self.log_folder):
+            os.makedirs(self.log_folder)
 
         # generate table headers before we know size of the data
         max_file_len = 0
@@ -128,8 +132,7 @@ class Deploy(config.Config):
 
             # rename log to reflect the result in the file name
             original    = full.replace('.sql', '.log')
-            renamed     = full.replace('.sql', '|{}|{}|{}.log'.format(self.patch_env, self.config.today_deploy, results['status']))
-            renamed     = renamed.replace('|', self.splitter)
+            renamed     = '{}/{} {} [{}].log'.format(self.log_folder, file.replace('.sql', ''), self.config.today_deploy, results['status'])
             #
             if os.path.exists(original):
                 os.rename(original, renamed)
@@ -144,14 +147,14 @@ class Deploy(config.Config):
         # identify patch folder
         patch_found = []
         for ref, patch in enumerate(sorted(glob.glob(self.repo_root + self.config.patch_root + '**'), reverse = True), start = 1):
-            if self.patch_code != '' and not (self.patch_code in patch):
+            if self.patch_code != None and not (self.patch_code in patch):
                 continue
             #
             self.patches[ref] = patch
             if self.args.ref != None:
                 if self.args.ref == ref:
                     patch_found.append(patch)
-            elif self.patch_code != '':
+            elif self.patch_code != None:
                 if self.patch_code in patch:
                     patch_found.append(patch)
 
@@ -201,41 +204,43 @@ class Deploy(config.Config):
         self.patch_full     = patch_found[0]
         self.patch_short    = self.patch_full.replace(self.repo_root + self.config.patch_root, '')
         self.patch_path     = self.repo_root + self.config.patch_root + self.patch_folder + '/'
+        self.log_folder     = self.logs_prefix.format(self.patch_path, self.patch_env)
 
 
 
     def get_available_patches(self):
         for ref in sorted(self.patches.keys(), reverse = True):
             patch       = self.patches[ref]
-            files       = []
-            deployed    = ''
-            result      = ''
+            count_files = []
+            buckets     = {}    # use buckets to identify the most recent results
 
             # get number of files referenced in the patch root files
             for file in glob.glob(patch + '/*.sql'):
-                files.extend(self.get_file_references(file))
-            files = list(set(files))    # deduplicate
+                count_files.extend(self.get_file_references(file))
+            count_files = list(set(count_files))    # deduplicate
 
             # find more details from log names
-            for file in glob.glob(patch + '/*.log'):
-                info = os.path.splitext(os.path.basename(file))[0].split(self.splitter)
-                if len(info) == 4:
-                    env, date, schema, status = info
-                    if env != self.patch_env:
-                        continue
-                    #
-                    deployed    = util.replace(date.replace('_', ' '), '( \d\d)[-](\d\d)$', '\\1:\\2')  # fix time
-                    result      = status if (result == '' or status == 'ERROR') else result
+            for file in glob.glob(self.logs_prefix.format(patch, self.patch_env) + '/*.log'):
+                info        = os.path.splitext(os.path.basename(file))[0].split(' ')
+                schema      = info.pop(0)
+                result      = info.pop(-1).replace('[', '').replace(']', '')
+                deployed    = util.replace(' '.join(info).replace('_', ' '), '( \d\d)[-](\d\d)$', '\\1:\\2')  # fix time
+                #
+                if not (deployed in buckets):
+                    buckets[deployed] = result if result == 'ERROR' else (buckets[deployed] or result)
+            #
+            last_deployed   = max(buckets.keys())     if buckets != {} else ''
+            last_result     = buckets[last_deployed]  if buckets != {} else ''
 
             # create a row in table
             self.available_ref[ref] = {
                 'ref'           : ref,
                 'patch_name'    : patch.replace(self.repo_root + self.config.patch_root, ''),
-                'files'         : files,
-                'deployed_at'   : deployed,
-                'result'        : result,
+                'files'         : count_files,
+                'deployed_at'   : last_deployed,
+                'result'        : last_result,
             }
-            self.available_show.append({**self.available_ref[ref], **{'files': len(files)}})
+            self.available_show.append({**self.available_ref[ref], **{'files': len(count_files)}})
 
 
 

@@ -227,6 +227,10 @@ class Config(util.Attributed):
                         self.info.schema = schema_name
                     break
 
+                # check environment
+                if not (env_name in data):
+                    util.raise_error('UNKNOWN ENVIRONMENT NAME')
+
                 # process schema overrides
                 if 'schemas' in data[env_name] and self.info.schema != None:
                     schema_name = schema_name or self.info.schema

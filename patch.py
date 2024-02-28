@@ -63,6 +63,9 @@ class Patch(config.Config):
         self.relevant_files     = {}
         self.relevant_objects   = {}
         self.diffs              = {}
+        self.head_commit        = None
+        self.first_commit       = None
+        self.last_commit        = None
 
         # set current commit to the head and search through recent commits
         self.current_commit_obj = self.repo.commit('HEAD')
@@ -164,6 +167,9 @@ class Patch(config.Config):
 
         # add or remove specific commits from the queue
         for _, commit in self.all_commits.items():
+            if self.head_commit == None:
+                self.head_commit = commit.count()
+
             # skip non requested commits
             if len(self.add_commits) > 0:
                 commits     = '|{}|'.format('|'.join(self.add_commits))
@@ -223,10 +229,14 @@ class Patch(config.Config):
             util.raise_error('NO COMMITS FOUND!')
 
         # get last version (max) and version before first change (min)
-        self.first_commit       = min(self.relevant_commits) - 1
-        self.first_commit_obj   = self.all_commits[self.first_commit]
-        self.last_commit        = max(self.relevant_commits)
-        self.last_commit_obj    = self.all_commits[self.last_commit]
+        self.first_commit   = min(self.relevant_commits) - 1
+        self.last_commit    = max(self.relevant_commits)
+        #
+        try:
+            self.first_commit_obj   = self.all_commits[self.first_commit]
+            self.last_commit_obj    = self.all_commits[self.last_commit]
+        except:
+            util.raise_error('INCREASE COMMIT DEPTH SEARCH')
 
 
 

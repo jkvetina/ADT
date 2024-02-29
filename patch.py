@@ -44,6 +44,7 @@ class Patch(config.Config):
         self.add_commits        = self.args.add
         self.ignore_commits     = self.args.ignore
         self.search_depth       = self.args.depth or self.config.repo_commits
+        self.full_exports       = self.args.full
         #
         self.init_config()
 
@@ -315,47 +316,51 @@ class Patch(config.Config):
             if self.config.spooling:
                 payload += 'SPOOL "{}" APPEND;\n\n'.format(self.patch_spool_log)
 
-            # for APEX patches add some query
-            if app_id != '':
-                payload += self.fix_apex_start(app_id)
-
             # add properly sorted files (objects by dependencies) to the patch
-            apex_pages = []
-            for file in self.dependencies_sorted():
-                # modify list of APEX files
-                if app_id != '':
-                    try:
-                        short_file = '/application/' + file.split('/application/')[1]
-                    except:
-                        short_file = ''
+            if app_id != '' and app_id in self.full_exports:
+                # attach the whole application for full imports
+                payload += '--\n'
+                payload += '-- APPLICATION {}\n'.format(app_id)
+                payload += '--\n'
+                payload += '@"./{}f{}/f{}.sql";\n'.format(self.config.path_apex, app_id, app_id)
+            #
+            elif app_id != '' and not (app_id in self.full_exports):
+                payload += self.fix_apex_start(app_id)
+                apex_pages = []
+                for file in self.dependencies_sorted():
+                    # modify list of APEX files
+                    if app_id != '':
+                        try:
+                            short_file = '/application/' + file.split('/application/')[1]
+                        except:
+                            short_file = ''
 
-                    # move APEX pages to the end + create script to delete them in patch
-                    search = re.search('/pages/page_(\d+)\.sql', file)
-                    if search:
-                        apex_pages.append(file)
-                        continue
+                        # move APEX pages to the end + create script to delete them in patch
+                        search = re.search('/pages/page_(\d+)\.sql', file)
+                        if search:
+                            apex_pages.append(file)
+                            continue
 
-                    # ignore full APEX exports
-                    if len(re.findall('/f\d+/f\d+\.sql$', file)) > 0:
-                        continue
+                        # ignore full APEX exports
+                        if len(re.findall('/f\d+/f\d+\.sql$', file)) > 0:
+                            continue
 
-                    # skip file if it should be ignored in the patch (but keep it in snapshot folder)
-                    if short_file in skip_apex_files:
-                        continue
+                        # skip file if it should be ignored in the patch (but keep it in snapshot folder)
+                        if short_file in skip_apex_files:
+                            continue
 
-                # attach file reference
-                payload += 'PROMPT --;\n'
-                payload += 'PROMPT -- FILE: {};\n'.format(file)
-                payload += 'PROMPT --;\n'
-                payload += self.config.patch_file_link.replace('{$FILE}', file) + '\n'
-                payload += 'PROMPT ;\n'
+                    # attach file reference
+                    payload += 'PROMPT --;\n'
+                    payload += 'PROMPT -- FILE: {};\n'.format(file)
+                    payload += 'PROMPT --;\n'
+                    payload += self.config.patch_file_link.replace('{$FILE}', file) + '\n'
+                    payload += 'PROMPT ;\n'
 
-            # for APEX patches add some query
-            if app_id != '':
                 # attach APEX pages to the end
                 if len(apex_pages) > 0:
                     payload += self.fix_apex_pages(apex_pages)
-                #
+
+                # for APEX patches add some queries
                 payload += self.fix_apex_end(app_id)
             payload += '\n'
 
@@ -539,8 +544,9 @@ class Patch(config.Config):
         payload = '--\n'
 
         # attach ending file
-        file = '{}f{}/{}'.format(self.config.path_apex, app_id, 'application/end_environment.sql')
-        payload += '@"./{}";\n'.format(file.replace(self.repo_root, '').lstrip('/'))
+        if not (app_id in self.full_exports):
+            file = '{}f{}/{}'.format(self.config.path_apex, app_id, 'application/end_environment.sql')
+            payload += '@"./{}";\n'.format(file.replace(self.repo_root, '').lstrip('/'))
         #
         return payload
 
@@ -673,7 +679,8 @@ if __name__ == "__main__":
     parser.add_argument('-add',         help = 'Process just specific commits',                                 default = [],   nargs = '*')
     parser.add_argument('-ignore',      help = 'Ignore specific commits',                                       default = [],   nargs = '*')
     parser.add_argument('-branch',      help = 'To override active branch',                                     default = None)
-    parser.add_argument('-depth',       help = 'Number of recent commits to search',                            default = None, type = int)
+    parser.add_argument('-depth',       help = 'Number of recent commits to search',                            default = None,               type = int)
+    parser.add_argument('-full',        help = 'Specify APEX app(s) where to use full export ',                 default = [],   nargs = '*')
     #
     Patch(parser)
 

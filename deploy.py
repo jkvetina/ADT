@@ -41,6 +41,7 @@ class Deploy(config.Config):
         self.patch_env          = self.args.target
         self.patch_code         = self.args.patch
         self.patch_folder       = ''
+        self.patch_ref          = self.args.ref
         self.info.branch        = self.args.branch or self.info.branch or self.repo.active_branch
         #
         self.init_config()
@@ -151,12 +152,19 @@ class Deploy(config.Config):
                 continue
             #
             self.patches[ref] = patch
-            if self.args.ref != None:
-                if self.args.ref == ref:
+            if self.patch_ref != None:
+                if self.patch_ref == ref:
                     patch_found.append(patch)
             elif self.patch_code != None:
                 if self.patch_code in patch:
                     patch_found.append(patch)
+
+        # set values
+        self.patch_folder   = patch_found[0].replace(self.repo_root + self.config.patch_root, '')
+        self.patch_full     = patch_found[0]
+        self.patch_short    = self.patch_full.replace(self.repo_root + self.config.patch_root, '')
+        self.patch_path     = self.repo_root + self.config.patch_root + self.patch_folder + '/'
+        self.log_folder     = self.logs_prefix.format(self.patch_path, self.patch_env)
 
         # get patches for checks
         self.get_available_patches()
@@ -166,13 +174,13 @@ class Deploy(config.Config):
             util.print_table(self.available_show)
             #
             util.print_header('SELECT PATCH YOU WANT TO DEPLOY')
-            print('  - use can either use       : -patch NAME')
-            print('  - or pass reference number : -ref #')
+            print('  - use can either use unique:   -patch NAME')
+            print('  - or pass reference number:    -ref #')
             print()
             util.quit()
 
         # check status of requested patch, search for ref#
-        ref = self.args.ref or list(self.patches.keys())[list(self.patches.values()).index(patch_found[0])]
+        ref = self.patch_ref or list(self.patches.keys())[list(self.patches.values()).index(patch_found[0])]
         #
         if self.available_ref[ref]['result'] == 'SUCCESS' and not self.args.force:
             util.raise_error('PATCH ALREADY DEPLOYED', '  - use -force flag if you want to redeploy anyway')
@@ -198,13 +206,6 @@ class Deploy(config.Config):
             util.raise_error('REQUESTED PATCH TOO OLD',
                 '  - there is a newer patch deployed, you might lose things...\n' +
                 '  - use -force flag if you want to redeploy anyway')
-
-        # set values
-        self.patch_folder   = patch_found[0].replace(self.repo_root + self.config.patch_root, '')
-        self.patch_full     = patch_found[0]
-        self.patch_short    = self.patch_full.replace(self.repo_root + self.config.patch_root, '')
-        self.patch_path     = self.repo_root + self.config.patch_root + self.patch_folder + '/'
-        self.log_folder     = self.logs_prefix.format(self.patch_path, self.patch_env)
 
 
 

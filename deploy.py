@@ -195,14 +195,19 @@ class Deploy(config.Config):
                 if file in self.available_ref[ref]['files'] and not (file in conflicted):
                     conflicted.append(file)
 
+        # show requested patch but also newer patches
+        util.print_header('REQUESTED PATCH:', self.patch_short)
+        util.print_table(new_patches)
+
         # show list of conflicted files
         if len(conflicted) > 0:
             util.print_header('CONFLICTED FILES:')
             for file in conflicted:
-                print('  - {}'.format(file))
+                print('  - {}'.format(file).replace(' ./', ' '))
             print()
-        #
-        if found_newer:
+
+        # show warning
+        if len(new_patches) > 0 and not self.args.force:
             util.raise_error('REQUESTED PATCH TOO OLD',
                 '  - there is a newer patch deployed, you might lose things...\n' +
                 '  - use -force flag if you want to redeploy anyway')
@@ -243,7 +248,10 @@ class Deploy(config.Config):
                 'deployed_at'   : last_deployed,
                 'result'        : last_result,
             }
-            self.available_show.append({**self.available_ref[ref], **{'files': len(count_files)}})
+
+            # show only matches
+            if self.patch_code in patch:
+                self.available_show.append({**self.available_ref[ref], **{'files': len(count_files)}})
 
 
 
@@ -270,7 +278,7 @@ class Deploy(config.Config):
                 'files'     : len(self.get_file_references(full)),
             })
         #
-        util.print_header('PATCH FOUND:', self.patch_short)
+        util.print_header('PATCH DETAILS:')
         util.print_table(self.deploy_plan, columns = ['order', 'file', 'schema', 'app_id', 'files'], right_align = ['app_id'])
 
 

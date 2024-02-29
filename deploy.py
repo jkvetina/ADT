@@ -148,9 +148,6 @@ class Deploy(config.Config):
         # identify patch folder
         patch_found = []
         for ref, patch in enumerate(sorted(glob.glob(self.repo_root + self.config.patch_root + '**'), reverse = True), start = 1):
-            if self.patch_code != None and not (self.patch_code in patch):
-                continue
-            #
             self.patches[ref] = patch
             if self.patch_ref != None:
                 if self.patch_ref == ref:
@@ -186,14 +183,29 @@ class Deploy(config.Config):
             util.raise_error('PATCH ALREADY DEPLOYED', '  - use -force flag if you want to redeploy anyway')
 
         # check if there is a newer patch deployed than requested one
-        found_newer = False
+        new_patches = []
         conflicted  = []
         #
-        for i in reversed(range(1, ref)):
-            found_newer = True
-            for file in self.available_ref[i]['files']:
-                if file in self.available_ref[ref]['files'] and not (file in conflicted):
-                    conflicted.append(file)
+        for i in reversed(range(1, ref + 1)):
+            info = self.available_ref[i]
+            new_patches.append({
+                'ref'           : info['ref'],
+                'patch_name'    : info['patch_name'],
+                'files'         : len(info['files']),
+                'deployed_at'   : info['deployed_at'],
+                'result'        : info['result'],
+            })
+
+            # for patches below
+            if i < ref:
+                # also check existence of log files
+                if info['deployed_at'] != None and info['deployed_at'] != '':
+                    found_newer = True
+
+                # check if files from requested patch are in the following patches
+                for file in self.available_ref[i]['files']:
+                    if file in self.available_ref[ref]['files'] and not (file in conflicted):
+                        conflicted.append(file)
 
         # show requested patch but also newer patches
         util.print_header('REQUESTED PATCH:', self.patch_short)

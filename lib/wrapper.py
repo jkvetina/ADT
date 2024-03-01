@@ -67,6 +67,7 @@ class Oracle:
 
 
     def connect(self):
+        self.disconnect()       # to use as reconnect
         os.environ['NLS_LANG'] = self.tns.lang
 
         # might need to adjust client for classic connections or for DPY-3015 password issues

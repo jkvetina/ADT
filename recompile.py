@@ -81,7 +81,6 @@ class Recompile(config.Config):
         print()
 
         # reconnect due to some unforseen recompilation issues
-        self.conn.disconnect()
         self.conn = self.db_connect(ping_sqlcl = False, silent = True)
 
         # calculate difference

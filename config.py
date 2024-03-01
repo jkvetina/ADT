@@ -117,8 +117,10 @@ class Config(util.Attributed):
 
 
 
-    def __init__(self, parser):
-        self.start_timer = timeit.default_timer()
+    def __init__(self, parser, ignore_timer = False):
+        self.ignore_timer = ignore_timer
+        if not (self.ignore_timer):
+            self.start_timer = timeit.default_timer()
 
         # parse arguments from command line
         self.args = vars(parser.parse_args())
@@ -190,9 +192,9 @@ class Config(util.Attributed):
 
 
 
-
     def __del__(self):
-        print('\nTIMER: {}s\n'.format(int(round(timeit.default_timer() - self.start_timer + 0.5, 0))))
+        if not (self.ignore_timer):
+            print('\nTIMER: {}s\n'.format(int(round(timeit.default_timer() - self.start_timer + 0.5, 0))))
 
 
 

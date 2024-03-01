@@ -558,7 +558,8 @@ class Config(util.Attributed):
                             value = obj[attribute.lower()]
 
                     # replace all tags "{$...}" with passed object attribute values
-                    payload = payload.replace(tag, value)
+                    if value != None:
+                        payload = payload.replace(tag, value)
 
         # verify left over tags
         payload = payload.strip().rstrip('-').rstrip('_').strip()

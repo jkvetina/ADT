@@ -368,8 +368,10 @@ class Patch(config.Config):
                 payload += '--\n'
                 payload += '@"./{}f{}/f{}.sql";\n'.format(self.config.path_apex, app_id, app_id)
             #
-            elif app_id != '' and not (app_id in self.full_exports):
-                payload += self.fix_apex_start(app_id)
+            else:
+                if app_id != '':
+                    payload += self.fix_apex_start(app_id)
+                #
                 apex_pages = []
                 for file in self.dependencies_sorted():
                     # modify list of APEX files
@@ -405,7 +407,9 @@ class Patch(config.Config):
                     payload += self.fix_apex_pages(apex_pages)
 
                 # for APEX patches add some queries
-                payload += self.fix_apex_end(app_id)
+                if app_id != '':
+                    payload += self.fix_apex_end(app_id)
+
             payload += '\n'
 
             # add grants

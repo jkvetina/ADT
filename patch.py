@@ -445,8 +445,15 @@ class Patch(config.Config):
             # 'copied_file', 'deleted_file', 'diff', 'new_file', 'raw_rename_from', 'raw_rename_to', 're_header',
             # 'rename_from', 'rename_to', 'renamed', 'renamed_file', 'score'
             #print(dir(x))
+
+            # skip deleted files
+            if 'file deleted in rhs' in str(diff):
+                continue
+
+            # process file and sort to show the file status
             if file in rel_files and not (file in self.diffs):
                 self.diffs[file] = diff
+                #
                 if diff.new_file:
                     new_files.append(file)
                 elif diff.deleted_file:

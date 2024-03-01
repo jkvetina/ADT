@@ -2,6 +2,7 @@
 import sys, os, re, shutil, subprocess, argparse, glob
 #
 import config
+import deploy
 from lib import util
 from lib import queries_patch as query          # ditch for template folder
 
@@ -79,9 +80,34 @@ class Patch(config.Config):
         self.patch_folder_splitter = '-'
         self.get_patch_folders()
 
+        # reuse info from Deploy script
+        self.deploy             = deploy.Deploy(parser, ignore_timer = True)
+        self.available_ref      = self.deploy.available_ref
+
         # create patch
         if self.patch_code != None and len(self.patch_code) > 0:
-            util.print_header('BUILDING PATCH {}'.format(self.patch_code))
+            util.print_header('BUILDING PATCH FOR: {}'.format(self.patch_code))
+            util.print_help('use -search    to adjust the matched commits')
+            util.print_help('use -depth     to adjust the number of recent commits searched')
+            util.print_help('use -add #     to limit which commits will be processed')
+            util.print_help('use -ignore #  to limit which commits will not be processed')
+            print()
+
+        # show matching patches
+        data = []
+        for ref in sorted(self.available_ref.keys(), reverse = True):
+            info = self.available_ref[ref]
+            if (self.patch_code == None or self.patch_code in info['patch_name']):
+                data.append({
+                    'ref'           : info['ref'],
+                    'patch_name'    : info['patch_name'],
+                    'files'         : len(info['files']),
+                    'deployed_at'   : info['deployed_at'],
+                    'result'        : info['result'],
+                })
+        #
+        util.print_header('EXISTING PATCHES:')
+        util.print_table(data)
 
         # show help for processing specific commits
         if self.patch_seq == '':
@@ -110,6 +136,8 @@ class Patch(config.Config):
                 util.print_help('use -seq #     to actually create a new patch files')
                 print()
 
+        # create patch
+        if self.patch_code != None and len(self.patch_code) > 0:
             # get through commits for specific patch name/code
             self.get_patch_commits()
             #
@@ -122,7 +150,7 @@ class Patch(config.Config):
                 self.show_recent_commits()
         else:
             # show recent commits, resp. parse card numbers ???
-            util.assert_(self.patch_code,           'MISSING ARGUMENT: PATCH CODE')
+            util.assert_(self.patch_code, 'MISSING ARGUMENT: PATCH CODE')
 
 
 
@@ -277,8 +305,10 @@ class Patch(config.Config):
 
     def show_recent_commits(self):
         # show relevant recent commits
-        depth = 'DEPTH: {}/{}'.format(self.head_commit - self.first_commit + 1, self.search_depth) if self.args.get('depth') else ''
-        util.print_header('RECENT COMMITS FOR "{}":'.format(' '.join(self.search_message)), depth)
+        depth   = 'DEPTH: {}/{}'.format(self.head_commit - self.first_commit + 1, self.search_depth) if self.args.get('depth') else ''
+        header  = 'REQUESTED' if (self.args.add != [] or self.args.ignore != []) else 'RECENT'
+        #
+        util.print_header('{} COMMITS FOR "{}":'.format(header, ' '.join(self.search_message)), depth)
         print()
         for commit in sorted(self.relevant_commits.keys(), reverse = True):
             print('  {}) {}'.format(commit, self.relevant_commits[commit].summary))

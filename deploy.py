@@ -57,12 +57,14 @@ class Deploy(config.Config):
         self.splitter           = '__'      # in deploy logs in between env, date, schema, status
         self.logs_prefix        = '{}/LOGS_{}'
         #
-        self.deploy_patch()
+        self.find_folder()
+        if __name__ == "__main__":
+            self.deploy_patch()
 
 
 
     def deploy_patch(self):
-        self.find_folder()
+        self.check_folder()
         self.create_plan()
         self.check_connections()
 
@@ -165,8 +167,11 @@ class Deploy(config.Config):
 
         # get patches for checks
         self.get_available_patches()
-        #
-        if len(patch_found) != 1:
+
+
+
+    def check_folder(self):
+        if len(self.patch_found) != 1:
             util.print_header('AVAILABLE PATCHES:', self.patch_env)
             util.print_table(self.available_show)
             #

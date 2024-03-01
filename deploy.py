@@ -158,6 +158,11 @@ class Deploy(config.Config):
                 if self.patch_code in patch:
                     self.patch_found.append(patch)
 
+            # pass all folders for Patch script
+            if __name__ != "__main__":
+                if self.patch_ref == None:
+                    self.patch_found.append(patch)
+
         # set values
         self.patch_folder   = self.patch_found[0].replace(self.repo_root + self.config.patch_root, '')
         self.patch_full     = self.patch_found[0]

@@ -135,7 +135,14 @@ def get_yaml(h, file = ''):
 
 
 def print_header(message, append = ''):
+    if append == None:
+        append = ''
     print('\n{}{}\n{}'.format(message, (' ' + append).rstrip(), '-' * len(message)))
+
+
+
+def print_help(message):
+    print('  -> {}'.format(message))
 
 
 

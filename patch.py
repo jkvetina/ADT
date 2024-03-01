@@ -238,11 +238,11 @@ class Patch(config.Config):
         self.first_commit   = min(self.relevant_commits) - 1
         self.last_commit    = max(self.relevant_commits)
         #
-        try:
-            self.first_commit_obj   = self.all_commits[self.first_commit]
-            self.last_commit_obj    = self.all_commits[self.last_commit]
-        except:
-            util.raise_error('INCREASE COMMIT DEPTH SEARCH')
+        if not (self.first_commit in self.all_commits):
+            self.all_commits = min(self.all_commits)
+        #
+        self.first_commit_obj   = self.all_commits[self.first_commit]
+        self.last_commit_obj    = self.all_commits[self.last_commit]
 
 
 

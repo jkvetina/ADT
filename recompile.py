@@ -60,40 +60,7 @@ class Recompile(config.Config):
         progress_done   = 0
         #
         for row in data_todo:
-            type_body   = ' BODY' if 'BODY' in row.object_type else ''
-            type_family = row.object_type.replace(' BODY', '')
-            extras      = ''
-
-            # extra stuff for code objects
-            if row.object_type in ('PACKAGE', 'PACKAGE BODY', 'PROCEDURE', 'FUNCTION', 'TRIGGER',):
-                extras += ' PLSQL_CODE_TYPE = ' + ('NATIVE' if self.args.native else 'INTERPRETED')
-
-                # setup optimize level
-                if 'level' in self.args:
-                    if self.args.level != None and self.args.level >= 1 and self.args.level <= 3:
-                        extras += ' PLSQL_OPTIMIZE_LEVEL = ' + str(self.args.level)
-
-                # setup scope
-                if 'scope' in self.args and isinstance(self.args['scope'], list):
-                    scope = ''
-                    scope += 'IDENTIFIERS:ALL,'  if ('IDENTIFIERS' in self.args.scope or 'ALL' in self.args.scope) else ''
-                    scope += 'STATEMENTS:ALL,'   if ('STATEMENTS'  in self.args.scope or 'ALL' in self.args.scope) else ''
-                    #
-                    extras += ' PLSCOPE_SETTINGS = \'' + scope.rstrip(',') + '\''
-
-                # setup warnings
-                if 'warnings' in self.args and isinstance(self.args['warnings'], list):
-                    warnings = ''
-                    warnings += 'ENABLE:SEVERE,'        if ('SEVERE'  in self.args.warnings) else ''
-                    warnings += 'ENABLE:PERFORMANCE,'   if ('PERF'    in self.args.warnings or 'PERFORMANE'     in self.args.warnings) else ''
-                    warnings += 'ENABLE:INFORMATIONAL,' if ('INFO'    in self.args.warnings or 'INFORMATIONAL'  in self.args.warnings) else ''
-                    #
-                    extras += ' PLSQL_WARNINGS = \'' + warnings.strip(',').replace(',', '\',\'') + '\''
-                #
-                extras += ' REUSE SETTINGS'
-
-            # build query
-            q = 'ALTER {} {} COMPILE{} {}'.format(type_family, row.object_name, type_body, extras)
+            q = self.build_query(row)
             if self.args.force:
                 objects[row.object_type][1] += 1
 
@@ -147,6 +114,44 @@ class Recompile(config.Config):
             #
             util.print_header('INVALID OBJECTS:')
             util.print_table(data)
+
+
+
+    def build_query(self, row):
+        type_body   = ' BODY' if 'BODY' in row.object_type else ''
+        type_family = row.object_type.replace(' BODY', '')
+        extras      = ''
+
+        # extra stuff for code objects
+        if row.object_type in ('PACKAGE', 'PACKAGE BODY', 'PROCEDURE', 'FUNCTION', 'TRIGGER',):
+            extras += ' PLSQL_CODE_TYPE = ' + ('NATIVE' if self.args.native else 'INTERPRETED')
+
+            # setup optimize level
+            if 'level' in self.args:
+                if self.args.level != None and self.args.level >= 1 and self.args.level <= 3:
+                    extras += ' PLSQL_OPTIMIZE_LEVEL = ' + str(self.args.level)
+
+            # setup scope
+            if 'scope' in self.args and isinstance(self.args['scope'], list):
+                scope = ''
+                scope += 'IDENTIFIERS:ALL,'  if ('IDENTIFIERS' in self.args.scope or 'ALL' in self.args.scope) else ''
+                scope += 'STATEMENTS:ALL,'   if ('STATEMENTS'  in self.args.scope or 'ALL' in self.args.scope) else ''
+                #
+                extras += ' PLSCOPE_SETTINGS = \'' + scope.rstrip(',') + '\''
+
+            # setup warnings
+            if 'warnings' in self.args and isinstance(self.args['warnings'], list):
+                warnings = ''
+                warnings += 'ENABLE:SEVERE,'        if ('SEVERE'  in self.args.warnings) else ''
+                warnings += 'ENABLE:PERFORMANCE,'   if ('PERF'    in self.args.warnings or 'PERFORMANE'     in self.args.warnings) else ''
+                warnings += 'ENABLE:INFORMATIONAL,' if ('INFO'    in self.args.warnings or 'INFORMATIONAL'  in self.args.warnings) else ''
+                #
+                extras += ' PLSQL_WARNINGS = \'' + warnings.strip(',').replace(',', '\',\'') + '\''
+            #
+            extras += ' REUSE SETTINGS'
+
+        # build query
+        return 'ALTER {} {} COMPILE{} {}'.format(type_family, row.object_name, type_body, extras)
 
 
 

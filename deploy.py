@@ -163,15 +163,16 @@ class Deploy(config.Config):
                 if self.patch_ref == None:
                     self.patch_found.append(patch)
 
-        # set values
-        self.patch_folder   = self.patch_found[0].replace(self.repo_root + self.config.patch_root, '')
-        self.patch_full     = self.patch_found[0]
-        self.patch_short    = self.patch_full.replace(self.repo_root + self.config.patch_root, '')
-        self.patch_path     = self.repo_root + self.config.patch_root + self.patch_folder + '/'
-        self.log_folder     = self.logs_prefix.format(self.patch_path, self.patch_env)
-
         # get patches for checks
         self.get_available_patches()
+
+        # set values
+        if len(self.patch_found) > 0:
+            self.patch_folder   = self.patch_found[0].replace(self.repo_root + self.config.patch_root, '')
+            self.patch_full     = self.patch_found[0]
+            self.patch_short    = self.patch_full.replace(self.repo_root + self.config.patch_root, '')
+            self.patch_path     = self.repo_root + self.config.patch_root + self.patch_folder + '/'
+            self.log_folder     = self.logs_prefix.format(self.patch_path, self.patch_env)
 
 
 
@@ -231,7 +232,7 @@ class Deploy(config.Config):
             print()
 
         # show warning
-        if len(new_patches) > 0 and not self.args.force:
+        if found_newer and not self.args.force:
             util.raise_error('REQUESTED PATCH TOO OLD',
                 'there is a newer patch deployed, you might lose things...',
                 'use -force flag if you want to redeploy anyway')

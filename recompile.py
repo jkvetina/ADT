@@ -58,6 +58,7 @@ class Recompile(config.Config):
         #
         progress_target = len(data_todo)
         progress_done   = 0
+        troublemakers   = []
         #
         for row in data_todo:
             q = self.build_query(row)
@@ -74,11 +75,24 @@ class Recompile(config.Config):
             try:
                 self.conn.execute(q)
             except Exception:
-                pass
+                troublemakers.append(row)
         #
         if not self.debug:
             print()
         print()
+
+        # if there are some leftovers, try to recompile them
+        if len(troublemakers) > 0:
+            # reconnect due to some unforseen recompilation issues
+            self.conn = self.db_connect(ping_sqlcl = False, silent = True)
+
+            # go backwards
+            for row in reversed(troublemakers):
+                q = self.build_query(row)
+                try:
+                    self.conn.execute(q)
+                except Exception:
+                    pass
 
         # reconnect due to some unforseen recompilation issues
         self.conn = self.db_connect(ping_sqlcl = False, silent = True)

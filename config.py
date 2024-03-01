@@ -162,7 +162,8 @@ class Config(util.Attributed):
         # check connections before config, since we can change schema here
         # check config file, rerun this when specific schema is processed to load schema overrides
         self.init_repo()
-        self.init_connection()
+        if __name__ != "__main__":
+            self.init_connection()
         self.init_config()
         #
         if self.debug:
@@ -180,6 +181,7 @@ class Config(util.Attributed):
                 self.create_connection()
 
             # check connection file and test connectivity
+            self.init_connection()
             self.conn = self.db_connect()
 
             # check APEX args (show matching apps)
@@ -208,6 +210,13 @@ class Config(util.Attributed):
             with open(file, 'rt', encoding = 'utf-8') as f:
                 data = dict(util.get_yaml(f, file))
 
+                # check environment
+                if not (env_name in data):
+                    if self.args.create:
+                        data[env_name] = {'schemas' : {schema_name : {}}}
+                if not (env_name in data):
+                    util.raise_error('UNKNOWN ENVIRONMENT NAME')
+
                 # make yaml content more flat
                 self.connection = {}
                 self.connection['file'] = file
@@ -226,10 +235,6 @@ class Config(util.Attributed):
                         schema_name = list(data[env_name]['schemas'].keys())[0]
                         self.info.schema = schema_name
                     break
-
-                # check environment
-                if not (env_name in data):
-                    util.raise_error('UNKNOWN ENVIRONMENT NAME')
 
                 # process schema overrides
                 if 'schemas' in data[env_name] and self.info.schema != None:

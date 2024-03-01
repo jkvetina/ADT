@@ -531,8 +531,11 @@ class Patch(config.Config):
             path = '{}f{}/'.format(self.config.path_apex, app_id).replace('//', '/')
             for file in self.config.apex_files_copy:
                 file = path + file
-                if not (file in process_files):
-                    self.create_file_snapshot(file)
+                if not (file in process_files) and os.path.exists(file):
+                    # get copied files from directory
+                    with open(file, 'rt') as f:
+                        self.create_file_snapshot(file, file_content = f.read())
+
 
             # attach full export
             file = '{}f{}.sql'.format(path, app_id)
@@ -552,11 +555,13 @@ class Patch(config.Config):
 
 
 
-    def create_file_snapshot(self, file):
+    def create_file_snapshot(self, file, file_content = None):
         # create folders and copy files
         target_file     = '{}/{}'.format(self.patch_folder, file).replace('//', '/')
         target_folder   = os.path.dirname(target_file)
-        file_content    = self.get_file_from_commit(file, commit = str(self.last_commit_obj))
+        #
+        if file_content == None:
+            file_content = self.get_file_from_commit(file, commit = str(self.last_commit_obj))
 
         # change page audit columns
         if self.config.replace_audit and self.apex_app_id != '' and '/application/pages/page' in file:

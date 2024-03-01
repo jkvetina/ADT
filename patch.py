@@ -37,6 +37,8 @@ class Patch(config.Config):
         super().__init__(parser)
 
         # process arguments and reinitiate config
+        util.assert_(self.args.target, 'MISSING ARGUMENT: TARGET ENV')
+        #
         self.patch_code         = self.args.patch
         self.patch_seq          = self.args.seq or ''
         self.search_message     = self.args.search or [self.patch_code]
@@ -679,6 +681,7 @@ if __name__ == "__main__":
     parser.add_argument('-key',         help = 'Key or key location to encypt passwords')
     parser.add_argument('-schema',      help = 'Schema/connection name')
     #
+    parser.add_argument('-target',      help = 'Target environment')
     parser.add_argument('-patch',       help = 'Patch code (name for the patch files)')
     parser.add_argument('-seq',         help = 'Sequence in patch folder, {$PATCH_SEQ}')
     parser.add_argument('-search',      help = 'Search string for Git to search just for relevant commits',     default = None, nargs = '*')

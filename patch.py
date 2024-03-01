@@ -363,10 +363,12 @@ class Patch(config.Config):
             # add properly sorted files (objects by dependencies) to the patch
             if app_id != '' and app_id in self.full_exports:
                 # attach the whole application for full imports
+                payload += 'SET SERVEROUTPUT OFF\n'
                 payload += '--\n'
                 payload += '-- APPLICATION {}\n'.format(app_id)
                 payload += '--\n'
                 payload += '@"./{}f{}/f{}.sql";\n'.format(self.config.path_apex, app_id, app_id)
+                payload += 'SET SERVEROUTPUT ON\n'
             #
             else:
                 if app_id != '':
@@ -589,11 +591,17 @@ class Patch(config.Config):
         payload += 'SET TIMING OFF\n'
         payload += '--\n'
 
-        # attach starting file
-        payload += '@"./{}f{}/{}";\n'.format(self.config.path_apex, app_id, 'application/set_environment.sql')
-
         # attach the whole application for full imports
+        payload += 'PROMPT --;\n'
+        payload += 'PROMPT -- APEX FULL EXPORT\n'
+        payload += 'PROMPT --;\n'
         payload += '--@"./{}f{}/f{}.sql";\n'.format(self.config.path_apex, app_id, app_id)
+
+        # attach starting file
+        payload += 'PROMPT --;\n'
+        payload += 'PROMPT -- APEX COMPONENTS\n'
+        payload += 'PROMPT --;\n'
+        payload += '@"./{}f{}/{}";\n'.format(self.config.path_apex, app_id, 'application/set_environment.sql')
         payload += '--\n'
         #
         return payload

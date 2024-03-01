@@ -81,6 +81,33 @@ class Patch(config.Config):
         if self.patch_code != None and len(self.patch_code) > 0:
             util.print_header('BUILDING PATCH {}'.format(self.patch_code))
 
+        # show help for processing specific commits
+        if self.patch_seq == '':
+            if self.patch_current['day'] in self.patch_folders:
+                data = []
+                for folder, info in self.patch_folders[self.patch_current['day']].items():
+                    data.append({
+                        #'folder'    : folder
+                        'day'           : info['day'],
+                        'seq'           : info['seq'],
+                        'patch_code'    : info['patch_code'],
+                    })
+                #
+                util.print_header('TODAY\'S FOLDERS:')
+                util.print_table(data)
+
+            # offer/hint next available sequence
+            if self.patch_code != None:
+                try:
+                    next = min(self.patch_sequences)
+                    next = str(int(next) + 1) if next.isnumeric() else '#'
+                except:
+                    next = '1'
+                #
+                util.print_header('SPECIFY PATCH SEQUENCE:', next)
+                util.print_help('use -seq #     to actually create a new patch files')
+                print()
+
             # get through commits for specific patch name/code
             self.get_patch_commits()
             #
@@ -254,27 +281,6 @@ class Patch(config.Config):
         for commit in sorted(self.relevant_commits.keys(), reverse = True):
             print('  {}) {}'.format(commit, self.relevant_commits[commit].summary))
         print()
-
-        # show help for processing specific commits
-        if self.patch_seq == '':
-            if self.patch_current['day'] in self.patch_folders:
-                data = []
-                for folder, info in self.patch_folders[self.patch_current['day']].items():
-                    data.append({'seq' : info['seq'], 'folder' : folder})
-                #
-                util.print_header('CURRENT FOLDERS:')
-                util.print_table(data)
-
-            # offer next available sequence
-            try:
-                next = min(self.patch_sequences)
-                next = str(int(next) + 1) if next.isnumeric() else '#'
-            except:
-                next = '1'
-            #
-            util.print_header('SPECIFY PATCH SEQUENCE:', next)
-            print('  - use -seq {:<7} to actually create a new patch files'.format(next))
-            print()
 
 
 

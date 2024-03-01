@@ -41,7 +41,7 @@ class Deploy(config.Config):
         self.patch_env          = self.args.target
         self.patch_code         = self.args.patch
         self.patch_folder       = ''
-        self.patch_ref          = self.args.ref
+        self.patch_ref          = self.args.get('ref', None)
         self.info.branch        = self.args.branch or self.info.branch or self.repo.active_branch
         #
         self.init_config()
@@ -51,6 +51,7 @@ class Deploy(config.Config):
         self.patches            = {}
         self.available_ref      = {}
         self.available_show     = []
+        self.patch_found        = []
         self.deploy_plan        = []
         self.deploy_schemas     = {}
         self.deploy_conn        = {}
@@ -148,19 +149,18 @@ class Deploy(config.Config):
 
     def find_folder(self):
         # identify patch folder
-        patch_found = []
         for ref, patch in enumerate(sorted(glob.glob(self.repo_root + self.config.patch_root + '**'), reverse = True), start = 1):
             self.patches[ref] = patch
             if self.patch_ref != None:
                 if self.patch_ref == ref:
-                    patch_found.append(patch)
+                    self.patch_found.append(patch)
             elif self.patch_code != None:
                 if self.patch_code in patch:
-                    patch_found.append(patch)
+                    self.patch_found.append(patch)
 
         # set values
-        self.patch_folder   = patch_found[0].replace(self.repo_root + self.config.patch_root, '')
-        self.patch_full     = patch_found[0]
+        self.patch_folder   = self.patch_found[0].replace(self.repo_root + self.config.patch_root, '')
+        self.patch_full     = self.patch_found[0]
         self.patch_short    = self.patch_full.replace(self.repo_root + self.config.patch_root, '')
         self.patch_path     = self.repo_root + self.config.patch_root + self.patch_folder + '/'
         self.log_folder     = self.logs_prefix.format(self.patch_path, self.patch_env)
@@ -182,12 +182,13 @@ class Deploy(config.Config):
             util.quit()
 
         # check status of requested patch, search for ref#
-        ref = self.patch_ref or list(self.patches.keys())[list(self.patches.values()).index(patch_found[0])]
+        ref = self.patch_ref or list(self.patches.keys())[list(self.patches.values()).index(self.patch_found[0])]
         #
         if self.available_ref[ref]['result'] == 'SUCCESS' and not self.args.force:
             util.raise_error('PATCH ALREADY DEPLOYED', '  - use -force flag if you want to redeploy anyway')
 
         # check if there is a newer patch deployed than requested one
+        found_newer = False
         new_patches = []
         conflicted  = []
         #
@@ -207,13 +208,13 @@ class Deploy(config.Config):
                 if info['deployed_at'] != None and info['deployed_at'] != '':
                     found_newer = True
 
-                # check if files from requested patch are in the following patches
-                for file in self.available_ref[i]['files']:
-                    if file in self.available_ref[ref]['files'] and not (file in conflicted):
-                        conflicted.append(file)
+                    # check if files from requested patch are in the following patches
+                    for file in self.available_ref[i]['files']:
+                        if file in self.available_ref[ref]['files'] and not (file in conflicted):
+                            conflicted.append(file)
 
         # show requested patch but also newer patches
-        util.print_header('REQUESTED PATCH:', self.patch_short)
+        util.print_header('REQUESTED PATCH:', '{} ({})'.format(self.patch_short, ref))
         util.print_table(new_patches)
 
         # show list of conflicted files
@@ -267,7 +268,7 @@ class Deploy(config.Config):
             }
 
             # show only matches
-            if self.patch_code in patch:
+            if (self.patch_code == None or self.patch_code in patch):
                 self.available_show.append({**self.available_ref[ref], **{'files': len(count_files)}})
 
 

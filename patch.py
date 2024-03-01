@@ -94,47 +94,24 @@ class Patch(config.Config):
             print()
 
         # show matching patches
-        data = []
+        existing_patches = []
         for ref in sorted(self.available_ref.keys(), reverse = True):
             info = self.available_ref[ref]
             if (self.patch_code == None or self.patch_code in info['patch_name']):
-                data.append({
+                existing_patches.append({
                     'ref'           : info['ref'],
                     'patch_name'    : info['patch_name'],
                     'files'         : len(info['files']),
                     'deployed_at'   : info['deployed_at'],
                     'result'        : info['result'],
                 })
-        #
-        util.print_header('EXISTING PATCHES:')
-        util.print_table(data)
 
-        # show help for processing specific commits
-        if self.patch_seq == '':
-            if self.patch_current['day'] in self.patch_folders:
-                data = []
-                for folder, info in self.patch_folders[self.patch_current['day']].items():
-                    data.append({
-                        #'folder'    : folder
-                        'day'           : info['day'],
-                        'seq'           : info['seq'],
-                        'patch_code'    : info['patch_code'],
-                    })
-                #
-                util.print_header('TODAY\'S FOLDERS:')
-                util.print_table(data)
-
-            # offer/hint next available sequence
-            if self.patch_code != None:
-                try:
-                    next = min(self.patch_sequences)
-                    next = str(int(next) + 1) if next.isnumeric() else '#'
-                except:
-                    next = '1'
-                #
-                util.print_header('SPECIFY PATCH SEQUENCE:', next)
-                util.print_help('use -seq #     to actually create a new patch files')
-                print()
+        # check patch code
+        if self.patch_code == None or len(self.patch_code) == 0:
+            util.print_header('EXISTING PATCHES:')
+            util.print_table(existing_patches)
+            #
+            util.assert_(self.patch_code, 'MISSING ARGUMENT: PATCH CODE')
 
         # create patch
         if self.patch_code != None and len(self.patch_code) > 0:
@@ -148,9 +125,36 @@ class Patch(config.Config):
                 # show recent commits for selected patch
                 # show more details if we have them
                 self.show_recent_commits()
-        else:
-            # show recent commits, resp. parse card numbers ???
-            util.assert_(self.patch_code, 'MISSING ARGUMENT: PATCH CODE')
+                #
+                util.print_header('EXISTING PATCHES:')
+                util.print_table(existing_patches)
+
+                # show help for processing specific commits
+                if self.patch_seq == '':
+                    if self.patch_current['day'] in self.patch_folders:
+                        data = []
+                        for folder, info in self.patch_folders[self.patch_current['day']].items():
+                            data.append({
+                                #'folder'    : folder
+                                'day'           : info['day'],
+                                'seq'           : info['seq'],
+                                'patch_code'    : info['patch_code'],
+                            })
+                        #
+                        util.print_header('TODAY\'S FOLDERS:')
+                        util.print_table(data)
+
+                # offer/hint next available sequence
+                if self.patch_code != None:
+                    try:
+                        next = min(self.patch_sequences)
+                        next = str(int(next) + 1) if next.isnumeric() else '#'
+                    except:
+                        next = '1'
+                    #
+                    util.print_header('SPECIFY PATCH SEQUENCE:', next)
+                    util.print_help('use -seq #     to actually create a new patch files')
+                    print()
 
 
 

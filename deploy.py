@@ -181,8 +181,8 @@ class Deploy(config.Config):
             util.print_table(self.available_show)
             #
             util.print_header('SELECT PATCH YOU WANT TO DEPLOY')
-            print('  - use can either use unique:   -patch NAME')
-            print('  - or pass reference number:    -ref #')
+            util.print_help('use -patch UNIQUE_NAME     to select patch by name')
+            util.print_help('use -ref #                 to select patch by ref number in table above')
             print()
             util.quit()
 
@@ -190,7 +190,8 @@ class Deploy(config.Config):
         ref = self.patch_ref or list(self.patches.keys())[list(self.patches.values()).index(self.patch_found[0])]
         #
         if self.available_ref[ref]['result'] == 'SUCCESS' and not self.args.force:
-            util.raise_error('PATCH ALREADY DEPLOYED', '  - use -force flag if you want to redeploy anyway')
+            util.raise_error('PATCH ALREADY DEPLOYED',
+                'use -force flag if you want to redeploy patch anyway')
 
         # check if there is a newer patch deployed than requested one
         found_newer = False
@@ -232,8 +233,8 @@ class Deploy(config.Config):
         # show warning
         if len(new_patches) > 0 and not self.args.force:
             util.raise_error('REQUESTED PATCH TOO OLD',
-                '  - there is a newer patch deployed, you might lose things...\n' +
-                '  - use -force flag if you want to redeploy anyway')
+                'there is a newer patch deployed, you might lose things...',
+                'use -force flag if you want to redeploy anyway')
 
 
 

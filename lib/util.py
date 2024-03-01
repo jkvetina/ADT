@@ -308,7 +308,7 @@ def quit(message = ''):
 
 
 
-def raise_error(message = '', extra = ''):
+def raise_error(message = '', *extras):
     # print exception to screen
     splitter    = 80 * '#'
     exception   = traceback.format_exc().rstrip()
@@ -318,8 +318,9 @@ def raise_error(message = '', extra = ''):
     # show more friendly message at the end
     message = 'ERROR: {}'.format(message)
     print('\n{}\n{}'.format(message, '-' * len(message)))
-    if len(extra) > 0:
-        print(extra)
+    if len(extras) > 0:
+        for line in extras:
+            print_help(line.rstrip())
     print()
     sys.exit()
 

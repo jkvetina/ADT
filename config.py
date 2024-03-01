@@ -380,7 +380,7 @@ class Config(util.Attributed):
         # find OPY pickle file
         pickle_file = self.args.opy
         if not os.path.exists(pickle_file) and os.path.splitext(pickle_file)[1] != '.conf':
-            util.raise_error('MISSING OR INVALID OPY FILE!')
+            util.raise_error('MISSING OR INVALID OPY FILE')
 
         # check the file content
         args = {}
@@ -388,9 +388,8 @@ class Config(util.Attributed):
             with open(pickle_file, 'rb') as f:
                 args = pickle.load(f).items()
         except Exception:
-            util.raise_error('INVALID OPY FILE!',
-                '   - expecting .conf file created by OPY tool\n'
-            )
+            util.raise_error('INVALID OPY FILE',
+                'expecting .conf file created by OPY tool')
 
         # import data as arguments
         for arg, value in args.items():
@@ -487,10 +486,9 @@ class Config(util.Attributed):
             if self.repo.bare:
                 raise Exception()
         except:
-            util.raise_error('INVALID GIT REPO!',
-                '   - change current folder to the repo you would like to use.\n' +
-                '   - or specify repo in args or system arguments\n'
-            )
+            util.raise_error('INVALID GIT REPO',
+                'change current folder to the repo you would like to use.',
+                'or specify repo in args or system arguments')
 
         # get current account
         with self.repo.config_reader() as git_config:

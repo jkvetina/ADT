@@ -492,9 +492,7 @@ class Patch(config.Config):
             payload.extend(self.get_grants_made())
 
             # load final files, for database or APEX
-            #
-            #
-            #
+            payload.extend(self.get_template_files('apex_end' if app_id != '' else 'db_end'))
 
             # add flag so deploy script can evaluate it as successful
             payload.extend([
@@ -705,7 +703,6 @@ class Patch(config.Config):
 
     def get_grants_made(self):
         payload         = []
-        grants_found    = False
 
         # grab the file with grants made
         with open(self.patch_grants, 'rt', encoding = 'utf-8') as f:
@@ -723,12 +720,9 @@ class Patch(config.Config):
                     object_name = self.get_file_object_name(file).lower()
                     if object_name == find_name:
                         payload.append(line.strip())
-                        grants_found = True
                         break
         #
-        if grants_found:
-            payload.append('')
-        #
+        payload.append('')
         return payload
 
 

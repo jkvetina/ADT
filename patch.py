@@ -310,15 +310,27 @@ class Patch(config.Config):
 
 
     def show_recent_commits(self):
+        # pivot commits
+        commits_map = {}
+        for ref in sorted(self.available_ref.keys()):
+            for commit in self.available_ref[ref]['commits']:
+                commits_map[commit] = ref
+
         # show relevant recent commits
         depth   = 'DEPTH: {}/{}'.format(self.head_commit - self.first_commit + 1, self.search_depth) if self.args.get('depth') else ''
         header  = 'REQUESTED' if (self.args.add != [] or self.args.ignore != []) else 'RECENT'
+        data    = []
+        #
+        for commit in sorted(self.relevant_commits.keys(), reverse = True):
+            summary = self.relevant_commits[commit].summary
+            data.append({
+                'commit'        : commit,
+                'summary'       : (summary[:50] + '..') if len(summary) > 50 else summary,
+                'patch_ref'     : commits_map.get(commit, ''),
+            })
         #
         util.print_header('{} COMMITS FOR "{}":'.format(header, ' '.join(self.search_message)), depth)
-        print()
-        for commit in sorted(self.relevant_commits.keys(), reverse = True):
-            print('  {}) {}'.format(commit, self.relevant_commits[commit].summary))
-        print()
+        util.print_table(data)
 
 
 

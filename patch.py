@@ -147,13 +147,13 @@ class Patch(config.Config):
                 # offer/hint next available sequence
                 if self.patch_code != None:
                     try:
-                        next = min(self.patch_sequences)
+                        next = max(self.patch_sequences)
                         next = str(int(next) + 1) if next.isnumeric() else '#'
                     except:
                         next = '1'
                     #
-                    util.print_header('SPECIFY PATCH SEQUENCE:', next)
-                    util.print_help('use -seq #     to actually create a new patch files')
+                    util.print_header('FOR NEW PATCH SPECIFY SEQUENCE:', next)
+                    util.print_help('add -seq #     to actually create a new patch files')
                     print()
 
 

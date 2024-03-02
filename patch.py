@@ -76,6 +76,10 @@ class Patch(config.Config):
         self.current_commit     = self.current_commit_obj.count()
         self.patch_folder       = self.replace_tags(self.patch_folder)  # replace tags in folder
 
+        # fetch changes in Git
+        if self.args.fetch:
+            self.fetch_changes()
+
         # go through patch folders
         self.patch_folder_splitter = '-'
         self.get_patch_folders()
@@ -798,6 +802,7 @@ if __name__ == "__main__":
     parser.add_argument('-depth',       help = 'Number of recent commits to search',                            default = None,               type = int)
     parser.add_argument('-full',        help = 'Specify APEX app(s) where to use full export',                  default = [],   nargs = '*')
     parser.add_argument('-archive',     help = 'To archive patches older than passed #',                        default = None, nargs = '?')
+    parser.add_argument('-fetch',       help = 'Fetch Git changes before patching',                             default = False, nargs = '?', const = True)
     #
     Patch(parser)
 

@@ -361,7 +361,7 @@ class Patch(config.Config):
                 '-- {:>16} | {}'.format('PATCH CODE', self.patch_code),
                 '-- {:>16} | {}'.format('SCHEMA', target_schema),
                 '-- {:>16} | {}'.format('APP ID', app_id) if app_id else None,
-                '--'
+                '--',
             ])
 
             # get differences in between first and last commits
@@ -399,9 +399,7 @@ class Patch(config.Config):
             #
             else:
                 # load init files, for database or APEX
-                #
-                #
-                #
+                payload.extend(self.get_template_files('apex_init' if app_id != '' else 'db_init'))
 
                 # attach APEX starting file for partial APEX exports
                 if app_id != '':
@@ -577,6 +575,22 @@ class Patch(config.Config):
                 payload.append('--   {}'.format(file))  # self.diffs[file].change_type
         #
         payload.append('--')
+        #
+        return payload
+
+
+
+    def get_template_files(self, folder):
+        payload = []
+        for file in glob.glob('{}{}/*.sql'.format(self.config.patch_template_dir, folder)):
+            file    = self.create_file_snapshot(file)
+            short   = file.replace(self.config.patch_template_dir, '').replace(self.patch_folder, '').replace(self.repo_root, '')
+            #
+            payload.extend([
+                'PROMPT -- TEMPLATE FILE: {}'.format(short),
+                '@"./{}";'.format(file.replace(self.repo_root, '').lstrip('/')),
+                '',
+            ])
         #
         return payload
 

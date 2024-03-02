@@ -4,7 +4,6 @@ import sys, os, re, shutil, subprocess, argparse, glob
 import config
 import deploy
 from lib import util
-from lib import queries_patch as query          # ditch for template folder
 
 #
 #                                                      (R)
@@ -399,7 +398,11 @@ class Patch(config.Config):
                 ])
             #
             else:
+                # load init files, for database or APEX
                 #
+                #
+                #
+
                 # attach APEX starting file for partial APEX exports
                 if app_id != '':
                     payload.extend([
@@ -426,6 +429,13 @@ class Patch(config.Config):
                 # go through files
                 apex_pages = []
                 for file in self.dependencies_sorted():
+                    if app_id == '':
+                        pass
+                        # load type related files for database objects
+                        #
+                        #
+                        #
+
                     # modify list of APEX files
                     if app_id != '':
                         try:
@@ -482,6 +492,11 @@ class Patch(config.Config):
                 'PROMPT --;',
             ])
             payload.extend(self.get_grants_made())
+
+            # load final files, for database or APEX
+            #
+            #
+            #
 
             # add flag so deploy script can evaluate it as successful
             payload.extend([
@@ -547,26 +562,17 @@ class Patch(config.Config):
 
         # split files by the change type
         if len(new_files) > 0:
-            payload.extend([
-                '--',
-                '-- NEW FILES:',
-            ])
+            payload.append('--\n-- NEW FILES:')
             for file in sorted(new_files):
                 payload.append('--   {}'.format(file))  # self.diffs[file].change_type
         #
         if len(deleted_files) > 0:
-            payload.extend([
-                '--',
-                '-- DELETED FILES:',
-            ])
+            payload.append('--\n-- DELETED FILES:')
             for file in sorted(deleted_files):
                 payload.append('--   {}'.format(file))  # self.diffs[file].change_type
         #
         if len(modifed_files) > 0:
-            payload.extend([
-                '--',
-                '-- MODIFIED FILES:',
-            ])
+            payload.append('--\n-- MODIFIED FILES:')
             for file in sorted(modifed_files):
                 payload.append('--   {}'.format(file))  # self.diffs[file].change_type
         #
@@ -602,7 +608,6 @@ class Patch(config.Config):
                     # get copied files from directory
                     with open(file, 'rt') as f:
                         self.create_file_snapshot(file, file_content = f.read())
-
 
             # attach full export
             file = '{}f{}.sql'.format(path, app_id)

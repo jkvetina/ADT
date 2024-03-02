@@ -52,6 +52,7 @@ class Deploy(config.Config):
         self.available_ref      = {}
         self.available_show     = []
         self.patch_found        = []
+        self.patch_commits      = {}
         self.deploy_plan        = []
         self.deploy_schemas     = {}
         self.deploy_conn        = {}
@@ -241,14 +242,22 @@ class Deploy(config.Config):
 
     def get_available_patches(self):
         for ref in sorted(self.patches.keys(), reverse = True):
-            patch       = self.patches[ref]
-            count_files = []
-            buckets     = {}    # use buckets to identify the most recent results
+            patch           = self.patches[ref]
+            count_files     = []
+            count_commits   = []
+            buckets         = {}    # use buckets to identify the most recent results
 
-            # get number of files referenced in the patch root files
+            # get some numbers from patch root files
             for file in glob.glob(patch + '/*.sql'):
+                # get list of commits referenced by file
+                count_commits.extend(self.get_file_commits(file))
+
+                # get number of referenced files
                 count_files.extend(self.get_file_references(file))
-            count_files = list(set(count_files))    # deduplicate
+
+            # deduplicate
+            count_files     = list(set(count_files))
+            count_commits   = list(set(count_commits))
 
             # find more details from log names
             for file in glob.glob(self.logs_prefix.format(patch, self.patch_env) + '/*.log'):
@@ -270,6 +279,7 @@ class Deploy(config.Config):
                 'ref'           : ref,
                 'patch_name'    : patch.replace(self.repo_root + self.config.patch_root, ''),
                 'files'         : count_files,
+                'commits'       : count_commits,
                 'deployed_at'   : last_deployed,
                 'result'        : last_result,
             }
@@ -319,6 +329,26 @@ class Deploy(config.Config):
                         file = line.replace('@', '').split(' ')[0]
                     files.append(file)
         return files
+
+
+
+    def get_file_commits(self, file):
+        commits = []
+        with open(file, 'rt') as f:
+            extracting = False
+            for line in f.readlines():
+                if line.startswith('-- COMMITS:'):      # find start of commits
+                    extracting = True
+                #
+                if extracting:
+                    if line.strip() == '--':            # find end of commits
+                        break
+
+                    # find commit number
+                    search = re.search('^[-][-]\s+(\d+)[)]?\s', line)
+                    if search:
+                        commits.append(int(search.group(1)))
+        return commits
 
 
 

@@ -644,9 +644,10 @@ class Patch(config.Config):
             file_content = self.get_file_from_commit(file, commit = str(self.last_commit_obj))
 
         # change page audit columns
-        if self.config.replace_audit and self.apex_app_id != '' and '/application/pages/page' in file:
-            file_content = re.sub(r",p_last_updated_by=>'([^']+)'",         ",p_last_updated_by=>'{}'".format(self.patch_code), file_content)
-            file_content = re.sub(r",p_last_upd_yyyymmddhh24miss=>'(\d+)'", ",p_last_upd_yyyymmddhh24miss=>'{}'".format(self.config.today_full_raw), file_content)
+        if self.config.replace_audit and app_id != None:
+            if ('/application/pages/page_' in file or '/f{}/f{}.sql'.format(app_id, app_id) in file):
+                file_content = re.sub(r",p_last_updated_by=>'([^']+)'",         ",p_last_updated_by=>'{}'".format(self.patch_code), file_content)
+                file_content = re.sub(r",p_last_upd_yyyymmddhh24miss=>'(\d+)'", ",p_last_upd_yyyymmddhh24miss=>'{}'".format(self.config.today_full_raw), file_content)
 
         # save file
         target_folder = os.path.dirname(target_file)

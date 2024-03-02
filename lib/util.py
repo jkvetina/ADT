@@ -201,7 +201,7 @@ def print_table(data, columns = [], right_align = [], spacer = 3, start = 2, no_
                     value       = str(filtered[name])
                     widths[i]   = max(widths[i], len(value))
                     #
-                    if not (value.isnumeric() or value == None):
+                    if not (value.isnumeric() or value == None or value == ''):
                         auto_align[i] = False
 
         # auto align numeric columns to the right

@@ -597,7 +597,7 @@ class Patch(config.Config):
         process_files = list(self.diffs.keys())
         if len(self.diffs.keys()) > 0:
             for file in process_files:
-                self.create_file_snapshot(file)
+                self.create_file_snapshot(file, app_id = app_id)
 
         # copy some files even if they did not changed
         if app_id != None and str(app_id) != '':
@@ -607,11 +607,11 @@ class Patch(config.Config):
                 if not (file in process_files) and os.path.exists(file):
                     # get copied files from directory
                     with open(file, 'rt') as f:
-                        self.create_file_snapshot(file, file_content = f.read())
+                        self.create_file_snapshot(file, file_content = f.read(), app_id = app_id)
 
             # attach full export
             file = '{}f{}.sql'.format(path, app_id)
-            self.create_file_snapshot(file)
+            self.create_file_snapshot(file, app_id = app_id)
 
 
 
@@ -629,11 +629,17 @@ class Patch(config.Config):
 
 
 
-    def create_file_snapshot(self, file, file_content = None):
+    def create_file_snapshot(self, file, file_content = None, app_id = None):
         # create folders and copy files
-        target_file     = '{}/{}'.format(self.patch_folder, file).replace('//', '/')
-        target_folder   = os.path.dirname(target_file)
-        #
+        target_file = '{}/{}'.format(self.patch_folder, file).replace('//', '/')
+
+        # shorten target folder for template files
+        if self.config.patch_template_dir in target_file:
+            target_file = target_file.replace(self.config.patch_template_dir, self.config.patch_template_snap)
+            with open(file, 'rt') as f:
+                file_content = f.read()
+
+        # get file content from commit, not local file
         if file_content == None:
             file_content = self.get_file_from_commit(file, commit = str(self.last_commit_obj))
 
@@ -643,10 +649,13 @@ class Patch(config.Config):
             file_content = re.sub(r",p_last_upd_yyyymmddhh24miss=>'(\d+)'", ",p_last_upd_yyyymmddhh24miss=>'{}'".format(self.config.today_full_raw), file_content)
 
         # save file
+        target_folder = os.path.dirname(target_file)
         if not os.path.exists(target_folder):
             os.makedirs(target_folder)
         with open(target_file, 'wt', encoding = 'utf-8') as w:
             w.write(file_content)
+        #
+        return target_file
 
 
 

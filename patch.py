@@ -350,51 +350,80 @@ class Patch(config.Config):
         # process files per schema
         for schema_with_app, rel_files in self.relevant_files.items():
             target_schema, app_id, _ = (schema_with_app + '..').split('.', maxsplit = 2)
+            payload = []
 
             # generate patch file name for specific schema
             self.patch_file      = '{}/{}.sql'.format(self.patch_folder, schema_with_app)
             self.patch_spool_log = './{}.log'.format(schema_with_app)  # must start with ./ and ends with .log for proper function
 
             # generate patch header
-            payload = '--\n'
-            payload += '-- {:>16} | {}\n'.format('PATCH CODE', self.patch_code)
-            payload += '-- {:>16} | {}\n'.format('SCHEMA', target_schema)
-            if app_id:
-                payload += '-- {:>16} | {}\n'.format('APP ID', app_id)
-            payload += '--\n'
+            payload.extend([
+                '--',
+                '-- {:>16} | {}'.format('PATCH CODE', self.patch_code),
+                '-- {:>16} | {}'.format('SCHEMA', target_schema),
+                '-- {:>16} | {}'.format('APP ID', app_id) if app_id else None,
+                '--'
+            ])
 
             # get differences in between first and last commits
-            payload += self.get_differences(rel_files, target_schema)
+            payload.extend(self.get_differences(rel_files))
 
             # create snapshot files
             self.create_snapshots(app_id)
 
-            payload += 'SET DEFINE OFF\n'
-            payload += 'SET TIMING OFF\n'
-            payload += 'SET SQLBLANKLINES ON\n'
-            payload += '--\n'
-            payload += 'WHENEVER OSERROR EXIT ROLLBACK;\n'
-            payload += 'WHENEVER SQLERROR EXIT ROLLBACK;\n'
-            payload += '--\n'
-
+            # set defaults in case they are not specified in init file
             # spool output to the file
-            if self.config.spooling:
-                payload += 'SPOOL "{}" APPEND;\n\n'.format(self.patch_spool_log)
+            payload.extend([
+                'SET DEFINE OFF',
+                'SET TIMING OFF',
+                'SET SQLBLANKLINES ON',
+                '--',
+                'WHENEVER OSERROR  EXIT ROLLBACK;',
+                'WHENEVER SQLERROR EXIT ROLLBACK;',
+                '--',
+                'SPOOL "{}" APPEND;'.format(self.patch_spool_log),
+                ''
+            ])
 
             # add properly sorted files (objects by dependencies) to the patch
             if app_id != '' and app_id in self.full_exports:
                 # attach the whole application for full imports
-                payload += 'SET SERVEROUTPUT OFF\n'
-                payload += '--\n'
-                payload += '-- APPLICATION {}\n'.format(app_id)
-                payload += '--\n'
-                payload += '@"./{}f{}/f{}.sql";\n'.format(self.config.path_apex, app_id, app_id)
-                payload += 'SET SERVEROUTPUT ON\n'
+                payload.extend([
+                    '--',
+                    '-- APPLICATION {}'.format(app_id),
+                    '--',
+                    'SET SERVEROUTPUT OFF',
+                    '@"./{}f{}/f{}.sql";'.format(self.config.path_apex, app_id, app_id),
+                    'SET SERVEROUTPUT ON',
+                    '',
+                ])
             #
             else:
-                if app_id != '':
-                    payload += self.fix_apex_start(app_id)
                 #
+                # attach APEX starting file for partial APEX exports
+                if app_id != '':
+                    payload.extend([
+                        # start APEX import
+                        'SET DEFINE OFF',
+                        'SET TIMING OFF',
+                        '--',
+
+                        # attach the whole application for full imports
+                        'PROMPT --;',
+                        'PROMPT -- APEX FULL EXPORT',
+                        'PROMPT --;',
+                        '--@"./{}f{}/f{}.sql";'.format(self.config.path_apex, app_id, app_id),
+                        '',
+
+                        # attach starting file
+                        'PROMPT --;',
+                        'PROMPT -- APEX COMPONENTS',
+                        'PROMPT --;',
+                        '@"./{}f{}/{}";'.format(self.config.path_apex, app_id, 'application/set_environment.sql'),
+                        '--',
+                    ])
+
+                # go through files
                 apex_pages = []
                 for file in self.dependencies_sorted():
                     # modify list of APEX files
@@ -410,7 +439,7 @@ class Patch(config.Config):
                             apex_pages.append(file)
                             continue
 
-                        # ignore full APEX exports
+                        # skip full APEX exports
                         if len(re.findall('/f\d+/f\d+\.sql$', file)) > 0:
                             continue
 
@@ -419,45 +448,58 @@ class Patch(config.Config):
                             continue
 
                     # attach file reference
-                    payload += 'PROMPT --;\n'
-                    payload += 'PROMPT -- FILE: {};\n'.format(file)
-                    payload += 'PROMPT --;\n'
-                    payload += self.config.patch_file_link.replace('{$FILE}', file) + '\n'
-                    payload += 'PROMPT ;\n'
+                    payload.extend([
+                        'PROMPT --;',
+                        'PROMPT -- FILE: {};'.format(file),
+                        'PROMPT --;',
+                        self.config.patch_file_link.replace('{$FILE}', file),
+                        'PROMPT ;',
+                        ''
+                    ])
 
                 # attach APEX pages to the end
                 if len(apex_pages) > 0:
-                    payload += self.fix_apex_pages(apex_pages)
+                    payload.extend(self.fix_apex_pages(apex_pages))
+            #
+            payload.append('')
 
-                # for APEX patches add some queries
-                if app_id != '':
-                    payload += self.fix_apex_end(app_id)
+            # attach APEX ending file for partial APEX exports
+            if app_id != '' and not (app_id in self.full_exports):
+                if not (app_id in self.full_exports):
+                    file = '{}f{}/{}'.format(self.config.path_apex, app_id, 'application/end_environment.sql')
+                    payload.extend([
+                        'PROMPT --;',
+                        'PROMPT -- APEX END',
+                        'PROMPT --;',
+                        '@"./{}";'.format(file.replace(self.repo_root, '').lstrip('/')),
+                        ''
+                    ])
 
-            payload += '\n'
-
-            # add grants
-            payload += 'PROMPT --;\n'
-            payload += 'PROMPT -- GRANTS;\n'
-            payload += 'PROMPT --;\n'
-            payload += self.get_grants_made()
+            # add grants made on referenced objects
+            payload.extend([
+                'PROMPT --;',
+                'PROMPT -- GRANTS',
+                'PROMPT --;',
+            ])
+            payload.extend(self.get_grants_made())
 
             # add flag so deploy script can evaluate it as successful
-            payload += 'PROMPT --;\n'
-            payload += 'PROMPT -- SUCCESS;\n'
-            payload += 'PROMPT --;\n'
-
-            # spool output end
-            if self.config.spooling:
-                payload += 'SPOOL OFF;\n'
+            payload.extend([
+                'PROMPT --;',
+                'PROMPT -- SUCCESS',
+                'PROMPT --;',
+                'SPOOL OFF;',           # spool output end
+                '',
+            ])
 
             # store payload in file
-            self.create_patch_file(payload, target_schema)
+            self.create_patch_file(payload)
 
 
 
-    def get_differences(self, rel_files, target_schema):
+    def get_differences(self, rel_files):
         self.diffs      = {}    # cleanup
-        payload         = ''
+        payload         = []
         new_files       = []
         deleted_files   = []
         modifed_files   = []
@@ -492,8 +534,7 @@ class Patch(config.Config):
                     self.config.apex_workspace  = obj['apex_workspace']
 
         # show commits only with relevant files
-        payload += '-- COMMITS:\n'
-        payload += '-- --------\n'
+        payload.append('-- COMMITS:')
         for commit_number, commit in self.relevant_commits.items():
             files_found = False
             for file in commit.stats.files:
@@ -502,31 +543,34 @@ class Patch(config.Config):
                     break
             #
             if files_found:
-                payload += '--   {}) {}\n'.format(commit_number, commit.summary)
+                payload.append('--   {}) {}'.format(commit_number, commit.summary))
 
         # split files by the change type
         if len(new_files) > 0:
-            payload += '--\n'
-            payload += '-- NEW FILES:\n'
-            payload += '-- ----------\n'
+            payload.extend([
+                '--',
+                '-- NEW FILES:',
+            ])
             for file in sorted(new_files):
-                payload += '--   {}\n'.format(file)  # self.diffs[file].change_type
+                payload.append('--   {}'.format(file))  # self.diffs[file].change_type
         #
         if len(deleted_files) > 0:
-            payload += '--\n'
-            payload += '-- DELETED FILES:\n'
-            payload += '-- --------------\n'
+            payload.extend([
+                '--',
+                '-- DELETED FILES:',
+            ])
             for file in sorted(deleted_files):
-                payload += '--   {}\n'.format(file)  # self.diffs[file].change_type
+                payload.append('--   {}'.format(file))  # self.diffs[file].change_type
         #
         if len(modifed_files) > 0:
-            payload += '--\n'
-            payload += '-- MODIFIED FILES:\n'
-            payload += '-- ---------------\n'
+            payload.extend([
+                '--',
+                '-- MODIFIED FILES:',
+            ])
             for file in sorted(modifed_files):
-                payload += '--   {}\n'.format(file)  # self.diffs[file].change_type
+                payload.append('--   {}'.format(file))  # self.diffs[file].change_type
         #
-        payload += '--\n\n'
+        payload.append('--')
         #
         return payload
 
@@ -566,7 +610,9 @@ class Patch(config.Config):
 
 
 
-    def create_patch_file(self, payload, target_schema):
+    def create_patch_file(self, payload):
+        payload = '\n'.join([line for line in payload if line != None])
+
         # save in schema patch file
         with open(self.patch_file, 'wt', encoding = 'utf-8', newline = '\n') as w:
             w.write(payload)
@@ -599,74 +645,37 @@ class Patch(config.Config):
 
 
 
-    def fix_apex_start(self, app_id):
-        util.assert_(app_id,                        'MISSING ARGUMENT: APEX APP')
-        util.assert_(self.config.apex_workspace,    'MISSING ARGUMENT: APEX WORKSPACE')
-        payload = ''
-
-        # set proper workspace
-        payload += self.replace_tags(query.query_apex_version, ignore_missing = False) + '\n'
-
-        # start APEX import
-        payload += 'SET DEFINE OFF\n'
-        payload += 'SET TIMING OFF\n'
-        payload += '--\n'
-
-        # attach the whole application for full imports
-        payload += 'PROMPT --;\n'
-        payload += 'PROMPT -- APEX FULL EXPORT\n'
-        payload += 'PROMPT --;\n'
-        payload += '--@"./{}f{}/f{}.sql";\n'.format(self.config.path_apex, app_id, app_id)
-
-        # attach starting file
-        payload += 'PROMPT --;\n'
-        payload += 'PROMPT -- APEX COMPONENTS\n'
-        payload += 'PROMPT --;\n'
-        payload += '@"./{}f{}/{}";\n'.format(self.config.path_apex, app_id, 'application/set_environment.sql')
-        payload += '--\n'
-        #
-        return payload
-
-
-
-    def fix_apex_end(self, app_id):
-        payload = '--\n'
-
-        # attach ending file
-        if not (app_id in self.full_exports):
-            file = '{}f{}/{}'.format(self.config.path_apex, app_id, 'application/end_environment.sql')
-            payload += '@"./{}";\n'.format(file.replace(self.repo_root, '').lstrip('/'))
-        #
-        return payload
-
-
-
     def fix_apex_pages(self, apex_pages):
-        payload = '\n'
-        payload += 'PROMPT --;\n'
-        payload += 'PROMPT -- APEX PAGES\n'
-        payload += 'PROMPT --;\n'
-        payload += 'BEGIN\n'
+        payload = [
+            '',
+            'PROMPT --;',
+            'PROMPT -- APEX PAGES',
+            'PROMPT --;',
+            'BEGIN',
+        ]
         #
         for file in apex_pages:
             search = re.search('/pages/page_(\d+)\.sql', file)
             if search:
                 page_id = int(search.group(1))
-                payload += '    wwv_flow_imp_page.remove_page(p_flow_id => wwv_flow.g_flow_id, p_page_id => {});\n'.format(page_id)
-        payload += 'END;\n'
-        payload += '/\n'
+                payload.append('    wwv_flow_imp_page.remove_page(p_flow_id => wwv_flow.g_flow_id, p_page_id => {});'.format(page_id))
+        #
+        payload.extend([
+            'END;',
+            '/',
+            '--',
+        ])
 
         # recreate requested pages
-        payload += '--\n'
         for file in apex_pages:
-            payload += self.config.patch_file_link.replace('{$FILE}', file) + '\n'
+            payload.append(self.config.patch_file_link.replace('{$FILE}', file))
         #
         return payload
 
 
 
     def get_grants_made(self):
-        payload         = ''
+        payload         = []
         grants_found    = False
 
         # grab the file with grants made
@@ -684,12 +693,12 @@ class Patch(config.Config):
                 for file in self.diffs:
                     object_name = self.get_file_object_name(file).lower()
                     if object_name == find_name:
-                        payload += line
+                        payload.append(line.strip())
                         grants_found = True
                         break
         #
         if grants_found:
-            payload += '\n'
+            payload.append('')
         #
         return payload
 

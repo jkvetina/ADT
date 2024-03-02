@@ -84,6 +84,11 @@ class Patch(config.Config):
         self.deploy             = deploy.Deploy(parser, ignore_timer = True)
         self.available_ref      = self.deploy.available_ref
 
+        # archive old patches and quit
+        if self.args.archive != None:
+            self.archive_patches(self.args.archive)
+            util.quit()
+
         # create patch
         if self.patch_code != None and len(self.patch_code) > 0:
             util.print_header('BUILDING PATCH FOR: {}'.format(self.patch_code))
@@ -744,6 +749,36 @@ class Patch(config.Config):
 
 
 
+    def archive_patches(self, above_ref = 10):
+        archive_folder = self.repo_root + self.config.patch_archive
+        if not (os.path.exists(archive_folder)):
+            os.makedirs(archive_folder)
+
+        # find folders to archive
+        data = []
+        for ref in sorted(self.available_ref.keys(), reverse = True):
+            if ref < int(above_ref):
+                break
+            data.append({
+                'ref'           : ref,
+                'patch_name'    : self.available_ref[ref]['patch_name'],
+            })
+        #
+        util.print_header('ARCHIVING PATCHES:')
+        util.print_table(data)
+        #
+        for row in data:
+            source_folder = self.repo_root + self.config.patch_root + row['patch_name']
+            shutil.make_archive(
+                base_name   = archive_folder + row['patch_name'],
+                format      = 'zip',
+                root_dir    = archive_folder,
+                base_dir    = source_folder         # zip whole folder
+            )
+            shutil.rmtree(source_folder, ignore_errors = True, onerror = None)
+
+
+
 if __name__ == "__main__":
     # parse arguments
     parser = argparse.ArgumentParser()
@@ -761,7 +796,8 @@ if __name__ == "__main__":
     parser.add_argument('-ignore',      help = 'Ignore specific commits',                                       default = [],   nargs = '*')
     parser.add_argument('-branch',      help = 'To override active branch',                                     default = None)
     parser.add_argument('-depth',       help = 'Number of recent commits to search',                            default = None,               type = int)
-    parser.add_argument('-full',        help = 'Specify APEX app(s) where to use full export ',                 default = [],   nargs = '*')
+    parser.add_argument('-full',        help = 'Specify APEX app(s) where to use full export',                  default = [],   nargs = '*')
+    parser.add_argument('-archive',     help = 'To archive patches older than passed #',                        default = None, nargs = '?')
     #
     Patch(parser)
 

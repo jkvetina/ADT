@@ -4,7 +4,7 @@ import sys, os, re, shutil, subprocess, argparse, glob
 import config
 import deploy
 from lib import util
-from lib import file
+from lib.file import File
 
 #
 #                                                      (R)

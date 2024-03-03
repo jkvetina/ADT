@@ -42,7 +42,7 @@ class Patch(config.Config):
         self.patch_code         = self.args.patch
         self.patch_seq          = self.args.seq or ''
         self.search_message     = self.args.search or [self.patch_code]
-        self.info.branch        = self.args.branch or self.info.branch or self.repo.active_branch
+        self.info.branch        = self.args.branch or self.config.repo_branch or self.info.branch or self.repo.active_branch
         self.add_commits        = self.args.add
         self.ignore_commits     = self.args.ignore
         self.search_depth       = self.args.depth or self.config.repo_commits

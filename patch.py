@@ -4,6 +4,7 @@ import sys, os, re, shutil, subprocess, argparse, glob
 import config
 import deploy
 from lib import util
+from lib import file
 
 #
 #                                                      (R)
@@ -349,7 +350,7 @@ class Patch(config.Config):
         skip_apex_files = '|{}|'.format('|'.join(self.config.apex_files_ignore))
 
         # process files per schema
-        for schema_with_app, rel_files in self.relevant_files.items():
+        for schema_with_app in self.relevant_files.keys():
             target_schema, app_id, _ = (schema_with_app + '..').split('.', maxsplit = 2)
             payload = []
 
@@ -367,7 +368,17 @@ class Patch(config.Config):
             ])
 
             # get differences in between first and last commits
-            payload.extend(self.get_differences(rel_files))
+            # also fill the self.diffs() with files changed in commits
+            # in self.relevant_files we can have files which were deleted
+            payload.extend(self.get_differences(self.relevant_files[schema_with_app]))
+
+            # need to map files to object types & sort them by dependencies
+            # 1) self.diffs.keys() with committed files
+            # 2) self.patch_templates with template files
+            # 3) self.patch_script with adhoc files
+            files_to_sort   = list(self.diffs.keys())
+            files_sorted    = []
+            diffs_mapped    = []    # to check if we sorted all files
 
             # create snapshot files
             self.create_snapshots(app_id)
@@ -428,7 +439,7 @@ class Patch(config.Config):
 
                 # go through files
                 apex_pages = []
-                for file in self.dependencies_sorted():
+                for file in files_sorted:
                     if app_id == '':
                         pass
                         # load type related files for database objects
@@ -589,16 +600,6 @@ class Patch(config.Config):
 
 
 
-    def dependencies_sorted(self):
-        files = self.diffs.keys()
-        #
-        # @TODO:
-        #
-        # follow the patch template + sort relevant files by dependencies
-        return files
-
-
-
     def create_snapshots(self, app_id):
         # copy changed files
         process_files = list(self.diffs.keys())
@@ -742,42 +743,8 @@ class Patch(config.Config):
 
 
 
-    #
-    # class File
-    #
-
-    def get_file_object_type(self, file):
-        return ''
 
 
-
-    def get_file_object_name(self, file):
-        return os.path.basename(file).split('.')[0]
-
-
-
-    def get_file_object(self, file):
-        file = file.replace('\\', '/').replace('//', '/')
-        #
-        find_app    = re.search('/f(\d+)/', file)
-        find_page   = re.search('/f\d+/application/pages/page_(\d+)\.sql$', file)
-        app_id      = int(find_app.group(1))  if find_app  else None
-        page_id     = int(find_page.group(1)) if find_page else None
-        #
-        return {
-            'file'              : file,
-            'object_type'       : self.get_file_object_type(file),
-            'object_name'       : self.get_file_object_name(file),
-            'schema'            : self.info.schema if not app_id else self.config.apex_schema,
-            'apex_app_id'       : app_id,
-            'apex_page_id'      : page_id,
-            'apex_workspace'    : self.config.apex_workspace,
-            #'patch_file'  : '',
-            #'group'       : '',  subfolders
-            #'shortcut'    : '',
-            #'hash_old'    : '',
-            #'hash_new'    : ''
-        }
 
 
 

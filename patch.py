@@ -647,9 +647,10 @@ class Patch(config.Config):
 
         # shorten target folder for template files
         if self.config.patch_template_dir in target_file:
+            target_file = target_file.replace(self.config.patch_scripts_dir,  self.config.patch_template_snap)
             target_file = target_file.replace(self.config.patch_template_dir, self.config.patch_template_snap)
             with open(file, 'rt') as f:
-                file_content = f.read()
+                file_content = self.replace_tags(f.read())
 
         # get file content from commit, not local file
         if file_content == None:

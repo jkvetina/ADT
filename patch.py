@@ -506,7 +506,7 @@ class Patch(config.Config):
             ])
 
             # store payload in file
-            self.create_patch_file(payload)
+            self.create_patch_file(payload, app_id = app_id)
 
 
 
@@ -538,13 +538,6 @@ class Patch(config.Config):
                     deleted_files.append(file)
                 else:
                     modifed_files.append(file)
-
-                # detect APEX application
-                if self.config.path_apex in file and self.apex_app_id == '':
-                    obj = self.get_file_object(file)
-                    #
-                    self.apex_app_id            = obj['apex_app_id']
-                    self.config.apex_workspace  = obj['apex_workspace']
 
         # show commits only with relevant files
         payload.append('-- COMMITS:')
@@ -629,14 +622,14 @@ class Patch(config.Config):
 
 
 
-    def create_patch_file(self, payload):
+    def create_patch_file(self, payload, app_id):
         payload = '\n'.join([line for line in payload if line != None])
 
         # save in schema patch file
         with open(self.patch_file, 'wt', encoding = 'utf-8', newline = '\n') as w:
             w.write(payload)
         #
-        if self.apex_app_id != '':
+        if app_id != '':
             self.patch_files_apex.append(self.patch_file)
         else:
             self.patch_files.append(self.patch_file)
@@ -705,7 +698,7 @@ class Patch(config.Config):
 
 
     def get_grants_made(self):
-        payload         = []
+        payload = []
 
         # grab the file with grants made
         with open(self.patch_grants, 'rt', encoding = 'utf-8') as f:
@@ -720,7 +713,7 @@ class Patch(config.Config):
                     find_name = find_name.group(1).lower()
                 #
                 for file in self.diffs:
-                    object_name = self.get_file_object_name(file).lower()
+                    object_name = os.path.basename(file).split('.')[0].lower()
                     if object_name == find_name:
                         payload.append(line.strip())
                         break

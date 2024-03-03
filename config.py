@@ -51,7 +51,7 @@ class Config(util.Attributed):
 
     # search for config files in current folder
     config_files = [
-        #'{$ROOT}config/default_config.yaml',
+        '{$ROOT}config/config.yaml',
         #'{$ROOT}config/{$INFO_CLIENT}/config.yaml',
         #'{$ROOT}config/{$INFO_CLIENT}/config_{$INFO_PROJECT}.yaml',
         #'{$ROOT}config/{$INFO_CLIENT}/config_{$INFO_PROJECT}_{$INFO_ENV}.yaml',

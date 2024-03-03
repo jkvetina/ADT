@@ -1,0 +1,129 @@
+#
+# DATES
+#
+today                   : '%Y-%m-%d'        # YYYY-MM-DD
+today_full              : '%Y-%m-%d %H:%M'  # YYYY-MM-DD HH24:MI
+today_full_raw          : '%Y%m%d%H%M00'
+today_custom            : ''
+today_patch             : '%y%m%d'          # YYMMDD
+today_deploy            : '%Y-%m-%d %H-%M'  # used in deployment logs
+
+
+
+#
+# BASIC PATHS
+#
+path_objects            : 'database/'       # database objects
+path_apex               : 'apex/'           # APEX files
+
+# target folders by object types
+object_types:
+    DATA                : ['data/',         .sql]
+    FUNCTION            : ['functions/',    .sql]
+    GRANT               : ['grants/',       .sql]
+    INDEX               : ['indexes/',      .sql]
+    JOB                 : ['jobs/',         .sql]
+    MATERIALIZED VIEW   : ['mviews/',       .sql]
+    MVIEW LOG           : ['mview_logs/',   .sql]
+    PACKAGE             : ['packages/',     .spec.sql]
+    PACKAGE BODY        : ['packages/',     .sql]
+    PROCEDURE           : ['procedures/',   .sql]
+    SEQUENCE            : ['sequences/',    .sql]
+    SYNONYM             : ['synonyms/',     .sql]
+    TABLE               : ['tables/',       .sql]
+    TRIGGER             : ['triggers/',     .sql]
+    TYPE                : ['types/',        .sql]
+    TYPE BODY           : ['types/',        .body.sql]
+    VIEW                : ['views/',        .sql]
+
+
+
+#
+# PATCH
+#
+patch_root              : 'patch/'
+patch_archive           : 'patch_archive/'
+patch_template_dir      : 'config/patch_template/'
+patch_scripts_dir       : 'patch_scripts/{$PATCH_CODE}/'
+patch_template_snap     : 'patch_template/'
+patch_grants            : 'grants/{$INFO_SCHEMA}.sql'
+patch_file_link         : '@"./{$FILE}"'
+patch_folder            : '{$INFO_SCHEMA}{$TODAY_PATCH}-{$PATCH_SEQ}-{$PATCH_CODE}'
+
+# patch map to create patch files in this order
+# and to add files from templates at before/after points
+# and to add scripts (manual interventions) at specific points
+patch_map:
+    sequences:
+        - SEQUENCE
+    tables:
+        - TABLE
+    types:
+        - TYPE
+        - TYPE BODY
+    synonyms:
+        - SYNONYM
+    objects:
+        - VIEW
+        - PROCEDURE
+        - FUNCTION
+        - PACKAGE
+        - PACKAGE BODY
+    triggers:
+        - TRIGGER
+    mviews:
+        - MVIEW LOG
+        - MATERIALIZED VIEW
+    indexes:
+        - INDEX
+    data:
+        - DATA
+    grants:
+        - GRANT
+    jobs:
+        - JOB
+
+
+
+#
+# EXPORT
+#
+drop_objects:
+    - MATERIALIZED VIEW
+    - MVIEW LOG
+    - JOB
+
+add_indexes:
+    - TABLES
+    - MATERIALIZED VIEW
+
+
+
+#
+# GIT REPOSITORY
+#
+repo_commits        : 50                    # depth for the commit history
+repo_branch         : dev
+
+
+
+#
+# APEX RELATED
+#
+apex_schema         : '{$INFO_SCHEMA}'
+apex_workspace      : '{$INFO_SCHEMA}'
+apex_version        : '{$TODAY} {$PATCH_CODE}'
+replace_audit       : True
+
+# these files will not be in the patch even if they change
+apex_files_ignore:
+    - /application/set_environment.sql
+    - /application/end_environment.sql
+    - /application/create_application.sql
+    - /application/delete_application.sql
+
+# these files will always be copied to the snapshot folder
+apex_files_copy:
+    - /application/set_environment.sql
+    - /application/end_environment.sql
+

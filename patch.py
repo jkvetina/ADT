@@ -59,12 +59,10 @@ class Patch(config.Config):
         self.patch_folders      = {}
         self.patch_sequences    = []
         self.patch_current      = {}
-        self.apex_app_id        = ''
         self.all_commits        = {}
         self.relevant_commits   = {}
         self.relevant_count     = {}
         self.relevant_files     = {}
-        self.relevant_objects   = {}
         self.diffs              = {}
         self.head_commit        = None
         self.first_commit       = None
@@ -179,7 +177,7 @@ class Patch(config.Config):
         # show summary
         short = self.patch_folder.replace(self.repo_root, './')
         util.assert_(not ('{$' in self.patch_folder), 'LEFOVER TAGS IN FOLDER', short)
-        util.print_header('PATCH CREATED:', short)
+        #
         summary = []
         for order, schema_with_app in enumerate(sorted(self.relevant_files.keys())):
             schema, app_id, _ = (schema_with_app + '..').split('.', maxsplit = 2)
@@ -191,6 +189,7 @@ class Patch(config.Config):
                 'commits'   : len(self.relevant_count[schema_with_app]),
                 'files'     : len(self.relevant_files[schema_with_app]),
             })
+        util.print_header('PATCH CREATED:', short)
         util.print_table(summary, right_align = ['app_id'])
 
         # create snapshot folder
@@ -285,12 +284,15 @@ class Patch(config.Config):
                 if not (file.startswith(self.config.path_objects)) and not (file.startswith(self.config.path_apex)):
                     continue
 
-                # get info about the file
-                self.relevant_objects[file] = self.get_file_object(file)
-                schema = self.relevant_objects[file]['schema']
-                app_id = self.relevant_objects[file]['apex_app_id']
-                if app_id != None:
-                    schema += '.{}'.format(app_id)      # append app_id to separate APEX files
+                # get APEX app info from the yaml file
+                schema  = self.info.schema
+                app_id  = None
+                #
+                if self.config.path_apex in file:
+                    search = re.search('^f(\d+)[/]', file.replace(self.config.path_apex, ''))
+                    if search:
+                        app_id = int(search.group(1))       # get app_id from APEX folder
+                        schema += '.{}'.format(app_id)      # append app_id to separate APEX files
                 #
                 if not (schema in self.relevant_files):
                     self.relevant_files[schema] = []

@@ -465,11 +465,9 @@ class Patch(config.Config):
             elif len(files_to_process.keys()) > 0:
                 util.raise_error('NOT ALL FILES PROCESSED')
 
-            # create snapshot files
-            for file in files_processed:
-                self.create_file_snapshot(file, app_id = app_id)
-            #
-            self.create_snapshots(app_id)
+            # create APEX specific snapshot files
+            if app_id:
+                self.create_apex_snapshots(app_id)
 
             # set defaults in case they are not specified in init file
             # spool output to the file
@@ -716,16 +714,15 @@ class Patch(config.Config):
 
 
 
-    def create_snapshots(self, app_id):
+    def create_apex_snapshots(self, app_id):
         # copy some files even if they did not changed
-        if app_id != None and str(app_id) != '':
+        if str(app_id) != '':
             path = '{}f{}/'.format(self.config.path_apex, app_id).replace('//', '/')
             for file in self.config.apex_files_copy:
                 file = path + file
                 if os.path.exists(file):
                     # get copied files from directory
-                    with open(file, 'rt') as f:
-                        self.create_file_snapshot(file, file_content = f.read(), app_id = app_id)
+                    self.create_file_snapshot(file, app_id = app_id, live = True)
 
             # attach full export
             file = '{}f{}.sql'.format(path, app_id)
@@ -770,7 +767,7 @@ class Patch(config.Config):
             file_content    = self.get_file_from_commit(file, commit = str(self.last_commit_obj))
 
         # change page audit columns
-        if self.config.replace_audit and app_id != None:
+        if self.config.replace_audit and app_id:
             if ('/application/pages/page_' in file or '/f{}/f{}.sql'.format(app_id, app_id) in file):
                 file_content = re.sub(r",p_last_updated_by=>'([^']+)'",         ",p_last_updated_by=>'{}'".format(self.patch_code), file_content)
                 file_content = re.sub(r",p_last_upd_yyyymmddhh24miss=>'(\d+)'", ",p_last_upd_yyyymmddhh24miss=>'{}'".format(self.config.today_full_raw), file_content)

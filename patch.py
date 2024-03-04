@@ -476,7 +476,7 @@ class Patch(config.Config):
             ])
 
             # add properly sorted files (objects by dependencies) to the patch
-            if app_id != '' and app_id in self.full_exports:
+            if app_id and app_id in self.full_exports:
                 # attach the whole application for full imports
                 payload.extend([
                     '--',
@@ -490,10 +490,10 @@ class Patch(config.Config):
             #
             else:
                 # load init files, for database or APEX
-                payload.extend(self.attach_files(self.get_template_files('apex_init' if app_id != '' else 'db_init'), category = 'INIT'))
+                payload.extend(self.attach_files(self.get_template_files('apex_init' if app_id else 'db_init'), category = 'INIT'))
 
                 # attach APEX starting file for partial APEX exports
-                if app_id != '':
+                if app_id:
                     payload.extend([
                         # start APEX import
                         'SET DEFINE OFF',
@@ -523,7 +523,7 @@ class Patch(config.Config):
                         #
 
                     # modify list of APEX files
-                    if app_id != '':
+                    if app_id:
                         try:
                             short_file = '/application/' + file.split('/application/')[1]
                         except:
@@ -553,7 +553,7 @@ class Patch(config.Config):
             payload.append('')
 
             # attach APEX ending file for partial APEX exports
-            if app_id != '' and not (app_id in self.full_exports):
+            if app_id and not (app_id in self.full_exports):
                 if not (app_id in self.full_exports):
                     file = '{}f{}/{}'.format(self.config.path_apex, app_id, 'application/end_environment.sql')
                     payload.extend(self.attach_file(file, header = 'APEX END', category = 'FIXED'))
@@ -567,7 +567,7 @@ class Patch(config.Config):
             payload.extend(self.get_grants_made())
 
             # load final files, for database or APEX
-            payload.extend(self.attach_files(self.get_template_files('apex_end' if app_id != '' else 'db_end'), category = 'END'))
+            payload.extend(self.attach_files(self.get_template_files('apex_end' if app_id else 'db_end'), category = 'END'))
 
             # add flag so deploy script can evaluate it as successful
             payload.extend([
@@ -728,7 +728,7 @@ class Patch(config.Config):
         with open(self.patch_file, 'wt', encoding = 'utf-8', newline = '\n') as w:
             w.write(payload)
         #
-        if app_id != '':
+        if app_id:
             self.patch_files_apex.append(self.patch_file)
         else:
             self.patch_files.append(self.patch_file)

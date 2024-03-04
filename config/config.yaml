@@ -49,6 +49,8 @@ patch_template_snap     : 'patch_template/'
 patch_grants            : 'grants/{$INFO_SCHEMA}.sql'
 patch_file_link         : '@"./{$FILE}"'
 patch_folder            : '{$INFO_SCHEMA}{$TODAY_PATCH}-{$PATCH_SEQ}-{$PATCH_CODE}'
+patch_add_scripts       : False
+patch_add_templates     : False
 
 # patch map to create patch files in this order
 # and to add files from templates at before/after points

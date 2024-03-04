@@ -391,6 +391,9 @@ class Patch(config.Config):
                     print('  -', group)
                 #
                 for object_type in self.config.patch_map[group]:
+                    scripts_before  = []
+                    scripts_after   = []
+
                     # scenario (1)
                     files = []
                     for file in list(files_to_process.keys()):  # copy
@@ -400,8 +403,9 @@ class Patch(config.Config):
                                 files.append(file)
                                 files_to_process.pop(file, '')
                     #
-                    scripts_before  = self.get_script_before_files()    if not app_id else []
-                    scripts_after   = self.get_script_after_files()     if not app_id else []
+                    if not app_id and self.config.patch_add_scripts:
+                        scripts_before  = self.get_script_before_files()
+                        scripts_after   = self.get_script_after_files()
 
                     # need to sort these files by dependencies
                     #
@@ -416,7 +420,7 @@ class Patch(config.Config):
                         print('    -', object_type)
 
                     # (2) before template
-                    if len(files) > 0:
+                    if len(files) > 0 and self.config.patch_add_templates:
                         for file in self.get_template_files(group + self.postfix_before):
                             if not (file in files_processed):
                                 files_processed.append(file)
@@ -445,7 +449,7 @@ class Patch(config.Config):
                                 print('        >>>', file)
 
                     # (2) after template
-                    if len(files) > 0:
+                    if len(files) > 0 and self.config.patch_add_templates:
                         for file in self.get_template_files(group + self.postfix_after):
                             if not (file in files_processed):
                                 files_processed.append(file)
@@ -456,6 +460,7 @@ class Patch(config.Config):
             if app_id:
                 for file in list(files_to_process.keys()):  # copy
                     files_processed.append(file)
+                    self.create_file_snapshot(file, app_id = app_id)
             #
             elif len(files_to_process.keys()) > 0:
                 util.raise_error('NOT ALL FILES PROCESSED')
@@ -495,7 +500,8 @@ class Patch(config.Config):
             #
             else:
                 # load init files, for database or APEX
-                payload.extend(self.attach_files(self.get_template_files('apex_init' if app_id else 'db_init'), category = 'INIT'))
+                if self.config.patch_add_templates:
+                    payload.extend(self.attach_files(self.get_template_files('apex_init' if app_id else 'db_init'), category = 'INIT'))
 
                 # attach APEX starting file for partial APEX exports
                 if app_id:
@@ -572,7 +578,8 @@ class Patch(config.Config):
                 payload.extend(grants)
 
             # load final files, for database or APEX
-            payload.extend(self.attach_files(self.get_template_files('apex_end' if app_id else 'db_end'), category = 'END'))
+            if self.config.patch_add_templates:
+                payload.extend(self.attach_files(self.get_template_files('apex_end' if app_id else 'db_end'), category = 'END'))
 
             # add flag so deploy script can evaluate it as successful
             payload.extend([

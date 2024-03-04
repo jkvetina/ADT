@@ -758,14 +758,16 @@ class Patch(config.Config):
 
         # shorten target folder for template files
         if self.config.patch_template_dir in target_file:
-            target_file = target_file.replace(self.config.patch_scripts_dir,  self.config.patch_template_snap)
-            target_file = target_file.replace(self.config.patch_template_dir, self.config.patch_template_snap)
-            with open(file, 'rt') as f:
-                file_content = self.replace_tags(f.read())
+            target_file     = target_file.replace(self.config.patch_template_dir, self.config.patch_template_snap)
+            file_content    = self.replace_tags(file_content)
+
+        # shorten target folder for script files
+        if self.config.patch_scripts_dir in target_file:
+            target_file     = target_file.replace(self.config.patch_scripts_dir, self.config.patch_scripts_snap)
 
         # get file content from commit, not local file
         if file_content == None:
-            file_content = self.get_file_from_commit(file, commit = str(self.last_commit_obj))
+            file_content    = self.get_file_from_commit(file, commit = str(self.last_commit_obj))
 
         # change page audit columns
         if self.config.replace_audit and app_id != None:

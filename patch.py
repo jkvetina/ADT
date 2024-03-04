@@ -68,6 +68,8 @@ class Patch(config.Config):
         self.head_commit        = None
         self.first_commit       = None
         self.last_commit        = None
+        self.postfix_before     = '_before'
+        self.postfix_after      = '_after'
 
         # set current commit to the head and search through recent commits
         self.current_commit_obj = self.repo.commit('HEAD')
@@ -211,7 +213,7 @@ class Patch(config.Config):
         self.patch_current  = dict(zip(['day', 'seq', 'patch_code'], curr_folder.split(self.patch_folder_splitter, maxsplit = 2)))
 
         # get more ifno from folder name
-        for folder in glob.glob(self.repo_root + self.config.patch_root + '*'):
+        for folder in sorted(glob.glob(self.repo_root + self.config.patch_root + '*')):
             folder  = folder.replace(self.repo_root + self.config.patch_root, '')
             info    = dict(zip(['day', 'seq', 'patch_code'], folder.split(self.patch_folder_splitter, maxsplit = 2)))
             #
@@ -373,14 +375,90 @@ class Patch(config.Config):
             payload.extend(self.get_differences(self.relevant_files[schema_with_app]))
 
             # need to map files to object types & sort them by dependencies
-            # 1) self.diffs.keys() with committed files
-            # 2) self.patch_templates with template files
-            # 3) self.patch_script with adhoc files
-            files_to_sort   = list(self.diffs.keys())
-            files_sorted    = []
-            diffs_mapped    = []    # to check if we sorted all files
+            # (1) self.diffs.keys() with committed files
+            # (2) self.patch_templates with template files (only if some files were changed), before and after (1)
+            # (3) self.patch_script with adhoc files (add every time), before and after (1)
+            #
+            files_processed     = []
+            files_to_process    = {}
+            #
+            for file in self.diffs.keys():
+                files_to_process[file] = File(file, config = self.config)
+
+            # processed groups one by one in order defined by patch_map
+            for group in self.config.patch_map.keys():
+                if self.debug:
+                    print('  -', group)
+                #
+                for object_type in self.config.patch_map[group]:
+                    # scenario (1)
+                    files = []
+                    for file in list(files_to_process.keys()):  # copy
+                        obj = files_to_process[file]
+                        if obj.is_object and obj.object_type == object_type:
+                            if not (file in files_processed):
+                                files.append(file)
+                                files_to_process.pop(file, '')
+                    #
+                    scripts_before  = self.get_script_before_files()    if not app_id else []
+                    scripts_after   = self.get_script_after_files()     if not app_id else []
+
+                    # need to sort these files by dependencies
+                    #
+                    #
+                    #
+
+                    # dont process template folder if there are no group related files
+                    if len(files) == 0 and len(scripts_before) == 0 and len(scripts_after) == 0:
+                        continue
+                    #
+                    if self.debug:
+                        print('    -', object_type)
+
+                    # (2) before template
+                    if len(files) > 0:
+                        for file in self.get_template_files(group + self.postfix_before):
+                            if not (file in files_processed):
+                                files_processed.append(file)
+                                if self.debug:
+                                    print('        >>', file)
+
+                    # (3) before script
+                    for file in scripts_before:
+                        if '/{}{}/'.format(group, self.postfix_before) in file:
+                            files_processed.append(file)
+                            if self.debug:
+                                print('        >>>', file)
+
+                    # (1) add changed objects to the list
+                    for file in files:
+                        files_processed.append(file)
+                        files_to_process.pop(file, '')
+                        if self.debug:
+                            print('        >', file)
+
+                    # (3) after script
+                    for file in scripts_after:
+                        if '/{}{}/'.format(group, self.postfix_after) in file:
+                            files_processed.append(file)
+                            if self.debug:
+                                print('        >>>', file)
+
+                    # (2) after template
+                    if len(files) > 0:
+                        for file in self.get_template_files(group + self.postfix_after):
+                            if not (file in files_processed):
+                                files_processed.append(file)
+                                if self.debug:
+                                    print('        >>', file)
+
+            if not app_id and len(files_to_process.keys()) > 0:
+                util.raise_error('NOT ALL FILES PROCESSED')
 
             # create snapshot files
+            for file in files_processed:
+                self.create_file_snapshot(file, app_id = app_id)
+            #
             self.create_snapshots(app_id)
 
             # set defaults in case they are not specified in init file
@@ -439,7 +517,7 @@ class Patch(config.Config):
 
                 # go through files
                 apex_pages = []
-                for file in files_sorted:
+                for file in files_processed:
                     if app_id == '':
                         pass
                         # load type related files for database objects

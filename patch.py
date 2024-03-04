@@ -490,7 +490,7 @@ class Patch(config.Config):
             #
             else:
                 # load init files, for database or APEX
-                payload.extend(self.attach_files(self.get_template_files('apex_init' if app_id != '' else 'db_init')))
+                payload.extend(self.attach_files(self.get_template_files('apex_init' if app_id != '' else 'db_init'), category = 'INIT'))
 
                 # attach APEX starting file for partial APEX exports
                 if app_id != '':
@@ -506,14 +506,11 @@ class Patch(config.Config):
                         'PROMPT --;',
                         '--@"./{}f{}/f{}.sql";'.format(self.config.path_apex, app_id, app_id),
                         '',
-
-                        # attach starting file
-                        'PROMPT --;',
-                        'PROMPT -- APEX COMPONENTS',
-                        'PROMPT --;',
-                        '@"./{}f{}/{}";'.format(self.config.path_apex, app_id, 'application/set_environment.sql'),
-                        '--',
                     ])
+
+                    # attach starting file
+                    file = '{}f{}/{}'.format(self.config.path_apex, app_id, 'application/set_environment.sql')
+                    payload.extend(self.attach_file(file, header = 'APEX COMPONENTS START', category = 'FIXED'))
 
                 # go through files
                 apex_pages = []
@@ -547,14 +544,7 @@ class Patch(config.Config):
                             continue
 
                     # attach file reference
-                    payload.extend([
-                        'PROMPT --;',
-                        'PROMPT -- FILE: {};'.format(file),
-                        'PROMPT --;',
-                        self.config.patch_file_link.replace('{$FILE}', file),
-                        'PROMPT ;',
-                        ''
-                    ])
+                    payload.extend(self.attach_file(file, category = 'COMMIT'))
 
                 # attach APEX pages to the end
                 if len(apex_pages) > 0:
@@ -566,13 +556,7 @@ class Patch(config.Config):
             if app_id != '' and not (app_id in self.full_exports):
                 if not (app_id in self.full_exports):
                     file = '{}f{}/{}'.format(self.config.path_apex, app_id, 'application/end_environment.sql')
-                    payload.extend([
-                        'PROMPT --;',
-                        'PROMPT -- APEX END',
-                        'PROMPT --;',
-                        '@"./{}";'.format(file.replace(self.repo_root, '').lstrip('/')),
-                        ''
-                    ])
+                    payload.extend(self.attach_file(file, header = 'APEX END', category = 'FIXED'))
 
             # add grants made on referenced objects
             payload.extend([
@@ -583,7 +567,7 @@ class Patch(config.Config):
             payload.extend(self.get_grants_made())
 
             # load final files, for database or APEX
-            payload.extend(self.attach_files(self.get_template_files('apex_end' if app_id != '' else 'db_end')))
+            payload.extend(self.attach_files(self.get_template_files('apex_end' if app_id != '' else 'db_end'), category = 'END'))
 
             # add flag so deploy script can evaluate it as successful
             payload.extend([
@@ -679,26 +663,43 @@ class Patch(config.Config):
 
 
 
-    def attach_file(self, file, type = ''):
-        file    = self.create_file_snapshot(file)
-        short   = file.replace(self.repo_root, '')
-        short   = file.replace(self.config.patch_template_dir, '').replace(self.patch_folder, '')
+    def attach_file(self, file, header = '', category = ''):
+        attach_type = ''
+        if category != '':
+            attach_type = category
+        if self.config.patch_template_dir in file:
+            attach_type = 'TEMPLATE'
+        elif self.config.patch_scripts_dir in file:
+            attach_type = 'SCRIPT'
         #
-        return [
-            'PROMPT -- {} FILE: {}'.format(type, short),
-            '@"./{}";'.format(file.replace(self.repo_root, '').lstrip('/')),
+        file = self.create_file_snapshot(file)
+        file = file.replace(self.patch_folder, '')       # replace first, full path
+        file = file.replace(self.repo_root, '')
+        file = file.replace(self.config.patch_template_dir, '')
+        #
+        payload = []
+        if header != '':
+            payload = [
+                'PROMPT --;',
+                'PROMPT -- {}'.format(header),
+                'PROMPT --;',
+            ]
+        payload.extend([
+            'PROMPT -- {}: {}'.format(attach_type or 'FILE', file),
+            '@"./{}";'.format(file.lstrip('/')),
             '',
-        ]
+        ])
+        return payload
 
 
 
-    def attach_files(self, files, type = ''):
+    def attach_files(self, files, category = ''):
         if isinstance(files, str):
             files = sorted(glob.glob(files))
         #
         payload = []
         for file in files:
-            payload.extend(self.attach_file(file, type = type))
+            payload.extend(self.attach_file(file, category = category))
         return payload
 
 

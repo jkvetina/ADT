@@ -4,7 +4,7 @@ SELECT
     o.object_type,
     COUNT(*) AS total,
     NULL AS fixed,
-    SUM(CASE WHEN o.status = 'INVALID' THEN 1 ELSE 0 END) AS invalid
+    SUM(CASE WHEN o.status != 'VALID' THEN 1 ELSE 0 END) AS invalid
 FROM user_objects o
 WHERE 1 = 1
     AND o.object_type       IN ('PACKAGE', 'PACKAGE BODY', 'PROCEDURE', 'FUNCTION', 'TRIGGER', 'VIEW', 'MATERIALIZED VIEW', 'SYNONYM', 'TYPE', 'TYPE BODY')

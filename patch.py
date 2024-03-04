@@ -89,7 +89,7 @@ class Patch(config.Config):
         self.available_ref      = self.deploy.available_ref
 
         # archive old patches and quit
-        if self.args.archive != None:
+        if self.args.archive != []:
             self.archive_patches(self.args.archive)
             util.quit()
 
@@ -862,34 +862,50 @@ class Patch(config.Config):
 
 
 
+    def archive_patches(self, requested = []):
+        if requested == []:
+            return
 
-    def archive_patches(self, above_ref = 10):
+        # prepare archive folder if needed
         archive_folder = self.repo_root + self.config.patch_archive
         if not (os.path.exists(archive_folder)):
             os.makedirs(archive_folder)
 
-        # find folders to archive
+        # find requested folders to archive
         data = []
         for ref in sorted(self.available_ref.keys(), reverse = True):
-            if ref < int(above_ref):
-                break
-            data.append({
-                'ref'           : ref,
-                'patch_name'    : self.available_ref[ref]['patch_name'],
-            })
+            if ref in requested:
+                name = self.available_ref[ref]['patch_name']
+                code = name.split('-', maxsplit = 2)[2]
+                data.append({
+                    'ref'           : ref,
+                    'patch_name'    : name,
+                    'patch_code'    : code,
+                })
         #
         util.print_header('ARCHIVING PATCHES:')
         util.print_table(data)
         #
         for row in data:
-            source_folder = self.repo_root + self.config.patch_root + row['patch_name']
+            # zip custom source files first
+            source_folder   = self.repo_root + self.config.patch_scripts_dir.replace('/None/', '/{}/'.format(row['patch_code']))
+            patch_folder    = self.repo_root + self.config.patch_root + row['patch_name'] + '/'
+            #
+            if os.path.exists(source_folder):
+                shutil.make_archive(
+                    base_name   = patch_folder + row['patch_code'],
+                    format      = 'zip',
+                    root_dir    = source_folder
+                )
+                shutil.rmtree(source_folder, ignore_errors = True, onerror = None)
+
+            # zip whole patch folder
             shutil.make_archive(
                 base_name   = archive_folder + row['patch_name'],
                 format      = 'zip',
-                root_dir    = archive_folder,
-                base_dir    = source_folder         # zip whole folder
+                root_dir    = patch_folder
             )
-            shutil.rmtree(source_folder, ignore_errors = True, onerror = None)
+            shutil.rmtree(patch_folder, ignore_errors = True, onerror = None)
 
 
 
@@ -905,14 +921,14 @@ if __name__ == "__main__":
     parser.add_argument('-target',      help = 'Target environment')
     parser.add_argument('-patch',       help = 'Patch code (name for the patch files)')
     parser.add_argument('-seq',         help = 'Sequence in patch folder, {$PATCH_SEQ}')
-    parser.add_argument('-search',      help = 'Search string for Git to search just for relevant commits',     default = None, nargs = '*')
-    parser.add_argument('-add',         help = 'Process just specific commits',                                 default = [],   nargs = '*')
-    parser.add_argument('-ignore',      help = 'Ignore specific commits',                                       default = [],   nargs = '*')
+    parser.add_argument('-search',      help = 'Search string for Git to search just for relevant commits',     default = None,   nargs = '*')
+    parser.add_argument('-add',         help = 'Process just specific commits',                                 default = [],     nargs = '*')
+    parser.add_argument('-ignore',      help = 'Ignore specific commits',                                       default = [],     nargs = '*')
     parser.add_argument('-branch',      help = 'To override active branch',                                     default = None)
-    parser.add_argument('-depth',       help = 'Number of recent commits to search',                            default = None,               type = int)
-    parser.add_argument('-full',        help = 'Specify APEX app(s) where to use full export',                  default = [],   nargs = '*')
-    parser.add_argument('-archive',     help = 'To archive patches older than passed #',                        default = None, nargs = '?')
-    parser.add_argument('-fetch',       help = 'Fetch Git changes before patching',                             default = False, nargs = '?', const = True)
+    parser.add_argument('-depth',       help = 'Number of recent commits to search',                            default = None,                 type = int)
+    parser.add_argument('-full',        help = 'Specify APEX app(s) where to use full export',                  default = [],     nargs = '*')
+    parser.add_argument('-archive',     help = 'To archive patches older than passed #',                        default = [],     nargs = '*',  type = int)
+    parser.add_argument('-fetch',       help = 'Fetch Git changes before patching',                             default = False,  nargs = '?',  const = True)
     #
     Patch(parser)
 

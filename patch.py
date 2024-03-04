@@ -452,7 +452,12 @@ class Patch(config.Config):
                                 if self.debug:
                                     print('        >>', file)
 
-            if not app_id and len(files_to_process.keys()) > 0:
+            # attach APEX files
+            if app_id:
+                for file in list(files_to_process.keys()):  # copy
+                    files_processed.append(file)
+            #
+            elif len(files_to_process.keys()) > 0:
                 util.raise_error('NOT ALL FILES PROCESSED')
 
             # create snapshot files
@@ -494,13 +499,11 @@ class Patch(config.Config):
 
                 # attach APEX starting file for partial APEX exports
                 if app_id:
+                    # attach the whole application for full imports (as a fallback)
                     payload.extend([
-                        # start APEX import
                         'SET DEFINE OFF',
                         'SET TIMING OFF',
                         '--',
-
-                        # attach the whole application for full imports
                         'PROMPT --;',
                         'PROMPT -- APEX FULL EXPORT',
                         'PROMPT --;',

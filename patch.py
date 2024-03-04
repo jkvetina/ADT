@@ -412,7 +412,7 @@ class Patch(config.Config):
             #
             else:
                 # load init files, for database or APEX
-                payload.extend(self.get_template_files('apex_init' if app_id != '' else 'db_init'))
+                payload.extend(self.attach_files(self.get_template_files('apex_init' if app_id != '' else 'db_init')))
 
                 # attach APEX starting file for partial APEX exports
                 if app_id != '':
@@ -505,7 +505,7 @@ class Patch(config.Config):
             payload.extend(self.get_grants_made())
 
             # load final files, for database or APEX
-            payload.extend(self.get_template_files('apex_end' if app_id != '' else 'db_end'))
+            payload.extend(self.attach_files(self.get_template_files('apex_end' if app_id != '' else 'db_end')))
 
             # add flag so deploy script can evaluate it as successful
             payload.extend([
@@ -584,35 +584,54 @@ class Patch(config.Config):
 
 
 
+    def get_script_before_files(self):
+        folder = '{}*{}/*.sql'.format(self.config.patch_scripts_dir, self.postfix_before)
+        return list(sorted(glob.glob(folder)))
+
+
+
+    def get_script_after_files(self):
+        folder = '{}*/*.sql'.format(self.config.patch_scripts_dir, self.postfix_after)
+        return list(sorted(glob.glob(folder)))
+
+
+
     def get_template_files(self, folder):
-        payload = []
-        for file in glob.glob('{}{}/*.sql'.format(self.config.patch_template_dir, folder)):
-            file    = self.create_file_snapshot(file)
-            short   = file.replace(self.config.patch_template_dir, '').replace(self.patch_folder, '').replace(self.repo_root, '')
-            #
-            payload.extend([
-                'PROMPT -- TEMPLATE FILE: {}'.format(short),
-                '@"./{}";'.format(file.replace(self.repo_root, '').lstrip('/')),
-                '',
-            ])
+        return list(sorted(glob.glob('{}{}/*.sql'.format(self.config.patch_template_dir, folder))))
+
+
+
+    def attach_file(self, file, type = ''):
+        file    = self.create_file_snapshot(file)
+        short   = file.replace(self.repo_root, '')
+        short   = file.replace(self.config.patch_template_dir, '').replace(self.patch_folder, '')
         #
+        return [
+            'PROMPT -- {} FILE: {}'.format(type, short),
+            '@"./{}";'.format(file.replace(self.repo_root, '').lstrip('/')),
+            '',
+        ]
+
+
+
+    def attach_files(self, files, type = ''):
+        if isinstance(files, str):
+            files = sorted(glob.glob(files))
+        #
+        payload = []
+        for file in files:
+            payload.extend(self.attach_file(file, type = type))
         return payload
 
 
 
     def create_snapshots(self, app_id):
-        # copy changed files
-        process_files = list(self.diffs.keys())
-        if len(self.diffs.keys()) > 0:
-            for file in process_files:
-                self.create_file_snapshot(file, app_id = app_id)
-
         # copy some files even if they did not changed
         if app_id != None and str(app_id) != '':
             path = '{}f{}/'.format(self.config.path_apex, app_id).replace('//', '/')
             for file in self.config.apex_files_copy:
                 file = path + file
-                if not (file in process_files) and os.path.exists(file):
+                if os.path.exists(file):
                     # get copied files from directory
                     with open(file, 'rt') as f:
                         self.create_file_snapshot(file, file_content = f.read(), app_id = app_id)

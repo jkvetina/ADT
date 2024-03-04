@@ -175,15 +175,16 @@ class Config(util.Attributed):
         # get APEX apps info from file
         self.apex_applications = {}
         file = self.repo_root + 'config/apex_applications.yaml'
-        with open(file, 'rt', encoding = 'utf-8') as f:
-            data = dict(util.get_yaml(f, file))
-            for workspace in data.keys():
-                for owner, apps in data[workspace].items():
-                    for app_id, info in apps.items():
-                        self.apex_applications[app_id] = {
-                            'workspace' : workspace,
-                            'owner'     : owner,
-                        }
+        if os.path.exists(file):
+            with open(file, 'rt', encoding = 'utf-8') as f:
+                data = dict(util.get_yaml(f, file))
+                for workspace in data.keys():
+                    for owner, apps in data[workspace].items():
+                        for app_id, info in apps.items():
+                            self.apex_applications[app_id] = {
+                                'workspace' : workspace,
+                                'owner'     : owner,
+                            }
 
         # different flow for direct call
         if __name__ == "__main__":

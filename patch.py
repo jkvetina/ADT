@@ -747,9 +747,14 @@ class Patch(config.Config):
 
 
 
-    def create_file_snapshot(self, file, file_content = None, app_id = None):
+    def create_file_snapshot(self, file, file_content = None, app_id = None, live = False):
         # create folders and copy files
         target_file = '{}/{}'.format(self.patch_folder, file).replace('//', '/')
+
+        # get real file content, not the git
+        if (live or self.config.patch_template_dir in target_file):
+            with open(file, 'rt') as f:
+                file_content = f.read()
 
         # shorten target folder for template files
         if self.config.patch_template_dir in target_file:

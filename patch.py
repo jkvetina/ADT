@@ -562,12 +562,14 @@ class Patch(config.Config):
                     payload.extend(self.attach_file(file, header = 'APEX END', category = 'FIXED'))
 
             # add grants made on referenced objects
-            payload.extend([
-                'PROMPT --;',
-                'PROMPT -- GRANTS',
-                'PROMPT --;',
-            ])
-            payload.extend(self.get_grants_made())
+            grants = self.get_grants_made()
+            if len(grants) > 0:
+                payload.extend([
+                    'PROMPT --;',
+                    'PROMPT -- GRANTS',
+                    'PROMPT --;',
+                ])
+                payload.extend(grants)
 
             # load final files, for database or APEX
             payload.extend(self.attach_files(self.get_template_files('apex_end' if app_id else 'db_end'), category = 'END'))
@@ -820,7 +822,8 @@ class Patch(config.Config):
                         payload.append(line.strip())
                         break
         #
-        payload.append('')
+        if payload != []:
+            payload.append('')
         return payload
 
 

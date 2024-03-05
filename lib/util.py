@@ -28,6 +28,22 @@ def replace(subject, pattern, replacement, flags = 0):
 
 
 
+def extract(regexp_search, text, group = 1):
+    if regexp_search == '':
+        return ''
+    #
+    found = re.search(regexp_search, text)
+    if found:
+        return found.group(group)
+    return ''
+
+
+
+def extract_int(regexp_search, text, group = 1):
+    return int(extract(regexp_search, text, group))
+
+
+
 def get_encryption_key(password, salt):
     k = PBKDF2HMAC(
         algorithm   = hashes.SHA256(),

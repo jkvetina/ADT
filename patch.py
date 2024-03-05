@@ -208,14 +208,22 @@ class Patch(config.Config):
 
 
     def get_patch_folders(self):
-        # split current folder
-        curr_folder         = self.patch_folder.replace(self.repo_root + self.config.patch_root, '')
-        self.patch_current  = dict(zip(['day', 'seq', 'patch_code'], curr_folder.split(self.patch_folder_splitter, maxsplit = 2)))
+        # extract values from folder name
+        curr_folder = self.patch_folder.replace(self.repo_root + self.config.patch_root, '')
+        self.patch_current = {
+            'day'           : util.extract(self.config.patch_folder_day, curr_folder),
+            'seq'           : util.extract(self.config.patch_folder_seq, curr_folder),
+            'patch_code'    : util.extract(self.config.patch_folder_cod, curr_folder),
+        }
 
-        # get more ifno from folder name
+        # get more info from folder name
         for folder in sorted(glob.glob(self.repo_root + self.config.patch_root + '*')):
-            folder  = folder.replace(self.repo_root + self.config.patch_root, '')
-            info    = dict(zip(['day', 'seq', 'patch_code'], folder.split(self.patch_folder_splitter, maxsplit = 2)))
+            folder  = folder.replace('\\', '/').replace(self.repo_root + self.config.patch_root, '')
+            info    = {
+                'day'           : util.extract(self.config.patch_folder_day, folder),
+                'seq'           : util.extract(self.config.patch_folder_seq, folder),
+                'patch_code'    : util.extract(self.config.patch_folder_cod, folder),
+            }
             #
             if info['day'] == self.patch_current['day'] and not (info['seq'] in self.patch_sequences):
                 self.patch_sequences.append(info['seq'])

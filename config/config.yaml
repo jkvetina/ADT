@@ -53,6 +53,9 @@ patch_scripts_snap      : 'patch_scripts/'
 patch_grants            : 'grants/{$INFO_SCHEMA}.sql'
 patch_file_link         : '@"./{$FILE}"'
 patch_folder            : '{$INFO_SCHEMA}{$TODAY_PATCH}-{$PATCH_SEQ}-{$PATCH_CODE}'
+patch_folder_day        : '^([^-]+)'
+patch_folder_cod        : '[-](.*)$'
+patch_folder_seq        : '[-](.*)[-])'
 patch_add_scripts       : True
 patch_add_templates     : True
 patch_spooling          : True

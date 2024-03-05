@@ -300,10 +300,8 @@ class Patch(config.Config):
                 app_id  = None
                 #
                 if self.config.path_apex in file:
-                    search = re.search('^f(\d+)[/]', file.replace(self.config.path_apex, ''))
-                    if search:
-                        app_id = int(search.group(1))       # get app_id from APEX folder
-                        schema += '.{}'.format(app_id)      # append app_id to separate APEX files
+                    app_id = util.extract_int('^f(\d+)[/]', file.replace(self.config.path_apex, ''))
+                    schema += '.{}'.format(app_id)      # append app_id to separate APEX files
                 #
                 if not (schema in self.relevant_files):
                     self.relevant_files[schema] = []
@@ -810,10 +808,8 @@ class Patch(config.Config):
         ]
         #
         for file in apex_pages:
-            search = re.search('/pages/page_(\d+)\.sql', file)
-            if search:
-                page_id = int(search.group(1))
-                payload.append('    wwv_flow_imp_page.remove_page(p_flow_id => wwv_flow.g_flow_id, p_page_id => {});'.format(page_id))
+            page_id = util.extract_int('/pages/page_(\d+)\.sql', file)
+            payload.append('    wwv_flow_imp_page.remove_page(p_flow_id => wwv_flow.g_flow_id, p_page_id => {});'.format(page_id))
         #
         payload.extend([
             'END;',
@@ -840,9 +836,7 @@ class Patch(config.Config):
                     continue
 
                 # find match on object name
-                find_name = re.search('\sON\s+(.*)\s+TO\s', line)
-                if find_name:
-                    find_name = find_name.group(1).lower()
+                find_name = util.extract('\sON\s+(.*)\s+TO\s', line).lower()
                 #
                 for file in self.diffs:
                     object_name = os.path.basename(file).split('.')[0].lower()

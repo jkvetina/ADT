@@ -845,8 +845,11 @@ class Patch(config.Config):
         command = 'git show {$REV}:{$FILE}'
         command = command.replace('{$REV}',  commit)
         command = command.replace('{$FILE}', file)
-        #
         result  = subprocess.run(command, shell = True, capture_output = True, text = True)
+        #
+        if result.stderr:
+            util.raise_error('GET_FILE_ERROR: ' + result.stderr)
+        #
         return (result.stdout or '')
 
 

@@ -234,7 +234,7 @@ class Patch(config.Config):
 
         # check clash on patch sequence
         if self.patch_current['patch_code'] != self.patch_code and self.patch_current['seq'] in self.patch_sequences:
-            util.raise_error('CLASH ON PATCH SEQUENCE'
+            util.raise_error('CLASH ON PATCH SEQUENCE',
                 'you should select a different -seq #')
 
 

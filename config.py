@@ -537,7 +537,7 @@ class Config(util.Attributed):
             return payload
 
         # replace just strings
-        if not isinstance(payload, str):
+        if (not isinstance(payload, str) or payload == None):
             return payload
 
         # check passed argument types

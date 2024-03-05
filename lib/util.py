@@ -326,12 +326,13 @@ def raise_error(message = '', *extras):
 
 
 
-def assert_(condition, message, extra = ''):
+def assert_(condition, message, *extras):
     if (not condition or condition == None or condition == ''):
         message = 'ASSERT: {}'.format(message)
         print('\n{}\n{}'.format(message, '-' * len(message)))
-        if len(extra) > 0:
-            print(extra)
+        if len(extras) > 0:
+            for line in extras:
+                print_help(line.rstrip())
         print()
         sys.exit()
 

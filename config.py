@@ -143,37 +143,28 @@ class Config(util.Attributed):
             util.print_header('ARGS:')
             util.print_args(self.args, skip_keys = self.password_args)
 
-        if self.args['env'] == None:
-            self.args['env'] = self.config.get('env')
-        util.assert_(self.args['env'], 'MISSING ENV')
-
-        # set info group from command line arguments
-        for arg in self.info_attributes:
-            setattr(self.info, arg, self.args.get(arg, '') or '')
-
         # repo attributes
         self.root           = util.fix_path(os.path.dirname(os.path.realpath(__file__)))
         self.repo_root      = util.fix_path(self.args.get('repo') or os.path.abspath(os.path.curdir))
         self.repo           = None      # set through init_repo()
         self.conn           = None      # database connection object
 
-        # if we are using ADT repo for connection file, we have to know these too
-        if self.repo_root == self.root:
-            util.assert_(self.args.client,  'MISSING ARGUMENT: CLIENT')
-            util.assert_(self.args.project, 'MISSING ARGUMENT: PROJECT')
-            util.assert_(self.args.env,     'MISSING ARGUMENT: ENV')
-
-        # connect to repo, we need valid repo for everything
-        # check connections before config, since we can change schema here
-        # check config file, rerun this when specific schema is processed to load schema overrides
-        self.init_repo()
-        if __name__ != "__main__":
-            self.init_connection()
-        self.init_config()
-        #
+        # set info group from command line arguments
+        for arg in self.info_attributes:
+            setattr(self.info, arg, self.args.get(arg, '') or '')
         if self.debug:
             util.print_header('INFO GROUP:')
             util.print_args(self.info)
+
+        # load config first
+        self.init_config()
+        self.info['schema'] = self.info.get('schema', '')   or self.config.get('default_schema')
+        self.info['env']    = self.info.get('env', '')      or self.config.get('default_env')
+
+        # connect to repo, we need valid repo for everything
+        self.init_repo()
+        if __name__ != "__main__":
+            self.init_connection()
 
         # get APEX apps info from file
         self.apex_applications = {}
@@ -457,7 +448,7 @@ class Config(util.Attributed):
                 self.apply_config(file)
 
         # allow schema overrides
-        if self.info.schema:
+        if self.info.get('schema'):
             for file in self.replace_tags(list(self.config_overrides)):  # copy
                 if not ('{$' in file) and os.path.exists(file):
                     self.apply_config(file)

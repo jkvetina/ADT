@@ -16,6 +16,9 @@ today_deploy            : '%Y-%m-%d %H-%M'  # used in deployment logs
 path_objects            : 'database/'       # database objects
 path_apex               : 'apex/'           # APEX files
 
+default_schema          : ''
+default_env             : DEV
+
 # target folders by object types
 object_types:
     DATA                : ['data/',         .sql]

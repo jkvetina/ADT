@@ -56,7 +56,6 @@ class Deploy(config.Config):
         self.deploy_plan        = []
         self.deploy_schemas     = {}
         self.deploy_conn        = {}
-        self.splitter           = '__'      # in deploy logs in between env, date, schema, status
         self.logs_prefix        = '{}/LOGS_{}'
         #
         self.find_folder()
@@ -372,7 +371,6 @@ if __name__ == "__main__":
     # actions and flags
     parser.add_argument('-debug',       help = 'Turn on the debug/verbose mode',    default = False, nargs = '?', const = True)
     parser.add_argument('-key',         help = 'Key or key location to encypt passwords')
-    parser.add_argument('-schema',      help = 'Schema/connection name')
     #
     parser.add_argument('-patch',       help = 'Patch code (name for the patch files)')
     parser.add_argument('-ref',         help = 'Reference number (see list of available patches)', type = int)

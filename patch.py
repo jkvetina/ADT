@@ -479,9 +479,9 @@ class Patch(config.Config):
                 'WHENEVER OSERROR  EXIT ROLLBACK;',
                 'WHENEVER SQLERROR EXIT ROLLBACK;',
                 '--',
-                'SPOOL "{}" APPEND;'.format(self.patch_spool_log),
-                ''
             ])
+            if self.config.patch_spooling:
+                payload.append('SPOOL "{}" APPEND;\n'.format(self.patch_spool_log))
 
             # add properly sorted files (objects by dependencies) to the patch
             if app_id and app_id in self.full_exports:
@@ -584,9 +584,10 @@ class Patch(config.Config):
                 'PROMPT --;',
                 'PROMPT -- SUCCESS',
                 'PROMPT --;',
-                'SPOOL OFF;',           # spool output end
                 '',
             ])
+            if self.config.patch_spooling:
+                payload.append('SPOOL OFF;\n')
 
             # store payload in file
             self.create_patch_file(payload, app_id = app_id)

@@ -11,7 +11,7 @@ Checkout the [install guide](./doc/install.md) and <ins>quick start guide</ins>.
 
 &nbsp;
 
-## Actions (progress 21/52, 40%)
+## Actions (progress 23/54, 42%)
 
 | Filename                                 | Description                                    | Status          | Complexity | Done
 | :-------                                 | :----------                                    | :-----          | ---------: | ---:
@@ -19,7 +19,7 @@ Checkout the [install guide](./doc/install.md) and <ins>quick start guide</ins>.
 | [`export_db.py`](./doc/export_db.md)     | to export database objects                     | OPY **          |          9 |
 | [`export_apex.py`](./doc/export_apex.md) | to export APEX & REST services                 | OPY **          |          4 |
 | [`export_data.py`](./doc/export_data.md) | to export data into CSV files                  | OPY **          |          2 |
-| [`patch.py`](./doc/patch.md)             | to prepare patch files from your changes       | __In Progress__ |          8 | 7
+| [`patch.py`](./doc/patch.md)             | to prepare patch files from your changes       | __In Progress__ |         10 | 9
 | [`deploy.py`](./doc/deploy.md)           | to deploy your patch files                     | __In Progress__ |          8 | 6
 | [`compare.py`](./doc/compare.md)         | to compare two databases                       | Planned         |          9 |
 | [`recompile.py`](./doc/recompile.md)     | to recompile invalid objects                   | __Done__        |          1 | 1

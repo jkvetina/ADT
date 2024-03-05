@@ -767,6 +767,14 @@ class Patch(config.Config):
         if file_content == None:
             file_content    = self.get_file_from_commit(file, commit = str(self.last_commit_obj))
 
+        # check for empty file
+        if (file_content == None or len(file_content) == 0):
+            util.raise_error('FILE IS EMPTY', file)
+
+        # check for merge issues when developer ovelook things
+        if '<<<<<<< ' in file_content and '>>>>>>> ' in file_content:
+            util.raise_error('UNRESOLVED MERGE ISSUES', file)
+
         # change page audit columns
         if self.config.replace_audit and app_id:
             if ('/application/pages/page_' in file or '/f{}/f{}.sql'.format(app_id, app_id) in file):
@@ -857,12 +865,6 @@ class Patch(config.Config):
     def fetch_changes(self):
         self.repo.git.checkout()
         self.repo.git.pull()
-
-
-
-
-
-
 
 
 

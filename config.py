@@ -130,10 +130,9 @@ class Config(util.Attributed):
         # merge with environment variables
         for arg in self.os_args:
             if not (arg.lower() in self.args) or self.args[arg.lower()] == None:
-                self.args[arg.lower()] = os.getenv(self.os_prefix + arg.upper())
-        #
-        if self.args['env'] == None:
-            self.args['env'] = 'DEV'
+                value = os.getenv(self.os_prefix + arg.upper())
+                if value != None:
+                    self.args[arg.lower()] = value
         #
         self.args   = util.Attributed(self.args)    # for passed attributes
         self.config = util.Attributed({})           # for user config
@@ -144,13 +143,17 @@ class Config(util.Attributed):
             util.print_header('ARGS:')
             util.print_args(self.args, skip_keys = self.password_args)
 
+        if self.args['env'] == None:
+            self.args['env'] = self.config.get('env')
+        util.assert_(self.args['env'], 'MISSING ENV')
+
         # set info group from command line arguments
         for arg in self.info_attributes:
             setattr(self.info, arg, self.args.get(arg, '') or '')
 
         # repo attributes
         self.root           = util.fix_path(os.path.dirname(os.path.realpath(__file__)))
-        self.repo_root      = util.fix_path(self.args.repo or os.path.abspath(os.path.curdir))
+        self.repo_root      = util.fix_path(self.args.get('repo') or os.path.abspath(os.path.curdir))
         self.repo           = None      # set through init_repo()
         self.conn           = None      # database connection object
 
@@ -228,10 +231,10 @@ class Config(util.Attributed):
 
                 # check environment
                 if not (env_name in data):
-                    if self.args.create:
+                    if self.args.get('create'):
                         data[env_name] = {'schemas' : {schema_name : {}}}
                 if not (env_name in data):
-                    util.raise_error('UNKNOWN ENVIRONMENT NAME')
+                    util.raise_error('UNKNOWN ENVIRONMENT NAME', env_name)
 
                 # make yaml content more flat
                 self.connection = {}

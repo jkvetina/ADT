@@ -912,23 +912,27 @@ class Patch(config.Config):
 
 if __name__ == "__main__":
     # parse arguments
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser(add_help = False)
 
     # actions and flags
-    parser.add_argument('-debug',       help = 'Turn on the debug/verbose mode',    default = False, nargs = '?', const = True)
-    parser.add_argument('-key',         help = 'Key or key location to encypt passwords')
+    group = parser.add_argument_group('MAIN ACTIONS')
+    group.add_argument('-patch',        help = 'Patch code (name for the patch files)')
+    group.add_argument('-seq',          help = 'Sequence in patch folder, {$PATCH_SEQ}')
+    group.add_argument('-fetch',        help = 'Fetch Git changes before patching',                                 nargs = '?', const = True,  default = False)
+    group.add_argument('-archive',      help = 'To archive patches with specific ref #',    type = int,             nargs = '*',                default = [])
     #
-    parser.add_argument('-target',      help = 'Target environment')
-    parser.add_argument('-patch',       help = 'Patch code (name for the patch files)')
-    parser.add_argument('-seq',         help = 'Sequence in patch folder, {$PATCH_SEQ}')
-    parser.add_argument('-search',      help = 'Search string for Git to search just for relevant commits',     default = None,   nargs = '*')
-    parser.add_argument('-add',         help = 'Process just specific commits',                                 default = [],     nargs = '*')
-    parser.add_argument('-ignore',      help = 'Ignore specific commits',                                       default = [],     nargs = '*')
-    parser.add_argument('-branch',      help = 'To override active branch',                                     default = None)
-    parser.add_argument('-depth',       help = 'Number of recent commits to search',                            default = None,                 type = int)
-    parser.add_argument('-full',        help = 'Specify APEX app(s) where to use full export',                  default = [],     nargs = '*')
-    parser.add_argument('-archive',     help = 'To archive patches older than passed #',                        default = [],     nargs = '*',  type = int)
-    parser.add_argument('-fetch',       help = 'Fetch Git changes before patching',                             default = False,  nargs = '?',  const = True)
+    group = parser.add_argument_group('SPECIFY ENVIRONMENT DETAILS')
+    group.add_argument('-target',       help = 'Target environment',                                                nargs = '?')
+    group.add_argument('-branch',       help = 'To override active branch',                                         nargs = '?',                default = None)
+    group.add_argument('-key',          help = 'Key or key location for passwords',                                 nargs = '?')
+    #
+    group = parser.add_argument_group('LIMIT SCOPE')
+    group.add_argument('-search',       help = 'Search commits summary for provided words',                         nargs = '*',                default = None)
+    group.add_argument('-add',          help = 'Process just specific commits',                                     nargs = '*',                default = [])
+    group.add_argument('-ignore',       help = 'Ignore specific commits',                                           nargs = '*',                default = [])
+    group.add_argument('-depth',        help = 'Number of recent commits to search',        type = int,             nargs = '?',                default = None)
+    group.add_argument('-full',         help = 'Specify APEX app(s) where to use full export',                      nargs = '*',                default = [])
+    group.add_argument('-local',        help = 'Use local files and not files from Git',                            nargs = '?', const = True,  default = False)
     #
     Patch(parser)
 

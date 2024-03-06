@@ -321,7 +321,7 @@ class Patch(config.Config):
         self.last_commit    = max(self.relevant_commits)
         #
         if not (self.first_commit in self.all_commits):
-            self.all_commits = min(self.all_commits)
+            self.first_commit = min(self.all_commits.keys())
         #
         self.first_commit_obj   = self.all_commits[self.first_commit]
         self.last_commit_obj    = self.all_commits[self.last_commit]

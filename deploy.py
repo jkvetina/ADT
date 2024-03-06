@@ -32,8 +32,8 @@ from lib import util
 
 class Deploy(config.Config):
 
-    def __init__(self, parser, ignore_timer = False):
-        super().__init__(parser, ignore_timer)
+    def __init__(self, parser):
+        super().__init__(parser)
 
         # process arguments and reinitiate config
         util.assert_(self.args.target, 'MISSING ARGUMENT: TARGET ENV')

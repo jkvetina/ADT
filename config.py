@@ -117,10 +117,9 @@ class Config(util.Attributed):
 
 
 
-    def __init__(self, parser, ignore_timer = False):
-        self.ignore_timer = ignore_timer
-        if not (self.ignore_timer):
-            self.start_timer = timeit.default_timer()
+    def __init__(self, parser):
+        self.is_curr_class  = os.path.basename(sys.argv[0]).split('.')[0] == self.__class__.__name__.lower()
+        self.start_timer    = timeit.default_timer() if self.is_curr_class else None
 
         # add global args
         group = parser.add_argument_group('ADJUST SCREEN OUTPUT')
@@ -129,7 +128,7 @@ class Config(util.Attributed):
 
         # check if any arguments were provided
         if len(sys.argv) == 1:
-            self.ignore_timer = True
+            self.is_curr_class = False
             util.print_program_help(parser)
 
         # parse arguments from command line
@@ -211,7 +210,7 @@ class Config(util.Attributed):
 
 
     def __del__(self):
-        if not (self.ignore_timer):
+        if self.start_timer:
             print('\nTIMER: {}s\n'.format(int(round(timeit.default_timer() - self.start_timer + 0.5, 0))))
 
 

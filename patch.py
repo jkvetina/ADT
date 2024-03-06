@@ -85,7 +85,7 @@ class Patch(config.Config):
         self.get_patch_folders()
 
         # reuse info from Deploy script
-        self.deploy             = deploy.Deploy(parser, ignore_timer = True)
+        self.deploy             = deploy.Deploy(parser)
         self.available_ref      = self.deploy.available_ref
 
         # archive old patches and quit

@@ -1,5 +1,5 @@
 # coding: utf-8
-import sys, os, re, argparse, glob, timeit
+import sys, os, re, argparse, timeit
 #
 import config
 from lib import util
@@ -149,7 +149,7 @@ class Deploy(config.Config):
 
     def find_folder(self):
         # identify patch folder
-        for ref, patch in enumerate(sorted(glob.glob(self.repo_root + self.config.patch_root + '**'), reverse = True), start = 1):
+        for ref, patch in enumerate(util.get_files(self.repo_root + self.config.patch_root + '**', reverse = True), start = 1):
             self.patches[ref] = patch
             if self.patch_ref != None:
                 if self.patch_ref == ref:
@@ -247,7 +247,7 @@ class Deploy(config.Config):
             buckets         = {}    # use buckets to identify the most recent results
 
             # get some numbers from patch root files
-            for file in glob.glob(patch + '/*.sql'):
+            for file in util.get_files(patch + '/*.sql'):
                 # get list of commits referenced by file
                 count_commits.extend(self.get_file_commits(file))
 
@@ -259,7 +259,7 @@ class Deploy(config.Config):
             count_commits   = list(set(count_commits))
 
             # find more details from log names
-            for file in glob.glob(self.logs_prefix.format(patch, self.patch_env) + '/*.log'):
+            for file in util.get_files(self.logs_prefix.format(patch, self.patch_env) + '/*.log'):
                 info        = os.path.splitext(os.path.basename(file))[0].split(' ')
                 schema      = info.pop(0)
                 result      = info.pop(-1).replace('[', '').replace(']', '')
@@ -291,7 +291,7 @@ class Deploy(config.Config):
 
     def create_plan(self):
         # create deployment plan
-        for order, file in enumerate(sorted(glob.glob(self.patch_full + '/*.sql'))):
+        for order, file in enumerate(util.get_files(self.patch_full + '/*.sql')):
             full    = file
             file    = os.path.basename(file.replace(self.patch_full, ''))
             #

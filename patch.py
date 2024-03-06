@@ -1,5 +1,5 @@
 # coding: utf-8
-import sys, os, re, shutil, subprocess, argparse, glob
+import sys, os, re, shutil, subprocess, argparse
 #
 import config
 import deploy
@@ -217,7 +217,7 @@ class Patch(config.Config):
         }
 
         # get more info from folder name
-        for folder in sorted(glob.glob(self.repo_root + self.config.patch_root + '*')):
+        for folder in util.get_files(self.repo_root + self.config.patch_root + '*'):
             folder  = folder.replace('\\', '/').replace(self.repo_root + self.config.patch_root, '')
             info    = {
                 'day'           : util.extract(self.config.patch_folder_day, folder),
@@ -665,18 +665,18 @@ class Patch(config.Config):
 
     def get_script_before_files(self):
         folder = '{}*{}/*.sql'.format(self.config.patch_scripts_dir, self.postfix_before)
-        return list(sorted(glob.glob(folder)))
+        return util.get_files(folder)
 
 
 
     def get_script_after_files(self):
         folder = '{}*/*.sql'.format(self.config.patch_scripts_dir, self.postfix_after)
-        return list(sorted(glob.glob(folder)))
+        return util.get_files(folder)
 
 
 
     def get_template_files(self, folder):
-        return list(sorted(glob.glob('{}{}/*.sql'.format(self.config.patch_template_dir, folder))))
+        return util.get_files('{}{}/*.sql'.format(self.config.patch_template_dir, folder))
 
 
 
@@ -712,7 +712,7 @@ class Patch(config.Config):
 
     def attach_files(self, files, category = ''):
         if isinstance(files, str):
-            files = sorted(glob.glob(files))
+            files = util.get_files(files)
         #
         payload = []
         for file in files:

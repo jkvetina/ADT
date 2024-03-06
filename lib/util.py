@@ -1,4 +1,4 @@
-import sys, os, re, yaml, traceback, inspect, io
+import sys, os, re, yaml, glob, traceback, inspect, io
 import secrets, base64
 
 # for encryptions
@@ -41,6 +41,14 @@ def extract(regexp_search, text, group = 1):
 
 def extract_int(regexp_search, text, group = 1):
     return int(extract(regexp_search, text, group))
+
+
+
+def get_files(glob_pattern, reverse = False):
+    files = list(sorted(glob.glob(glob_pattern), reverse = reverse))
+    for i, file in enumerate(files):
+        files[i] = file.replace('\\', '/')
+    return files
 
 
 

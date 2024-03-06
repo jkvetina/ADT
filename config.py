@@ -122,6 +122,11 @@ class Config(util.Attributed):
         if not (self.ignore_timer):
             self.start_timer = timeit.default_timer()
 
+        # add global args
+        group = parser.add_argument_group('ADJUST SCREEN OUTPUT')
+        group.add_argument('-verbose',      help = 'Show more details',                         type = util.is_boolean, nargs = '?', const = True,  default = False)
+        group.add_argument('-debug',        help = 'Show even more details and exceptions',     type = util.is_boolean, nargs = '?', const = True,  default = False)
+
         # check if any arguments were provided
         if len(sys.argv) == 1:
             self.ignore_timer = True
@@ -597,39 +602,36 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(add_help = False)
 
     # actions and flags
-    group = parser.add_argument_group('MAIN ACTIONS', prefix_chars = '')
-    group.add_argument('-create',       help = 'Create or update connection',       type = util.is_boolean, nargs = '?', const = True, default = False)
-    group.add_argument('-opy',          help = 'Import connection from OPY file')
+    group = parser.add_argument_group('MAIN ACTIONS')
+    group.add_argument('-show',         help = 'Show connection details',                   type = util.is_boolean, nargs = '?', const = True, default = False)
+    group.add_argument('-create',       help = 'Create or update connection',               type = util.is_boolean, nargs = '?', const = True, default = False)
+    group.add_argument('-opy',          help = 'Import connection from OPY file',                                   nargs = '?')
     #
-    group = parser.add_argument_group('SPECIFY ENVIRONMENT DETAILS', prefix_chars = '')
-    group.add_argument('-env',          help = 'Environment name like DEV, UAT, LAB1...')
-    group.add_argument('-schema',       help = 'Schema/connection name (for multiple schemas)')
-    group.add_argument('-repo',         help = 'Path to your project repo')
-    group.add_argument('-branch',       help = 'Repo branch')
-    group.add_argument('-decrypt',      help = 'Store passwords decypted',          type = util.is_boolean, nargs = '?', const = True, default = False)
-    group.add_argument('-key',          help = 'Key or key location to encypt passwords')
+    group = parser.add_argument_group('SPECIFY ENVIRONMENT DETAILS')
+    group.add_argument('-env',          help = 'Environment name like DEV, UAT, LAB1...',                           nargs = '?')
+    group.add_argument('-schema',       help = 'Schema/connection name (for multiple schemas)',                     nargs = '?')
+    group.add_argument('-repo',         help = 'Path to your project repo',                                         nargs = '?')
+    group.add_argument('-branch',       help = 'Repo branch',                                                       nargs = '?')
+    group.add_argument('-decrypt',      help = 'Store passwords decypted',                  type = util.is_boolean, nargs = '?', const = True, default = False)
+    group.add_argument('-key',          help = 'Key or key location for passwords',                                 nargs = '?')
     #
-    group = parser.add_argument_group('LIMIT SCOPE', prefix_chars = '')
-    group.add_argument('-prefix',       help = 'Export objects with listed prefix(es)')
-    group.add_argument('-ignore',       help = 'Ignore objects with listed prefix(es)')
-    group.add_argument('-subfolder',    help = 'Subfolder for exported objects (for multiple schemas)')
-    group.add_argument('-workspace',    help = 'Limit to specific APEX workspace')
-    group.add_argument('-app',          help = 'APEX app(s) to export as default')
+    group = parser.add_argument_group('LIMIT SCOPE')
+    group.add_argument('-prefix',       help = 'Export objects with listed prefix(es)',                             nargs = '?')
+    group.add_argument('-ignore',       help = 'Ignore objects with listed prefix(es)',                             nargs = '?')
+    group.add_argument('-subfolder',    help = 'Subfolder for exported objects (for multiple schemas)',             nargs = '?')
+    group.add_argument('-workspace',    help = 'Limit to specific APEX workspace',                                  nargs = '?')
+    group.add_argument('-app',          help = 'APEX app(s) to export as default',                                  nargs = '?')
     #
-    group = parser.add_argument_group('PROVIDE CONNECTION DETAILS', prefix_chars = '')
-    group.add_argument('-user',         help = 'User name')
-    group.add_argument('-pwd',          help = 'User password')
-    group.add_argument('-hostname',     help = 'Hostname')
-    group.add_argument('-port',         help = 'Port',                              type = int, default = 1521)
-    group.add_argument('-service',      help = 'Service name (provide this or SID)')
-    group.add_argument('-sid',          help = 'SID')
-    group.add_argument('-wallet',       help = 'Wallet file (for cloud connections)')
-    group.add_argument('-wallet_pwd',   help = 'Wallet password')
-    group.add_argument('-thick',        help = 'Thick client path or \'Y\' for auto resolve')
-    #
-    group = parser.add_argument_group('ADJUST SCREEN OUTPUT', prefix_chars = '')
-    group.add_argument('-verbose',      help = 'Show more details',                         type = util.is_boolean, nargs = '?', const = True, default = False)
-    group.add_argument('-debug',        help = 'Show even more details and exceptions',     type = util.is_boolean, nargs = '?', const = True, default = False)
+    group = parser.add_argument_group('PROVIDE CONNECTION DETAILS')
+    group.add_argument('-user',         help = 'User name',                                                         nargs = '?')
+    group.add_argument('-pwd',          help = 'User password',                                                     nargs = '?')
+    group.add_argument('-hostname',     help = 'Hostname',                                                          nargs = '?')
+    group.add_argument('-port',         help = 'Port',                                      type = int,             nargs = '?', default = 1521)
+    group.add_argument('-service',      help = 'Service name (provide this or SID)',                                nargs = '?')
+    group.add_argument('-sid',          help = 'SID',                                                               nargs = '?')
+    group.add_argument('-wallet',       help = 'Wallet file (for cloud connections)',                               nargs = '?')
+    group.add_argument('-wallet_pwd',   help = 'Wallet password',                                                   nargs = '?')
+    group.add_argument('-thick',        help = 'Thick client path or \'Y\' for auto resolve',                       nargs = '?')
     #
     Config(parser)
 

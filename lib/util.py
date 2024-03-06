@@ -316,6 +316,31 @@ def print_progress(done, target = 100):
 
 
 
+def print_program_help(parser):
+    program = os.path.basename(sys.argv[0]).split('.')[0]
+    print_header('APEX DEPLOYMENT TOOL: {}'.format(program.upper()))
+    print()
+    parser.print_help(sys.stderr)
+    print()
+    print_header('FOR DOCUMENTATION AND EXAMPLES VISIT:')
+    print('https://github.com/jkvetina/ADT/blob/main/doc/{}.md'.format(program))
+    print('\n')
+    sys.exit()
+
+
+
+def is_boolean(v):
+    # to allow argparse evaluate to True, False AND None
+    if isinstance(v, bool):
+        return v
+    if str(v).upper() in ('ON', 'YES', 'Y', 'TRUE', '1'):
+        return True
+    if str(v).upper() in ('OFF', 'NO', 'N', 'FALSE', '0'):
+        return False
+    return None
+
+
+
 def quit(message = ''):
     if message != None and len(str(message)) > 0:
         print(message)
@@ -351,29 +376,4 @@ def assert_(condition, message, *extras):
                 print_help(line.rstrip())
         print()
         sys.exit()
-
-
-
-def print_program_help(parser):
-    program = os.path.basename(sys.argv[0]).split('.')[0]
-    print_header('APEX DEPLOYMENT TOOL: {}'.format(program.upper()))
-    print()
-    parser.print_help(sys.stderr)
-    print()
-    print_header('FOR DOCUMENTATION AND EXAMPLES VISIT:')
-    print('https://github.com/jkvetina/ADT/blob/main/doc/{}.md'.format(program))
-    print('\n')
-    sys.exit()
-
-
-
-def is_boolean(v):
-    # to allow argparse evaluate to True, False AND None
-    if isinstance(v, bool):
-        return v
-    if str(v).upper() in ('ON', 'YES', 'Y', 'TRUE', '1'):
-        return True
-    if str(v).upper() in ('OFF', 'NO', 'N', 'FALSE', '0'):
-        return False
-    return None
 

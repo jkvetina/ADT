@@ -365,3 +365,15 @@ def print_program_help(parser):
     print('\n')
     sys.exit()
 
+
+
+def is_boolean(v):
+    # to allow argparse evaluate to True, False AND None
+    if isinstance(v, bool):
+        return v
+    if str(v).upper() in ('ON', 'YES', 'Y', 'TRUE', '1'):
+        return True
+    if str(v).upper() in ('OFF', 'NO', 'N', 'FALSE', '0'):
+        return False
+    return None
+

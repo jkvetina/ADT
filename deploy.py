@@ -41,8 +41,8 @@ class Deploy(config.Config):
         self.patch_env          = self.args.target
         self.patch_code         = self.args.patch
         self.patch_folder       = ''
-        self.patch_ref          = self.args.get('ref', None)
-        self.info.branch        = self.args.branch or self.info.branch or self.repo.active_branch
+        self.patch_ref          = self.args.get('ref')
+        self.info.branch        = self.args.get('branch') or self.info.get('branch') or self.repo.active_branch
         #
         self.init_config()
         self.init_connection(env_name = self.patch_env)
@@ -369,7 +369,6 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
 
     # actions and flags
-    parser.add_argument('-debug',       help = 'Turn on the debug/verbose mode',    default = False, nargs = '?', const = True)
     parser.add_argument('-key',         help = 'Key or key location to encypt passwords')
     #
     parser.add_argument('-patch',       help = 'Patch code (name for the patch files)')

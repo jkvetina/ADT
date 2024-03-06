@@ -389,6 +389,15 @@ class Patch(config.Config):
             files_to_process    = {}
             #
             for file in self.diffs.keys():
+                # skip file if it should be ignored in the patch (but keep it in snapshot folder)
+                try:
+                    short_file = '/' + file.split('/', maxsplit = 2)[2]
+                except:
+                    short_file = ''
+                #
+                if short_file in skip_apex_files:
+                    continue
+                #
                 files_to_process[file] = File(file, config = self.config)
 
             # processed groups one by one in order defined by patch_map
@@ -528,20 +537,8 @@ class Patch(config.Config):
                 # go through files
                 apex_pages = []
                 for file in files_processed:
-                    if app_id == '':
-                        pass
-                        # load type related files for database objects
-                        #
-                        #
-                        #
-
                     # modify list of APEX files
                     if app_id:
-                        try:
-                            short_file = '/application/' + file.split('/application/')[1]
-                        except:
-                            short_file = ''
-
                         # move APEX pages to the end + create script to delete them in patch
                         search = re.search('/pages/page_(\d+)\.sql', file)
                         if search:
@@ -550,10 +547,6 @@ class Patch(config.Config):
 
                         # skip full APEX exports
                         if len(re.findall('/f\d+/f\d+\.sql$', file)) > 0:
-                            continue
-
-                        # skip file if it should be ignored in the patch (but keep it in snapshot folder)
-                        if short_file in skip_apex_files:
                             continue
 
                     # attach file reference

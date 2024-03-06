@@ -172,7 +172,7 @@ class Patch(config.Config):
         print()
 
         # show commits and files
-        for commit in sorted(self.relevant_commits.keys()):
+        for commit in sorted(self.relevant_commits.keys(), reverse = True):
             data = self.relevant_commits[commit]
             print('  {}) {}'.format(commit, data.summary))  # data.author.email, data.authored_datetime
         print()

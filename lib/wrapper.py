@@ -35,7 +35,7 @@ class Oracle:
 
     # temp file for Windows
     sqlcl_root      = './'
-    sqlcl_temp_file = './sqlcl.{}.tmp'.format('')
+    sqlcl_temp_file = 'sqlcl.tmp'
 
 
 
@@ -214,9 +214,13 @@ class Oracle:
 
         # for Windows we have to use the temp file
         if os.name == 'nt':
-            process = 'sql /nolog @' + self.sqlcl_temp_file
-            with open(self.sqlcl_temp_file, 'wt', encoding = 'utf-8', newline = '\n') as f:
+            process     = 'sql /nolog @{}'.format(self.sqlcl_temp_file)
+            full_tmp    = os.path.abspath(self.sqlcl_root) + '/' + self.sqlcl_temp_file
+            #
+            with open(full_tmp, 'wt', encoding = 'utf-8', newline = '\n') as f:
                 f.write(request)
+            if not os.path.exists(full_tmp):
+                util.raise_error('TEMP FILE FAILED')
 
         # run SQLcl and capture the output
         command = 'cd "{}"{}{}'.format(
@@ -241,8 +245,8 @@ class Oracle:
             print()
 
         # for Windows remove temp file
-        if os.name == 'nt' and os.path.exists(self.sqlcl_temp_file):
-            os.remove(self.sqlcl_temp_file)
+        if os.name == 'nt' and os.path.exists(full_tmp):
+            os.remove(full_tmp)
         #
         return output
 

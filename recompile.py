@@ -170,25 +170,30 @@ class Recompile(config.Config):
 
 if __name__ == "__main__":
     # parse arguments
-    parser = argparse.ArgumentParser()
-
-    # actions and flags
-    parser.add_argument('-debug',       help = 'Turn on the debug/verbose mode',    default = False, nargs = '?', const = True)
-    parser.add_argument('-key',         help = 'Key or key location to encypt passwords')
-    parser.add_argument('-schema',      help = 'Schema/connection name')
-    parser.add_argument('-env',         help = 'Target environment')
+    parser = argparse.ArgumentParser(add_help = False)
+    #
+    group = parser.add_argument_group('SPECIFY ENVIRONMENT DETAILS', prefix_chars = '')
+    group.add_argument('-env',          help = 'Target environment')
+    group.add_argument('-key',          help = 'Key or key location for passwords')
+    group.add_argument('-schema',       help = 'Schema/connection name')
 
     # limit scope by object type and name (prefix)
-    parser.add_argument('-type',        help = 'Object type')
-    parser.add_argument('-name',        help = 'Object name/prefix')
+    group = parser.add_argument_group('LIMIT SCOPE', prefix_chars = '')
+    group.add_argument('-type',         help = 'Object type (you can use LIKE syntax)')
+    group.add_argument('-name',         help = 'Object name/prefix (you can use LIKE syntax)')
 
     # compilation flags
-    parser.add_argument('-force',       help = '', default = False, nargs = '?', type = bool, const = True)
-    parser.add_argument('-level',       help = '',                  nargs = '?', type = int)
-    parser.add_argument('-interpreted', help = '', default = False, nargs = '?', type = bool, const = True)
-    parser.add_argument('-native',      help = '', default = False, nargs = '?', type = bool, const = True)
-    parser.add_argument('-scope',       help = '',                  nargs = '*')
-    parser.add_argument('-warnings',    help = '',                  nargs = '*')
+    group = parser.add_argument_group('COMPILATION FLAGS', prefix_chars = '')
+    group.add_argument('-force',        help = 'Recompile even valid objects',              type = util.is_boolean, nargs = '?', const = True, default = False)
+    group.add_argument('-level',        help = 'Level of PL/SQL optimization',                                      nargs = '?', type = int)
+    group.add_argument('-interpreted',  help = 'Interpreted or native compilation',         type = util.is_boolean, nargs = '?', const = True, default = False)
+    group.add_argument('-native',       help = 'Interpreted or native compilation',         type = util.is_boolean, nargs = '?', const = True, default = False)
+    group.add_argument('-scope',        help = 'Gather identifiers',                                                nargs = '*')
+    group.add_argument('-warnings',     help = 'Allow PL/SQL warnings',                                             nargs = '*')
+    #
+    group = parser.add_argument_group('ADJUST SCREEN OUTPUT', prefix_chars = '')
+    group.add_argument('-verbose',      help = 'Show more details',                         type = util.is_boolean, nargs = '?', const = True, default = False)
+    group.add_argument('-debug',        help = 'Show even more details and exceptions',     type = util.is_boolean, nargs = '?', const = True, default = False)
     #
     Recompile(parser)
 

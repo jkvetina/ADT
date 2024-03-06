@@ -122,6 +122,11 @@ class Config(util.Attributed):
         if not (self.ignore_timer):
             self.start_timer = timeit.default_timer()
 
+        # check if any arguments were provided
+        if len(sys.argv) == 1:
+            self.ignore_timer = True
+            util.print_program_help(parser)
+
         # parse arguments from command line
         self.args = vars(parser.parse_args())
         if not ('decrypt' in self.args):

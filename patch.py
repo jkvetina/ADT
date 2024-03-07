@@ -94,7 +94,7 @@ class Patch(config.Config):
             util.quit()
 
         # create patch
-        if self.patch_code != None and len(self.patch_code) > 0:
+        if self.patch_code != None and len(self.patch_code) > 0 and self.patch_seq == '':
             util.print_header('BUILDING PATCH FOR: {}'.format(self.patch_code))
             util.print_help('use -search    to adjust the matched commits')
             util.print_help('use -depth     to adjust the number of recent commits searched')
@@ -140,7 +140,7 @@ class Patch(config.Config):
 
                 # show help for processing specific commits
                 if self.patch_seq == '':
-                    if self.patch_current['day'] in self.patch_folders:
+                    if self.patch_current['day'] and self.patch_current['day'] in self.patch_folders:
                         data = []
                         for folder, info in self.patch_folders[self.patch_current['day']].items():
                             data.append({

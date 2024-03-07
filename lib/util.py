@@ -1,4 +1,4 @@
-import sys, os, re, yaml, glob, traceback, inspect, io
+import sys, os, re, yaml, glob, traceback, inspect, io, subprocess
 import secrets, base64
 
 # for encryptions
@@ -384,4 +384,14 @@ def assert_(condition, message, *extras):
                 print_help(line.rstrip())
         print()
         sys.exit()
+
+
+
+def run_command(command):
+    result = subprocess.run(command, shell = True, capture_output = True, text = True)
+    #
+    if result.stderr:
+        raise_error('COMMAND_ERROR: ' + result.stderr)
+    #
+    return (result.stdout or '')
 

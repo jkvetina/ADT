@@ -1,5 +1,5 @@
 # coding: utf-8
-import sys, os, subprocess, traceback
+import sys, os, traceback
 import oracledb         # pip3 install oracledb     --upgrade
 #
 from lib import util
@@ -236,19 +236,18 @@ class Oracle:
                 print(request)
             print()
         #
-        result  = subprocess.run(command, shell = True, capture_output = True, text = True)
-        output  = (result.stdout or '').strip()
+        result = util.run_command(command).strip()
         #
         if self.debug:
             util.print_header('RESULT:')
-            print(result.stdout)
+            print(result)
             print()
 
         # for Windows remove temp file
         if os.name == 'nt' and os.path.exists(full_tmp):
             os.remove(full_tmp)
         #
-        return output
+        return result
 
 
 

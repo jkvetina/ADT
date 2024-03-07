@@ -1,5 +1,5 @@
 # coding: utf-8
-import sys, os, re, shutil, subprocess, argparse
+import sys, os, re, shutil, argparse
 #
 import config
 import deploy
@@ -845,15 +845,7 @@ class Patch(config.Config):
 
     def get_file_from_commit(self, file, commit):
         # run command line and capture the output, text file is expected
-        command = 'git show {$REV}:{$FILE}'
-        command = command.replace('{$REV}',  commit)
-        command = command.replace('{$FILE}', file)
-        result  = subprocess.run(command, shell = True, capture_output = True, text = True)
-        #
-        if result.stderr:
-            util.raise_error('GET_FILE_ERROR: ' + result.stderr)
-        #
-        return (result.stdout or '')
+        return util.run_command('git show {}:{}'.format(commit, file))
 
 
 

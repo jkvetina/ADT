@@ -140,6 +140,19 @@ class Deploy(config.Config):
             #
             if os.path.exists(original):
                 os.rename(original, renamed)
+            else:
+                # no spooling, create file manually and remove the SQcl clutter
+                with open(renamed, 'wt', encoding = 'utf-8', newline = '\n') as w:
+                    output = output.splitlines()
+                    print(output)
+                    if output[0].startswith('SQLcl') and output[2].startswith('Copyright') and output[4].startswith('Connected'):
+                        output = output[5:]
+                    size = len(output)
+                    if output[size - 2].startswith('Disconnected') and output[size - 1].startswith('Version'):
+                        size -= 2
+                        output = output[:size]
+                    output = '\n'.join(output).replace('---\n', '--\n')
+                    w.write(output)
 
             # show progress
             util.print_table([results], columns = map, right_align = ['order', 'output', 'timer'], no_header = True)

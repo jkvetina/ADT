@@ -103,7 +103,7 @@ class Deploy(config.Config):
 
             # cleanup the script from comments, fix prompts
             payload = []
-            with open(full, 'rt') as f:
+            with open(full, 'rt', encoding = 'utf-8') as f:
                 for line in f.readlines():
                     line = line.strip()
                     if line.startswith('--') or line == '':
@@ -319,7 +319,7 @@ class Deploy(config.Config):
 
     def get_file_references(self, file):
         files = []
-        with open(file, 'rt') as f:
+        with open(file, 'rt', encoding = 'utf-8') as f:
             for line in f.readlines():
                 if line.startswith('@'):
                     if '"' in line:
@@ -333,7 +333,7 @@ class Deploy(config.Config):
 
     def get_file_commits(self, file):
         commits = []
-        with open(file, 'rt') as f:
+        with open(file, 'rt', encoding = 'utf-8') as f:
             extracting = False
             for line in f.readlines():
                 if line.startswith('-- COMMITS:'):      # find start of commits

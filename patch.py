@@ -750,7 +750,7 @@ class Patch(config.Config):
 
         # get real file content, not the git
         if (live or self.config.patch_template_dir in target_file):
-            with open(file, 'rt') as f:
+            with open(file, 'rt', encoding = 'utf-8') as f:
                 file_content = f.read()
 
         # shorten target folder for template files
@@ -784,7 +784,7 @@ class Patch(config.Config):
         target_folder = os.path.dirname(target_file)
         if not os.path.exists(target_folder):
             os.makedirs(target_folder)
-        with open(target_file, 'wt', encoding = 'utf-8') as w:
+        with open(target_file, 'wt', encoding = 'utf-8', newline = '\n') as w:
             w.write(file_content)
         #
         return target_file

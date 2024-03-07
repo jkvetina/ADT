@@ -126,6 +126,7 @@ class Config(util.Attributed):
             group = parser.add_argument_group('ADJUST SCREEN OUTPUT')
             group.add_argument('-verbose',      help = 'Show more details',                         type = util.is_boolean, nargs = '?', const = True,  default = False)
             group.add_argument('-debug',        help = 'Show even more details and exceptions',     type = util.is_boolean, nargs = '?', const = True,  default = False)
+            group.add_argument('-go',           help = 'When you need to run without args',         type = util.is_boolean, nargs = '?', const = True,  default = False)
 
         # check if any arguments were provided
         if len(sys.argv) == 1:

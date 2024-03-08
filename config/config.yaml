@@ -13,8 +13,8 @@ today_deploy            : '%Y-%m-%d %H-%M'  # used in deployment logs
 #
 # BASIC PATHS
 #
-path_objects            : 'database/'       # database objects
-path_apex               : 'apex/'           # APEX files
+path_objects            : 'database/'       # folder with database objects
+path_apex               : 'apex/'           # folder with APEX related files
 
 default_schema          : ''
 default_env             : DEV
@@ -44,30 +44,32 @@ object_types:
 #
 # PATCH
 #
-patch_root              : 'patch/'
-patch_archive           : 'patch_archive/'
-patch_template_dir      : 'config/patch_template/'
-patch_template_snap     : 'patch_template/'
-patch_scripts_dir       : 'patch_scripts/{$PATCH_CODE}/'
-patch_scripts_snap      : 'patch_scripts/'
-patch_grants            : 'grants/{$INFO_SCHEMA}.sql'
-patch_file_link         : '@"./{$FILE}"'
+patch_root              : 'patch/'                          # folder with live patches
+patch_archive           : 'patch_archive/'                  # folder with archived patches
+patch_template_dir      : 'config/patch_template/'          # source folder for all patches
+patch_template_snap     : 'patch_template/'                 # folder name inside of your patch folder
+patch_scripts_dir       : 'patch_scripts/{$PATCH_CODE}/'    # source folder for specific patch
+patch_scripts_snap      : 'patch_scripts/'                  # folder name inside of your patch folder
+patch_grants            : 'grants/{$INFO_SCHEMA}.sql'       # location of your grants file
+patch_file_link         : '@"./{$FILE}"'                    # file line in patch file
 patch_folder            : '{$INFO_SCHEMA}{$TODAY_PATCH}-{$PATCH_SEQ}-{$PATCH_CODE}'
-patch_folder_day        : '^([^-]+)'
-patch_folder_cod        : '[-](.*)$'
-patch_folder_seq        : '[-](.*)[-]'
-patch_add_scripts       : True
-patch_add_templates     : True
-patch_spooling          : True
+patch_folder_day        : '^([^-]+)'                        # to extract day from patch_folder
+patch_folder_cod        : '[-](.*)$'                        # to extract patch_code from patch_folder
+patch_folder_seq        : '[-](.*)[-]'                      # to extract patch_seq from patch_folder
+patch_add_templates     : True                              # process templates
+patch_add_scripts       : True                              # process scripts
+patch_spooling          : True                              # to SPOOL into file or not
+patch_postfix_before    : '_before'                         # for templates and scripts
+patch_postfix_after     : '_after'                          # for templates and scripts
 
-# patch map to create patch files in this order
+# patch map to create patch files in this very order
 # and to add files from templates at before/after points
 # and to add scripts (manual interventions) at specific points
 patch_map:
     sequences:
         - SEQUENCE
-    tables:
-        - TABLE
+    tables:             # group name
+        - TABLE         # object type, order is important
     types:
         - TYPE
         - TYPE BODY

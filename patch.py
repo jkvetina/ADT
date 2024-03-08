@@ -68,8 +68,8 @@ class Patch(config.Config):
         self.head_commit        = None
         self.first_commit       = None
         self.last_commit        = None
-        self.postfix_before     = '_before'
-        self.postfix_after      = '_after'
+        self.postfix_before     = self.config.patch_postfix_before or '_before'
+        self.postfix_after      = self.config.patch_postfix_after  or '_after'
 
         # set current commit to the head and search through recent commits
         self.current_commit_obj = self.repo.commit('HEAD')

@@ -31,7 +31,7 @@ Checkout the [install guide](./doc/install.md) and <ins>quick start guide</ins>.
 
 &nbsp;
 
-## Main features
+## Main features (also a Roadmap)
 
 - ✅ it can __connect to on-premise and cloud__ Oracle databases
 - ⭕️ it can __export database objects__
@@ -85,23 +85,23 @@ Checkout the [install guide](./doc/install.md) and <ins>quick start guide</ins>.
     - if you are into documenting things, you will love this folder
 - `database_{$info_schema}/{$object_type}/` for database objects
 - `database_{$info_schema}/data/` for exported data
+- `database_{$info_schema}/unit_tests/` for packages which are unit tests
 - `database/grants_made/{$info_schema}.sql`
 - `database/grants_received/{$info_schema}.sql`
     - made and received grants for each schema involved
-- `apex_{$app_ws}_{$app_schema}/{$app_id}_{$app_alias}/`
+- `apex/{$app_ws}/{$app_group}/{$app_owner}/{$app_id}_{$app_alias}/`
     - for APEX app and related objects
-    - optional workspace and app alias or group in the path
-    - schema can be also pulled from config
-- `apex_{$app_ws}_{$app_schema}/rest/`
+    - optional workspace, application group, owner and app alias in the path
+    - you don't have to use all of these variables
+- `apex/{$app_ws}/rest/`
     - with folders and files
-- `apex_{$app_ws}/workspace_files/`
-- `patch/{$info_env}/{$date_today}_{$patch_code}_{$info_schema|$app_schema}/` to store files snapshot
-- `patch/{$info_env}/{$date_today}_{$patch_code}_{$info_schema|$app_schema}.sql` for generated patch script
-- `patch_logs/{$info_env}/compare{$date_time}_{$source_env}.log`
-    - changed objects, APEX components, timings...
-- `patch_archive/{$info_env}/` for old patches
-- `patch_template/{$info_env}_{$info_schema|$app_schema}/` for patch templates
-- `scripts/`
+- `apex/{$app_ws}/workspace_files/`
+- `patch/{$date_today}.{$sequence}.{$patch_code}/` for generated patch files
+- `patch/{$date_today}.{$sequence}.{$patch_code}/LOGS_{$info_env}/` for deployment logs
+- `patch_archive/` for old patches (use `deploy.py -archive`)
+- `patch_template/` for patch templates (appended to all patches)
+- `patch_scripts/{$patch_code}/` for patch scripts (appended to just for specific patch)
+- `scripts/` for your scripts, snippets, tests...
 
 &nbsp;
 

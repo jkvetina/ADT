@@ -40,7 +40,10 @@ class Recompile(config.Config):
         self.conn = self.db_connect(ping_sqlcl = False)
 
         # show objects overview
-        print('RECOMPILING')
+        if self.args.verbose:
+            util.print_header('RECOMPILING:')
+        else:
+            print('\nRECOMPILING')
         #
         objects = {}
         args = {
@@ -66,7 +69,7 @@ class Recompile(config.Config):
                 objects[row.object_type][1] += 1
 
             # show progress
-            if self.debug:
+            if self.args.verbose:
                 print('  - {}'.format(row.object_name))
             else:
                 progress_done = util.print_progress(progress_done, progress_target)
@@ -77,7 +80,7 @@ class Recompile(config.Config):
             except Exception:
                 troublemakers.append(row)
         #
-        if not self.debug:
+        if not self.args.verbose:
             print()
         print()
 

@@ -1,6 +1,17 @@
 #
 # DATES
 #
+default_env             : DEV
+default_schema          : ''
+default_workspace       : ''
+default_apps            : []
+default_app_group       : ''
+
+
+
+#
+# DATES
+#
 today                   : '%Y-%m-%d'        # YYYY-MM-DD
 today_full              : '%Y-%m-%d %H:%M'  # YYYY-MM-DD HH24:MI
 today_full_raw          : '%Y%m%d%H%M00'
@@ -15,9 +26,6 @@ today_deploy            : '%Y-%m-%d %H-%M'  # used in deployment logs
 #
 path_objects            : 'database/'       # folder with database objects
 path_apex               : 'apex/'           # folder with APEX related files
-
-default_schema          : ''
-default_env             : DEV
 
 # target folders by object types
 object_types:
@@ -126,6 +134,12 @@ apex_schema         : '{$INFO_SCHEMA}'
 apex_workspace      : '{$INFO_SCHEMA}'
 apex_version        : '{$TODAY} {$PATCH_CODE}'
 replace_audit       : True
+
+apex_path_files     : 'files/'
+apex_path_files_ws  : 'workspace_files/'
+apex_path_rest      : 'rest/'
+
+apex_yaml_file      : 'config/apex.{$APP_WS}.yaml'
 
 # these files will not be in the patch even if they change
 apex_files_ignore:

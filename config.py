@@ -391,11 +391,11 @@ class Config(util.Attributed):
         print('{}\n'.format(file))
 
         # store connection parameters in the yaml file
-        with open(file, 'wt', encoding = 'utf-8', newline = '\n') as f:
+        with open(file, 'wt', encoding = 'utf-8', newline = '\n') as w:
             # convert dict to yaml string
             payload = yaml.dump(connections, allow_unicode = True, default_flow_style = False, indent = 4) + '\n'
             payload = util.fix_yaml(payload)
-            f.write(payload)
+            w.write(payload)
 
 
 

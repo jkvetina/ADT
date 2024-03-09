@@ -66,7 +66,6 @@ def parse_table(payload):
     pointers    = []
     start       = 0
     columns     = payload[1].split()
-    data        = []
 
     # parse column sizes based on second line
     for i, val in enumerate(columns):
@@ -77,16 +76,17 @@ def parse_table(payload):
         start += len(val) + 1
 
     # parse column names
-    columns = parse_table_line(payload[0].lower(), pointers)
+    names = parse_table_line(payload[0].lower(), pointers)
 
     # parse data
+    data = []
     for i, line in enumerate(payload):
         if i <= 1:
             continue
         if line.strip() == '':
             break
         #
-        data.append(dict(zip(columns, parse_table_line(line, pointers))))
+        data.append(dict(zip(names, parse_table_line(line, pointers))))
     return data
 
 

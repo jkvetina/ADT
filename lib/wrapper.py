@@ -255,10 +255,10 @@ class Oracle:
         self.curs = self.conn.cursor()
         if limit > 0:
             self.curs.arraysize = limit
-            data = self.curs.execute(query.strip(), **binds).fetchmany(limit)
+            data = self.curs.execute(query.strip(), **self.get_binds(query, binds)).fetchmany(limit)
         else:
             self.curs.arraysize = 5000
-            data = self.curs.execute(query.strip(), **binds).fetchall()
+            data = self.curs.execute(query.strip(), **self.get_binds(query, binds)).fetchall()
         #
         self.cols = [row[0].lower() for row in self.curs.description]
         self.desc = {}
@@ -277,9 +277,19 @@ class Oracle:
 
 
 
+    def get_binds(self, query, binds):
+        # remove passed arguments which are not in the query
+        pass_binds = {}
+        for key, value in binds.items():
+            if ':{}'.format(key) in query:
+                pass_binds[key] = value
+        return pass_binds
+
+
+
     def fetch_assoc(self, query, limit = 0, **binds):
         self.curs = self.conn.cursor()
-        h = self.curs.execute(query.strip(), **binds)
+        h = self.curs.execute(query.strip(), **self.get_binds(query, binds))
         self.cols = [row[0].lower() for row in self.curs.description]
         self.desc = {}
         for row in self.curs.description:
@@ -299,7 +309,7 @@ class Oracle:
     def fetch_value(self, query, **binds):
         self.curs = self.conn.cursor()
         self.curs.arraysize = 1
-        data = self.curs.execute(query.strip(), **binds).fetchmany(1)
+        data = self.curs.execute(query.strip(), **self.get_binds(query, binds)).fetchmany(1)
         #
         self.cols = [row[0].lower() for row in self.curs.description]
         self.desc = {}
@@ -314,13 +324,13 @@ class Oracle:
 
     def execute(self, query, **binds):
         self.curs = self.conn.cursor()
-        return self.curs.execute(query.strip(), **binds)
+        return self.curs.execute(query.strip(), **self.get_binds(query, binds))
 
 
 
     def executemany(self, query, **binds):
         self.curs = self.conn.cursor()
-        return self.curs.executemany(query.strip(), **binds)
+        return self.curs.executemany(query.strip(), **self.get_binds(query, binds))
 
 
 

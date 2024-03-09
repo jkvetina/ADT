@@ -161,7 +161,7 @@ def get_yaml(h, file = ''):
 def print_header(message, append = ''):
     if append == None:
         append = ''
-    print('\n{}{}\n{}'.format(message, (' ' + append).rstrip(), '-' * len(message)))
+    print('\n{}{}\n{}'.format(message, (' ' + str(append)).rstrip(), '-' * len(message)))
 
 
 
@@ -330,15 +330,13 @@ def print_progress(done, target = 100):
 
 
 
-def print_program_help(parser):
-    program = os.path.basename(sys.argv[0]).split('.')[0]
-    print_header('APEX DEPLOYMENT TOOL: {}'.format(program.upper()))
+def print_program_help(parser, program):
     print()
     parser.print_help(sys.stderr)
     print()
     print_header('FOR DOCUMENTATION AND EXAMPLES VISIT:')
     print('https://github.com/jkvetina/ADT/blob/main/doc/{}.md'.format(program))
-    print('\n')
+    print()
     sys.exit()
 
 

@@ -118,11 +118,15 @@ class Config(util.Attributed):
 
 
     def __init__(self, parser):
-        self.is_curr_class  = os.path.basename(sys.argv[0]).split('.')[0] == self.__class__.__name__.lower()
+        self.program        = os.path.basename(sys.argv[0]).split('.')[0]
+        self.is_curr_class  = self.program == self.__class__.__name__.lower()
         self.start_timer    = timeit.default_timer() if self.is_curr_class else None
 
-        # add global args
+        # if we are running the main program
         if self.is_curr_class:
+            util.print_header('APEX DEPLOYMENT TOOL: {}'.format(self.program.upper()))
+
+            # add global args
             group = parser.add_argument_group('ADJUST SCREEN OUTPUT')
             group.add_argument('-verbose',      help = 'Show more details',                         type = util.is_boolean, nargs = '?', const = True,  default = False)
             group.add_argument('-debug',        help = 'Show even more details and exceptions',     type = util.is_boolean, nargs = '?', const = True,  default = False)
@@ -131,7 +135,7 @@ class Config(util.Attributed):
         # check if any arguments were provided
         if len(sys.argv) == 1:
             self.is_curr_class = False
-            util.print_program_help(parser)
+            util.print_program_help(parser, program = self.program)
 
         # parse arguments from command line
         self.args = vars(parser.parse_args())

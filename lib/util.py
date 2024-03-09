@@ -53,6 +53,44 @@ def extract_int(regexp_search, text, group = 1):
 
 
 
+def parse_table_line(line, pointers):
+    data = []
+    for col in pointers:
+        start, end = col
+        data.append(line[start:end].strip())
+    return data
+
+
+
+def parse_table(payload):
+    pointers    = []
+    start       = 0
+    columns     = payload[1].split()
+    data        = []
+
+    # parse column sizes based on second line
+    for i, val in enumerate(columns):
+        end = start + len(val)
+        if i == len(columns) - 1:
+            end = 1000
+        pointers.append((start, end))
+        start += len(val) + 1
+
+    # parse column names
+    columns = parse_table_line(payload[0].lower(), pointers)
+
+    # parse data
+    for i, line in enumerate(payload):
+        if i <= 1:
+            continue
+        if line.strip() == '':
+            break
+        #
+        data.append(dict(zip(columns, parse_table_line(line, pointers))))
+    return data
+
+
+
 def get_files(glob_pattern, reverse = False):
     files = list(sorted(glob.glob(glob_pattern), reverse = reverse))
     for i, file in enumerate(files):

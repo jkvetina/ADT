@@ -115,17 +115,23 @@ class Patch(config.Config):
                     'result'        : info['result'],
                 })
 
-        # check patch code
-        if self.patch_code == None or len(self.patch_code) == 0:
+        # show recent patches
+        if self.patch_code == None and self.args.patches > 0:
             util.print_header('EXISTING PATCHES:')
-            util.print_table(existing_patches)
-            #
+            util.print_table(existing_patches, limit_bottom = self.args.patches)
+
+        # show recent commits
+        if self.args.commits > 0:
+            self.get_recent_commits()
+            self.show_recent_commits()
+
+        if self.patch_code == None:
             util.assert_(self.patch_code, 'MISSING ARGUMENT: PATCH CODE')
 
         # create patch
         if self.patch_code != None and len(self.patch_code) > 0:
             # get through commits for specific patch name/code
-            self.get_patch_commits()
+            self.get_matching_commits()
             #
             if self.patch_seq != '':
                 # create patch for requested name and seq
@@ -133,9 +139,9 @@ class Patch(config.Config):
             else:
                 # show recent commits for selected patch
                 # show more details if we have them
-                self.show_recent_commits()
+                self.show_matching_commits()
                 #
-                util.print_header('EXISTING PATCHES:')
+                util.print_header('RECENT PATCHES:')
                 util.print_table(existing_patches)
 
                 # show help for processing specific commits
@@ -239,7 +245,7 @@ class Patch(config.Config):
 
 
 
-    def get_patch_commits(self):
+    def get_matching_commits(self):
         # loop through all recent commits
         print('\nSEARCHING REPO:')
         progress_target = self.search_depth
@@ -273,7 +279,7 @@ class Patch(config.Config):
                     continue
 
             # skip non relevant commits
-            if self.search_message != '':
+            if self.search_message != []:
                 found_match = False
                 for word in [word for word in self.search_message if word is not None]:
                     if word in commit.summary:
@@ -314,7 +320,7 @@ class Patch(config.Config):
         # check number of commits
         if len(self.relevant_commits.keys()) == 0:
             util.raise_error('NO COMMITS FOUND',
-                'please adjust your parameters')
+                'please adjust your input parameters')
 
         # get last version (max) and version before first change (min)
         self.first_commit   = min(self.relevant_commits) - 1
@@ -328,7 +334,7 @@ class Patch(config.Config):
 
 
 
-    def show_recent_commits(self):
+    def show_matching_commits(self):
         # pivot commits
         commits_map = {}
         for ref in sorted(self.available_ref.keys()):
@@ -348,8 +354,32 @@ class Patch(config.Config):
                 'patch_ref'     : commits_map.get(commit, ''),
             })
         #
-        util.print_header('{} COMMITS FOR "{}":'.format(header, ' '.join(self.search_message)), depth)
+        if self.search_message != None and self.search_message != [None]:
+            util.print_header('{} COMMITS FOR "{}":'.format(header, ' '.join(self.search_message or [])), depth)
+        else:
+            util.print_header('RECENT COMMITS:')
         util.print_table(data)
+
+
+
+    def get_recent_commits(self):
+        # loop through all recent commits
+        for commit in list(self.repo.iter_commits(self.info.branch, max_count = self.search_depth, skip = 0)):
+            self.all_commits[commit.count()] = commit
+
+
+
+    def show_recent_commits(self):
+        data = []
+        for commit in sorted(self.all_commits.keys(), reverse = True):
+            summary = self.all_commits[commit].summary
+            data.append({
+                'commit'        : commit,
+                'summary'       : (summary[:50] + '..') if len(summary) > 50 else summary,
+            })
+        #
+        util.print_header('RECENT COMMITS:')
+        util.print_table(data, limit_top = self.args.commits)
 
 
 
@@ -908,6 +938,8 @@ if __name__ == "__main__":
 
     # actions and flags
     group = parser.add_argument_group('MAIN ACTIONS')
+    group.add_argument('-commits',      help = 'To show number of recent commits',          type = int,             nargs = '?',                default = 0)
+    group.add_argument('-patches',      help = 'To show number of recent patches',          type = int,             nargs = '?',                default = 0)
     group.add_argument('-patch',        help = 'Patch code (name for the patch files)')
     group.add_argument('-seq',          help = 'Sequence in patch folder, {$PATCH_SEQ}')
     group.add_argument('-fetch',        help = 'Fetch Git changes before patching',                                 nargs = '?', const = True,  default = False)

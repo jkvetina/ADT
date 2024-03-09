@@ -41,7 +41,7 @@ class Patch(config.Config):
         util.assert_(self.args.target, 'MISSING ARGUMENT: TARGET ENV')
         #
         self.patch_code         = self.args.patch
-        self.patch_seq          = (self.args.create or '-') if hasattr(self.args, 'create') else ''
+        self.patch_seq          = (self.args.create or '-') if hasattr(self.args, 'create') and self.args.create != None else ''
         self.search_message     = self.args.search or [self.patch_code]
         self.info.branch        = self.args.branch or self.config.repo_branch or self.info.branch or self.repo.active_branch
         self.add_commits        = self.args.add
@@ -141,8 +141,9 @@ class Patch(config.Config):
                 # show more details if we have them
                 self.show_matching_commits()
                 #
-                util.print_header('RECENT PATCHES:')
-                util.print_table(existing_patches)
+                if len(existing_patches) > 0:
+                    util.print_header('RECENT PATCHES:')
+                    util.print_table(existing_patches)
 
                 # show help for processing specific commits
                 if self.patch_seq == '':

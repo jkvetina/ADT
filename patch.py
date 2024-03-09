@@ -41,7 +41,7 @@ class Patch(config.Config):
         util.assert_(self.args.target, 'MISSING ARGUMENT: TARGET ENV')
         #
         self.patch_code         = self.args.patch
-        self.patch_seq          = self.args.seq or ''
+        self.patch_seq          = (self.args.create or '-') if hasattr(self.args, 'create') else ''
         self.search_message     = self.args.search or [self.patch_code]
         self.info.branch        = self.args.branch or self.config.repo_branch or self.info.branch or self.repo.active_branch
         self.add_commits        = self.args.add
@@ -167,8 +167,9 @@ class Patch(config.Config):
                     except:
                         next = '1'
                     #
-                    util.print_header('FOR NEW PATCH SPECIFY SEQUENCE:', next)
-                    util.print_help('add -seq #     to actually create a new patch files')
+                    util.print_header('TO CREATE PATCH SPECIFY SEQUENCE:', next)
+                    util.print_help('add -create #  to create patch with specified sequence')
+                    util.print_help('add -create    to create patch without sequence')
                     print()
 
 
@@ -241,7 +242,7 @@ class Patch(config.Config):
         # check clash on patch sequence
         if self.patch_current['patch_code'] != self.patch_code and self.patch_current['seq'] in self.patch_sequences:
             util.raise_error('CLASH ON PATCH SEQUENCE',
-                'you should select a different -seq #')
+                'you should select a different create sequence')
 
 
 
@@ -343,7 +344,7 @@ class Patch(config.Config):
 
         # show relevant recent commits
         depth   = 'DEPTH: {}/{}'.format(self.head_commit - self.first_commit + 1, self.search_depth) if self.args.get('depth') else ''
-        header  = 'REQUESTED' if (self.args.add != [] or self.args.ignore != []) else 'RECENT'
+        header  = 'REQUESTED' if (self.args.add != [] or self.args.ignore != []) else 'RELEVANT'
         data    = []
         #
         for commit in sorted(self.relevant_commits.keys(), reverse = True):
@@ -948,7 +949,7 @@ if __name__ == "__main__":
     group.add_argument('-my',           help = 'Show only my commits',                                              nargs = '?', const = True,  default = False)
     group.add_argument('-patches',      help = 'To show number of recent patches',          type = int,             nargs = '?',                default = 0)
     group.add_argument('-patch',        help = 'Patch code (name for the patch files)')
-    group.add_argument('-seq',          help = 'Sequence in patch folder, {$PATCH_SEQ}')
+    group.add_argument('-create',       help = 'To create patch with or without sequence',                          nargs = '?',                default = None)
     group.add_argument('-fetch',        help = 'Fetch Git changes before patching',                                 nargs = '?', const = True,  default = False)
     group.add_argument('-archive',      help = 'To archive patches with specific ref #',    type = int,             nargs = '*',                default = [])
     #

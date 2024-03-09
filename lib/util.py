@@ -353,6 +353,14 @@ def is_boolean(v):
 
 
 
+def is_boolstr(v):
+    # to allow argparse evaluate to True, False or passed string value
+    if v == None:
+        return False
+    return v
+
+
+
 def quit(message = ''):
     if message != None and len(str(message)) > 0:
         print(message)

@@ -41,7 +41,7 @@ class Patch(config.Config):
         util.assert_(self.args.target, 'MISSING ARGUMENT: TARGET ENV')
         #
         self.patch_code         = self.args.patch
-        self.patch_seq          = (self.args.create or '-') if hasattr(self.args, 'create') and self.args.create != None else ''
+        self.patch_seq          = self.args.create if isinstance(self.args.create, str) else ('-' if self.args.create else '')
         self.search_message     = self.args.search or [self.patch_code]
         self.info.branch        = self.args.branch or self.config.repo_branch or self.info.branch or self.repo.active_branch
         self.add_commits        = self.args.add
@@ -950,7 +950,7 @@ if __name__ == "__main__":
     group.add_argument('-my',           help = 'Show only my commits',                                              nargs = '?', const = True,  default = False)
     group.add_argument('-patches',      help = 'To show number of recent patches',          type = int,             nargs = '?',                default = 0)
     group.add_argument('-patch',        help = 'Patch code (name for the patch files)')
-    group.add_argument('-create',       help = 'To create patch with or without sequence',                          nargs = '?',                default = None)
+    group.add_argument('-create',       help = 'To create patch with or without sequence',  type = util.is_boolstr, nargs = '?', const = True,  default = False)
     group.add_argument('-fetch',        help = 'Fetch Git changes before patching',                                 nargs = '?', const = True,  default = False)
     group.add_argument('-archive',      help = 'To archive patches with specific ref #',    type = int,             nargs = '*',                default = [])
     #

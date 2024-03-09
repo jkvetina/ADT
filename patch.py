@@ -364,8 +364,14 @@ class Patch(config.Config):
 
     def get_recent_commits(self):
         # loop through all recent commits
+        found = 0
         for commit in list(self.repo.iter_commits(self.info.branch, max_count = self.search_depth, skip = 0)):
+            if self.args.my and self.repo_user_mail != commit.author.email:
+                continue
             self.all_commits[commit.count()] = commit
+            found += 1
+            if (found == self.args.commits or self.args.commits == 0):
+                break;
 
 
 
@@ -939,6 +945,7 @@ if __name__ == "__main__":
     # actions and flags
     group = parser.add_argument_group('MAIN ACTIONS')
     group.add_argument('-commits',      help = 'To show number of recent commits',          type = int,             nargs = '?',                default = 0)
+    group.add_argument('-my',           help = 'Show only my commits',                                              nargs = '?', const = True,  default = False)
     group.add_argument('-patches',      help = 'To show number of recent patches',          type = int,             nargs = '?',                default = 0)
     group.add_argument('-patch',        help = 'Patch code (name for the patch files)')
     group.add_argument('-seq',          help = 'Sequence in patch folder, {$PATCH_SEQ}')

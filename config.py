@@ -596,9 +596,6 @@ class Config(util.Attributed):
 
 
 
-    def replace_dict(self, payload, translation):
-        regex = re.compile('|'.join(map(re.escape, translation)))
-        return regex.sub(lambda match: translation[match.group(0)], payload)
 
 
 

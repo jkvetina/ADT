@@ -28,6 +28,15 @@ def replace(subject, pattern, replacement, flags = 0):
 
 
 
+def replace_dict(subject, translations):
+    for key, value in translations.items():
+        subject = subject.replace(key, str(value))
+    #regex = re.compile('|'.join(map(re.escape, translations)))
+    #return regex.sub(lambda match: translations[match.group(0)], subject)
+    return subject
+
+
+
 def extract(regexp_search, text, group = 1):
     if regexp_search == '':
         return ''

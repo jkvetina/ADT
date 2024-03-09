@@ -73,6 +73,34 @@ class Export_APEX(config.Config):
     def show_ws_apps(self):
         self.get_applications()
 
+        if self.arg_recent:
+            today = str(datetime.datetime.today() - datetime.timedelta(days = self.arg_recent - 1))[0:10]
+            #
+            for app_id in sorted(self.apex_apps.keys()):
+                alias = self.apex_apps[app_id]['app_alias']
+                util.print_header('APP {}/{}, CHANGES SINCE {}'.format(app_id, alias, today))
+                #
+                transl = {
+                    '{app_id}'          : app_id,
+                    '{since}'           : today,
+                    '{format_json}'     : ',READABLE_JSON',
+                    '{format_yaml}'     : ',READABLE_YAML',
+                    '{embedded}'        : ',EMBEDDED_CODE',
+                }
+                request = 'SET LINESIZE 200;\napex export -applicationid {app_id} -list -changesSince {since};\n'
+                request = util.replace_dict(request, transl)
+                output  = self.conn.sqlcl_request(request)
+                #
+                data = util.parse_table(output.splitlines()[5:])
+                for i, row in enumerate(data):
+                    if row['id'].startswith('PAGE:'):
+                        page_id = row['id'].replace('PAGE:', '')
+                        data[i]['name'] = data[i]['name'].replace('{}. '.format(page_id), '')
+                    else:
+                        data[i]['id']   = data[i]['id'].split(':')[0]
+                #
+                util.print_table(data)
+
 
 
     def get_applications(self):
@@ -130,7 +158,7 @@ if __name__ == "__main__":
     group.add_argument('-ws',           help = '',                         nargs = '?')
     group.add_argument('-group',        help = '',                         nargs = '?')
     group.add_argument('-app',          help = '',                         type = int, nargs = '*', default = [])
-    group.add_argument('-recent',       help = '',                         type = int, nargs = '?')
+    group.add_argument('-recent',       help = '',                         type = int, nargs = '?', default = 1)
     #
     Export_APEX(parser)
 

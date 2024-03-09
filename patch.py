@@ -94,13 +94,13 @@ class Patch(config.Config):
             util.quit()
 
         # create patch
-        if self.patch_code != None and len(self.patch_code) > 0 and self.patch_seq == '':
-            util.print_header('BUILDING PATCH FOR: {}'.format(self.patch_code))
-            util.print_help('use -search    to adjust the matched commits')
-            util.print_help('use -depth     to adjust the number of recent commits searched')
-            util.print_help('use -add #     to limit which commits will be processed')
-            util.print_help('use -ignore #  to limit which commits will not be processed')
-            print()
+        #if self.patch_code != None and len(self.patch_code) > 0 and self.patch_seq == '':
+        #    util.print_header('BUILDING PATCH FOR: {}'.format(self.patch_code))
+        #    util.print_help('use -search    to adjust the matched commits')
+        #    util.print_help('use -depth     to adjust the number of recent commits searched')
+        #    util.print_help('use -add #     to limit which commits will be processed')
+        #    util.print_help('use -ignore #  to limit which commits will not be processed')
+        #    print()
 
         # show matching patches
         existing_patches = []

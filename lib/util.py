@@ -170,7 +170,7 @@ def print_help(message):
 
 
 
-def print_table(data, columns = [], right_align = [], spacer = 3, start = 2, no_header = False, capture = False):
+def print_table(data, columns = [], right_align = [], spacer = 3, start = 2, no_header = False, capture = False, limit_top = None, limit_bottom = None):
     if capture:
         buffer = io.StringIO()
         sys.stdout = buffer
@@ -247,8 +247,14 @@ def print_table(data, columns = [], right_align = [], spacer = 3, start = 2, no_
         print(pattern.format(*columns).upper().replace('_', ' '))
         print(pattern.format(*splitter))
     #
-    if len(data) > 0:
+    total_rows = len(data)
+    if total_rows > 0:
         for i, row in enumerate(data):
+            if limit_bottom != None and i < total_rows - limit_bottom:
+                continue
+            if limit_top != None and i >= limit_top:
+                break
+            #
             args = []
             for name in columns:
                 args.append(row.get(name.lower(), '') or '')

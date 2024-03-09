@@ -37,6 +37,10 @@ class Recompile(config.Config):
         super().__init__(parser)
 
         # connect to the database
+        util.assert_(self.args.target, 'MISSING ARGUMENT: TARGET ENV')
+        #
+        self.init_connection(env_name = self.args.target)
+        #
         self.conn = self.db_connect(ping_sqlcl = False)
 
         # show objects overview
@@ -176,9 +180,9 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(add_help = False)
     #
     group = parser.add_argument_group('SPECIFY ENVIRONMENT DETAILS')
-    group.add_argument('-env',          help = 'Target environment',                                                nargs = '?')
-    group.add_argument('-key',          help = 'Key or key location for passwords',                                 nargs = '?')
+    group.add_argument('-target',       help = 'Target environment',                                                nargs = '?')
     group.add_argument('-schema',       help = 'Schema/connection name',                                            nargs = '?')
+    group.add_argument('-key',          help = 'Key or key location for passwords',                                 nargs = '?')
 
     # limit scope by object type and name (prefix)
     group = parser.add_argument_group('LIMIT SCOPE')

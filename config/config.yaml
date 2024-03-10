@@ -128,6 +128,14 @@ repo_branch         : dev
 
 
 #
+# GIT REPOSITORY
+#
+sqlcl_root          : './temp.nosync/'
+sqlcl_temp_file     : 'sqlcl.tmp'
+
+
+
+#
 # APEX RELATED
 #
 apex_schema         : '{$INFO_SCHEMA}'

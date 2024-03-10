@@ -33,20 +33,15 @@ from lib import queries_wrapper as query
 
 class Oracle:
 
-    # temp file for Windows
-    sqlcl_root      = './'
-    sqlcl_temp_file = 'sqlcl.tmp'
-
-
-
-    def __init__(self, tns, debug = False, ping_sqlcl = False, silent = False):
-        self.conn   = None    # recent connection link
-        self.curs   = None    # recent cursor
-        self.cols   = []      # recent columns mapping (name to position) to avoid associative arrays
-        self.desc   = {}      # recent columns description (name, type, display_size, internal_size, precision, scale, null_ok)
-        self.silent = silent
-        self.tns    = {
-          'lang'    : '.AL32UTF8',
+    def __init__(self, tns, config = {}, debug = False, ping_sqlcl = False, silent = False):
+        self.conn       = None    # recent connection link
+        self.curs       = None    # recent cursor
+        self.cols       = []      # recent columns mapping (name to position) to avoid associative arrays
+        self.desc       = {}      # recent columns description (name, type, display_size, internal_size, precision, scale, null_ok)
+        self.config     = config
+        self.silent     = silent
+        self.tns        = {
+            'lang'      : '.AL32UTF8',
         }
         if not isinstance(tns, dict):
             util.raise_error('DB_CONNECT EXPECTS DICTIONARY')
@@ -209,13 +204,14 @@ class Oracle:
             ])
 
         # prepare process for normal platforms
+        root    = os.path.abspath(self.config.sqlcl_root)
         request = '{}\n{}\nexit;\n'.format(request_conn, request)
         process = 'sql /nolog <<EOF\n{}EOF'.format(request)
 
         # for Windows we have to use the temp file
         if os.name == 'nt':
-            process     = 'sql /nolog @{}'.format(self.sqlcl_temp_file)
-            full_tmp    = os.path.abspath(self.sqlcl_root) + '/' + self.sqlcl_temp_file
+            process     = 'sql /nolog @{}'.format(self.config.sqlcl_temp_file)
+            full_tmp    = root + '/' + self.config.sqlcl_temp_file
             #
             with open(full_tmp, 'wt', encoding = 'utf-8', newline = '\n') as f:
                 f.write(request)
@@ -224,7 +220,7 @@ class Oracle:
 
         # run SQLcl and capture the output
         command = 'cd "{}"{}{}'.format(
-            os.path.abspath(self.sqlcl_root),
+            root,
             ' && ' if os.name == 'nt' else '; ',
             process
         )

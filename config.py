@@ -176,6 +176,11 @@ class Config(util.Attributed):
         self.info['schema'] = self.info.get('schema', '')   or self.config.get('default_schema')
         self.info['env']    = self.info.get('env', '')      or self.config.get('default_env')
 
+        # create temp folder
+        self.config.sqlcl_root = os.path.abspath(self.config.sqlcl_root)
+        if not os.path.exists(self.config.sqlcl_root):
+            os.makedirs(self.config.sqlcl_root)
+
         # connect to repo, we need valid repo for everything
         self.init_repo()
         if __name__ != "__main__":
@@ -430,7 +435,13 @@ class Config(util.Attributed):
 
 
     def db_connect(self, ping_sqlcl = False, silent = False):
-        return wrapper.Oracle(dict(self.connection), debug = self.debug, ping_sqlcl = ping_sqlcl, silent = silent)
+        return wrapper.Oracle(
+            tns         = dict(self.connection),
+            config      = self.config,
+            debug       = self.debug,
+            ping_sqlcl  = ping_sqlcl,
+            silent      = silent
+        )
 
 
 

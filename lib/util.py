@@ -29,6 +29,11 @@ def replace(subject, pattern, replacement, flags = 0):
 
 
 def replace_dict(subject, translations):
+    if isinstance(subject, dict):
+        for key, value in subject.items():
+            subject[key] = replace_dict(value, translations)
+        return subject
+    #
     for key, value in translations.items():
         subject = subject.replace(key, str(value))
     #regex = re.compile('|'.join(map(re.escape, translations)))

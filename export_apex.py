@@ -236,7 +236,8 @@ class Export_APEX(config.Config):
         request = util.replace_dict(request, util.replace_dict(self.transl, {'{$APP_ID}': app_id, '{$TODAY}': self.today}))
         output  = self.conn.sqlcl_request(request)
         timer   = int(round(timeit.default_timer() - start + 0.5, 0))
-        #
+
+        # cleanup target directory before moving new files there
         target_dir = self.get_root(app_id, 'application/')
         if os.path.exists(target_dir):
             shutil.rmtree(target_dir, ignore_errors = True, onerror = None)
@@ -281,13 +282,18 @@ class Export_APEX(config.Config):
     def export_files(self, app_id):
         start   = timeit.default_timer() if self.is_curr_class else None
         files   = self.conn.fetch_assoc(query.apex_files, app_id = app_id)
-        #
+
+        # get target folder
+        if app_id == 0:  # workspace files
+            target_dir = self.target_root + self.target_files_ws
+        else:
+            target_dir = self.get_root(app_id, self.target_files)
+
+        # delete targer folders first
+        shutil.rmtree(target_dir, ignore_errors = True, onerror = None)
+
+        # create files
         for row in files:
-            if app_id == 0:  # workspace files
-                target_dir = self.target_root + self.config.apex_path_files_ws
-            else:
-                target_dir = self.get_root(app_id, self.config.apex_path_files)
-            #
             file = target_dir + row.filename
             os.makedirs(os.path.dirname(file), exist_ok = True)
             #
@@ -317,6 +323,10 @@ class Export_APEX(config.Config):
             if '/readable/application/pages/p' in file:
                 target = file.replace('/pages/p', '/pages/page_')
 
+            # workspace files
+            if '/readable/workspace/' in file:
+                target = file.replace('/readable/', '/../')
+
             # move readable files close to original files
             if os.path.exists(file):
                 target = target.replace(source_dir, target_dir).replace('/readable/', '/')
@@ -327,7 +337,14 @@ class Export_APEX(config.Config):
         if os.path.exists(source_dir + 'readable/'):
             shutil.rmtree(source_dir + 'readable/', ignore_errors = True, onerror = None)
 
-        # move file
+        # move workspace files to workspace folder
+        for file in util.get_files(source_dir + 'workspace/**/*.*'):
+            target = file.replace('/f{}/workspace/'.format(app_id), '/workspace/')
+            os.makedirs(os.path.dirname(target), exist_ok = True)
+            os.rename(file, target)
+        shutil.rmtree(source_dir + 'workspace/', ignore_errors = True, onerror = None)
+
+        # move full export file
         source_file = '{}f{}.sql'.format(self.config.sqlcl_root, app_id)
         target_file = '{}f{}.sql'.format(self.get_root(app_id), app_id)
         #

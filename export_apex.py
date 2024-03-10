@@ -56,7 +56,7 @@ class Export_APEX(config.Config):
         # make sure we have the temp folder ready
         if os.path.exists(self.config.sqlcl_root):
             shutil.rmtree(self.config.sqlcl_root, ignore_errors = True, onerror = None)
-            os.makedirs(self.config.sqlcl_root)
+            os.makedirs(self.config.sqlcl_root, exist_ok = True)
 
         # for request replacements
         self.transl = {
@@ -90,8 +90,7 @@ class Export_APEX(config.Config):
             # create folders
             for dir in ['', self.target_rest, self.target_files, self.target_files_ws]:
                 dir = os.path.dirname(self.get_root(app_id, dir))
-                if not os.path.exists(dir):
-                    os.makedirs(dir)
+                os.makedirs(dir, exist_ok = True)
 
             # show recent changes
             if self.config.apex_show_recent and self.arg_recent > 0:
@@ -100,23 +99,23 @@ class Export_APEX(config.Config):
 
             # export changed objects only
             if (self.config.apex_export_changed or self.args.changed) and self.arg_recent > 0:
-                self.get_export_changed(app_id)
+                self.export_changed(app_id)
 
             # full export
             if self.config.apex_export_full and not self.args.nofull:
-                self.get_export_full(app_id)
+                self.export_full(app_id)
 
             # split export
             if self.config.apex_export_split and not self.args.nosplit:
-                self.get_export_split(app_id)
+                self.export_split(app_id)
 
             # export embedded code report
             if (self.config.apex_embedded or self.args.embedded):
-                self.get_export_embedded(app_id)
+                self.export_embedded(app_id)
 
             # export REST services
             if (self.config.apex_export_rest or self.args.rest):
-                self.get_export_rest(app_id)
+                self.export_rest(app_id)
 
 
 
@@ -191,7 +190,7 @@ class Export_APEX(config.Config):
 
 
 
-    def get_export_changed(self, app_id):
+    def export_changed(self, app_id):
         print('EXPORTING CHANGED... ', end = '')
         start   = timeit.default_timer() if self.is_curr_class else None
         request = 'apex export -applicationid {app_id} -expComponents "{comp}" -split'.replace('{comp}', ' '.join(self.comp_changed))
@@ -210,7 +209,7 @@ class Export_APEX(config.Config):
 
 
 
-    def get_export_full(self, app_id):
+    def export_full(self, app_id):
         start   = timeit.default_timer() if self.is_curr_class else None
         request = 'apex export -applicationid {app_id} -nochecksum -skipExportDate -expComments -expTranslations'
         request = util.replace_dict(request, util.replace_dict(self.transl, {'{$APP_ID}': app_id, '{$TODAY}': self.today}))
@@ -221,7 +220,7 @@ class Export_APEX(config.Config):
 
 
 
-    def get_export_split(self, app_id):
+    def export_split(self, app_id):
         start   = timeit.default_timer() if self.is_curr_class else None
         request = 'apex export -applicationid {app_id} -nochecksum -skipExportDate -expComments -expTranslations -expType APPLICATION_SOURCE{format_json}{format_yaml} -split'
         request = util.replace_dict(request, util.replace_dict(self.transl, {'{$APP_ID}': app_id, '{$TODAY}': self.today}))
@@ -236,7 +235,7 @@ class Export_APEX(config.Config):
 
 
 
-    def get_export_embedded(self, app_id):
+    def export_embedded(self, app_id):
         print('EXPORTING EMBEDDED... ', end = '')
         start   = timeit.default_timer() if self.is_curr_class else None
         request = 'apex export -applicationid {app_id} -nochecksum -expType EMBEDDED_CODE'
@@ -261,7 +260,7 @@ class Export_APEX(config.Config):
 
 
 
-    def get_export_rest(self, app_id):
+    def export_rest(self, app_id):
         start   = timeit.default_timer() if self.is_curr_class else None
         request = 'rest export;\n'
         output  = self.conn.sqlcl_request(request)
@@ -291,8 +290,7 @@ class Export_APEX(config.Config):
             # move readable files close to original files
             if os.path.exists(file):
                 target = target.replace(source_dir, target_dir).replace('/readable/', '/')
-                if not os.path.exists(os.path.dirname(target)):
-                    os.makedirs(os.path.dirname(target))
+                os.makedirs(os.path.dirname(target), exist_ok = True)
                 os.rename(file, target)
 
         # remove readable folder
@@ -310,8 +308,7 @@ class Export_APEX(config.Config):
         # move leftovers
         for file in util.get_files(source_dir + '**/*.*'):
             target = file.replace(source_dir, target_dir)
-            if not os.path.exists(os.path.dirname(target)):
-                os.makedirs(os.path.dirname(target))
+            os.makedirs(os.path.dirname(target), exist_ok = True)
             self.cleanup_file(file)
             os.rename(file, target)
         #

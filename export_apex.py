@@ -57,6 +57,15 @@ class Export_APEX(config.Config):
             if not os.path.exists(dir):
                 os.makedirs(dir)
 
+        # for request replacements
+        self.transl = {
+            '{app_id}'          : '{$APP_ID}',
+            '{since}'           : '{$TODAY}',
+            '{format_json}'     : ',READABLE_JSON' if self.config.apex_format_json else '',
+            '{format_yaml}'     : ',READABLE_YAML' if self.config.apex_format_yaml else '',
+        }
+
+        # for workspace and apps lists
         self.apex_apps  = {}
         self.apex_ws    = {}
 
@@ -130,15 +139,8 @@ class Export_APEX(config.Config):
         alias = self.apex_apps[app_id]['app_alias']
         util.print_header('APP {}/{}, CHANGES SINCE {}'.format(app_id, alias, self.today))
         #
-        transl = {
-            '{app_id}'          : app_id,
-            '{since}'           : self.today,
-            '{format_json}'     : ',READABLE_JSON',
-            '{format_yaml}'     : ',READABLE_YAML',
-            '{embedded}'        : ',EMBEDDED_CODE',
-        }
         request = 'SET LINESIZE 200;\napex export -applicationid {app_id} -list -changesSince {since};\n'
-        request = util.replace_dict(request, transl)
+        request = util.replace_dict(request, util.replace_dict(self.transl, {'{$APP_ID}': app_id, '{$TODAY}': self.today}))
         output  = self.conn.sqlcl_request(request)
         #
         data = util.parse_table(output.splitlines()[5:])

@@ -261,6 +261,54 @@ class Export_APEX(config.Config):
 
 
 
+    def move_files(self, app_id):
+        source_dir = '{}f{}/'.format(self.config.sqlcl_root, app_id)
+        target_dir = self.get_root(app_id)
+
+        # move readable files
+        for file in util.get_files(source_dir + 'readable/**/*.*'):
+            target = file
+
+            # application file close to app full export
+            if '/readable/application/f{}.'.format(app_id) in file:
+                target = file.replace('/readable/application/', '/')
+
+            # move page files close to pages
+            if '/readable/application/page_groups.' in file:
+                target = file.replace('/application/', '/application/pages/')
+            #
+            if '/readable/application/pages/p' in file:
+                target = file.replace('/pages/p', '/pages/page_')
+
+            # move readable files close to original files
+            if os.path.exists(file):
+                target = target.replace(source_dir, target_dir).replace('/readable/', '/')
+                if not os.path.exists(os.path.dirname(target)):
+                    os.makedirs(os.path.dirname(target))
+                os.rename(file, target)
+
+        # remove readable folder
+        if os.path.exists(source_dir + 'readable/'):
+            shutil.rmtree(source_dir + 'readable/', ignore_errors = True, onerror = None)
+
+        # move file
+        source_file = '{}f{}.sql'.format(self.config.sqlcl_root, app_id)
+        target_file = '{}f{}.sql'.format(self.get_root(app_id), app_id)
+        #
+        if os.path.exists(source_file):
+            os.rename(source_file, target_file)
+
+        # move leftovers
+        for file in util.get_files(source_dir + '**/*.*'):
+            target = file.replace(source_dir, target_dir)
+            if not os.path.exists(os.path.dirname(target)):
+                os.makedirs(os.path.dirname(target))
+            os.rename(file, target)
+        #
+        shutil.rmtree(source_dir, ignore_errors = True, onerror = None)
+
+
+
 if __name__ == "__main__":
     # parse arguments
     parser = argparse.ArgumentParser(add_help = False)

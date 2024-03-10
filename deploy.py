@@ -38,14 +38,14 @@ class Deploy(config.Config):
         # process arguments and reinitiate config
         util.assert_(self.args.target, 'MISSING ARGUMENT: TARGET ENV')
         #
-        self.patch_env          = self.args.target
+        self.target_env         = self.args.target
         self.patch_code         = self.args.patch
         self.patch_folder       = ''
         self.patch_ref          = self.args.get('ref')
         self.info.branch        = self.args.get('branch') or self.info.get('branch') or self.repo.active_branch
         #
         self.init_config()
-        self.init_connection(env_name = self.patch_env)
+        self.init_connection(env_name = self.target_env)
 
         # internal variables
         self.patches            = {}
@@ -185,13 +185,13 @@ class Deploy(config.Config):
             self.patch_full     = self.patch_found[0]
             self.patch_short    = self.patch_full.replace(self.repo_root + self.config.patch_root, '')
             self.patch_path     = self.repo_root + self.config.patch_root + self.patch_folder + '/'
-            self.log_folder     = self.logs_prefix.format(self.patch_path, self.patch_env)
+            self.log_folder     = self.logs_prefix.format(self.patch_path, self.target_env)
 
 
 
     def check_folder(self):
         if len(self.patch_found) != 1:
-            util.print_header('AVAILABLE PATCHES:', self.patch_env)
+            util.print_header('AVAILABLE PATCHES:', self.target_env)
             util.print_table(self.available_show)
             #
             util.print_header('SELECT PATCH YOU WANT TO DEPLOY')
@@ -272,7 +272,7 @@ class Deploy(config.Config):
             count_commits   = list(set(count_commits))
 
             # find more details from log names
-            for file in util.get_files(self.logs_prefix.format(patch, self.patch_env) + '/*.log'):
+            for file in util.get_files(self.logs_prefix.format(patch, self.target_env) + '/*.log'):
                 info        = os.path.splitext(os.path.basename(file))[0].split(' ')
                 schema      = info.pop(0)
                 result      = info.pop(-1).replace('[', '').replace(']', '')
@@ -366,9 +366,9 @@ class Deploy(config.Config):
 
     def check_connections(self):
         # connect to all target schemas first so we know we can deploy all scripts
-        util.print_header('CONNECTING TO {}:'.format(self.patch_env))
+        util.print_header('CONNECTING TO {}:'.format(self.target_env))
         for schema in self.deploy_schemas.keys():
-            self.init_connection(env_name = self.patch_env, schema_name = schema)
+            self.init_connection(env_name = self.target_env, schema_name = schema)
             print('  {} '.format(schema).ljust(72, '.') + ' ', end = '', flush = True)
             self.deploy_conn[schema] = self.db_connect(ping_sqlcl = True, silent = True)
             self.deploy_conn[schema].sqlcl_root = self.patch_path
@@ -382,12 +382,14 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
 
     # actions and flags
-    parser.add_argument('-key',         help = 'Key or key location to encypt passwords')
+    group = parser.add_argument_group('MAIN ACTIONS')
+    group.add_argument('-patch',        help = 'Patch code (name for the patch files)')
+    group.add_argument('-ref',          help = 'Reference number (see list of available patches)', type = int)
+    group.add_argument('-force',        help = 'Force deployment',                          default = False, nargs = '?', const = True)
     #
-    parser.add_argument('-patch',       help = 'Patch code (name for the patch files)')
-    parser.add_argument('-ref',         help = 'Reference number (see list of available patches)', type = int)
-    parser.add_argument('-target',      help = 'Target environment')
-    parser.add_argument('-force',       help = 'Force deployment',                          default = False, nargs = '?', const = True)
+    group = parser.add_argument_group('SPECIFY ENVIRONMENT DETAILS')
+    group.add_argument('-target',       help = 'Target environment')
+    group.add_argument('-key',          help = 'Key or key location to encypt passwords')
     #
     Deploy(parser)
 

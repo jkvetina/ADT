@@ -1,5 +1,5 @@
 # coding: utf-8
-import sys, os, argparse, datetime, timeit
+import sys, os, argparse, shutil, datetime, timeit
 #
 import config
 from lib import util
@@ -109,6 +109,10 @@ class Export_APEX(config.Config):
             # split export
             if self.config.apex_export_split and not self.args.nosplit:
                 self.get_export_split(app_id)
+
+            # export embedded code report
+            if (self.config.apex_embedded or self.args.embedded):
+                self.get_export_embedded(app_id)
 
             # export REST services
             if (self.config.apex_export_rest or self.args.rest):
@@ -224,6 +228,31 @@ class Export_APEX(config.Config):
 
 
 
+    def get_export_embedded(self, app_id):
+        print('EXPORTING EMBEDDED... ', end = '')
+        start   = timeit.default_timer() if self.is_curr_class else None
+        request = 'apex export -applicationid {app_id} -nochecksum -expType EMBEDDED_CODE'
+        request = util.replace_dict(request, util.replace_dict(self.transl, {'{$APP_ID}': app_id, '{$TODAY}': self.today}))
+        output  = self.conn.sqlcl_request(request)
+        timer   = int(round(timeit.default_timer() - start + 0.5, 0))
+        print(timer)
+
+        # move to proper folder
+        source_dir = '{}f{}/embedded_code/'.format(self.config.sqlcl_root, app_id)
+        target_dir = self.get_root(app_id, 'embedded_code/')
+        #
+        if os.path.exists(target_dir):
+            shutil.rmtree(target_dir, ignore_errors = True, onerror = None)
+        #
+        if os.path.exists(source_dir):
+            for file in util.get_files(source_dir + '/pages/p*.*'):
+                os.rename(file, file.replace('/pages/p', '/pages/page_'))
+            #
+            shutil.copytree(source_dir, target_dir, dirs_exist_ok = True)
+            shutil.rmtree(source_dir, ignore_errors = True, onerror = None)
+
+
+
     def get_export_rest(self, app_id):
         start   = timeit.default_timer() if self.is_curr_class else None
         request = 'rest export;\n'
@@ -252,6 +281,7 @@ if __name__ == "__main__":
     group.add_argument('-app',          help = 'Limit list of application(s)',          type = int, nargs = '*', default = [])
     group.add_argument('-recent',       help = 'Show components changed in # days',     type = int, nargs = '?', default = 1)
     group.add_argument('-changed',      help = 'Export components changed in # days',               nargs = '?', const = True, default = False)
+    group.add_argument('-embedded',     help = 'Export Embedded Code Report',                       nargs = '?', const = True, default = False)
     group.add_argument('-nofull',       help = 'Skip full export',                                  nargs = '?', const = True, default = False)
     group.add_argument('-nosplit',      help = 'Skip splitted export',                              nargs = '?', const = True, default = False)
     #

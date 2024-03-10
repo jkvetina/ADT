@@ -65,17 +65,14 @@ class Export_APEX(config.Config):
         self.arg_group      = self.args.group   or self.config.default_app_group
         self.arg_apps       = self.args.app     or self.config.default_apps
         self.arg_recent     = self.args.recent
+        self.today          = str(datetime.datetime.today() - datetime.timedelta(days = self.arg_recent - 1))[0:10]
         #
-        self.show_ws_apps()
-
-
-
-    def show_ws_apps(self):
         self.get_applications()
 
-        if self.arg_recent and self.arg_recent > 0:
-            self.show_recent_changes()
-
+        # for each requested app
+        for app_id in sorted(self.apex_apps.keys()):
+            if self.arg_recent and self.arg_recent > 0:
+                self.show_recent_changes(app_id)
 
 
 
@@ -117,36 +114,33 @@ class Export_APEX(config.Config):
 
 
 
-    def show_recent_changes(self):
-        today = str(datetime.datetime.today() - datetime.timedelta(days = self.arg_recent - 1))[0:10]
+    def show_recent_changes(self, app_id):
+        alias = self.apex_apps[app_id]['app_alias']
+        util.print_header('APP {}/{}, CHANGES SINCE {}'.format(app_id, alias, self.today))
         #
-        for app_id in sorted(self.apex_apps.keys()):
-            alias = self.apex_apps[app_id]['app_alias']
-            util.print_header('APP {}/{}, CHANGES SINCE {}'.format(app_id, alias, today))
+        transl = {
+            '{app_id}'          : app_id,
+            '{since}'           : self.today,
+            '{format_json}'     : ',READABLE_JSON',
+            '{format_yaml}'     : ',READABLE_YAML',
+            '{embedded}'        : ',EMBEDDED_CODE',
+        }
+        request = 'SET LINESIZE 200;\napex export -applicationid {app_id} -list -changesSince {since};\n'
+        request = util.replace_dict(request, transl)
+        output  = self.conn.sqlcl_request(request)
+        #
+        data = util.parse_table(output.splitlines()[5:])
+        for i, row in enumerate(data):
+            if row['id'].startswith('PAGE:'):
+                page_id = row['id'].replace('PAGE:', '')
+                data[i]['name'] = data[i]['name'].replace('{}. '.format(page_id), '')
+            else:
+                data[i]['id']   = data[i]['id'].split(':')[0]
             #
-            transl = {
-                '{app_id}'          : app_id,
-                '{since}'           : today,
-                '{format_json}'     : ',READABLE_JSON',
-                '{format_yaml}'     : ',READABLE_YAML',
-                '{embedded}'        : ',EMBEDDED_CODE',
-            }
-            request = 'SET LINESIZE 200;\napex export -applicationid {app_id} -list -changesSince {since};\n'
-            request = util.replace_dict(request, transl)
-            output  = self.conn.sqlcl_request(request)
-            #
-            data = util.parse_table(output.splitlines()[5:])
-            for i, row in enumerate(data):
-                if row['id'].startswith('PAGE:'):
-                    page_id = row['id'].replace('PAGE:', '')
-                    data[i]['name'] = data[i]['name'].replace('{}. '.format(page_id), '')
-                else:
-                    data[i]['id']   = data[i]['id'].split(':')[0]
-                #
-                data[i]['id']   = util.get_string(data[i]['id'],    16)
-                data[i]['name'] = util.get_string(data[i]['name'],  36)
-            #
-            util.print_table(data)
+            data[i]['id']   = util.get_string(data[i]['id'],    16)
+            data[i]['name'] = util.get_string(data[i]['name'],  36)
+        #
+        util.print_table(data)
 
 
 

@@ -67,8 +67,9 @@ class Export_APEX(config.Config):
         }
 
         # for workspace and apps lists
-        self.apex_apps  = {}
-        self.apex_ws    = {}
+        self.apex_apps      = {}
+        self.apex_ws        = {}
+        self.comp_changed   = []  # components changes recently
 
         # scope
         self.arg_workspace  = self.args.ws      or self.config.default_workspace
@@ -77,6 +78,11 @@ class Export_APEX(config.Config):
         self.arg_recent     = self.args.recent
         self.today          = str(datetime.datetime.today() - datetime.timedelta(days = self.arg_recent - 1))[0:10]
         #
+        if self.args.changed:
+            self.args.nofull    = True
+            self.args.nosplit   = True
+
+        # show matching apps every time
         self.get_applications()
 
         # for each requested app
@@ -90,6 +96,11 @@ class Export_APEX(config.Config):
             # show recent changes
             if self.config.apex_show_recent and self.arg_recent > 0:
                 self.show_recent_changes(app_id)
+                print()
+
+            # export changed objects only
+            if (self.config.apex_export_changed or self.args.changed) and self.arg_recent > 0:
+                self.get_export_changed(app_id)
 
             # full export
             if self.config.apex_export_full and not self.args.nofull:
@@ -162,6 +173,7 @@ class Export_APEX(config.Config):
         #
         data = util.parse_table(output.splitlines()[5:])
         for i, row in enumerate(data):
+            self.comp_changed.append(row['id'])
             if row['id'].startswith('PAGE:'):
                 page_id = row['id'].replace('PAGE:', '')
                 data[i]['name'] = data[i]['name'].replace('{}. '.format(page_id), '')
@@ -172,6 +184,25 @@ class Export_APEX(config.Config):
             data[i]['name'] = util.get_string(data[i]['name'],  36)
         #
         util.print_table(data)
+
+
+
+    def get_export_changed(self, app_id):
+        print('EXPORTING CHANGED... ', end = '')
+        start   = timeit.default_timer() if self.is_curr_class else None
+        request = 'apex export -applicationid {app_id} -expComponents "{comp}" -split'.replace('{comp}', ' '.join(self.comp_changed))
+        request = util.replace_dict(request, util.replace_dict(self.transl, {'{$APP_ID}': app_id, '{$TODAY}': self.today}))
+        output  = self.conn.sqlcl_request(request)
+        timer   = int(round(timeit.default_timer() - start + 0.5, 0))
+        print(timer)
+
+        # remove some extra files
+        source_dir = '{}f{}'.format(self.config.sqlcl_root, app_id)
+        for pattern in self.config.apex_files_ignore:
+            for file in util.get_files(source_dir + pattern):
+                os.remove(file)
+        #
+        self.move_files(app_id)
 
 
 
@@ -220,6 +251,7 @@ if __name__ == "__main__":
     group.add_argument('-group',        help = 'Limit application group',                           nargs = '?')
     group.add_argument('-app',          help = 'Limit list of application(s)',          type = int, nargs = '*', default = [])
     group.add_argument('-recent',       help = 'Show components changed in # days',     type = int, nargs = '?', default = 1)
+    group.add_argument('-changed',      help = 'Export components changed in # days',               nargs = '?', const = True, default = False)
     group.add_argument('-nofull',       help = 'Skip full export',                                  nargs = '?', const = True, default = False)
     group.add_argument('-nosplit',      help = 'Skip splitted export',                              nargs = '?', const = True, default = False)
     #

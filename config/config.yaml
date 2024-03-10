@@ -147,6 +147,7 @@ apex_path_rest      : 'rest/'
 apex_yaml_file      : 'config/apex.{$APP_WS}.yaml'
 
 apex_show_recent    : True
+apex_export_changed : False
 apex_export_full    : True
 apex_export_split   : True
 apex_format_json    : False

@@ -304,6 +304,7 @@ class Export_APEX(config.Config):
         target_file = '{}f{}.sql'.format(self.get_root(app_id), app_id)
         #
         if os.path.exists(source_file):
+            self.cleanup_file(source_file)
             os.rename(source_file, target_file)
 
         # move leftovers
@@ -311,9 +312,31 @@ class Export_APEX(config.Config):
             target = file.replace(source_dir, target_dir)
             if not os.path.exists(os.path.dirname(target)):
                 os.makedirs(os.path.dirname(target))
+            self.cleanup_file(file)
             os.rename(file, target)
         #
         shutil.rmtree(source_dir, ignore_errors = True, onerror = None)
+
+
+
+    def cleanup_file(self, file):
+        if not file.endswith('.sql'):
+            return
+
+        # replace just pages or/and full export
+        if not ('/pages/page_' in file) and util.extract('/f(\d+).sql$', file) != '':
+            return
+
+        # get current file content
+        old_content = ''
+        with open(file, 'rt') as f:
+            old_content = f.read()
+        new_content = old_content
+
+        # store new content in the same file
+        if new_content != old_content:
+            with open(file, 'w', encoding = 'utf-8', newline = '\n') as w:
+                w.write(new_content)
 
 
 

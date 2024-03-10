@@ -142,7 +142,7 @@ apex_schema         : '{$INFO_SCHEMA}'
 apex_workspace      : '{$INFO_SCHEMA}'
 apex_version        : '{$TODAY} {$PATCH_CODE}'
 apex_path_files     : 'files/'
-apex_path_files_ws  : 'workspace_files/'
+apex_path_files_ws  : 'workspace/files/'
 apex_path_rest      : 'rest/'
 apex_yaml_file      : 'config/apex.{$APP_WS}.yaml'
 

@@ -38,11 +38,13 @@ class Export_APEX(config.Config):
         super().__init__(parser)
 
         # setup env and paths
+        self.app_folder         = '$APP_FOLDER/'
         self.target_env         = self.args.target or self.config.default_env
-        self.target_path        = self.repo_root + self.config.path_apex
-        self.target_path_rest   = self.repo_root + self.config.apex_path_rest
-        self.target_files       = self.repo_root + self.config.apex_path_files
-        self.target_files_ws    = self.repo_root + self.config.apex_path_files_ws
+        self.target_root        = self.repo_root + self.config.path_apex
+        self.target_path        = self.target_root + self.app_folder        # raplace later
+        self.target_rest        = self.config.apex_path_rest
+        self.target_files       = self.config.apex_path_files
+        self.target_files_ws    = self.config.apex_path_files_ws
         #
         util.assert_(self.target_env, 'MISSING ARGUMENT: TARGET ENV')
         #
@@ -51,11 +53,10 @@ class Export_APEX(config.Config):
         #
         self.conn = self.db_connect(ping_sqlcl = False)
 
-        # create folders
-        for dir in [self.target_path, self.target_path_rest, self.target_files, self.target_files_ws]:
-            dir = os.path.dirname(dir)
-            if not os.path.exists(dir):
-                os.makedirs(dir)
+        # make sure we have the temp folder ready
+        if os.path.exists(self.config.sqlcl_root):
+            shutil.rmtree(self.config.sqlcl_root, ignore_errors = True, onerror = None)
+            os.makedirs(self.config.sqlcl_root)
 
         # for request replacements
         self.transl = {
@@ -80,7 +81,14 @@ class Export_APEX(config.Config):
 
         # for each requested app
         for app_id in sorted(self.apex_apps.keys()):
-            if self.config.apex_show_recent and self.arg_recent and self.arg_recent > 0:
+            # create folders
+            for dir in ['', self.target_rest, self.target_files, self.target_files_ws]:
+                dir = os.path.dirname(self.get_root(app_id, dir))
+                if not os.path.exists(dir):
+                    os.makedirs(dir)
+
+            # show recent changes
+            if self.config.apex_show_recent and self.arg_recent > 0:
                 self.show_recent_changes(app_id)
 
             # full export
@@ -94,6 +102,15 @@ class Export_APEX(config.Config):
             # export REST services
             if (self.config.apex_export_rest or self.args.rest):
                 self.get_export_rest(app_id)
+
+
+
+    def get_root(self, app_id, folders = ''):
+        app_alias   = self.apex_apps[app_id]['app_alias']
+        app_folder  = '/{}_{}/'.format(app_id, app_alias)
+        path        = self.target_path.replace(self.app_folder, app_folder) + folders
+        #
+        return path.replace('//', '/')
 
 
 

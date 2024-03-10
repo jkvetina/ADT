@@ -98,6 +98,9 @@ class Export_APEX(config.Config):
                         data[i]['name'] = data[i]['name'].replace('{}. '.format(page_id), '')
                     else:
                         data[i]['id']   = data[i]['id'].split(':')[0]
+                    #
+                    data[i]['id']   = util.get_string(data[i]['id'],    16)
+                    data[i]['name'] = util.get_string(data[i]['name'],  36)
                 #
                 util.print_table(data)
 

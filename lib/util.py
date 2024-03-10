@@ -450,6 +450,14 @@ def run_command(command):
     result = subprocess.run(command, shell = True, capture_output = True, text = True)
     if result.returncode != 0:
         raise_error('COMMAND_ERROR: ' + result.stderr, command)
-    #
     return (result.stdout or '')
+
+
+
+def get_string(string, max_length = None, append = '..'):
+    string = str(string)
+    if max_length == None:
+        return string
+    cutoff = max_length - len(append)
+    return (string[:cutoff] + '..') if len(string) > max_length else string
 

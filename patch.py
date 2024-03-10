@@ -352,7 +352,7 @@ class Patch(config.Config):
             summary = self.relevant_commits[commit].summary
             data.append({
                 'commit'        : commit,
-                'summary'       : (summary[:50] + '..') if len(summary) > 50 else summary,
+                'summary'       : util.get_string(summary, 50),
                 'patch_ref'     : commits_map.get(commit, ''),
             })
         #
@@ -383,7 +383,7 @@ class Patch(config.Config):
             summary = self.all_commits[commit].summary
             data.append({
                 'commit'        : commit,
-                'summary'       : (summary[:50] + '..') if len(summary) > 50 else summary,
+                'summary'       : util.get_string(summary, 50),
             })
         #
         util.print_header('RECENT COMMITS:')

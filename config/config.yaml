@@ -141,13 +141,16 @@ sqlcl_temp_file     : 'sqlcl.tmp'
 apex_schema         : '{$INFO_SCHEMA}'
 apex_workspace      : '{$INFO_SCHEMA}'
 apex_version        : '{$TODAY} {$PATCH_CODE}'
-replace_audit       : True
-
 apex_path_files     : 'files/'
 apex_path_files_ws  : 'workspace_files/'
 apex_path_rest      : 'rest/'
-
 apex_yaml_file      : 'config/apex.{$APP_WS}.yaml'
+
+apex_show_recent    : True
+apex_export_full    : True
+apex_export_split   : True
+apex_replace_audit  : True
+apex_export_rest    : False
 
 # these files will not be in the patch even if they change
 apex_files_ignore:

@@ -1,5 +1,5 @@
 # coding: utf-8
-import sys, os, argparse, datetime
+import sys, os, argparse, datetime, timeit
 #
 import config
 from lib import util
@@ -71,8 +71,20 @@ class Export_APEX(config.Config):
 
         # for each requested app
         for app_id in sorted(self.apex_apps.keys()):
-            if self.arg_recent and self.arg_recent > 0:
+            if self.config.apex_show_recent and self.arg_recent and self.arg_recent > 0:
                 self.show_recent_changes(app_id)
+
+            # full export
+            if self.config.apex_export_full and not self.args.nofull:
+                self.get_export_full(app_id)
+
+            # split export
+            if self.config.apex_export_split and not self.args.nosplit:
+                self.get_export_split(app_id)
+
+            # export REST services
+            if (self.config.apex_export_rest or self.args.rest):
+                self.get_export_rest(app_id)
 
 
 
@@ -144,6 +156,32 @@ class Export_APEX(config.Config):
 
 
 
+    def get_export_full(self, app_id):
+        start   = timeit.default_timer() if self.is_curr_class else None
+        request = 'apex export -applicationid {app_id} -nochecksum -skipExportDate -expComments -expTranslations'
+        request = util.replace_dict(request, util.replace_dict(self.transl, {'{$APP_ID}': app_id, '{$TODAY}': self.today}))
+        output  = self.conn.sqlcl_request(request)
+        timer   = int(round(timeit.default_timer() - start + 0.5, 0))
+
+
+
+    def get_export_split(self, app_id):
+        start   = timeit.default_timer() if self.is_curr_class else None
+        request = 'apex export -applicationid {app_id} -nochecksum -skipExportDate -expComments -expTranslations -expType APPLICATION_SOURCE{format_json}{format_yaml}{embedded} -split'
+        request = util.replace_dict(request, util.replace_dict(self.transl, {'{$APP_ID}': app_id, '{$TODAY}': self.today}))
+        output  = self.conn.sqlcl_request(request)
+        timer   = int(round(timeit.default_timer() - start + 0.5, 0))
+
+
+
+    def get_export_rest(self, app_id):
+        start   = timeit.default_timer() if self.is_curr_class else None
+        request = 'rest export;\n'
+        output  = self.conn.sqlcl_request(request)
+        timer   = int(round(timeit.default_timer() - start + 0.5, 0))
+
+
+
 if __name__ == "__main__":
     # parse arguments
     parser = argparse.ArgumentParser(add_help = False)
@@ -151,6 +189,7 @@ if __name__ == "__main__":
     # actions and flags
     group = parser.add_argument_group('MAIN ACTIONS')
     group.add_argument('-fetch',        help = 'Fetch Git changes before patching',                                 nargs = '?', const = True,  default = False)
+    group.add_argument('-rest',         help = 'Export REST services',                              nargs = '?', const = True, default = False)
     #
     group = parser.add_argument_group('SPECIFY ENVIRONMENT DETAILS')
     group.add_argument('-schema',       help = '')
@@ -158,10 +197,12 @@ if __name__ == "__main__":
     group.add_argument('-key',          help = 'Key or key location for passwords',                                 nargs = '?')
     #
     group = parser.add_argument_group('LIMIT SCOPE')
-    group.add_argument('-ws',           help = '',                         nargs = '?')
-    group.add_argument('-group',        help = '',                         nargs = '?')
-    group.add_argument('-app',          help = '',                         type = int, nargs = '*', default = [])
-    group.add_argument('-recent',       help = '',                         type = int, nargs = '?', default = 1)
+    group.add_argument('-ws',           help = 'Limit APEX workspace',                              nargs = '?')
+    group.add_argument('-group',        help = 'Limit application group',                           nargs = '?')
+    group.add_argument('-app',          help = 'Limit list of application(s)',          type = int, nargs = '*', default = [])
+    group.add_argument('-recent',       help = 'Show components changed in # days',     type = int, nargs = '?', default = 1)
+    group.add_argument('-nofull',       help = 'Skip full export',                                  nargs = '?', const = True, default = False)
+    group.add_argument('-nosplit',      help = 'Skip splitted export',                              nargs = '?', const = True, default = False)
     #
     Export_APEX(parser)
 

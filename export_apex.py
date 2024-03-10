@@ -216,15 +216,23 @@ class Export_APEX(config.Config):
         request = util.replace_dict(request, util.replace_dict(self.transl, {'{$APP_ID}': app_id, '{$TODAY}': self.today}))
         output  = self.conn.sqlcl_request(request)
         timer   = int(round(timeit.default_timer() - start + 0.5, 0))
+        #
+        self.move_files(app_id)
 
 
 
     def get_export_split(self, app_id):
         start   = timeit.default_timer() if self.is_curr_class else None
-        request = 'apex export -applicationid {app_id} -nochecksum -skipExportDate -expComments -expTranslations -expType APPLICATION_SOURCE{format_json}{format_yaml}{embedded} -split'
+        request = 'apex export -applicationid {app_id} -nochecksum -skipExportDate -expComments -expTranslations -expType APPLICATION_SOURCE{format_json}{format_yaml} -split'
         request = util.replace_dict(request, util.replace_dict(self.transl, {'{$APP_ID}': app_id, '{$TODAY}': self.today}))
         output  = self.conn.sqlcl_request(request)
         timer   = int(round(timeit.default_timer() - start + 0.5, 0))
+        #
+        target_dir = self.get_root(app_id, 'application/')
+        if os.path.exists(target_dir):
+            shutil.rmtree(target_dir, ignore_errors = True, onerror = None)
+        #
+        self.move_files(app_id)
 
 
 

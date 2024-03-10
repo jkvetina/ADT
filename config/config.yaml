@@ -162,7 +162,9 @@ apex_files_ignore:
     - /application/end_environment.sql
     - /application/create_application.sql
     - /application/delete_application.sql
+    - /application/pages/delete_*.sql
     - /install.sql
+    - /install_component.sql
 
 # these files will always be copied to the snapshot folder
 apex_files_copy:

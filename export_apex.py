@@ -346,8 +346,14 @@ if __name__ == "__main__":
 
     # actions and flags
     group = parser.add_argument_group('MAIN ACTIONS')
-    group.add_argument('-fetch',        help = 'Fetch Git changes before patching',                                 nargs = '?', const = True,  default = False)
+    group.add_argument('-recent',       help = 'Show components changed in # days',     type = int, nargs = '?', default = 1)
+    group.add_argument('-changed',      help = 'Export components changed in # days',               nargs = '?', const = True, default = False)
+    group.add_argument('-nofull',       help = 'Skip full export',                                  nargs = '?', const = True, default = False)
+    group.add_argument('-nosplit',      help = 'Skip splitted export',                              nargs = '?', const = True, default = False)
+    group.add_argument('-embedded',     help = 'Export Embedded Code Report',                       nargs = '?', const = True, default = False)
     group.add_argument('-rest',         help = 'Export REST services',                              nargs = '?', const = True, default = False)
+    group.add_argument('-files',        help = 'Export app & ws files in binary form',              nargs = '?', const = True, default = False)
+    group.add_argument('-fetch',        help = 'Fetch Git changes before patching',                 nargs = '?', const = True, default = False)
     #
     group = parser.add_argument_group('SPECIFY ENVIRONMENT DETAILS')
     group.add_argument('-schema',       help = '')
@@ -358,11 +364,6 @@ if __name__ == "__main__":
     group.add_argument('-ws',           help = 'Limit APEX workspace',                              nargs = '?')
     group.add_argument('-group',        help = 'Limit application group',                           nargs = '?')
     group.add_argument('-app',          help = 'Limit list of application(s)',          type = int, nargs = '*', default = [])
-    group.add_argument('-recent',       help = 'Show components changed in # days',     type = int, nargs = '?', default = 1)
-    group.add_argument('-changed',      help = 'Export components changed in # days',               nargs = '?', const = True, default = False)
-    group.add_argument('-embedded',     help = 'Export Embedded Code Report',                       nargs = '?', const = True, default = False)
-    group.add_argument('-nofull',       help = 'Skip full export',                                  nargs = '?', const = True, default = False)
-    group.add_argument('-nosplit',      help = 'Skip splitted export',                              nargs = '?', const = True, default = False)
     #
     Export_APEX(parser)
 

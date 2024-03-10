@@ -130,7 +130,7 @@ repo_branch         : dev
 #
 # GIT REPOSITORY
 #
-sqlcl_root          : './temp.nosync/'
+sqlcl_root          : './.temp.nosync/'
 sqlcl_temp_file     : 'sqlcl.tmp'
 
 
@@ -145,16 +145,21 @@ apex_path_files     : 'files/'
 apex_path_files_ws  : 'workspace/files/'
 apex_path_rest      : 'rest/'
 apex_yaml_file      : 'config/apex.{$APP_WS}.yaml'
-
-apex_show_recent    : True
-apex_export_changed : False
-apex_export_full    : True
-apex_export_split   : True
-apex_format_json    : False
-apex_format_yaml    : True
-apex_embedded       : False
-apex_replace_audit  : True
-apex_export_rest    : False
+#
+apex_show_recent    : True          # show changes made in past # days
+apex_export_changed : False         # export just changed components
+apex_export_full    : True          # full export
+apex_export_split   : True          # export individual components
+apex_format_json    : False         # export also in JSON format
+apex_format_yaml    : True          # export also in YAML format
+apex_embedded       : False         # export Embedded Code report
+apex_export_rest    : False         # export rest services
+#
+apex_comments       : True          # add component names as comments
+apex_timestamps     : '#TODAY#'     # convert page timestamp to a specific value
+apex_authors        : 'DEV'         # convert page author to a specific value for non developers
+apex_authentication : '[DEFAULT]'   # switch to marked authentication scheme
+apex_set_version    : '#TODAY#'     # overwrite application version
 
 # these files will not be in the patch even if they change
 apex_files_ignore:
@@ -162,7 +167,7 @@ apex_files_ignore:
     - /application/end_environment.sql
     - /application/create_application.sql
     - /application/delete_application.sql
-    - /application/pages/delete_*.sql
+    - /application/pages/delete_*.sql       # wild flag
     - /install.sql
     - /install_component.sql
 

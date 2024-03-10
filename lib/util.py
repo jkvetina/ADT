@@ -96,11 +96,17 @@ def parse_table(payload):
 
 
 
-def get_files(glob_pattern, reverse = False):
-    files = list(sorted(glob.glob(glob_pattern), reverse = reverse))
+def get_files(glob_pattern, reverse = False, recursive = True):
+    files = list(glob.glob(glob_pattern, recursive = recursive))
+    if '/**/*' in glob_pattern and recursive:
+        glob_pattern = glob_pattern.replace('/**/*', '/*')
+        for file in glob.glob(glob_pattern):
+            files.append(file)
+    #
     for i, file in enumerate(files):
         files[i] = file.replace('\\', '/')
-    return files
+    #
+    return list(sorted(set(files), reverse = reverse))
 
 
 

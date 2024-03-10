@@ -87,8 +87,10 @@ class Export_APEX(config.Config):
 
         # for each requested app
         for app_id in sorted(self.apex_apps.keys()):
+            self.conn.execute(query.apex_security_context, app_id = app_id)
+
             # create folders
-            for dir in ['', self.target_rest, self.target_files, self.target_files_ws]:
+            for dir in ['', self.target_rest, self.target_files]:
                 dir = os.path.dirname(self.get_root(app_id, dir))
                 os.makedirs(dir, exist_ok = True)
 
@@ -116,6 +118,14 @@ class Export_APEX(config.Config):
             # export REST services
             if (self.config.apex_export_rest or self.args.rest):
                 self.export_rest(app_id)
+
+            # export application files
+            if (self.config.apex_export_files or self.args.files):
+                self.export_files(app_id)
+
+        # export workspace files
+        if (self.config.apex_export_files or self.args.files):
+            self.export_files(app_id = 0)
 
 
 
@@ -264,6 +274,26 @@ class Export_APEX(config.Config):
         start   = timeit.default_timer() if self.is_curr_class else None
         request = 'rest export;\n'
         output  = self.conn.sqlcl_request(request)
+        timer   = int(round(timeit.default_timer() - start + 0.5, 0))
+
+
+
+    def export_files(self, app_id):
+        start   = timeit.default_timer() if self.is_curr_class else None
+        files   = self.conn.fetch_assoc(query.apex_files, app_id = app_id)
+        #
+        for row in files:
+            if app_id == 0:  # workspace files
+                target_dir = self.target_root + self.config.apex_path_files_ws
+            else:
+                target_dir = self.get_root(app_id, self.config.apex_path_files)
+            #
+            file = target_dir + row.filename
+            os.makedirs(os.path.dirname(file), exist_ok = True)
+            #
+            with open(file, 'wb') as w:
+                w.write(row.f.read())   # blob_content
+        #
         timer   = int(round(timeit.default_timer() - start + 0.5, 0))
 
 

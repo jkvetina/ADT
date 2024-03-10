@@ -154,6 +154,7 @@ apex_format_json    : False         # export also in JSON format
 apex_format_yaml    : True          # export also in YAML format
 apex_embedded       : False         # export Embedded Code report
 apex_export_rest    : False         # export rest services
+apex_export_files   : False         # export application & workspace files
 #
 apex_comments       : True          # add component names as comments
 apex_timestamps     : '#TODAY#'     # convert page timestamp to a specific value

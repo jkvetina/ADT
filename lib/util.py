@@ -460,7 +460,10 @@ def assert_(condition, message, *extras):
 def run_command(command):
     result = subprocess.run(command, shell = True, capture_output = True, text = True)
     if result.returncode != 0:
-        raise_error('COMMAND_ERROR: ' + result.stderr, command)
+        print()
+        print(command)
+        print(result.stdout)
+        raise_error('COMMAND_ERROR: {} {}'.format(result.returncode, result.stderr))
     return (result.stdout or '')
 
 

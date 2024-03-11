@@ -144,7 +144,6 @@ class Deploy(config.Config):
                 # no spooling, create file manually and remove the SQcl clutter
                 with open(renamed, 'wt', encoding = 'utf-8', newline = '\n') as w:
                     output = output.splitlines()
-                    print(output)
                     if output[0].startswith('SQLcl') and output[2].startswith('Copyright') and output[4].startswith('Connected'):
                         output = output[5:]
                     size = len(output)
@@ -162,7 +161,7 @@ class Deploy(config.Config):
 
     def find_folder(self):
         # identify patch folder
-        for ref, patch in enumerate(util.get_files(self.repo_root + self.config.patch_root + '**', reverse = True), start = 1):
+        for ref, patch in enumerate(util.get_files(self.repo_root + self.config.patch_root + '**', reverse = True, recursive = False), start = 1):
             self.patches[ref] = patch
             if self.patch_ref != None:
                 if self.patch_ref == ref:

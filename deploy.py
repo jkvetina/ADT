@@ -297,7 +297,7 @@ class Deploy(config.Config):
 
             # show only matches
             if (self.patch_code == None or self.patch_code in patch):
-                self.available_show.append({**self.available_ref[ref], **{'files': len(count_files)}})
+                self.available_show.append({**self.available_ref[ref], **{'files': len(count_files), 'commits': len(count_commits)}})
 
 
 

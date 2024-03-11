@@ -182,7 +182,7 @@ class Oracle:
 
 
 
-    def sqlcl_request(self, request):
+    def sqlcl_request(self, request, root = None):
         if isinstance(request, list):
             request = '\n'.join(request)
 
@@ -204,7 +204,7 @@ class Oracle:
             ])
 
         # prepare process for normal platforms
-        root    = os.path.abspath(self.config.sqlcl_root)
+        root    = os.path.abspath(root or self.config.sqlcl_root)
         request = '{}\n{}\nexit;\n'.format(request_conn, request)
         process = 'sql /nolog <<EOF\n{}EOF'.format(request)
 

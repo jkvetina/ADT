@@ -115,7 +115,7 @@ class Deploy(config.Config):
             payload = '\n'.join(payload)
 
             # execute the script
-            output = conn.sqlcl_request(payload)
+            output = conn.sqlcl_request(payload, root = self.patch_path)
 
             # search for the success prompt at last few lines
             lines = output.splitlines()

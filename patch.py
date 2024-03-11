@@ -813,9 +813,10 @@ class Patch(config.Config):
             util.raise_error('UNRESOLVED MERGE ISSUES', file)
 
         # change page audit columns
-        if self.config.replace_audit and app_id:
-            if ('/application/pages/page_' in file or '/f{}/f{}.sql'.format(app_id, app_id) in file):
+        if app_id and ('/application/pages/page_' in file or '/f{}/f{}.sql'.format(app_id, app_id) in file):
+            if self.config.apex_timestamps:
                 file_content = re.sub(r",p_last_updated_by=>'([^']+)'",         ",p_last_updated_by=>'{}'".format(self.patch_code), file_content)
+            if self.config.apex_authors:
                 file_content = re.sub(r",p_last_upd_yyyymmddhh24miss=>'(\d+)'", ",p_last_upd_yyyymmddhh24miss=>'{}'".format(self.config.today_full_raw), file_content)
 
         # save file

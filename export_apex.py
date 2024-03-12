@@ -219,14 +219,14 @@ class Export_APEX(config.Config):
 
         # show groups
         for group, rows in groups.items():
-            util.print_header('APEX APPLICATIONS:', group)
+            util.print_header('APEX APPLICATIONS:', group if group != '-' else '')
             util.print_table(rows)
 
 
 
     def show_recent_changes(self, app_id):
         alias = self.apex_apps[app_id]['app_alias']
-        util.print_header('APP {}/{}, CHANGES SINCE {}'.format(app_id, alias, self.today))
+        util.print_header('APP {}/{}, CHANGES SINCE {}:'.format(app_id, alias, self.today))
         #
         output  = self.execute_request('apex export -applicationid {$APP_ID} -list -changesSince {$TODAY}', app_id)
         data    = util.parse_table(output.splitlines()[5:])
@@ -385,15 +385,27 @@ class Export_APEX(config.Config):
         if not file.endswith('.sql'):
             return
 
-        # replace just pages or/and full export
-        if not ('/pages/page_' in file) and util.extract('/f(\d+).sql$', file) != '':
-            return
-
         # get current file content
         old_content = ''
         with open(file, 'rt') as f:
             old_content = f.read()
         new_content = old_content
+
+        if self.config.apex_workspace_id and self.config.apex_workspace_id > 0:
+            new_content = util.replace(new_content,
+                ",p_default_workspace_id=>(\d+)",
+                ",p_default_workspace_id=>{}".format(self.config.apex_workspace_id))
+
+        # change page attributes to make changes in Git minimal
+        if self.config.apex_authors and ('/pages/page_' in file or util.extract('/f(\d+).sql$', file)):
+            new_content = util.replace(new_content,
+                ",p_last_updated_by=>'([^']+)'",
+                ",p_last_updated_by=>'{}'".format(self.config.apex_authors))
+        #
+        if self.config.apex_timestamps and ('/pages/page_' in file or util.extract('/f(\d+).sql$', file)):
+            new_content = util.replace(new_content,
+                ",p_last_upd_yyyymmddhh24miss=>'(\d+)'",
+                ",p_last_upd_yyyymmddhh24miss=>'{}'".format(self.config.apex_timestamps))
 
         # store new content in the same file
         if new_content != old_content:

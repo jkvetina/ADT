@@ -173,8 +173,8 @@ class Config(util.Attributed):
 
         # load config first
         self.init_config()
-        self.info['schema'] = self.info.get('schema', '')   or self.config.get('default_schema')
-        self.info['env']    = self.info.get('env', '')      or self.config.get('default_env')
+        self.info['schema'] = self.args.get('schema', '')   or self.info.get('schema', '')  or self.config.get('default_schema')
+        self.info['env']    = self.args.get('env', '')      or self.info.get('env', '')     or self.config.get('default_env')
 
         # create temp folder
         self.config.sqlcl_root = os.path.abspath(self.config.sqlcl_root)
@@ -227,10 +227,8 @@ class Config(util.Attributed):
 
 
     def init_connection(self, env_name = '', schema_name = ''):
-        if env_name == '':
-            env_name = self.info.env
-        if schema_name == '':
-            schema_name = self.info.schema or ''
+        env_name    = env_name      or self.info.env
+        schema_name = schema_name   or self.info.schema or ''
 
         # search for connection file
         for file in self.replace_tags(list(self.connection_files)):  # copy, dont change original
@@ -249,8 +247,10 @@ class Config(util.Attributed):
 
                 # make yaml content more flat
                 self.connection = {}
-                self.connection['file'] = file
-                self.connection['key']  = self.args.key
+                self.connection['file']     = file
+                self.connection['key']      = self.args.key
+                self.connection['env']      = env_name
+                self.connection['schema']   = schema_name
                 #
                 for env, args in data.items():
                     if env != env_name:

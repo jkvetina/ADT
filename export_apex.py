@@ -39,18 +39,13 @@ class Export_APEX(config.Config):
 
         # setup env and paths
         self.app_folder         = '$APP_FOLDER/'
-        self.target_env         = self.args.target or self.config.default_env
         self.target_root        = self.repo_root + self.config.path_apex
         self.target_path        = self.target_root + self.app_folder        # raplace later
         self.target_rest        = self.config.apex_path_rest
         self.target_files       = self.config.apex_path_files
         self.target_files_ws    = self.config.apex_path_files_ws
         #
-        util.assert_(self.target_env, 'MISSING ARGUMENT: TARGET ENV')
-        #
         self.init_config()
-        self.init_connection(env_name = self.target_env)
-        #
         self.conn = self.db_connect(ping_sqlcl = False)
 
         # make sure we have the temp folder ready
@@ -409,9 +404,9 @@ if __name__ == "__main__":
     group.add_argument('-fetch',        help = 'Fetch Git changes before patching',                 nargs = '?', const = True, default = False)
     #
     group = parser.add_argument_group('SPECIFY ENVIRONMENT DETAILS')
-    group.add_argument('-schema',       help = '')
-    group.add_argument('-target',       help = 'Target environment')
-    group.add_argument('-key',          help = 'Key or key location for passwords',                                 nargs = '?')
+    group.add_argument('-schema',       help = '',                                                  nargs = '?')
+    group.add_argument('-env',          help = 'Source environment (for overrides)',                nargs = '?')
+    group.add_argument('-key',          help = 'Key or key location for passwords',                 nargs = '?')
     #
     group = parser.add_argument_group('LIMIT SCOPE')
     group.add_argument('-ws',           help = 'Limit APEX workspace',                              nargs = '?')

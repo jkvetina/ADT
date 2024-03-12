@@ -62,7 +62,14 @@ class Export_APEX(config.Config):
         self.arg_workspace  = self.args.ws      or self.config.default_workspace
         self.arg_group      = self.args.group   or self.config.default_app_group
         self.arg_apps       = self.args.app     or self.config.default_apps
-        self.today          = str(datetime.datetime.today() - datetime.timedelta(days = self.args.recent - 1))[0:10]
+        #
+        self.arg_recent     = 1     # default walue = changes done today
+        if isinstance(self.args.recent, bool):
+            self.arg_recent = self.arg_recent if self.args.recent else 0
+        elif self.args.recent:
+            self.arg_recent = int(self.args.recent)
+        #
+        self.today          = str(datetime.datetime.today() - datetime.timedelta(days = self.arg_recent - 1))[0:10]
         #
         self.actions = {
             'recent'    : False,
@@ -81,7 +88,7 @@ class Export_APEX(config.Config):
         # for each requested app
         for app_id in sorted(self.apex_apps.keys()):
             # show recent changes
-            if self.config.apex_show_recent and self.args.recent > 0:
+            if (self.config.apex_show_recent > 0 or self.arg_recent > 0):
                 self.show_recent_changes(app_id)
 
             util.print_header('APP {}/{}, EXPORTING:'.format(app_id, self.apex_apps[app_id]['app_alias']))
@@ -100,7 +107,6 @@ class Export_APEX(config.Config):
                 self.move_files(app_id)
                 timer = int(round(timeit.default_timer() - start + 0.5, 0))
                 print(' {}'.format(timer))
-                break
 
             # full export
             if self.actions['full']:
@@ -168,7 +174,8 @@ class Export_APEX(config.Config):
                 self.actions[arg_name] = True
                 continue
         #
-        self.actions['recent'] = (self.actions['recent'] and self.args.recent > 0 and not self.actions['split'])
+        if self.arg_recent and self.actions['split']:
+            self.actions['recent'] = False
 
 
 
@@ -444,34 +451,34 @@ if __name__ == "__main__":
 
     # actions and flags
     group = parser.add_argument_group('MAIN ACTIONS')
-    group.add_argument('-recent',       help = 'Show components changed in # days',     type = int, nargs = '?', default = 1)
-    group.add_argument('-full',         help = 'Export full application export',                    nargs = '?', const = True, default = False)
-    group.add_argument('-split',        help = 'Export splitted export (components)',               nargs = '?', const = True, default = False)
-    group.add_argument('-embedded',     help = 'Export Embedded Code report',                       nargs = '?', const = True, default = False)
-    group.add_argument('-rest',         help = 'Export REST services',                              nargs = '?', const = True, default = False)
-    group.add_argument('-files',        help = 'Export application files in binary form',           nargs = '?', const = True, default = False)
-    group.add_argument('-files_ws',     help = 'Export workspace files in binary form',             nargs = '?', const = True, default = False)
-    group.add_argument('-only',         help = 'Proceed with passed actions only',                  nargs = '?', const = True, default = False)
-    group.add_argument('-fetch',        help = 'Fetch Git changes before patching',                 nargs = '?', const = True, default = False)
+    group.add_argument('-recent',       help = 'Show components changed in # days',     type = util.is_boolstr, nargs = '?')
+    group.add_argument('-full',         help = 'Export full application export',                                nargs = '?', const = True, default = False)
+    group.add_argument('-split',        help = 'Export splitted export (components)',                           nargs = '?', const = True, default = False)
+    group.add_argument('-embedded',     help = 'Export Embedded Code report',                                   nargs = '?', const = True, default = False)
+    group.add_argument('-rest',         help = 'Export REST services',                                          nargs = '?', const = True, default = False)
+    group.add_argument('-files',        help = 'Export application files in binary form',                       nargs = '?', const = True, default = False)
+    group.add_argument('-files_ws',     help = 'Export workspace files in binary form',                         nargs = '?', const = True, default = False)
+    group.add_argument('-only',         help = 'Proceed with passed actions only',                              nargs = '?', const = True, default = False)
+    group.add_argument('-fetch',        help = 'Fetch Git changes before patching',                             nargs = '?', const = True, default = False)
     #
     group = parser.add_argument_group('NEGATING ACTIONS')
-    group.add_argument('-nofull',       help = 'Skip full export',                                  nargs = '?', const = True, default = False)
-    group.add_argument('-nosplit',      help = 'Skip splitted export',                              nargs = '?', const = True, default = False)
-    group.add_argument('-noembedded',   help = 'Skip Embedded Code report',                         nargs = '?', const = True, default = False)
-    group.add_argument('-norest',       help = 'Skip REST services',                                nargs = '?', const = True, default = False)
-    group.add_argument('-nofiles',      help = 'Skip application files',                            nargs = '?', const = True, default = False)
-    group.add_argument('-nofiles_ws',   help = 'Skip workspace files',                              nargs = '?', const = True, default = False)
+    group.add_argument('-nofull',       help = 'Skip full export',                                              nargs = '?', const = True, default = False)
+    group.add_argument('-nosplit',      help = 'Skip splitted export',                                          nargs = '?', const = True, default = False)
+    group.add_argument('-noembedded',   help = 'Skip Embedded Code report',                                     nargs = '?', const = True, default = False)
+    group.add_argument('-norest',       help = 'Skip REST services',                                            nargs = '?', const = True, default = False)
+    group.add_argument('-nofiles',      help = 'Skip application files',                                        nargs = '?', const = True, default = False)
+    group.add_argument('-nofiles_ws',   help = 'Skip workspace files',                                          nargs = '?', const = True, default = False)
 
     # env details
     group = parser.add_argument_group('SPECIFY ENVIRONMENT DETAILS')
-    group.add_argument('-schema',       help = '',                                                  nargs = '?')
-    group.add_argument('-env',          help = 'Source environment (for overrides)',                nargs = '?')
-    group.add_argument('-key',          help = 'Key or key location for passwords',                 nargs = '?')
+    group.add_argument('-schema',       help = '',                                                              nargs = '?')
+    group.add_argument('-env',          help = 'Source environment (for overrides)',                            nargs = '?')
+    group.add_argument('-key',          help = 'Key or key location for passwords',                             nargs = '?')
     #
     group = parser.add_argument_group('LIMIT SCOPE')
-    group.add_argument('-ws',           help = 'Limit APEX workspace',                              nargs = '?')
-    group.add_argument('-group',        help = 'Limit application group',                           nargs = '?')
-    group.add_argument('-app',          help = 'Limit list of application(s)',          type = int, nargs = '*', default = [])
+    group.add_argument('-ws',           help = 'Limit APEX workspace',                                          nargs = '?')
+    group.add_argument('-group',        help = 'Limit application group',                                       nargs = '?')
+    group.add_argument('-app',          help = 'Limit list of application(s)',          type = int,             nargs = '*', default = [])
     #
     Export_APEX(parser)
 

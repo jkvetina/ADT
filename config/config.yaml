@@ -147,7 +147,7 @@ apex_path_files_ws      : 'workspace/files/'
 apex_path_rest          : 'rest/'
 apex_yaml_file          : 'config/apex.{$APP_WS}.yaml'
 #
-apex_show_recent        : True                  # show changes made in past # days
+apex_show_recent        : 1                     # show changes made in past # days
 apex_export_full        : False                 # full export
 apex_export_split       : True                  # export individual components
 apex_format_json        : False                 # export also in JSON format

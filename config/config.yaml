@@ -122,7 +122,7 @@ add_indexes:
 #
 # GIT REPOSITORY
 #
-repo_commits        : 50                    # depth for the commit history
+repo_commits        : 50                        # depth search for the commits history
 repo_branch         : dev
 
 
@@ -130,7 +130,7 @@ repo_branch         : dev
 #
 # GIT REPOSITORY
 #
-sqlcl_root          : './.temp.nosync/'
+sqlcl_root          : './.temp.nosync/'         # add to .gitignore, keep flag to avoid cloud sync
 sqlcl_temp_file     : 'sqlcl.tmp'
 
 
@@ -148,7 +148,7 @@ apex_path_rest          : 'rest/'
 apex_yaml_file          : 'config/apex.{$APP_WS}.yaml'
 #
 apex_show_recent        : True                  # show changes made in past # days
-apex_export_full        : True                  # full export
+apex_export_full        : False                 # full export
 apex_export_split       : True                  # export individual components
 apex_format_json        : False                 # export also in JSON format
 apex_format_yaml        : True                  # export also in YAML format

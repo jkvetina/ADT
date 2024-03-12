@@ -70,12 +70,8 @@ class Export_APEX(config.Config):
         self.arg_workspace  = self.args.ws      or self.config.default_workspace
         self.arg_group      = self.args.group   or self.config.default_app_group
         self.arg_apps       = self.args.app     or self.config.default_apps
-        self.arg_recent     = self.args.recent
-        self.today          = str(datetime.datetime.today() - datetime.timedelta(days = self.arg_recent - 1))[0:10]
+        self.today          = str(datetime.datetime.today() - datetime.timedelta(days = self.args.recent - 1))[0:10]
         #
-        if self.args.changed:
-            self.args.nofull    = True
-            self.args.nosplit   = True
 
         # show matching apps every time
         self.get_applications()
@@ -83,10 +79,10 @@ class Export_APEX(config.Config):
         # for each requested app
         for app_id in sorted(self.apex_apps.keys()):
             # show recent changes
-            if self.config.apex_show_recent and self.arg_recent > 0:
+            if self.config.apex_show_recent and self.args.recent > 0:
                 self.show_recent_changes(app_id)
 
-            util.print_header('EXPORTING {} {}'.format(app_id, self.apex_apps[app_id]['app_alias']))
+            util.print_header('APP {}/{}, EXPORTING:'.format(app_id, self.apex_apps[app_id]['app_alias']))
             self.conn.execute(query.apex_security_context, app_id = app_id)
 
             # create folders
@@ -395,14 +391,24 @@ if __name__ == "__main__":
     # actions and flags
     group = parser.add_argument_group('MAIN ACTIONS')
     group.add_argument('-recent',       help = 'Show components changed in # days',     type = int, nargs = '?', default = 1)
-    group.add_argument('-changed',      help = 'Export components changed in # days',               nargs = '?', const = True, default = False)
-    group.add_argument('-nofull',       help = 'Skip full export',                                  nargs = '?', const = True, default = False)
-    group.add_argument('-nosplit',      help = 'Skip splitted export',                              nargs = '?', const = True, default = False)
-    group.add_argument('-embedded',     help = 'Export Embedded Code Report',                       nargs = '?', const = True, default = False)
+    group.add_argument('-full',         help = 'Export full application export',                    nargs = '?', const = True, default = False)
+    group.add_argument('-split',        help = 'Export splitted export (components)',               nargs = '?', const = True, default = False)
+    group.add_argument('-embedded',     help = 'Export Embedded Code report',                       nargs = '?', const = True, default = False)
     group.add_argument('-rest',         help = 'Export REST services',                              nargs = '?', const = True, default = False)
-    group.add_argument('-files',        help = 'Export app & ws files in binary form',              nargs = '?', const = True, default = False)
+    group.add_argument('-files',        help = 'Export application files in binary form',           nargs = '?', const = True, default = False)
+    group.add_argument('-files_ws',     help = 'Export workspace files in binary form',             nargs = '?', const = True, default = False)
+    group.add_argument('-only',         help = 'Proceed with passed actions only',                  nargs = '?', const = True, default = False)
     group.add_argument('-fetch',        help = 'Fetch Git changes before patching',                 nargs = '?', const = True, default = False)
     #
+    group = parser.add_argument_group('NEGATING ACTIONS')
+    group.add_argument('-nofull',       help = 'Skip full export',                                  nargs = '?', const = True, default = False)
+    group.add_argument('-nosplit',      help = 'Skip splitted export',                              nargs = '?', const = True, default = False)
+    group.add_argument('-noembedded',   help = 'Skip Embedded Code report',                         nargs = '?', const = True, default = False)
+    group.add_argument('-norest',       help = 'Skip REST services',                                nargs = '?', const = True, default = False)
+    group.add_argument('-nofiles',      help = 'Skip application files',                            nargs = '?', const = True, default = False)
+    group.add_argument('-nofiles_ws',   help = 'Skip workspace files',                              nargs = '?', const = True, default = False)
+
+    # env details
     group = parser.add_argument_group('SPECIFY ENVIRONMENT DETAILS')
     group.add_argument('-schema',       help = '',                                                  nargs = '?')
     group.add_argument('-env',          help = 'Source environment (for overrides)',                nargs = '?')

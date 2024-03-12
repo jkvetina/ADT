@@ -53,14 +53,6 @@ class Export_APEX(config.Config):
             shutil.rmtree(self.config.sqlcl_root, ignore_errors = True, onerror = None)
             os.makedirs(self.config.sqlcl_root, exist_ok = True)
 
-        # for request replacements
-        self.transl = {
-            '{app_id}'          : '{$APP_ID}',
-            '{since}'           : '{$TODAY}',
-            '{format_json}'     : ',READABLE_JSON' if self.config.apex_format_json else '',
-            '{format_yaml}'     : ',READABLE_YAML' if self.config.apex_format_yaml else '',
-        }
-
         # for workspace and apps lists
         self.apex_apps      = {}
         self.apex_ws        = {}
@@ -72,6 +64,16 @@ class Export_APEX(config.Config):
         self.arg_apps       = self.args.app     or self.config.default_apps
         self.today          = str(datetime.datetime.today() - datetime.timedelta(days = self.args.recent - 1))[0:10]
         #
+        self.actions = {
+            'recent'    : False,
+            'full'      : False,
+            'split'     : False,
+            'embedded'  : False,
+            'rest'      : False,
+            'files'     : False,
+            'files_ws'  : False,
+        }
+        self.parse_actions()
 
         # show matching apps every time
         self.get_applications()
@@ -90,34 +92,83 @@ class Export_APEX(config.Config):
                 dir = os.path.dirname(self.get_root(app_id, dir))
                 os.makedirs(dir, exist_ok = True)
 
-            # export changed objects only
-            if (self.config.apex_export_changed or self.args.changed) and self.arg_recent > 0:
+            # export changed objects only and exit
+            if self.actions['recent']:
+                start = timeit.default_timer()
+                util.print_now('  CHANGED COMPONENTS ...')
                 self.export_changed(app_id)
+                self.move_files(app_id)
+                timer = int(round(timeit.default_timer() - start + 0.5, 0))
+                print(' {}'.format(timer))
+                break
 
             # full export
-            if self.config.apex_export_full and not self.args.nofull:
+            if self.actions['full']:
+                start = timeit.default_timer()
+                util.print_now('  FULL APP EXPORT ...')
                 self.export_full(app_id)
+                timer = int(round(timeit.default_timer() - start + 0.5, 0))
+                print(' {}'.format(timer))
 
             # split export
-            if self.config.apex_export_split and not self.args.nosplit:
+            if self.actions['split']:
+                start = timeit.default_timer()
+                util.print_now('  SPLIT COMPONENTS ...')
                 self.export_split(app_id)
+                timer = int(round(timeit.default_timer() - start + 0.5, 0))
+                print(' {}'.format(timer))
 
             # export embedded code report
-            if (self.config.apex_embedded or self.args.embedded):
+            if self.actions['embedded']:
+                start = timeit.default_timer()
+                util.print_now('  EMBEDDED CODE REPORT ...')
                 self.export_embedded(app_id)
+                timer = int(round(timeit.default_timer() - start + 0.5, 0))
+                print(' {}'.format(timer))
 
             # export REST services
-            if (self.config.apex_export_rest or self.args.rest):
+            if self.actions['rest']:
+                start = timeit.default_timer()
+                util.print_now('  REST SERVICES ...')
                 self.export_rest(app_id)
+                timer = int(round(timeit.default_timer() - start + 0.5, 0))
+                print(' {}'.format(timer))
 
             # export application files
-            if (self.config.apex_export_files or self.args.files):
+            if self.actions['files']:
+                start = timeit.default_timer()
+                util.print_now('  APPLICATION FILES ...')
                 self.export_files(app_id)
+                timer = int(round(timeit.default_timer() - start + 0.5, 0))
+                print(' {}'.format(timer))
+
+            self.move_files(app_id)
 
         # export workspace files
-        if (self.config.apex_export_files or self.args.files):
+        if self.actions['files_ws']:
+            start = timeit.default_timer()
+            util.print_now('  WORKSPACE FILES ...')
             self.export_files(app_id = 0)
+            timer = int(round(timeit.default_timer() - start + 0.5, 0))
+            print(' {}'.format(timer))
+
         print()
+
+
+
+    def parse_actions(self):
+        # check what exactly we will be exporting
+        for arg_name in self.actions.keys():
+            if self.args.get('no' + arg_name, ''):  # keep default False
+                continue
+            if self.args.get(arg_name, ''):         # proceed
+                self.actions[arg_name] = True
+                continue
+            if self.config.get('apex_export_' + arg_name, '') and not self.args.only:
+                self.actions[arg_name] = True
+                continue
+        #
+        self.actions['recent'] = (self.actions['recent'] and self.args.recent > 0 and not self.actions['split'])
 
 
 

@@ -222,6 +222,11 @@ class Export_APEX(config.Config):
             util.print_header('APEX APPLICATIONS:', group if group != '-' else '')
             util.print_table(rows)
 
+        # for cleanup files get some extra info
+        self.enrich_ids = {}
+        for row in self.conn.fetch_assoc(query.apex_id_names, **args):
+            self.enrich_ids[row.component_id] = '{}: {}'.format(row.component_type, row.component_name)
+
 
 
     def show_recent_changes(self, app_id):
@@ -406,6 +411,12 @@ class Export_APEX(config.Config):
             new_content = util.replace(new_content,
                 ",p_last_upd_yyyymmddhh24miss=>'(\d+)'",
                 ",p_last_upd_yyyymmddhh24miss=>'{}'".format(self.config.apex_timestamps))
+
+        # translate id to more meaningful names
+        for component_id, component_name in self.enrich_ids.items():
+            new_content = new_content.replace (
+                '.id({})\n'.format(component_id),
+                '.id({})  -- {}\n'.format(component_id, component_name))
 
         # store new content in the same file
         if new_content != old_content:

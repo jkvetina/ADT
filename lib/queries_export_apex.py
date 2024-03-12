@@ -50,3 +50,53 @@ WHERE f.flow_id                 = :app_id
     AND f.content_type          IS NULL
 """
 
+# translate ids to more meaningful names
+apex_id_names = """
+SELECT
+    t.authorization_scheme_id       AS component_id,
+    t.authorization_scheme_name     AS component_name,
+    'AUTHENTICATION'                AS component_type
+FROM apex_application_authorization t
+WHERE t.application_id = :app_id
+--
+UNION ALL
+SELECT
+    t.lov_id,
+    t.list_of_values_name,
+    'LOV'
+FROM apex_application_lovs t
+WHERE t.application_id = :app_id
+--
+UNION ALL
+SELECT
+    t.group_id,
+    t.page_group_name,
+    'PAGE GROUP'
+FROM apex_application_page_groups t
+WHERE t.application_id = :app_id
+--
+UNION ALL
+SELECT
+    t.list_id,
+    t.list_name,
+    'LIST'
+FROM apex_application_lists t
+WHERE t.application_id = :app_id
+--
+UNION ALL
+SELECT
+    t.breadcrumb_id,
+    t.breadcrumb_name,
+    'BREADCRUMB'
+FROM apex_application_breadcrumbs t
+WHERE t.application_id = :app_id
+--
+UNION ALL
+SELECT
+    t.email_template_id,
+    t.name,
+    'EMAIL TEMPLATE'
+FROM apex_appl_email_templates t
+WHERE t.application_id = :app_id
+"""
+

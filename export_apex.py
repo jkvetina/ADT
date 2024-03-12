@@ -299,8 +299,16 @@ class Export_APEX(config.Config):
             shutil.rmtree(target_dir, ignore_errors = True, onerror = None)
         #
         if os.path.exists(source_dir):
-            for file in util.get_files(source_dir + '/pages/p*.*'):
-                os.rename(file, file.replace('/pages/p', '/pages/page_'))
+            for file in util.get_files(source_dir + '**/*.*'):
+                # remove first 10 lines
+                with open(file, 'rt') as f:
+                    old_content = f.readlines()
+                with open(file, 'wt', encoding = 'utf-8', newline = '\n') as w:
+                    w.writelines(old_content[10:])
+
+                # move files
+                if '/pages/p' in file:
+                    os.rename(file, file.replace('/pages/p', '/pages/page_'))
             #
             shutil.copytree(source_dir, target_dir, dirs_exist_ok = True)
             shutil.rmtree(source_dir, ignore_errors = True, onerror = None)
@@ -427,7 +435,7 @@ class Export_APEX(config.Config):
 
         # store new content in the same file
         if new_content != old_content:
-            with open(file, 'w', encoding = 'utf-8', newline = '\n') as w:
+            with open(file, 'wt', encoding = 'utf-8', newline = '\n') as w:
                 w.write(new_content)
 
 

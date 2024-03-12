@@ -23,22 +23,19 @@ def get_linenumber():
 
 
 
-def replace(subject, pattern, replacement, flags = 0):
-    return re.compile(pattern, flags).sub(replacement, subject)
-
-
-
-def replace_dict(subject, translations):
+def replace(subject, pattern, replacement = '', flags = 0):
     if isinstance(subject, dict):
         for key, value in subject.items():
-            subject[key] = replace_dict(value, translations)
+            subject[key] = replace(value, replacement)
         return subject
     #
-    for key, value in translations.items():
-        subject = subject.replace(key, str(value))
-    #regex = re.compile('|'.join(map(re.escape, translations)))
-    #return regex.sub(lambda match: translations[match.group(0)], subject)
-    return subject
+    if isinstance(pattern, dict):
+        replacement = pattern
+        for key, value in replacement.items():
+            subject = subject.replace(key, str(value))
+        return subject
+    #
+    return re.compile(pattern, flags).sub(replacement, subject)
 
 
 

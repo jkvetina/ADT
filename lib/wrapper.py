@@ -58,7 +58,7 @@ class Oracle:
 
         # auto connect
         if not self.silent:
-            util.print_header('CONNECTING TO {}:'.format(self.tns.get('desc', '') or self.tns.get('user', '')))
+            util.print_header('CONNECTING TO {}, {}:'.format(self.tns.get('schema', ''), self.tns.get('env', '')))
         #
         self.connect()
         self.get_versions()

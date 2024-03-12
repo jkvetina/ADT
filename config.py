@@ -283,9 +283,6 @@ class Config(util.Attributed):
                         wallet = os.path.dirname(file) + '/' + wallet
                         if os.path.exists(wallet):
                             self.connection['wallet'] = wallet
-
-                # description for the screen
-                self.connection['desc'] = '{}, {}'.format(schema_name or self.connection['user'], env_name)
         #
         if self.debug:
             util.print_header('CONNECTION:')

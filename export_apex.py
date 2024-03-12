@@ -172,11 +172,9 @@ class Export_APEX(config.Config):
         alias = self.apex_apps[app_id]['app_alias']
         util.print_header('APP {}/{}, CHANGES SINCE {}'.format(app_id, alias, self.today))
         #
-        request = 'SET LINESIZE 200;\napex export -applicationid {app_id} -list -changesSince {since};\n'
-        request = util.replace_dict(request, util.replace_dict(self.transl, {'{$APP_ID}': app_id, '{$TODAY}': self.today}))
-        output  = self.conn.sqlcl_request(request)
+        output  = self.execute_request('apex export -applicationid {$APP_ID} -list -changesSince {$TODAY}', app_id)
+        data    = util.parse_table(output.splitlines()[5:])
         #
-        data = util.parse_table(output.splitlines()[5:])
         for i, row in enumerate(data):
             self.comp_changed.append(row['id'])
             if row['id'].startswith('PAGE:'):
@@ -193,13 +191,7 @@ class Export_APEX(config.Config):
 
 
     def export_changed(self, app_id):
-        print('  CHANGED '.ljust(20, '.'), end = '')
-        start   = timeit.default_timer() if self.is_curr_class else None
-        request = 'apex export -applicationid {app_id} -expComponents "{comp}" -split'.replace('{comp}', ' '.join(self.comp_changed))
-        request = util.replace_dict(request, util.replace_dict(self.transl, {'{$APP_ID}': app_id, '{$TODAY}': self.today}))
-        output  = self.conn.sqlcl_request(request)
-        timer   = int(round(timeit.default_timer() - start + 0.5, 0))
-        print(' {}'.format(timer).rjust(8, '.'))
+        output = self.execute_request('apex export -applicationid {$APP_ID} -skipExportDate -expComments -expComponents "{$COMPONENTS}" -split', app_id)
 
         # remove some extra files
         source_dir = '{}f{}'.format(self.config.sqlcl_root, app_id)
@@ -207,49 +199,29 @@ class Export_APEX(config.Config):
             for file in util.get_files(source_dir + pattern):
                 os.remove(file)
         #
-        self.move_files(app_id)
+        return output
 
 
 
     def export_full(self, app_id):
-        print('  FULL APP '.ljust(20, '.'), end = '')
-        start   = timeit.default_timer() if self.is_curr_class else None
-        request = 'apex export -applicationid {app_id} -nochecksum -skipExportDate -expComments -expTranslations'
-        request = util.replace_dict(request, util.replace_dict(self.transl, {'{$APP_ID}': app_id, '{$TODAY}': self.today}))
-        output  = self.conn.sqlcl_request(request)
-        timer   = int(round(timeit.default_timer() - start + 0.5, 0))
-        print(' {}'.format(timer).rjust(8, '.'))
-        #
-        self.move_files(app_id)
+        return self.execute_request('apex export -applicationid {$APP_ID} -nochecksum -skipExportDate -expComments -expTranslations', app_id)
 
 
 
     def export_split(self, app_id):
-        print('  SPLIT COMPONENTS '.ljust(20, '.'), end = '')
-        start   = timeit.default_timer() if self.is_curr_class else None
-        request = 'apex export -applicationid {app_id} -nochecksum -skipExportDate -expComments -expTranslations -expType APPLICATION_SOURCE{format_json}{format_yaml} -split'
-        request = util.replace_dict(request, util.replace_dict(self.transl, {'{$APP_ID}': app_id, '{$TODAY}': self.today}))
-        output  = self.conn.sqlcl_request(request)
-        timer   = int(round(timeit.default_timer() - start + 0.5, 0))
-        print(' {}'.format(timer).rjust(8, '.'))
+        output = self.execute_request('apex export -applicationid {$APP_ID} -nochecksum -skipExportDate -expComments -expTranslations -expType APPLICATION_SOURCE{$FORMAT_JSON}{$FORMAT_YAML} -split', app_id)
 
         # cleanup target directory before moving new files there
         target_dir = self.get_root(app_id, 'application/')
         if os.path.exists(target_dir):
             shutil.rmtree(target_dir, ignore_errors = True, onerror = None)
         #
-        self.move_files(app_id)
+        return output
 
 
 
     def export_embedded(self, app_id):
-        print('  EMBEDDED REPORT '.ljust(20, '.'), end = '')
-        start   = timeit.default_timer() if self.is_curr_class else None
-        request = 'apex export -applicationid {app_id} -nochecksum -expType EMBEDDED_CODE'
-        request = util.replace_dict(request, util.replace_dict(self.transl, {'{$APP_ID}': app_id, '{$TODAY}': self.today}))
-        output  = self.conn.sqlcl_request(request)
-        timer   = int(round(timeit.default_timer() - start + 0.5, 0))
-        print(' {}'.format(timer).rjust(8, '.'))
+        output = self.execute_request('apex export -applicationid {$APP_ID} -nochecksum -expType EMBEDDED_CODE', app_id)
 
         # move to proper folder
         source_dir = '{}f{}/embedded_code/'.format(self.config.sqlcl_root, app_id)
@@ -264,24 +236,17 @@ class Export_APEX(config.Config):
             #
             shutil.copytree(source_dir, target_dir, dirs_exist_ok = True)
             shutil.rmtree(source_dir, ignore_errors = True, onerror = None)
+        #
+        return output
 
 
 
     def export_rest(self, app_id):
-        print('  REST '.ljust(20, '.'), end = '')
-        start   = timeit.default_timer() if self.is_curr_class else None
-        request = 'rest export;\n'
-        output  = self.conn.sqlcl_request(request)
-        timer   = int(round(timeit.default_timer() - start + 0.5, 0))
-        print(' {}'.format(timer).rjust(8, '.'))
+        return self.execute_request('apex rest', app_id)
 
 
 
     def export_files(self, app_id):
-        print('  {}FILES '.format('WORKSPACE ' if app_id == 0 else '').ljust(20, '.'), end = '')
-        start   = timeit.default_timer() if self.is_curr_class else None
-        files   = self.conn.fetch_assoc(query.apex_files, app_id = app_id)
-
         # get target folder
         if app_id == 0:  # workspace files
             target_dir = self.target_root + self.target_files_ws
@@ -292,15 +257,12 @@ class Export_APEX(config.Config):
         shutil.rmtree(target_dir, ignore_errors = True, onerror = None)
 
         # create files
-        for row in files:
+        for row in self.conn.fetch_assoc(query.apex_files, app_id = app_id):
             file = target_dir + row.filename
             os.makedirs(os.path.dirname(file), exist_ok = True)
             #
             with open(file, 'wb') as w:
                 w.write(row.f.read())   # blob_content
-        #
-        timer   = int(round(timeit.default_timer() - start + 0.5, 0))
-        print(' {}'.format(timer).rjust(8, '.'))
 
 
 
@@ -381,6 +343,19 @@ class Export_APEX(config.Config):
         if new_content != old_content:
             with open(file, 'w', encoding = 'utf-8', newline = '\n') as w:
                 w.write(new_content)
+
+
+
+    def execute_request(self, request, app_id):
+        request = util.replace(request, {
+            '{$APP_ID}'         : app_id,
+            '{$TODAY}'          : self.today,
+            '{$FORMAT_JSON}'    : ',READABLE_JSON' if self.config.apex_format_json else '',
+            '{$FORMAT_YAML}'    : ',READABLE_YAML' if self.config.apex_format_yaml else '',
+            '{$COMPONENTS}'     : ' '.join(self.comp_changed),
+        })
+        request = 'SET LINESIZE 200;\n{};\n'.format(request)
+        return self.conn.sqlcl_request(request)
 
 
 

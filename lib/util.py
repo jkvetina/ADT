@@ -376,6 +376,12 @@ def print_pipes(payload, pattern = '  {:>16} | {}', right = [1], upper = True, s
 
 
 
+def print_now(line):
+    sys.stdout.write('\r' + str(line))  # overwrite current line and dont end it
+    sys.stdout.flush()
+
+
+
 def print_progress(done, target = 100):
     perc = min(done + 1, target) / target
     dots = int(70 * perc)

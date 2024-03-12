@@ -55,7 +55,7 @@ apex_id_names = """
 SELECT
     t.authorization_scheme_id       AS component_id,
     t.authorization_scheme_name     AS component_name,
-    'AUTHENTICATION'                AS component_type
+    'AUTHORIZATION'                 AS component_type
 FROM apex_application_authorization t
 WHERE t.application_id = :app_id
 --

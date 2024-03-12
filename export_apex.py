@@ -173,8 +173,13 @@ class Export_APEX(config.Config):
 
 
     def get_root(self, app_id, folders = ''):
-        app_alias   = self.apex_apps[app_id]['app_alias']
-        app_folder  = '/{}_{}/'.format(app_id, app_alias)
+        transl = {
+            '{$APP_ID}'     : app_id,
+            '{$APP_ALIAS}'  : self.apex_apps[app_id]['app_alias'],
+            '{$APP_NAME}'   : self.apex_apps[app_id]['app_name'],
+            '{$APP_GROUP}'  : self.apex_apps[app_id]['app_group'],
+        }
+        app_folder  = '/{}/'.format(util.replace(self.config.apex_path_app, transl))
         path        = self.target_path.replace(self.app_folder, app_folder) + folders
         #
         return path.replace('//', '/')

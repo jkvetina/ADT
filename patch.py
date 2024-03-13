@@ -823,6 +823,11 @@ class Patch(config.Config):
             if self.config.apex_authors:
                 file_content = re.sub(r",p_last_upd_yyyymmddhh24miss=>'(\d+)'", ",p_last_upd_yyyymmddhh24miss=>'{}'".format(self.config.today_full_raw), file_content)
 
+        # make the folder structure more shallow
+        if self.config.apex_snapshots:
+            target_file = target_file.replace(self.patch_folder, '').strip('/').replace('/', '.')
+            target_file = '{}/{}/{}'.format(self.patch_folder, self.config.apex_snapshots, target_file).replace('//', '/')
+
         # save file
         target_folder = os.path.dirname(target_file)
         if not os.path.exists(target_folder):
@@ -854,8 +859,13 @@ class Patch(config.Config):
         ])
 
         # recreate requested pages
-        for file in apex_pages:
-            payload.append(self.config.patch_file_link.replace('{$FILE}', file))
+        for target_file in apex_pages:
+            # make the folder structure more shallow
+            if self.config.apex_snapshots:
+                target_file = target_file.replace(self.patch_folder, '').strip('/').replace('/', '.')
+                target_file = '{}/{}'.format(self.config.apex_snapshots, target_file).replace('//', '/')
+            #
+            payload.append(self.config.patch_file_link.replace('{$FILE}', target_file))
         #
         return payload
 

@@ -147,6 +147,7 @@ apex_path_files         : 'files/'
 apex_path_rest          : 'rest/'
 apex_workspace_dir      : 'workspace/'
 apex_yaml_file          : 'config/apex.{$APP_WS}.yaml'
+apex_snapshots          : 'snapshots/'
 #
 apex_show_recent        : 1                     # show changes made in past # days
 apex_export_full        : False                 # full export

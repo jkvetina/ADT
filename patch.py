@@ -574,6 +574,10 @@ class Patch(config.Config):
                     # attach starting file
                     file = '{}f{}/{}'.format(self.config.path_apex, app_id, 'application/set_environment.sql')
                     payload.extend(self.attach_file(file, header = 'APEX COMPONENTS START', category = 'FIXED'))
+                    payload.append(
+                        # replace existing components
+                        'BEGIN wwv_flow_imp.g_mode := \'REPLACE\'; END;\n/\n'
+                    )
 
                 # go through files
                 apex_pages = []
@@ -841,21 +845,20 @@ class Patch(config.Config):
 
     def fix_apex_pages(self, apex_pages):
         payload = [
-            '',
             'PROMPT --;',
             'PROMPT -- APEX PAGES',
             'PROMPT --;',
-            'BEGIN',
+            ##'BEGIN',
         ]
         #
         for file in apex_pages:
             page_id = util.extract_int('/pages/page_(\d+)\.sql', file)
-            payload.append('    wwv_flow_imp_page.remove_page(p_flow_id => wwv_flow.g_flow_id, p_page_id => {});'.format(page_id))
+            ##payload.append('    wwv_flow_imp_page.remove_page(p_flow_id => wwv_flow.g_flow_id, p_page_id => {});'.format(page_id))
         #
         payload.extend([
-            'END;',
-            '/',
-            '--',
+            ##'END;',
+            ##'/',
+            ##'--',
         ])
 
         # recreate requested pages

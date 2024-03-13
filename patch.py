@@ -439,6 +439,10 @@ class Patch(config.Config):
                 #
                 if short_file in skip_apex_files:
                     continue
+
+                # skip full exports, need to add support for alias...
+                if file == '{}f{}/f{}.sql'.format(self.config.path_apex, app_id, app_id).replace('//', '/'):
+                    continue
                 #
                 files_to_process[file] = File(file, config = self.config)
 
@@ -565,11 +569,6 @@ class Patch(config.Config):
                         'SET DEFINE OFF',
                         'SET TIMING OFF',
                         '--',
-                        'PROMPT --;',
-                        'PROMPT -- APEX FULL EXPORT',
-                        'PROMPT --;',
-                        '--@"./{}f{}/f{}.sql";'.format(self.config.path_apex, app_id, app_id),
-                        '',
                     ])
 
                     # attach starting file
@@ -767,8 +766,9 @@ class Patch(config.Config):
                     self.create_file_snapshot(file, app_id = app_id, live = True)
 
             # attach full export
-            file = '{}f{}.sql'.format(path, app_id)
-            self.create_file_snapshot(file, app_id = app_id)
+            #if self.full_export:
+            #file = '{}f{}.sql'.format(path, app_id)
+            #self.create_file_snapshot(file, app_id = app_id)
 
 
 

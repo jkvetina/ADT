@@ -56,7 +56,7 @@ class Deploy(config.Config):
         self.deploy_plan        = []
         self.deploy_schemas     = {}
         self.deploy_conn        = {}
-        self.logs_prefix        = '{}/LOGS_{}'
+        self.logs_prefix        = self.config.patch_deploy_logs
         #
         self.find_folder()
         if __name__ == "__main__":
@@ -184,7 +184,7 @@ class Deploy(config.Config):
             self.patch_full     = self.patch_found[0]
             self.patch_short    = self.patch_full.replace(self.repo_root + self.config.patch_root, '')
             self.patch_path     = self.repo_root + self.config.patch_root + self.patch_folder + '/'
-            self.log_folder     = self.logs_prefix.format(self.patch_path, self.target_env)
+            self.log_folder     = '{}/{}/'.format(self.patch_path, self.logs_prefix.replace('{$TARGET_ENV}', self.target_env))
 
 
 

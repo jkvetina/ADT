@@ -376,8 +376,8 @@ def print_pipes(payload, pattern = '  {:>16} | {}', right = [1], upper = True, s
 
 
 
-def print_now(line):
-    sys.stdout.write('\r' + str(line))  # overwrite current line and dont end it
+def print_now(line, close = False):
+    sys.stdout.write('\r' + str(line) + ('\n' if close else ''))  # overwrite current line and dont end it
     sys.stdout.flush()
 
 

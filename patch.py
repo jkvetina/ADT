@@ -249,7 +249,7 @@ class Patch(config.Config):
 
     def get_matching_commits(self):
         # loop through all recent commits
-        print('\nSEARCHING REPO:')
+        print('\nSEARCHING REPO:', self.info.branch)
         progress_target = self.search_depth
         progress_done   = 0
         #
@@ -257,7 +257,7 @@ class Patch(config.Config):
             self.all_commits[commit.count()] = commit
             progress_done = util.print_progress(progress_done, progress_target)
         progress_done = util.print_progress(progress_target, progress_target)
-        print('\n')
+        print('')
 
         # add or remove specific commits from the queue
         for _, commit in self.all_commits.items():
@@ -318,6 +318,10 @@ class Patch(config.Config):
                     self.relevant_files[schema].append(file)
                 if not (commit.count() in self.relevant_count[schema]):
                     self.relevant_count[schema].append(commit.count())
+
+        # show depth to speedup repeated runs
+        print('DEPTH = {}'.format(self.current_commit - min(self.relevant_commits.keys()) + 1))
+        print('')
 
         # check number of commits
         if len(self.relevant_commits.keys()) == 0:

@@ -94,10 +94,6 @@ class Export_APEX(config.Config):
             self.conn.execute(query.apex_security_context, app_id = app_id)
 
             # create folders
-            for dir in ['', self.target_rest, self.target_files]:
-                dir = os.path.dirname(self.get_root(app_id, dir))
-                os.makedirs(dir, exist_ok = True)
-
             os.makedirs(os.path.dirname(self.get_root(app_id)), exist_ok = True)
 
             # create a queue
@@ -299,6 +295,8 @@ class Export_APEX(config.Config):
 
 
     def export_rest(self, app_id):
+        for dir in [self.target_rest]:
+            os.makedirs(os.path.dirname(self.get_root(app_id, dir)), exist_ok = True)
         return self.execute_request('apex rest', app_id)
 
 

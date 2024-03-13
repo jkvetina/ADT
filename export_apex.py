@@ -101,64 +101,64 @@ class Export_APEX(config.Config):
 
             # export changed objects only and exit
             if self.actions['recent']:
-                start = timeit.default_timer()
-                util.print_now('  CHANGED COMPONENTS ...')
+                h = self.print_start('CHANGED COMPONENTS')
                 self.export_changed(app_id)
-                self.move_files(app_id)
-                timer = int(round(timeit.default_timer() - start + 0.5, 0))
-                print(' {}'.format(timer))
+                self.print_end(**h)
 
             # full export
             if self.actions['full']:
-                start = timeit.default_timer()
-                util.print_now('  FULL APP EXPORT ...')
+                h = self.print_start('FULL APP EXPORT')
                 self.export_full(app_id)
-                timer = int(round(timeit.default_timer() - start + 0.5, 0))
-                print(' {}'.format(timer))
+                self.print_end(**h)
 
             # split export
             if self.actions['split']:
-                start = timeit.default_timer()
-                util.print_now('  SPLIT COMPONENTS ...')
+                h = self.print_start('SPLIT COMPONENTS')
                 self.export_split(app_id)
-                timer = int(round(timeit.default_timer() - start + 0.5, 0))
-                print(' {}'.format(timer))
+                self.print_end(**h)
 
             # export embedded code report
             if self.actions['embedded']:
-                start = timeit.default_timer()
-                util.print_now('  EMBEDDED CODE REPORT ...')
+                h = self.print_start('EMBEDDED CODE REPORT')
                 self.export_embedded(app_id)
-                timer = int(round(timeit.default_timer() - start + 0.5, 0))
-                print(' {}'.format(timer))
+                self.print_end(**h)
 
             # export REST services
             if self.actions['rest']:
-                start = timeit.default_timer()
-                util.print_now('  REST SERVICES ...')
+                h = self.print_start('REST SERVICES')
                 self.export_rest(app_id)
-                timer = int(round(timeit.default_timer() - start + 0.5, 0))
-                print(' {}'.format(timer))
+                self.print_end(**h)
 
             # export application files
             if self.actions['files']:
-                start = timeit.default_timer()
-                util.print_now('  APPLICATION FILES ...')
+                h = self.print_start('APPLICATION FILES')
                 self.export_files(app_id)
-                timer = int(round(timeit.default_timer() - start + 0.5, 0))
-                print(' {}'.format(timer))
+                self.print_end(**h)
 
             self.move_files(app_id)
 
         # export workspace files
         if self.actions['files_ws']:
-            start = timeit.default_timer()
-            util.print_now('  WORKSPACE FILES ...')
+            h = self.print_start('WORKSPACE FILES')
             self.export_files(app_id = 0)
-            timer = int(round(timeit.default_timer() - start + 0.5, 0))
-            print(' {}'.format(timer))
+            self.print_end(**h)
 
         print()
+
+
+
+    def print_start(self, header):
+        header = '  {} ...'.format(header)
+        util.print_now(header)
+        #
+        return {'header' : header, 'start' : timeit.default_timer()}
+
+
+
+    def print_end(self, header, start):
+        timer   = int(round(timeit.default_timer() - start + 0.5, 0))
+        header  = '{}{}'.format(header.ljust(30, '.'), (' ' + str(timer)).rjust(6, '.'))
+        util.print_now(header, close = True)
 
 
 

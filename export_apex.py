@@ -98,54 +98,28 @@ class Export_APEX(config.Config):
                 dir = os.path.dirname(self.get_root(app_id, dir))
                 os.makedirs(dir, exist_ok = True)
 
-            # export changed objects only and exit
-            if self.actions['recent']:
-                h = self.print_start('CHANGED COMPONENTS')
-                self.export_changed(app_id)
-                self.print_end(**h)
+            os.makedirs(os.path.dirname(self.get_root(app_id)), exist_ok = True)
 
-            # full export
-            if self.actions['full']:
-                h = self.print_start('FULL APP EXPORT')
-                self.export_full(app_id)
-                self.print_end(**h)
+            # create a queue
+            todo = [
+                {'action' : 'recent',       'header' : 'CHANGED COMPONENTS' },
+                {'action' : 'full',         'header' : 'FULL APP EXPORT' },
+                {'action' : 'split',        'header' : 'SPLIT COMPONENTS' },
+                {'action' : 'embedded',     'header' : 'EMBEDDED CODE REPORT' },
+                {'action' : 'rest',         'header' : 'REST SERVICES' },
+                {'action' : 'files',        'header' : 'APPLICATION FILES' },
+                {'action' : 'files_ws',     'header' : 'WORKSPACE FILES' },
+            ]
+            for row in todo:
+                if self.actions[row['action']]:
+                    h = self.print_start(row['header'])
+                    getattr(self, 'export_' + row['action'])(app_id)
+                    self.print_end(**h)
 
-            # split export
-            if self.actions['split']:
-                h = self.print_start('SPLIT COMPONENTS')
-                self.export_split(app_id)
-                self.print_end(**h)
-
-            # export embedded code report
-            if self.actions['embedded']:
-                h = self.print_start('EMBEDDED CODE REPORT')
-                self.export_embedded(app_id)
-                self.print_end(**h)
-
-            # export REST services
-            if self.actions['rest']:
-                h = self.print_start('REST SERVICES')
-                self.export_rest(app_id)
-                self.print_end(**h)
-
-            # export application files
-            if self.actions['files']:
-                h = self.print_start('APPLICATION FILES')
-                self.export_files(app_id)
-                self.print_end(**h)
-
-            # move files from temp folder to target folder
+            # move files from temp folders to target folders
             self.move_files(app_id)
-
-        # export workspace files
-        if self.actions['files_ws']:
-            h = self.print_start('WORKSPACE FILES')
-            self.export_files(app_id = 0)
-            self.print_end(**h)
-        #
-        self.move_ws_files()
-
-        print()
+            self.move_ws_files()
+            print()
 
 
 
@@ -265,7 +239,7 @@ class Export_APEX(config.Config):
 
 
 
-    def export_changed(self, app_id):
+    def export_recent(self, app_id):
         output = self.execute_request('apex export -applicationid {$APP_ID} -skipExportDate -expComments -expComponents "{$COMPONENTS}" -split', app_id)
 
         # remove some extra files
@@ -346,6 +320,11 @@ class Export_APEX(config.Config):
             #
             with open(file, 'wb') as w:
                 w.write(row.f.read())   # blob_content
+
+
+
+    def export_files_ws(self):
+        self.export_files(app_id = 0)
 
 
 

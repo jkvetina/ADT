@@ -40,10 +40,9 @@ class Export_APEX(config.Config):
         # setup env and paths
         self.app_folder         = '$APP_FOLDER/'
         self.target_root        = self.repo_root + self.config.path_apex
-        self.target_path        = self.target_root + self.app_folder        # raplace later
+        self.target_path        = self.target_root + self.app_folder        # replace later
         self.target_rest        = self.config.apex_path_rest
         self.target_files       = self.config.apex_path_files
-        self.target_files_ws    = self.config.apex_path_files_ws
         #
         self.init_config()
         self.conn = self.db_connect(ping_sqlcl = False)
@@ -193,6 +192,11 @@ class Export_APEX(config.Config):
 
 
 
+    def get_root_ws(self, folders = ''):
+        return (self.target_root + self.config.apex_workspace_dir + folders).replace('//', '/')
+
+
+
     def get_applications(self):
         # get list of applications
         args = {
@@ -325,7 +329,7 @@ class Export_APEX(config.Config):
     def export_files(self, app_id):
         # get target folder
         if app_id == 0:  # workspace files
-            target_dir = self.target_root + self.target_files_ws
+            target_dir = self.get_root_ws(self.config.apex_path_files)
         else:
             target_dir = self.get_root(app_id, self.target_files)
 
@@ -377,7 +381,7 @@ class Export_APEX(config.Config):
 
         # move workspace files to workspace folder
         for file in util.get_files(source_dir + 'workspace/**/*.*'):
-            target = file.replace('/f{}/workspace/'.format(app_id), '/workspace/')
+            target = file.replace('/f{}/workspace/'.format(app_id), '/' + self.config.apex_workspace_dir)
             os.makedirs(os.path.dirname(target), exist_ok = True)
             os.rename(file, target)
         shutil.rmtree(source_dir + 'workspace/', ignore_errors = True, onerror = None)

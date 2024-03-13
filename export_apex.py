@@ -134,6 +134,7 @@ class Export_APEX(config.Config):
                 self.export_files(app_id)
                 self.print_end(**h)
 
+            # move files from temp folder to target folder
             self.move_files(app_id)
 
         # export workspace files
@@ -141,6 +142,8 @@ class Export_APEX(config.Config):
             h = self.print_start('WORKSPACE FILES')
             self.export_files(app_id = 0)
             self.print_end(**h)
+        #
+        self.move_ws_files()
 
         print()
 
@@ -395,6 +398,20 @@ class Export_APEX(config.Config):
             os.rename(source_file, target_file)
 
         # move leftovers
+        for file in util.get_files(source_dir + '**/*.*'):
+            target = file.replace(source_dir, target_dir)
+            os.makedirs(os.path.dirname(target), exist_ok = True)
+            self.cleanup_file(file)
+            os.rename(file, target)
+        #
+        shutil.rmtree(source_dir, ignore_errors = True, onerror = None)
+
+
+
+    def move_ws_files(self):
+        source_dir = '{}workspace/'.format(self.config.sqlcl_root)
+        target_dir = self.get_root_ws()
+        #
         for file in util.get_files(source_dir + '**/*.*'):
             target = file.replace(source_dir, target_dir)
             os.makedirs(os.path.dirname(target), exist_ok = True)

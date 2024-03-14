@@ -297,6 +297,10 @@ class Patch(config.Config):
                 if os.path.splitext(file)[1] != '.sql':
                     continue
 
+                # skip embedded code report files
+                if '/embedded_code/' in file:
+                    continue
+
                 # process just database and APEX exports
                 if not (file.startswith(self.config.path_objects)) and not (file.startswith(self.config.path_apex)):
                     continue

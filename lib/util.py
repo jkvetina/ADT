@@ -1,4 +1,4 @@
-import sys, os, re, yaml, glob, traceback, inspect, io, subprocess
+import sys, os, re, yaml, glob, traceback, inspect, io, subprocess, datetime, timeit
 import secrets, base64
 
 # for encryptions
@@ -382,10 +382,37 @@ def print_now(line, close = False):
 
 
 
-def print_progress(done, target = 100):
-    perc = min(done + 1, target) / target
-    dots = int(70 * perc)
-    sys.stdout.write('\r' + ('.' * dots) + ' ' + str(int(perc * 100)) + '%')
+def print_progress(done, target = 100, start = None, extra = '', width = 78):
+    if done == None:
+        return None
+
+    # adjust number of dots for extra content
+    dots    = width - 5               # count with 100%
+    extra   = str(extra)
+    #
+    if len(extra) > 0:
+        dots -= len(extra)         # count with extra length
+        extra += ' '
+    if start:
+        dots -= 9                  # shorten to fit the timer
+    #
+    perc    = min(done + 1, target) / target
+    show    = min(int(perc * 100 + 0.5), 100)
+    dots    = int(dots * perc)
+
+    # calculate/estimate time to the end
+    estimate = ''
+    if start:
+        sofar       = round(timeit.default_timer() - start, 2)
+        estimate    = int((sofar / (perc * 100)) * 100 * (1 - perc))
+        estimate    = str(datetime.timedelta(seconds = estimate)).rjust(8, ' ')
+        if show == 100:
+            estimate = ''.rjust(8, ' ')
+
+    # refresh printed line
+    line = '{} {}%'.format('.' * dots, show)
+    text = ('{:<' + str(width - 9) + '} {} ').format(extra + line, estimate)
+    sys.stdout.write('\r{}'.format(text))
     sys.stdout.flush()
     #
     if done + 1 == target:

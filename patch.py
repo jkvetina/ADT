@@ -256,8 +256,6 @@ class Patch(config.Config):
         for commit in list(self.repo.iter_commits(self.info.branch, max_count = self.search_depth, skip = 0)):
             self.all_commits[commit.count()] = commit
             progress_done = util.print_progress(progress_done, progress_target)
-        progress_done = util.print_progress(progress_target, progress_target)
-        print('')
 
         # add or remove specific commits from the queue
         for _, commit in self.all_commits.items():

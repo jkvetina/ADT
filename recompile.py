@@ -83,9 +83,6 @@ class Recompile(config.Config):
                 self.conn.execute(q)
             except Exception:
                 troublemakers.append(row)
-        #
-        if not self.args.verbose:
-            print()
         print()
 
         # if there are some leftovers, try to recompile them

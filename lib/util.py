@@ -387,6 +387,10 @@ def print_progress(done, target = 100):
     dots = int(70 * perc)
     sys.stdout.write('\r' + ('.' * dots) + ' ' + str(int(perc * 100)) + '%')
     sys.stdout.flush()
+    #
+    if done + 1 == target:
+        print()
+        return None
     return done + 1
 
 

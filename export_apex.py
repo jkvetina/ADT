@@ -321,7 +321,7 @@ class Export_APEX(config.Config):
 
 
 
-    def export_files_ws(self):
+    def export_files_ws(self, app_id = 0):
         self.export_files(app_id = 0)
 
 

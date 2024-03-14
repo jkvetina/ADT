@@ -152,7 +152,7 @@ class Config(util.Attributed):
         self.args   = util.Attributed(self.args)    # for passed attributes
         self.config = util.Attributed({})           # for user config
         self.info   = util.Attributed({})           # for info group
-        self.debug  = self.args.debug
+        self.debug  = self.args.get('debug')
         #
         if self.debug:
             util.print_header('ARGS:')

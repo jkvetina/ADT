@@ -476,6 +476,10 @@ class Patch(config.Config):
                 if short_file in skip_apex_files:
                     continue
 
+                # skip grants file since we pull just related grants later
+                if file == self.patch_grants.replace(self.repo_root, ''):
+                    continue
+
                 # skip full exports, need to add support for alias...
                 if file == '{}f{}/f{}.sql'.format(self.config.path_apex, app_id, app_id).replace('//', '/'):
                     continue

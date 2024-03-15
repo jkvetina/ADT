@@ -676,6 +676,15 @@ class Patch(config.Config):
             # store payload in file
             self.create_patch_file(payload, app_id = app_id)
 
+            util.print_header('PROCESSED FILES:', schema_with_app)
+            for file in files_processed:
+                if file.startswith(self.config.path_objects):
+                    file = file.replace(self.config.path_objects, '')
+                elif file.startswith(self.config.path_apex):
+                    file = file.split('/application/')[1]
+                print('  - {}'.format(file))
+            print()
+
 
 
     def get_differences(self, rel_files):

@@ -13,8 +13,8 @@ ORDER BY 1, 2;
 SELECT e.name, e.type, e.line, e.text
 FROM user_errors e
 WHERE 1 = 1
-    AND o.object_name   LIKE '%'
-    AND e.text          NOT LIKE 'PLW%'
+    AND e.name  LIKE '%'
+    AND e.text  NOT LIKE 'PLW%'
 ORDER BY
     e.name,
     e.sequence;

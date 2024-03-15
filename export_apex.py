@@ -278,7 +278,7 @@ class Export_APEX(config.Config):
         if os.path.exists(source_dir):
             for file in util.get_files(source_dir + '**/*.*'):
                 # remove first 10 lines
-                with open(file, 'rt') as f:
+                with open(file, 'rt', encoding = 'utf-8') as f:
                     old_content = f.readlines()
                 with open(file, 'wt', encoding = 'utf-8', newline = '\n') as w:
                     w.writelines(old_content[10:])
@@ -405,7 +405,7 @@ class Export_APEX(config.Config):
 
         # get current file content
         old_content = ''
-        with open(file, 'rt') as f:
+        with open(file, 'rt', encoding = 'utf-8') as f:
             old_content = f.read()
         new_content = old_content
 

@@ -99,11 +99,22 @@ def get_files(glob_pattern, reverse = False, recursive = True):
         glob_pattern = glob_pattern.replace('/**/*', '/*')
         for file in glob.glob(glob_pattern):
             files.append(file)
-    #
+
+    # to sort files without extensions, to have 1) schema.sql, 2) schema.100.sql
+    filenames = {}
     for i, file in enumerate(files):
-        files[i] = file.replace('\\', '/')
+        files[i] = file.replace('\\', '/')          # consolidate slashes
+        base, ext = os.path.splitext(files[i])
+        if not (base in filenames):
+            filenames[base] = []
+        if not (ext in filenames[base]):            # also deduplicate
+            filenames[base].append(ext)
     #
-    return list(sorted(set(files), reverse = reverse))
+    out = []
+    for base in sorted(filenames.keys(), reverse = reverse):
+        for ext in sorted(filenames[base], reverse = reverse):
+            out.append(base + ext)
+    return out
 
 
 

@@ -522,6 +522,21 @@ def run_command(command):
 
 
 
+def cleanup_sqlcl(output, lines = False):
+    output = output.splitlines()
+    if output[0].startswith('SQLcl') and output[2].startswith('Copyright') and output[4].startswith('Connected'):
+        output = output[5:]
+    size = len(output)
+    if output[size - 2].startswith('Disconnected') and output[size - 1].startswith('Version'):
+        size -= 2
+        output = output[:size]
+    #
+    if not lines:
+        output = '\n'.join(output)
+    return output
+
+
+
 def get_string(string, max_length = None, append = '..'):
     string = str(string)
     if max_length == None:

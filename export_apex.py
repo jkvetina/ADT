@@ -447,20 +447,8 @@ class Export_APEX(config.Config):
             '{$COMPONENTS}'     : ' '.join(self.comp_changed),
         })
         request = 'SET LINESIZE 200;\n{};\n'.format(request)
-        output = self.conn.sqlcl_request(request)
-
-        # remove the SQLcl clutter
-        output = output.splitlines()
-        if output[0].startswith('SQLcl') and output[2].startswith('Copyright') and output[4].startswith('Connected'):
-            output = output[5:]
-        size = len(output)
-        if output[size - 2].startswith('Disconnected') and output[size - 1].startswith('Version'):
-            size -= 2
-            output = output[:size]
         #
-        if not lines:
-            output = ''.join(output)
-        return output
+        return util.cleanup_sqlcl(self.conn.sqlcl_request(request), lines = lines)
 
 
 

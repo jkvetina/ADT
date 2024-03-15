@@ -609,7 +609,7 @@ class Patch(config.Config):
 
                     # attach starting file
                     file = '{}f{}/{}'.format(self.config.path_apex, app_id, 'application/set_environment.sql')
-                    payload.extend(self.attach_file(file, header = 'APEX COMPONENTS START', category = 'FIXED'))
+                    payload.extend(self.attach_file(file, header = 'APEX COMPONENTS START', category = 'STATIC'))
                     payload.append(
                         # replace existing components
                         'BEGIN wwv_flow_imp.g_mode := \'REPLACE\'; END;\n/\n'
@@ -643,7 +643,7 @@ class Patch(config.Config):
             if app_id and not (app_id in self.full_exports):
                 if not (app_id in self.full_exports):
                     file = '{}f{}/{}'.format(self.config.path_apex, app_id, 'application/end_environment.sql')
-                    payload.extend(self.attach_file(file, header = 'APEX END', category = 'FIXED'))
+                    payload.extend(self.attach_file(file, header = 'APEX END', category = 'STATIC'))
 
             # add grants made on referenced objects
             grants = self.get_grants_made()

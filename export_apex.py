@@ -217,8 +217,8 @@ class Export_APEX(config.Config):
         alias = self.apex_apps[app_id]['app_alias']
         util.print_header('APP {}/{}, CHANGES SINCE {}:'.format(app_id, alias, self.today))
         #
-        output  = self.execute_request('apex export -applicationid {$APP_ID} -list -changesSince {$TODAY}', app_id)
-        data    = util.parse_table(output.splitlines()[5:])
+        output  = self.execute_request('apex export -applicationid {$APP_ID} -list -changesSince {$TODAY}', app_id, lines = True)
+        data    = util.parse_table(output)
         #
         for i, row in enumerate(data):
             self.comp_changed.append(row['id'])
@@ -438,7 +438,7 @@ class Export_APEX(config.Config):
 
 
 
-    def execute_request(self, request, app_id):
+    def execute_request(self, request, app_id, lines = False):
         request = util.replace(request, {
             '{$APP_ID}'         : app_id,
             '{$TODAY}'          : self.today,
@@ -447,7 +447,20 @@ class Export_APEX(config.Config):
             '{$COMPONENTS}'     : ' '.join(self.comp_changed),
         })
         request = 'SET LINESIZE 200;\n{};\n'.format(request)
-        return self.conn.sqlcl_request(request)
+        output = self.conn.sqlcl_request(request)
+
+        # remove the SQLcl clutter
+        output = output.splitlines()
+        if output[0].startswith('SQLcl') and output[2].startswith('Copyright') and output[4].startswith('Connected'):
+            output = output[5:]
+        size = len(output)
+        if output[size - 2].startswith('Disconnected') and output[size - 1].startswith('Version'):
+            size -= 2
+            output = output[:size]
+        #
+        if not lines:
+            output = ''.join(output)
+        return output
 
 
 

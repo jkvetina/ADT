@@ -268,7 +268,7 @@ class Patch(config.Config):
             start           = util.get_start()
 
         # add missing commits
-        stop = max(self.all_commits.keys()) - 10
+        stop = max(self.all_commits.keys() or [self.config.repo_commits]) - 10
         for commit in list(self.repo.iter_commits(self.info.branch, max_count = self.config.repo_commits, skip = 0, reverse = False)):
             id = commit.count()
             if id <= stop and not self.args.rebuild:    # stop when we find record in local file

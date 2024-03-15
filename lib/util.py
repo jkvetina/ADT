@@ -213,6 +213,14 @@ def get_yaml(h, file = ''):
 
 
 
+def store_yaml(w, payload, fix = False):
+    payload = yaml.dump(payload, allow_unicode = True, default_flow_style = False, indent = 4) + '\n'
+    if fix:
+        payload = fix_yaml(payload)
+    w.write(payload)
+
+
+
 def print_header(message, append = ''):
     if append == None:
         append = ''
@@ -509,4 +517,8 @@ def get_string(string, max_length = None, append = '..'):
         return string
     cutoff = max_length - len(append)
     return (string[:cutoff] + '..') if len(string) > max_length else string
+
+
+def get_start():
+    return timeit.default_timer()
 

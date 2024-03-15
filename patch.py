@@ -66,10 +66,13 @@ class Patch(config.Config):
         self.relevant_files     = {}
         self.diffs              = {}
         self.head_commit        = None
+        self.first_commit_id    = None
         self.first_commit       = None
+        self.last_commit_id     = None
         self.last_commit        = None
         self.postfix_before     = self.config.patch_postfix_before or '_before'
         self.postfix_after      = self.config.patch_postfix_after  or '_after'
+        self.commits_file       = self.config.repo_commits_file.replace('#BRANCH#', self.info.branch)
 
         # set current commit to the head and search through recent commits
         self.current_commit_obj = self.repo.commit('HEAD')
@@ -120,9 +123,11 @@ class Patch(config.Config):
             util.print_header('EXISTING PATCHES:')
             util.print_table(existing_patches, limit_bottom = self.args.patches)
 
+        # make sure we have all commits ready
+        self.get_all_commits()
+
         # show recent commits
         if self.args.commits > 0:
-            self.get_recent_commits()
             self.show_recent_commits()
 
         if self.patch_code == None:
@@ -247,25 +252,64 @@ class Patch(config.Config):
 
 
 
-    def get_matching_commits(self):
-        # loop through all recent commits
-        print('\nSEARCHING REPO:', self.info.branch)
-        progress_target = self.search_depth
-        progress_done   = 0
+    def get_all_commits(self):
+        # read stored values
+        if os.path.exists(self.commits_file):
+            with open(self.commits_file, 'rt', encoding = 'utf-8') as f:
+                self.all_commits = dict(util.get_yaml(f, self.commits_file))
         #
-        for commit in list(self.repo.iter_commits(self.info.branch, max_count = self.search_depth, skip = 0)):
-            self.all_commits[commit.count()] = commit
-            progress_done = util.print_progress(progress_done, progress_target)
+        if len(self.all_commits.keys()) == 0:
+            self.args.rebuild = True
 
+        # loop through all recent commits
+        if self.args.rebuild:
+            print('\nSEARCHING REPO:', self.info.branch)
+            #
+            progress_target = self.search_depth
+            progress_done   = 0
+            start           = util.get_start()
+
+        # add missing commits
+        stop = max(self.all_commits.keys()) - 10
+        for commit in list(self.repo.iter_commits(self.info.branch, max_count = self.search_depth, skip = 0, reverse = False)):
+            id = commit.count()
+            if id <= stop and not self.args.rebuild:    # stop when we find record in local file
+                break
+            #
+            self.all_commits[id] = {
+                'id'        : str(commit),
+                'summary'   : commit.summary,
+                'author'    : commit.author.email,
+                'date'      : commit.authored_datetime,
+                'files'     : list(sorted(commit.stats.files.keys())),
+            }
+
+            # show progress on rebuild
+            if self.args.rebuild:
+                progress_done = util.print_progress(progress_done, progress_target, start = start, extra = id)
+
+        # trim the old records, keep recent only
+        pass
+
+        # store commits in file for better performance
+        if not os.path.exists(os.path.dirname(self.commits_file)):
+            os.makedirs(os.path.dirname(self.commits_file))
+        with open(self.commits_file, 'wt', encoding = 'utf-8', newline = '\n') as w:
+            util.store_yaml(w, payload = self.all_commits)
+
+
+
+    def get_matching_commits(self):
         # add or remove specific commits from the queue
-        for _, commit in self.all_commits.items():
+        for commit_id in sorted(self.all_commits.keys(), reverse = True):
+            commit = util.Attributed(self.all_commits[commit_id])
             if self.head_commit == None:
-                self.head_commit = commit.count()
+                self.head_commit = commit_id
 
             # skip non requested commits
             if len(self.add_commits) > 0:
                 commits     = '|{}|'.format('|'.join(self.add_commits))
-                search_for  = '|{}|'.format(commit.count())
+                search_for  = '|{}|'.format(commit_id)
                 #
                 if not (search_for in commits):
                     continue
@@ -273,7 +317,7 @@ class Patch(config.Config):
             # skip ignored commits
             if len(self.ignore_commits) > 0:
                 commits     = '|{}|'.format('|'.join(self.ignore_commits))
-                search_for  = '|{}|'.format(commit.count())
+                search_for  = '|{}|'.format(commit_id)
                 #
                 if search_for in commits:
                     continue
@@ -289,10 +333,10 @@ class Patch(config.Config):
                     continue
 
             # store relevant commit
-            self.relevant_commits[commit.count()] = commit
+            self.relevant_commits[commit_id] = commit
 
             # process files in commit
-            for file in commit.stats.files.keys():
+            for file in commit.files:
                 # process just the listed extensions (in the config)
                 if os.path.splitext(file)[1] != '.sql':
                     continue
@@ -318,8 +362,8 @@ class Patch(config.Config):
                     self.relevant_count[schema] = []
                 if not (file in self.relevant_files[schema]):
                     self.relevant_files[schema].append(file)
-                if not (commit.count() in self.relevant_count[schema]):
-                    self.relevant_count[schema].append(commit.count())
+                if not (commit_id in self.relevant_count[schema]):
+                    self.relevant_count[schema].append(commit_id)
 
         # show depth to speedup repeated runs
         print('DEPTH = {}'.format(self.current_commit - min(self.relevant_commits.keys()) + 1))
@@ -331,14 +375,17 @@ class Patch(config.Config):
                 'please adjust your input parameters')
 
         # get last version (max) and version before first change (min)
-        self.first_commit   = min(self.relevant_commits) - 1
-        self.last_commit    = max(self.relevant_commits)
+        self.first_commit_id    = min(self.relevant_commits) - 1
+        self.last_commit_id     = max(self.relevant_commits)
         #
         if not (self.first_commit in self.all_commits):
-            self.first_commit = min(self.all_commits.keys())
+            for id in sorted(self.all_commits.keys(), reverse = True):
+                if id <= self.first_commit_id:
+                    self.first_commit_id = id
+                    break
         #
-        self.first_commit_obj   = self.all_commits[self.first_commit]
-        self.last_commit_obj    = self.all_commits[self.last_commit]
+        self.first_commit   = self.repo.commit(self.all_commits[self.first_commit_id]['id'])
+        self.last_commit    = self.repo.commit(self.all_commits[self.last_commit_id]['id'])
 
 
 
@@ -350,7 +397,7 @@ class Patch(config.Config):
                 commits_map[commit] = ref
 
         # show relevant recent commits
-        depth   = 'DEPTH: {}/{}'.format(self.head_commit - self.first_commit + 1, self.search_depth) if self.args.get('depth') else ''
+        depth   = 'DEPTH: {}/{}'.format(self.head_commit - self.first_commit_id + 1, self.search_depth) if self.args.get('depth') else ''
         header  = 'REQUESTED' if (self.args.add != [] or self.args.ignore != []) else 'RELEVANT'
         data    = []
         #
@@ -370,26 +417,20 @@ class Patch(config.Config):
 
 
 
-    def get_recent_commits(self):
-        # loop through all recent commits
-        found = 0
-        for commit in list(self.repo.iter_commits(self.info.branch, max_count = self.search_depth, skip = 0)):
-            if self.args.my and self.repo_user_mail != commit.author.email:
-                continue
-            self.all_commits[commit.count()] = commit
-            found += 1
-            if (found == self.args.commits or self.args.commits == 0):
-                break;
-
-
-
     def show_recent_commits(self):
+        # loop through all recent commits
         data = []
-        for commit in sorted(self.all_commits.keys(), reverse = True):
-            summary = self.all_commits[commit].summary
+        for i, commit_id in enumerate(sorted(self.all_commits.keys(), reverse = True)):
+            if i == self.args.commits:
+                break
+            #
+            commit = self.all_commits[commit_id]
+            if self.args.my and self.repo_user_mail != commit['author']:
+                continue
+            #
             data.append({
-                'commit'        : commit,
-                'summary'       : util.get_string(summary, 50),
+                'commit'        : commit_id,
+                'summary'       : util.get_string(commit['summary'], 50),
             })
         #
         util.print_header('RECENT COMMITS:')
@@ -647,7 +688,7 @@ class Patch(config.Config):
         deleted_files   = []
         modifed_files   = []
         #
-        for diff in self.first_commit_obj.diff(self.last_commit_obj):
+        for diff in self.first_commit.diff(self.last_commit):
             file = diff.b_path.replace('\\', '/').replace('//', '/')
             # 'a_blob', 'a_mode', 'a_path', 'a_rawpath', 'b_blob', 'b_mode', 'b_path', 'b_rawpath', 'change_type',
             # 'copied_file', 'deleted_file', 'diff', 'new_file', 'raw_rename_from', 'raw_rename_to', 're_header',
@@ -812,7 +853,7 @@ class Patch(config.Config):
 
         # get file content from commit, not local file
         if file_content == None:
-            file_content    = self.get_file_from_commit(file, commit = str(self.last_commit_obj))
+            file_content    = self.get_file_from_commit(file, commit = str(self.last_commit))
 
         # check for empty file
         if (file_content == None or len(file_content) == 0):
@@ -973,6 +1014,7 @@ if __name__ == "__main__":
     group.add_argument('-create',       help = 'To create patch with or without sequence',  type = util.is_boolstr, nargs = '?', const = True,  default = False)
     group.add_argument('-fetch',        help = 'Fetch Git changes before patching',                                 nargs = '?', const = True,  default = False)
     group.add_argument('-archive',      help = 'To archive patches with specific ref #',    type = int,             nargs = '*',                default = [])
+    group.add_argument('-rebuild',      help = 'Rebuild temp files',                                                nargs = '?', const = True,  default = False)
     #
     group = parser.add_argument_group('SPECIFY ENVIRONMENT DETAILS')
     group.add_argument('-target',       help = 'Target environment',                                                nargs = '?')

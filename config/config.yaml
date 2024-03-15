@@ -125,6 +125,7 @@ add_indexes:
 #
 repo_commits        : 50                        # depth search for the commits history
 repo_branch         : dev
+repo_commits_file   : './config/commits/#BRANCH#.yaml'
 
 
 

@@ -125,7 +125,7 @@ class Patch(config.Config):
         self.get_all_commits()
 
         # show recent commits
-        if self.args.commits > 0:
+        if self.patch_code == None and self.args.commits > 0:
             self.show_recent_commits()
 
         if self.patch_code == None:
@@ -413,8 +413,8 @@ class Patch(config.Config):
     def show_recent_commits(self):
         # loop through all recent commits
         data = []
-        for i, commit_id in enumerate(sorted(self.all_commits.keys(), reverse = True)):
-            if i == self.args.commits:
+        for commit_id in sorted(self.all_commits.keys(), reverse = True):
+            if len(data) == self.args.commits:
                 break
             #
             commit = self.all_commits[commit_id]

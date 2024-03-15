@@ -46,7 +46,6 @@ class Patch(config.Config):
         self.info.branch        = self.args.branch or self.config.repo_branch or self.info.branch or self.repo.active_branch
         self.add_commits        = self.args.add
         self.ignore_commits     = self.args.ignore
-        self.search_depth       = self.args.depth or self.config.repo_commits
         self.full_exports       = self.args.full
         #
         self.init_config()
@@ -100,7 +99,6 @@ class Patch(config.Config):
         #if self.patch_code != None and len(self.patch_code) > 0 and self.patch_seq == '':
         #    util.print_header('BUILDING PATCH FOR: {}'.format(self.patch_code))
         #    util.print_help('use -search    to adjust the matched commits')
-        #    util.print_help('use -depth     to adjust the number of recent commits searched')
         #    util.print_help('use -add #     to limit which commits will be processed')
         #    util.print_help('use -ignore #  to limit which commits will not be processed')
         #    print()
@@ -265,13 +263,13 @@ class Patch(config.Config):
         if self.args.rebuild:
             print('\nSEARCHING REPO:', self.info.branch)
             #
-            progress_target = self.search_depth
+            progress_target = self.config.repo_commits
             progress_done   = 0
             start           = util.get_start()
 
         # add missing commits
         stop = max(self.all_commits.keys()) - 10
-        for commit in list(self.repo.iter_commits(self.info.branch, max_count = self.search_depth, skip = 0, reverse = False)):
+        for commit in list(self.repo.iter_commits(self.info.branch, max_count = self.config.repo_commits, skip = 0, reverse = False)):
             id = commit.count()
             if id <= stop and not self.args.rebuild:    # stop when we find record in local file
                 break
@@ -365,10 +363,6 @@ class Patch(config.Config):
                 if not (commit_id in self.relevant_count[schema]):
                     self.relevant_count[schema].append(commit_id)
 
-        # show depth to speedup repeated runs
-        print('DEPTH = {}'.format(self.current_commit - min(self.relevant_commits.keys()) + 1))
-        print('')
-
         # check number of commits
         if len(self.relevant_commits.keys()) == 0:
             util.raise_error('NO COMMITS FOUND',
@@ -397,7 +391,6 @@ class Patch(config.Config):
                 commits_map[commit] = ref
 
         # show relevant recent commits
-        depth   = 'DEPTH: {}/{}'.format(self.head_commit - self.first_commit_id + 1, self.search_depth) if self.args.get('depth') else ''
         header  = 'REQUESTED' if (self.args.add != [] or self.args.ignore != []) else 'RELEVANT'
         data    = []
         #
@@ -410,7 +403,7 @@ class Patch(config.Config):
             })
         #
         if self.search_message != None and self.search_message != [None]:
-            util.print_header('{} COMMITS FOR "{}":'.format(header, ' '.join(self.search_message or [])), depth)
+            util.print_header('{} COMMITS FOR "{}":'.format(header, ' '.join(self.search_message or [])))
         else:
             util.print_header('RECENT COMMITS:')
         util.print_table(data)
@@ -1025,7 +1018,6 @@ if __name__ == "__main__":
     group.add_argument('-search',       help = 'Search commits summary for provided words',                         nargs = '*',                default = None)
     group.add_argument('-add',          help = 'Process just specific commits',                                     nargs = '*',                default = [])
     group.add_argument('-ignore',       help = 'Ignore specific commits',                                           nargs = '*',                default = [])
-    group.add_argument('-depth',        help = 'Number of recent commits to search',        type = int,             nargs = '?',                default = None)
     group.add_argument('-full',         help = 'Specify APEX app(s) where to use full export',                      nargs = '*',                default = [])
     group.add_argument('-local',        help = 'Use local files and not files from Git',                            nargs = '?', const = True,  default = False)
     #

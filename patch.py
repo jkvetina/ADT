@@ -60,7 +60,7 @@ class Patch(config.Config):
         self.patch_sequences    = []
         self.patch_current      = {}
         self.all_commits        = {}
-        self.relevant_commits   = {}
+        self.relevant_commits   = []
         self.relevant_count     = {}
         self.relevant_files     = {}
         self.diffs              = {}
@@ -183,9 +183,9 @@ class Patch(config.Config):
         print()
 
         # show commits and files
-        for commit in sorted(self.relevant_commits.keys(), reverse = True):
-            data = self.relevant_commits[commit]
-            print('  {}) {}'.format(commit, data.summary))  # data.author.email, data.authored_datetime
+        for commit_id in sorted(self.relevant_commits, reverse = True):
+            commit = self.all_commits[commit_id]
+            print('  {}) {}'.format(commit_id, commit['summary']))
         print()
 
         # show summary
@@ -331,7 +331,7 @@ class Patch(config.Config):
                     continue
 
             # store relevant commit
-            self.relevant_commits[commit_id] = commit
+            self.relevant_commits.append(commit_id)
 
             # process files in commit
             for file in commit.files:
@@ -364,7 +364,7 @@ class Patch(config.Config):
                     self.relevant_count[schema].append(commit_id)
 
         # check number of commits
-        if len(self.relevant_commits.keys()) == 0:
+        if len(self.relevant_commits) == 0:
             util.raise_error('NO COMMITS FOUND',
                 'please adjust your input parameters')
 
@@ -394,12 +394,12 @@ class Patch(config.Config):
         header  = 'REQUESTED' if (self.args.add != [] or self.args.ignore != []) else 'RELEVANT'
         data    = []
         #
-        for commit in sorted(self.relevant_commits.keys(), reverse = True):
-            summary = self.relevant_commits[commit].summary
+        for commit_id in sorted(self.relevant_commits, reverse = True):
+            commit = self.all_commits[commit_id]
             data.append({
-                'commit'        : commit,
-                'summary'       : util.get_string(summary, 50),
-                'patch_ref'     : commits_map.get(commit, ''),
+                'commit'        : commit_id,
+                'summary'       : util.get_string(commit['summary'], 50),
+                'patch_ref'     : commits_map.get(commit_id, ''),
             })
         #
         if self.search_message != None and self.search_message != [None]:
@@ -705,15 +705,16 @@ class Patch(config.Config):
 
         # show commits only with relevant files
         payload.append('-- COMMITS:')
-        for commit_number, commit in self.relevant_commits.items():
+        for commit_id in sorted(self.relevant_commits, reverse = True):
+            commit = self.all_commits[commit_id]
             files_found = False
-            for file in commit.stats.files:
+            for file in commit['files']:
                 if file in rel_files:
                     files_found = True
                     break
             #
             if files_found:
-                payload.append('--   {}) {}'.format(commit_number, commit.summary))
+                payload.append('--   {}) {}'.format(commit_id, commit['summary']))
 
         # split files by the change type
         if len(new_files) > 0:

@@ -237,6 +237,9 @@ class Export_APEX(config.Config):
 
 
     def export_recent(self, app_id):
+        if len(self.comp_changed) == 0:
+            return
+        #
         output = self.execute_request('apex export -applicationid {$APP_ID} -skipExportDate -expComments -expComponents "{$COMPONENTS}" -split', app_id)
 
         # remove some extra files

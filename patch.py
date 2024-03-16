@@ -267,10 +267,10 @@ class Patch(config.Config):
                 os.remove(self.commits_file)
             #
             print('\nSEARCHING REPO:', self.info.branch)
-            #
-            progress_target = self.config.repo_commits
-            progress_done   = 0
-            start           = util.get_start()
+        #
+        progress_target = self.config.repo_commits
+        progress_done   = 0
+        start           = util.get_start()
 
         # add missing commits
         stop = max(list(self.all_commits.keys() or [self.config.repo_commits])) + 10

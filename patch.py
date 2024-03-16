@@ -819,8 +819,7 @@ class Patch(config.Config):
             for file in self.config.apex_files_copy:
                 file = path + file
                 if os.path.exists(file):
-                    # get copied files from directory
-                    self.create_file_snapshot(file, app_id = app_id, live = True)
+                    self.create_file_snapshot(file, app_id = app_id, local = True)
 
             # attach full export
             #if self.full_export:
@@ -843,12 +842,12 @@ class Patch(config.Config):
 
 
 
-    def create_file_snapshot(self, file, file_content = None, app_id = None, live = False):
+    def create_file_snapshot(self, file, file_content = None, app_id = None, local = False):
         # create folders and copy files
         target_file = '{}/{}'.format(self.patch_folder, file).replace('//', '/')
 
         # get real file content, not the git
-        if (live or self.config.patch_template_dir in target_file):
+        if (local or self.args.local or self.config.patch_template_dir in target_file):
             with open(file, 'rt', encoding = 'utf-8') as f:
                 file_content = f.read()
 

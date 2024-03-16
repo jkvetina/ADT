@@ -1,5 +1,7 @@
 import sys, os, re, yaml, glob, traceback, inspect, io, subprocess, datetime, timeit
 import secrets, base64
+#
+import beepy         # pip3 install beepy --upgrade
 
 # for encryptions
 from cryptography.fernet import Fernet
@@ -453,6 +455,7 @@ def print_progress(done, target = 100, start = None, extra = '', width = 78):
     #
     if done + 1 == target:
         print()
+        beep(sound = 1)
         return None
     return done + 1
 
@@ -489,6 +492,11 @@ def is_boolstr(v):
 
 
 
+def beep(sound = 1):
+    beepy.beep(sound)
+
+
+
 def quit(message = ''):
     if message != None and len(str(message)) > 0:
         print(message)
@@ -511,6 +519,7 @@ def raise_error(message = '', stop = True, *extras):
         for line in extras:
             print_help(line.rstrip())
     print()
+    beep(sound = 3)
     if stop:
         sys.exit()
 

@@ -111,6 +111,7 @@ class Export_APEX(config.Config):
                     h = self.print_start(row['header'])
                     getattr(self, 'export_' + row['action'])(app_id)
                     self.print_end(**h)
+                    util.beep(sound = 1)
 
             # move files from temp folders to target folders
             self.move_files(app_id)

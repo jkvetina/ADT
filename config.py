@@ -1,5 +1,5 @@
 # coding: utf-8
-import sys, os, re, argparse, datetime, timeit, pickle
+import sys, os, re, argparse, datetime, timeit, pickle, shutil
 import yaml         # pip3 install pyyaml       --upgrade
 import git          # pip3 install GitPython    --upgrade
 #
@@ -221,11 +221,36 @@ class Config(util.Attributed):
             if self.connection.get('app') != None or self.connection.get('workspace'):
                 self.check_apex()
 
+            # copy patch templates and config file(s)
+            if self.args.init:
+                self.init_files()
+
 
 
     def __del__(self):
         if self.start_timer:
             print('\nTIMER: {}s\n'.format(int(round(timeit.default_timer() - self.start_timer + 0.5, 0))))
+
+
+
+    def init_files(self):
+        # copy folder structure for patching
+        folders = {
+            '/config/patch/'            : '/patch/',
+            '/config/patch_scripts/'    : '/patch_scripts/',
+            '/config/patch_template/'   : '/config/patch_template/',
+        }
+        for source, target in folders.items():
+            source_dir = '{}{}'.format(self.root, source)
+            target_dir = self.repo_root + target
+            os.makedirs(target_dir, exist_ok = True)
+            shutil.copytree(source_dir, target_dir, dirs_exist_ok = True)
+
+        # copy config file
+        source_file = '{}/config/config.yaml'.format(self.root)
+        target_file = source_file.replace(self.root, self.repo_root)
+        if not os.path.exists(target_file):
+            shutil.copyfile(source_file, target_file)
 
 
 
@@ -392,8 +417,8 @@ class Config(util.Attributed):
                 connections[env_name]['schemas'][schema] = data
 
         # show parameters
-        util.print_header('CREATING {} CONNECTION:'.format(found_type.upper()))
-        print('{}\n'.format(file))
+        print('\nCREATING {} CONNECTION:'.format(found_type.upper()))
+        print('  - {}\n'.format(file))
 
         # store connection parameters in the yaml file
         with open(file, 'wt', encoding = 'utf-8', newline = '\n') as w:
@@ -411,7 +436,7 @@ class Config(util.Attributed):
         args = {}
         try:
             with open(pickle_file, 'rb') as f:
-                args = pickle.load(f).items()
+                args = dict(pickle.load(f).items())
         except Exception:
             util.raise_error('INVALID OPY FILE',
                 'expecting .conf file created by OPY tool')
@@ -424,7 +449,12 @@ class Config(util.Attributed):
             self.args[arg] = value
 
         # need to set the repo to have correct paths
-        self.repo_root = self.args['repo']
+        self.repo_root      = self.args['repo']
+        self.info.env       = self.args['env']
+        self.info.schema    = self.args['user']
+        #
+        if self.debug:
+            util.print_args(self.args)
 
         # create new file as user would actually pass these arguments
         self.create_connection()
@@ -616,6 +646,7 @@ if __name__ == "__main__":
     group.add_argument('-show',         help = 'Show connection details',                   type = util.is_boolean, nargs = '?', const = True, default = False)
     group.add_argument('-create',       help = 'Create or update connection',               type = util.is_boolean, nargs = '?', const = True, default = False)
     group.add_argument('-opy',          help = 'Import connection from OPY file',                                   nargs = '?')
+    group.add_argument('-init',         help = 'Copy template files to repo folder',                                nargs = '?', const = True, default = False)
     #
     group = parser.add_argument_group('SPECIFY ENVIRONMENT DETAILS')
     group.add_argument('-env',          help = 'Environment name like DEV, UAT, LAB1...',                           nargs = '?')

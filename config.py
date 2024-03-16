@@ -230,7 +230,6 @@ class Config(util.Attributed):
 
     def __del__(self):
         if self.start_timer:
-            util.beep(sound = 1)
             print('\nTIMER: {}s\n'.format(int(round(timeit.default_timer() - self.start_timer + 0.5, 0))))
 
 

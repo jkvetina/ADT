@@ -261,6 +261,9 @@ class Patch(config.Config):
 
         # loop through all recent commits
         if self.args.rebuild:
+            if os.path.exists(self.commits_file):
+                os.remove(self.commits_file)
+            #
             print('\nSEARCHING REPO:', self.info.branch)
             #
             progress_target = self.config.repo_commits

@@ -11,16 +11,16 @@ Checkout the [install guide](./doc/install.md) and <ins>quick start guide</ins>.
 
 &nbsp;
 
-## Actions (progress 27/54, 50%)
+## Actions (progress 30/60, 52%)
 
 | Filename                                 | Description                                    | Status          | Complexity | Done
 | :-------                                 | :----------                                    | :-----          | ---------: | ---:
-| [`config.py`](./doc/config.md)           | to manage database connections and settings    | __Done__ *      |          5 | 5
+| [`config.py`](./doc/config.md)           | to manage database connections and settings    | __Done__        |          5 | 5
 | [`export_db.py`](./doc/export_db.md)     | to export database objects                     | OPY **          |          9 |
-| [`export_apex.py`](./doc/export_apex.md) | to export APEX & REST services                 | __In Progress__ |          4 | 3
-| [`export_data.py`](./doc/export_data.md) | to export data into CSV files                  | OPY **          |          2 |
-| [`patch.py`](./doc/patch.md)             | to prepare patch files from your changes       | __Done__ *      |         10 | 10
-| [`deploy.py`](./doc/deploy.md)           | to deploy your patch files                     | __In Progress__ |          8 | 6
+| [`export_apex.py`](./doc/export_apex.md) | to export APEX & REST services                 | __In Progress__ |          6 | 5
+| [`export_data.py`](./doc/export_data.md) | to export data into CSV files                  | OPY **          |          4 |
+| [`patch.py`](./doc/patch.md)             | to prepare patch files from your changes       | __In Progress__ |         12 | 10
+| [`deploy.py`](./doc/deploy.md)           | to deploy your patch files                     | __In Progress__ |          8 | 7
 | [`compare.py`](./doc/compare.md)         | to compare two databases                       | Planned         |          9 |
 | [`recompile.py`](./doc/recompile.md)     | to recompile invalid objects                   | __Done__        |          1 | 1
 | [`install.py`](./doc/install.md)         | to create install script for tests             | Planned         |          1 | 1

@@ -222,7 +222,8 @@ class Config(util.Attributed):
                 self.check_apex()
 
             # copy patch templates and config file(s)
-            if self.args.init:
+            config_file = '{}/config/config.yaml'.format(self.repo_root)
+            if (self.args.init or not os.path.exists(config_file)):
                 self.init_files()
 
 
@@ -247,10 +248,10 @@ class Config(util.Attributed):
             shutil.copytree(source_dir, target_dir, dirs_exist_ok = True)
 
         # copy config file
+        config_file = '{}/config/config.yaml'.format(self.repo_root)
         source_file = '{}/config/config.yaml'.format(self.root)
-        target_file = source_file.replace(self.root, self.repo_root)
-        if not os.path.exists(target_file):
-            shutil.copyfile(source_file, target_file)
+        if not os.path.exists(config_file):
+            shutil.copyfile(source_file, config_file)
 
 
 

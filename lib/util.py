@@ -53,7 +53,10 @@ def extract(regexp_search, text, group = 1):
 
 
 def extract_int(regexp_search, text, group = 1):
-    return int(extract(regexp_search, text, group))
+    val = extract(regexp_search, text, group)
+    if val == '':
+        return None
+    return int(val)
 
 
 

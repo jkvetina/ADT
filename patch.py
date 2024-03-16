@@ -271,14 +271,18 @@ class Patch(config.Config):
             start           = util.get_start()
 
         # add missing commits
-        stop = max(self.all_commits.keys() or [self.config.repo_commits]) - 10
+        stop = max(list(self.all_commits.keys() or [self.config.repo_commits])) + 10
         for commit in list(self.repo.iter_commits(self.info.branch, max_count = self.config.repo_commits, skip = 0, reverse = False)):
-            id = commit.count()
-            if id <= stop and not self.args.rebuild:    # stop when we find record in local file
+            commit_id = commit.count()
+            if self.head_commit == None:
+                self.head_commit = commit_id
+                progress_target = min(progress_target, self.head_commit)
+            #
+            if commit_id <= stop and not self.args.rebuild:    # stop when we find record in local file
                 break
             #
-            self.all_commits[id] = {
-                'id'        : str(commit),
+            self.all_commits[commit_id] = {     # number
+                'id'        : str(commit),      # hash
                 'summary'   : commit.summary,
                 'author'    : commit.author.email,
                 'date'      : commit.authored_datetime,
@@ -287,7 +291,7 @@ class Patch(config.Config):
 
             # show progress on rebuild
             if self.args.rebuild:
-                progress_done = util.print_progress(progress_done, progress_target, start = start, extra = id)
+                progress_done = util.print_progress(progress_done, progress_target, start = start, extra = commit_id)
 
         # trim the old records, keep recent only
         pass
@@ -304,8 +308,6 @@ class Patch(config.Config):
         # add or remove specific commits from the queue
         for commit_id in sorted(self.all_commits.keys(), reverse = True):
             commit = util.Attributed(self.all_commits[commit_id])
-            if self.head_commit == None:
-                self.head_commit = commit_id
 
             # skip non requested commits
             if len(self.add_commits) > 0:

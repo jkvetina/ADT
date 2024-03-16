@@ -125,7 +125,8 @@ def remove_cloud_junk(root = ''):
 
     # remove duplicated files
     for file in glob.glob(root + '/**/*.*', recursive = True):
-        if extract('(\s[0-9]+)\.[^\.]+$', file):
+        number = extract('(\s+[0-9]+\.)[^\.]+$', file)
+        if number and os.path.exists(file.replace(number, '.')):
             os.remove(file)
 
     # remove empty folders

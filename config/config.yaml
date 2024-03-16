@@ -144,6 +144,7 @@ apex_schema             : '{$INFO_SCHEMA}'
 apex_workspace          : '{$INFO_SCHEMA}'
 apex_version            : '{$TODAY} {$PATCH_CODE}'
 apex_path_app           : '{$APP_ID}_{$APP_ALIAS}'  # classic = 'f{$APP_ID}'
+apex_path_app_id        : '^f?(\d+)'            # to extract app_id from folder
 apex_path_files         : 'files/'
 apex_path_rest          : 'rest/'
 apex_workspace_dir      : 'workspace/'

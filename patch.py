@@ -246,9 +246,10 @@ class Patch(config.Config):
             self.patch_folders[info['day']][folder] = info
 
         # check clash on patch sequence
-        if self.patch_current['patch_code'] != self.patch_code and self.patch_current['seq'] in self.patch_sequences:
-            util.raise_error('CLASH ON PATCH SEQUENCE',
-                'you should select a different create sequence')
+        if self.patch_code != None:
+            if self.patch_current['patch_code'] != self.patch_code and self.patch_current['seq'] in self.patch_sequences:
+                util.raise_error('CLASH ON PATCH SEQUENCE',
+                    'you should select a different create sequence')
 
 
 

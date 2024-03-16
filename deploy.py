@@ -362,8 +362,8 @@ class Deploy(config.Config):
         util.print_header('CONNECTING TO {}:'.format(self.target_env))
         for schema in self.deploy_schemas.keys():
             self.init_connection(env_name = self.target_env, schema_name = schema)
-            print('  {} '.format(schema).ljust(72, '.') + ' ', end = '', flush = True)
-            self.deploy_conn[schema] = self.db_connect(ping_sqlcl = True, silent = True)
+            util.print_now('  {} '.format(schema).ljust(72, '.') + ' ')
+            self.deploy_conn[schema] = self.db_connect(ping_sqlcl = False, silent = True)
             self.deploy_conn[schema].sqlcl_root = self.patch_path
             print('OK')
         print()

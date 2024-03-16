@@ -1,5 +1,5 @@
 # coding: utf-8
-import sys, os, argparse, shutil, datetime, timeit
+import sys, os, re, argparse, shutil, datetime, timeit
 #
 import config
 from lib import util
@@ -295,9 +295,48 @@ class Export_APEX(config.Config):
 
 
     def export_rest(self, app_id):
+        # prepare target folders
+        if os.path.exists(self.target_rest):
+            shutil.rmtree(self.target_rest, ignore_errors = True, onerror = None)
         for dir in [self.target_rest]:
             os.makedirs(os.path.dirname(self.get_root(app_id, dir)), exist_ok = True)
-        return self.execute_request('apex rest', app_id)
+
+        # export REST services
+        lines = self.execute_request('apex rest', app_id, lines = True)
+        for (i, line) in enumerate(lines):
+            print(i, line)
+
+        # split into dedicated files for each module
+        lines       = lines.append('ORDS.DEFINE_MODULE')    # to process inside of the loop
+        content     = []
+        modules     = []
+        append      = False
+        #
+        for (i, line) in enumerate(lines):
+            if 'ORDS.DEFINE_MODULE' in line:
+                if len(content):
+                    modules.append(content)
+                content = []
+                append    = True
+            if line.strip().startswith('COMMIT;') and lines[i + 1].startswith('END;') and lines[i + 2].startswith('Disconnected'):
+                append = False
+            if append:
+                content.append(line)
+
+        # create folders from service names
+        groups = {}
+        for content in modules:
+            name = re.findall('[\'][^\']+[\']', content[1])[0].replace('\'', '')
+            path = re.findall('[\'][^\']+[\']', content[2])[0].replace('\'', '').replace('/', '')
+            file = self.target_rest + '/' + path + '/' + name + '.sql'
+            #
+            if not path in groups:
+                groups[path] = []
+            groups[path].append(name)
+            #
+            os.makedirs(os.path.dirname(file), exist_ok = True)
+            with open(file, 'wt', encoding = 'utf-8', newline = '\n') as w:
+                w.write('BEGIN\n' + ('\n'.join(content)).rstrip() + '\nEND;\n/\n')
 
 
 

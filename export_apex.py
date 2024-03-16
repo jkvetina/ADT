@@ -189,7 +189,7 @@ class Export_APEX(config.Config):
             groups[row.app_group].append({
                 'app_id'        : row.app_id,
                 'alias'         : row.app_alias,
-                'name'          : row.app_name,
+                #'name'          : row.app_name,
                 'pages'         : row.pages,
                 'updated_at'    : row.updated_at,
             })

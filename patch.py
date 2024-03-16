@@ -409,10 +409,7 @@ class Patch(config.Config):
                 'patch_ref'     : commits_map.get(commit_id, ''),
             })
         #
-        if self.search_message != None and self.search_message != [None]:
-            util.print_header('{} COMMITS FOR "{}":'.format(header, ' '.join(self.search_message or [])))
-        else:
-            util.print_header('RECENT COMMITS:')
+        util.print_header('{} COMMITS FOR "{}":'.format(header, ' '.join(self.search_message or [])))
         util.print_table(data)
 
 
@@ -470,8 +467,9 @@ class Patch(config.Config):
             # (2) self.patch_templates with template files (only if some files were changed), before and after (1)
             # (3) self.patch_script with adhoc files (add every time), before and after (1)
             #
-            files_processed     = []
             files_to_process    = {}
+            files_processed     = []
+            scripts_processed   = []
             #
             for file in self.diffs.keys():
                 # skip file if it should be ignored in the patch (but keep it in snapshot folder)
@@ -512,8 +510,8 @@ class Patch(config.Config):
                                 files_to_process.pop(file, '')
                     #
                     if not app_id and self.config.patch_add_scripts:
-                        scripts_before  = self.get_script_before_files()
-                        scripts_after   = self.get_script_after_files()
+                        scripts_before  = self.get_script_before_files(group)
+                        scripts_after   = self.get_script_after_files(group)
 
                     # need to sort these files by dependencies
                     #
@@ -537,8 +535,9 @@ class Patch(config.Config):
 
                     # (3) before script
                     for file in scripts_before:
-                        if '/{}{}/'.format(group, self.postfix_before) in file:
+                        if '/{}{}'.format(group, self.postfix_before) in file:
                             files_processed.append(file)
+                            scripts_processed.append(file)
                             if self.debug:
                                 print('        >>>', file)
 
@@ -551,8 +550,9 @@ class Patch(config.Config):
 
                     # (3) after script
                     for file in scripts_after:
-                        if '/{}{}/'.format(group, self.postfix_after) in file:
+                        if '/{}{}'.format(group, self.postfix_after) in file:
                             files_processed.append(file)
+                            scripts_processed.append(file)
                             if self.debug:
                                 print('        >>>', file)
 
@@ -682,14 +682,13 @@ class Patch(config.Config):
 
             # store payload in file
             self.create_patch_file(payload, app_id = app_id)
-
             util.print_header('PROCESSED FILES:', schema_with_app)
             for file in files_processed:
                 if file.startswith(self.config.path_objects):
                     file = file.replace(self.config.path_objects, '')
                 elif file.startswith(self.config.path_apex):
                     file = file.split('/application/')[1]
-                print('  - {}'.format(file))
+                print('  {} {}'.format('>' if file in scripts_processed else '-', file))
             print()
 
 
@@ -851,7 +850,7 @@ class Patch(config.Config):
         target_file = '{}/{}'.format(self.patch_folder, file).replace('//', '/')
 
         # get real file content, not the git
-        if (local or self.args.local or self.config.patch_template_dir in target_file):
+        if (local or self.args.local or self.config.patch_template_dir in target_file or file.startswith(self.config.patch_scripts_snap)):
             with open(file, 'rt', encoding = 'utf-8') as f:
                 file_content = f.read()
 

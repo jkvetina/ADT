@@ -271,8 +271,12 @@ class Export_APEX(config.Config):
 
         # delete original (encoded) files, we can export/keep binaries instead
         if self.config.apex_delete_orig_files:
-            source_dir = '{}f{}/application/shared_components/files/'.format(self.config.sqlcl_root, app_id)
-            shutil.rmtree(source_dir, ignore_errors = True, onerror = None)
+            duplicates = [
+                '{}f{}/application/shared_components/files/'.format(self.config.sqlcl_root, app_id),
+                '{}f{}/application/shared_components/app_static_files/'.format(self.config.sqlcl_root, app_id),
+            ]
+            for source_dir in duplicates:
+                shutil.rmtree(source_dir, ignore_errors = True, onerror = None)
         #
         return output
 

@@ -757,15 +757,21 @@ class Patch(config.Config):
 
 
 
-    def get_script_before_files(self):
-        folder = '{}*{}/*.sql'.format(self.config.patch_scripts_dir, self.postfix_before)
-        return util.get_files(folder)
+    def get_script_before_files(self, group):
+        name    = '{}{}'.format(group, self.postfix_before)
+        folders = util.get_files('{}{}/*.sql'.format(self.config.patch_scripts_dir, name))
+        files   = util.get_files('{}{}*.sql'.format(self.config.patch_scripts_dir, name))
+        #
+        return folders + files
 
 
 
-    def get_script_after_files(self):
-        folder = '{}*/*.sql'.format(self.config.patch_scripts_dir, self.postfix_after)
-        return util.get_files(folder)
+    def get_script_after_files(self, group):
+        name    = '{}{}'.format(group, self.postfix_after)
+        folders = util.get_files('{}{}/*.sql'.format(self.config.patch_scripts_dir, name))
+        files   = util.get_files('{}{}*.sql'.format(self.config.patch_scripts_dir, name))
+        #
+        return folders + files
 
 
 

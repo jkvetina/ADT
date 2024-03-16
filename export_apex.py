@@ -260,6 +260,11 @@ class Export_APEX(config.Config):
         target_dir = self.get_root(app_id, 'application/')
         if os.path.exists(target_dir):
             shutil.rmtree(target_dir, ignore_errors = True, onerror = None)
+
+        # delete original (encoded) files, we can export/keep binaries instead
+        if self.config.apex_delete_orig_files:
+            source_dir = '{}f{}/application/shared_components/files/'.format(self.config.sqlcl_root, app_id)
+            shutil.rmtree(source_dir, ignore_errors = True, onerror = None)
         #
         return output
 

@@ -72,6 +72,8 @@ class Patch(config.Config):
         self.postfix_before     = self.config.patch_postfix_before or '_before'
         self.postfix_after      = self.config.patch_postfix_after  or '_after'
         self.commits_file       = self.config.repo_commits_file.replace('#BRANCH#', self.info.branch)
+        self.show_commits       = (self.args.commits or 10) if self.patch_code == None else self.args.commits
+        self.show_patches       = (self.args.patches or 10)
 
         # set current commit to the head and search through recent commits
         self.current_commit_obj = self.repo.commit('HEAD')
@@ -117,15 +119,15 @@ class Patch(config.Config):
                 })
 
         # show recent patches
-        if self.patch_code == None and self.args.patches > 0:
-            util.print_header('EXISTING PATCHES:')
-            util.print_table(existing_patches, limit_bottom = self.args.patches)
+        if self.patch_code == None and self.show_patches > 0:
+            util.print_header('RECENT PATCHES:', self.args.target)
+            util.print_table(existing_patches, limit_bottom = self.show_patches)
 
         # make sure we have all commits ready
         self.get_all_commits()
 
         # show recent commits
-        if self.patch_code == None and self.args.commits > 0:
+        if self.show_commits > 0:
             self.show_recent_commits()
 
         if self.patch_code == None:
@@ -419,7 +421,7 @@ class Patch(config.Config):
         # loop through all recent commits
         data = []
         for commit_id in sorted(self.all_commits.keys(), reverse = True):
-            if len(data) == self.args.commits:
+            if len(data) == self.show_commits:
                 break
             #
             commit = self.all_commits[commit_id]
@@ -432,7 +434,7 @@ class Patch(config.Config):
             })
         #
         util.print_header('RECENT COMMITS:')
-        util.print_table(data, limit_top = self.args.commits)
+        util.print_table(data, limit_top = self.show_commits)
 
 
 

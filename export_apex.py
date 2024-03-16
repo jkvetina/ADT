@@ -138,9 +138,9 @@ class Export_APEX(config.Config):
     def parse_actions(self):
         # check what exactly we will be exporting
         for arg_name in self.actions.keys():
-            if self.args.get('no' + arg_name, ''):  # keep default False
+            if self.args.get('no' + arg_name, ''):              # keep default False
                 continue
-            if self.args.get(arg_name, ''):         # proceed
+            if self.args.get(arg_name, '') or self.args.all:    # proceed
                 self.actions[arg_name] = True
                 continue
             if self.config.get('apex_export_' + arg_name, '') and not self.args.only:
@@ -522,6 +522,7 @@ if __name__ == "__main__":
     group.add_argument('-files',        help = 'Export application files in binary form',                       nargs = '?', const = True, default = False)
     group.add_argument('-files_ws',     help = 'Export workspace files in binary form',                         nargs = '?', const = True, default = False)
     group.add_argument('-only',         help = 'Proceed with passed actions only',                              nargs = '?', const = True, default = False)
+    group.add_argument('-all',          help = 'Export everything',                                             nargs = '?', const = True, default = False)
     group.add_argument('-fetch',        help = 'Fetch Git changes before patching',                             nargs = '?', const = True, default = False)
     #
     group = parser.add_argument_group('NEGATING ACTIONS')

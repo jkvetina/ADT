@@ -428,6 +428,7 @@ class Patch(config.Config):
             #
             data.append({
                 'commit'        : commit_id,
+                'my'            : 'Y' if self.repo_user_mail == commit['author'] else '',
                 'summary'       : util.get_string(commit['summary'], 50),
             })
         #

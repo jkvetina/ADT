@@ -265,10 +265,6 @@ class Export_APEX(config.Config):
         if os.path.exists(target_dir):
             shutil.rmtree(target_dir, ignore_errors = True, onerror = None)
 
-        # get rid of install files
-        for file in util.get_files(self.get_root(app_id, 'application/install*.sql')):
-            os.remove(file)
-
         # delete original (encoded) files, we can export/keep binaries instead
         if self.config.apex_delete_orig_files:
             duplicates = [
@@ -438,6 +434,10 @@ class Export_APEX(config.Config):
             os.rename(file, target)
         #
         shutil.rmtree(source_dir, ignore_errors = True, onerror = None)
+
+        # get rid of install files
+        for file in util.get_files(self.get_root(app_id, 'install*.sql')):
+            os.remove(file)
 
 
 

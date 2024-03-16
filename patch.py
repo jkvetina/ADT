@@ -355,11 +355,11 @@ class Patch(config.Config):
                     continue
 
                 # get APEX app info from the yaml file
-                schema  = self.info.schema
-                app_id  = None
-                #
+                schema = self.info.schema
                 if self.config.path_apex in file:
-                    app_id = util.extract_int('^f(\d+)[/]', file.replace(self.config.path_apex, ''))
+                    app_id = util.extract(self.config.apex_path_app_id, file.replace(self.config.path_apex, ''))
+                    if app_id == '':
+                        continue
                     schema += '.{}'.format(app_id)      # append app_id to separate APEX files
                 #
                 if not (schema in self.relevant_files):

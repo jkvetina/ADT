@@ -11,7 +11,7 @@ Checkout the [install guide](./doc/install.md) and <ins>quick start guide</ins>.
 
 &nbsp;
 
-## Actions (progress 30/60, 52%)
+## Actions (progress 30/60, 50%)
 
 | Filename                                 | Description                                    | Status          | Complexity | Done
 | :-------                                 | :----------                                    | :-----          | ---------: | ---:

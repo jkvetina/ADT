@@ -132,6 +132,9 @@ class Config(util.Attributed):
             group.add_argument('-debug',        help = 'Show even more details and exceptions',     type = util.is_boolean, nargs = '?', const = True,  default = False)
             group.add_argument('-go',           help = 'When you need to run without args',         type = util.is_boolean, nargs = '?', const = True,  default = False)
 
+            # cleanup junk files created on Mac by iCloud sync
+            util.remove_cloud_junk()
+
         # check if any arguments were provided
         if len(sys.argv) == 1:
             self.is_curr_class = False

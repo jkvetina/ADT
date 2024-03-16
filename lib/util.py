@@ -118,6 +118,23 @@ def get_files(glob_pattern, reverse = False, recursive = True):
 
 
 
+def remove_cloud_junk(root = ''):
+    root = root or os.path.abspath(os.path.curdir)
+
+    # remove duplicated files
+    files = glob.glob(root + '/**/* [0-9]+.*', recursive = True)
+    for file in files:
+        os.remove(file)
+
+    # remove empty folders
+    for path, _, _ in os.walk(root, topdown = False):
+        if '/.git/' in path:
+            continue
+        if len(os.listdir(path)) == 0:
+            os.rmdir(path)
+
+
+
 def get_encryption_key(password, salt):
     k = PBKDF2HMAC(
         algorithm   = hashes.SHA256(),

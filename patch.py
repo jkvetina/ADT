@@ -189,10 +189,9 @@ class Patch(config.Config):
         self.create_patch_files()
 
         # show summary
-        summary = []
         for order, schema_with_app in enumerate(sorted(self.relevant_files.keys())):
-            schema, app_id, _ = (schema_with_app + '..').split('.', maxsplit = 2)
-            summary.append({
+            schema, app_id = self.get_schema_split(schema_with_app)
+            self.deploy_plan.append({
                 'order'     : order + 1,
                 'file'      : schema_with_app + '.sql',
                 'schema'    : schema,
@@ -200,10 +199,21 @@ class Patch(config.Config):
                 'commits'   : len(self.relevant_count[schema_with_app]),
                 'files'     : len(self.relevant_files[schema_with_app]),
             })
+
+            # create deployment plan
+            if not (schema in self.deploy_schemas):
+                self.deploy_schemas[schema] = []
+            self.deploy_schemas[schema].append(order)
         #
         folder = self.patch_folder.replace(self.repo_root + self.config.patch_root, '')
         util.print_header('PATCH CREATED:', folder)
-        util.print_table(summary, right_align = ['app_id'])
+        util.print_table(self.deploy_plan, right_align = ['app_id'])
+
+
+
+    def get_schema_split(self, schema_with_app):
+        schema, app_id, _ = (schema_with_app + '..').split('.', maxsplit = 2)
+        return (schema, app_id)
 
 
 

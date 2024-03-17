@@ -49,7 +49,7 @@ class Patch(config.Config):
         self.full_exports       = self.args.full
         self.target_env         = self.args.target
         self.patch_ref          = self.args.get('ref')
-        self.patch_rollback     = 'CONTINUE' if self.args.get('continue') else 'ROLLBACK'
+        self.patch_rollback     = 'CONTINUE' if self.args.get('continue') else 'EXIT ROLLBACK'
         #
         self.init_config()
 
@@ -735,8 +735,8 @@ class Patch(config.Config):
                 'SET TIMING OFF',
                 'SET SQLBLANKLINES ON',
                 '--',
-                'WHENEVER OSERROR  EXIT {};'.format(self.patch_rollback),
-                'WHENEVER SQLERROR EXIT {};'.format(self.patch_rollback),
+                'WHENEVER OSERROR  {};'.format(self.patch_rollback),
+                'WHENEVER SQLERROR {};'.format(self.patch_rollback),
                 '--',
             ])
             if self.config.patch_spooling:

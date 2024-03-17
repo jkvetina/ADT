@@ -155,15 +155,17 @@ class Patch(config.Config):
                     if self.patch_current['day'] and self.patch_current['day'] in self.patch_folders:
                         data = []
                         for folder, info in self.patch_folders[self.patch_current['day']].items():
-                            data.append({
-                                #'folder'    : folder
-                                'day'           : info['day'],
-                                'seq'           : info['seq'],
-                                'patch_code'    : info['patch_code'],
-                            })
+                            if info['seq']:
+                                data.append({
+                                    #'folder'    : folder
+                                    'day'           : info['day'],
+                                    'seq'           : info['seq'],
+                                    'patch_code'    : info['patch_code'],
+                                })
                         #
-                        util.print_header('TODAY\'S FOLDERS:')
-                        util.print_table(data)
+                        if len(data):
+                            util.print_header('TODAY\'S FOLDERS:')
+                            util.print_table(data)
 
                 # offer/hint next available sequence
                 if self.patch_code != None:
@@ -296,6 +298,10 @@ class Patch(config.Config):
             if self.args.rebuild:
                 progress_done = util.print_progress(progress_done, progress_target, start = start, extra = commit_id)
 
+        # what if the commit numbers repeats?
+        # check files and changes on first and last commit
+        pass
+
         # trim the old records, keep recent only
         pass
 
@@ -405,9 +411,9 @@ class Patch(config.Config):
         for commit_id in sorted(self.relevant_commits, reverse = True):
             commit = self.all_commits[commit_id]
             data.append({
-                'commit'        : commit_id,
-                'summary'       : util.get_string(commit['summary'], 50),
-                'patch_ref'     : commits_map.get(commit_id, ''),
+                'commit'    : commit_id,
+                'ref'       : commits_map.get(commit_id, ''),
+                'summary'   : util.get_string(commit['summary'], 50),
             })
         #
         util.print_header('{} COMMITS FOR "{}":'.format(header, ' '.join(self.search_message or [])))

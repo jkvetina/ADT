@@ -445,7 +445,7 @@ def print_progress(done, target = 100, start = None, extra = '', width = 78):
     # calculate/estimate time to the end
     estimate = ''
     if start:
-        sofar       = round(timeit.default_timer() - start, 2)
+        sofar       = round(get_start() - start, 2)
         estimate    = int((sofar / (perc * 100)) * 100 * (1 - perc))
         estimate    = str(datetime.timedelta(seconds = estimate)).rjust(8, ' ')
         if show == 100:
@@ -544,10 +544,17 @@ def assert_(condition, message, *extras):
 def run_command(command):
     result = subprocess.run(command, shell = True, capture_output = True, text = True)
     if result.returncode != 0:
-        print()
-        print(command)
-        print(result.stdout)
-        raise_error('COMMAND_ERROR: {} {}'.format(result.returncode, result.stderr))
+        # get all lines below error line
+        lines = []
+        for line in result.stdout.splitlines():
+            line = line.rstrip()
+            if line == 'Rollback':
+                break
+            if 'ERROR' in line.upper() or len(lines) > 0:
+                lines.append(line)
+        #
+        print('\n#\n# REQUEST FAILED:\n#\n{}\n'.format('\n'.join(lines)))
+        raise_error('COMMAND_ERROR: {} {}'.format(result.returncode, result.stderr.strip()))
     return (result.stdout or '')
 
 

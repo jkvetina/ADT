@@ -609,7 +609,7 @@ class Patch(config.Config):
             else:
                 # load init files, for database or APEX
                 if self.config.patch_add_templates:
-                    payload.extend(self.attach_files(self.get_template_files('apex_init' if app_id else 'db_init'), category = 'INIT'))
+                    payload.extend(self.attach_files(self.get_template_files('apex_init' if app_id else 'db_init'), category = 'INIT', app_id = app_id))
 
                 # attach APEX starting file for partial APEX exports
                 if app_id:
@@ -622,7 +622,7 @@ class Patch(config.Config):
 
                     # attach starting file
                     file = '{}f{}/{}'.format(self.config.path_apex, app_id, 'application/set_environment.sql')
-                    payload.extend(self.attach_file(file, header = 'APEX COMPONENTS START', category = 'STATIC'))
+                    payload.extend(self.attach_file(file, header = 'APEX COMPONENTS START', category = 'STATIC', app_id = app_id))
                     payload.append(
                         # replace existing components
                         'BEGIN wwv_flow_imp.g_mode := \'REPLACE\'; END;\n/\n'
@@ -644,7 +644,7 @@ class Patch(config.Config):
                             continue
 
                     # attach file reference
-                    payload.extend(self.attach_file(file, category = 'COMMIT'))
+                    payload.extend(self.attach_file(file, category = 'COMMIT', app_id = app_id))
 
                 # attach APEX pages to the end
                 if len(apex_pages) > 0:
@@ -656,7 +656,7 @@ class Patch(config.Config):
             if app_id and not (app_id in self.full_exports):
                 if not (app_id in self.full_exports):
                     file = '{}f{}/{}'.format(self.config.path_apex, app_id, 'application/end_environment.sql')
-                    payload.extend(self.attach_file(file, header = 'APEX END', category = 'STATIC'))
+                    payload.extend(self.attach_file(file, header = 'APEX END', category = 'STATIC', app_id = app_id))
 
             # add grants made on referenced objects
             grants = self.get_grants_made()
@@ -670,7 +670,7 @@ class Patch(config.Config):
 
             # load final files, for database or APEX
             if self.config.patch_add_templates:
-                payload.extend(self.attach_files(self.get_template_files('apex_end' if app_id else 'db_end'), category = 'END'))
+                payload.extend(self.attach_files(self.get_template_files('apex_end' if app_id else 'db_end'), category = 'END', app_id = app_id))
 
             # add flag so deploy script can evaluate it as successful
             payload.extend([
@@ -782,7 +782,7 @@ class Patch(config.Config):
 
 
 
-    def attach_file(self, file, header = '', category = ''):
+    def attach_file(self, file, header = '', category = '', app_id = None):
         attach_type = ''
         if category != '':
             attach_type = category
@@ -791,7 +791,7 @@ class Patch(config.Config):
         elif self.config.patch_scripts_dir in file:
             attach_type = 'SCRIPT'
         #
-        file = self.create_file_snapshot(file)
+        file = self.create_file_snapshot(file, app_id = app_id)
         file = file.replace(self.patch_folder, '')       # replace first, full path
         file = file.replace(self.repo_root, '')
         file = file.replace(self.config.patch_template_dir, '')
@@ -812,13 +812,13 @@ class Patch(config.Config):
 
 
 
-    def attach_files(self, files, category = ''):
+    def attach_files(self, files, category = '', app_id = None):
         if isinstance(files, str):
             files = util.get_files(files)
         #
         payload = []
         for file in files:
-            payload.extend(self.attach_file(file, category = category))
+            payload.extend(self.attach_file(file, category = category, app_id = app_id))
         return payload
 
 
@@ -865,7 +865,6 @@ class Patch(config.Config):
         # shorten target folder for template files
         if self.config.patch_template_dir in target_file:
             target_file     = target_file.replace(self.config.patch_template_dir, self.config.patch_template_snap)
-            file_content    = self.replace_tags(file_content)
 
         # shorten target folder for script files
         if self.config.patch_scripts_dir in target_file:
@@ -889,6 +888,15 @@ class Patch(config.Config):
                 file_content = re.sub(r",p_last_updated_by=>'([^']+)'",         ",p_last_updated_by=>'{}'".format(self.patch_code), file_content)
             if self.config.apex_authors:
                 file_content = re.sub(r",p_last_upd_yyyymmddhh24miss=>'(\d+)'", ",p_last_upd_yyyymmddhh24miss=>'{}'".format(self.config.today_full_raw), file_content)
+
+        # replace file content
+        file_content = self.replace_tags(file_content)
+        if app_id:
+            transl = {
+                '{$APEX_APP_ID}' : app_id,
+            }
+            for key, value in transl.items():
+                file_content = file_content.replace(key, value)
 
         # make the folder structure more shallow
         if self.config.apex_snapshots:

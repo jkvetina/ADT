@@ -76,6 +76,12 @@ class Patch(config.Config):
         self.commits_file       = self.config.repo_commits_file.replace('#BRANCH#', self.info.branch)
         self.show_commits       = (self.args.commits or 10) if self.patch_code == None else self.args.commits
         self.show_patches       = (self.args.patches or 10)
+        self.patches            = {}
+        self.patch_found        = []
+        self.deploy_plan        = []
+        self.deploy_schemas     = {}
+        self.deploy_conn        = {}
+        self.logs_prefix        = self.config.patch_deploy_logs.replace('{$TARGET_ENV}', self.target_env)
 
         # set current commit to the head and search through recent commits
         self.current_commit_obj = self.repo.commit('HEAD')
@@ -89,32 +95,10 @@ class Patch(config.Config):
         # go through patch folders
         self.get_patch_folders()
 
-        # reuse info from Deploy script
-        self.deploy             = deploy.Deploy(parser)
-        self.available_ref      = self.deploy.available_ref
-
         # archive old patches and quit
         if self.args.archive != []:
             self.archive_patches(self.args.archive)
             util.quit()
-
-        # show matching patches
-        existing_patches = []
-        for ref in sorted(self.available_ref.keys(), reverse = True):
-            info = self.available_ref[ref]
-            if (self.patch_code == None or self.patch_code in info['patch_name']):
-                existing_patches.append({
-                    'ref'           : info['ref'],
-                    'patch_name'    : info['patch_name'],
-                    'files'         : len(info['files']),
-                    'deployed_at'   : info['deployed_at'],
-                    'result'        : info['result'],
-                })
-
-        # show recent patches
-        if self.patch_code == None and self.show_patches > 0:
-            util.print_header('RECENT PATCHES:', self.args.target)
-            util.print_table(existing_patches, limit_bottom = self.show_patches)
 
         # make sure we have all commits ready
         self.get_all_commits()
@@ -138,10 +122,7 @@ class Patch(config.Config):
                 # show recent commits for selected patch
                 # show more details if we have them
                 self.show_matching_commits()
-                #
-                if len(existing_patches) > 0:
-                    util.print_header('RECENT PATCHES:')
-                    util.print_table(existing_patches)
+                self.show_matching_patches()
 
                 # show help for processing specific commits
                 if self.patch_seq == '':
@@ -172,6 +153,27 @@ class Patch(config.Config):
                     util.print_help('add -create #  to create patch with specified sequence')
                     util.print_help('add -create    to create patch without sequence')
                     print()
+
+
+
+    def show_matching_patches(self):
+        found_patches = []
+        for ref in sorted(self.patches.keys(), reverse = True):
+            info = self.patches[ref]
+            if (self.patch_code == None or self.patch_code in info['patch_code']):
+                found_patches.append({
+                    'ref'           : info['ref'],
+                    'patch_code'    : info['patch_code'],
+                    'commits'       : len(info['commits']),
+                    'files'         : len(info['files']),
+                    'deployed_at'   : info['deployed_at'],
+                    'result'        : info['result'],
+                })
+
+        # show recent patches
+        if ((self.patch_code == None and self.show_patches > 0) or len(found_patches) > 0):
+            util.print_header('RECENT PATCHES:', self.target_env)
+            util.print_table(found_patches, limit_bottom = self.show_patches)
 
 
 
@@ -224,27 +226,50 @@ class Patch(config.Config):
             'patch_code'    : util.extract(self.config.patch_folder_cod, curr_folder),
         }
 
-        # get more info from folder name
-        for folder in util.get_files(self.repo_root + self.config.patch_root + '*'):
+        # identify patch folder
+        for ref, folder in enumerate(util.get_files(self.repo_root + self.config.patch_root + '*', reverse = True, recursive = False), start = 1):
+            # get more info from folder name
+            root    = folder
             folder  = folder.replace('\\', '/').replace(self.repo_root + self.config.patch_root, '')
             info    = {
+                'ref'           : ref,
                 'day'           : util.extract(self.config.patch_folder_day, folder),
                 'seq'           : util.extract(self.config.patch_folder_seq, folder),
                 'patch_code'    : util.extract(self.config.patch_folder_cod, folder),
+                'folder'        : folder,
             }
-            #
+
+            # for current day sequence clash check
             if info['day'] == self.patch_current['day'] and not (info['seq'] in self.patch_sequences):
                 self.patch_sequences.append(info['seq'])
-            #
-            if not (info['day'] in self.patch_folders):
-                self.patch_folders[info['day']] = {}
-            self.patch_folders[info['day']][folder] = info
 
-        # check clash on patch sequence
-        if self.patch_code != None:
-            if self.patch_current['patch_code'] != self.patch_code and self.patch_current['seq'] in self.patch_sequences:
-                util.raise_error('CLASH ON PATCH SEQUENCE',
-                    'you should select a different create sequence')
+            # get some numbers from patch leading files
+            # note that they might be on parent folder too...
+            found_files, found_commits = [], []
+            for file in util.get_files(root + '/*.sql'):
+                found_commits.extend(self.get_file_commits(file))
+                found_files.extend(self.get_file_references(file))
+
+            # deduplicate
+            info['files']   = list(set(found_files))
+            info['commits'] = list(set(found_commits))
+
+            # extract deployment result and date from log names
+            buckets = {}    # use buckets to get overall status over multiple files
+            for file in util.get_files(root + self.logs_prefix + '/*.log'):
+                base        = os.path.splitext(os.path.basename(file))[0].split(' ')
+                schema      = base.pop(0)
+                result      = base.pop(-1).replace('[', '').replace(']', '')
+                deployed    = util.replace(' '.join(base).replace('_', ' '), '( \d\d)[-](\d\d)$', '\\1:\\2')  # fix time
+                #
+                if not (deployed in buckets):
+                    buckets[deployed] = result
+                else:
+                    buckets[deployed] = result if result == 'ERROR' else min(buckets[deployed], result)
+            #
+            info['deployed_at'] = max(buckets.keys())                   if buckets != {} else ''
+            info['result']      = buckets.get(info['deployed_at'], '')  if buckets != {} else ''
+            self.patches[ref]   = info
 
 
 
@@ -393,8 +418,8 @@ class Patch(config.Config):
     def show_matching_commits(self):
         # pivot commits
         commits_map = {}
-        for ref in sorted(self.available_ref.keys()):
-            for commit in self.available_ref[ref]['commits']:
+        for ref in sorted(self.patches.keys()):
+            for commit in self.patches[ref]['commits']:
                 commits_map[commit] = ref
 
         # show relevant recent commits
@@ -969,6 +994,40 @@ class Patch(config.Config):
 
 
 
+    def get_file_references(self, file):
+        files = []
+        with open(file, 'rt', encoding = 'utf-8') as f:
+            for line in f.readlines():
+                if line.startswith('@'):
+                    if '"' in line:
+                        file = line.split('"', maxsplit = 2)[1]
+                    else:
+                        file = line.replace('@', '').split(' ')[0]
+                    files.append(file)
+        return files
+
+
+
+    def get_file_commits(self, file):
+        commits = []
+        with open(file, 'rt', encoding = 'utf-8') as f:
+            extracting = False
+            for line in f.readlines():
+                if line.startswith('-- COMMITS:'):      # find start of commits
+                    extracting = True
+                #
+                if extracting:
+                    if line.strip() == '--':            # find end of commits
+                        break
+
+                    # find commit number
+                    search = re.search('^[-][-]\s+(\d+)[)]?\s', line)
+                    if search:
+                        commits.append(int(search.group(1)))
+        return commits
+
+
+
     def get_file_from_commit(self, file, commit):
         # run command line and capture the output, text file is expected
         return util.run_command('git show {}:{}'.format(commit, file))
@@ -992,13 +1051,13 @@ class Patch(config.Config):
 
         # find requested folders to archive
         data = []
-        for ref in sorted(self.available_ref.keys(), reverse = True):
+        for ref in sorted(self.patches.keys(), reverse = True):
             if ref in requested:
-                name = self.available_ref[ref]['patch_name']
+                name = self.patches[ref]['patch_code']
                 code = name.split('-', maxsplit = 2)[2]
                 data.append({
                     'ref'           : ref,
-                    'patch_name'    : name,
+                    'patch_code'    : name,
                     'patch_code'    : code,
                 })
         #
@@ -1008,7 +1067,7 @@ class Patch(config.Config):
         for row in data:
             # zip custom source files first
             source_folder   = self.repo_root + self.config.patch_scripts_dir.replace('/None/', '/{}/'.format(row['patch_code']))
-            patch_folder    = self.repo_root + self.config.patch_root + row['patch_name'] + '/'
+            patch_folder    = self.repo_root + self.config.patch_root + row['patch_code'] + '/'
             #
             if os.path.exists(source_folder):
                 shutil.make_archive(
@@ -1020,7 +1079,7 @@ class Patch(config.Config):
 
             # zip whole patch folder
             shutil.make_archive(
-                base_name   = archive_folder + row['patch_name'],
+                base_name   = archive_folder + row['patch_code'],
                 format      = 'zip',
                 root_dir    = patch_folder
             )
@@ -1037,7 +1096,8 @@ if __name__ == "__main__":
     group.add_argument('-commits',      help = 'To show number of recent commits',          type = int,             nargs = '?',                default = 0)
     group.add_argument('-my',           help = 'Show only my commits',                                              nargs = '?', const = True,  default = False)
     group.add_argument('-patches',      help = 'To show number of recent patches',          type = int,             nargs = '?',                default = 0)
-    group.add_argument('-patch',        help = 'Patch code (name for the patch files)')
+    group.add_argument('-patch',        help = 'Patch code (name for the patch files)',                             nargs = '?')
+    group.add_argument('-ref',          help = 'Patch reference (the number from screen)',  type = int,             nargs = '?')
     group.add_argument('-create',       help = 'To create patch with or without sequence',  type = util.is_boolstr, nargs = '?', const = True,  default = False)
     group.add_argument('-fetch',        help = 'Fetch Git changes before patching',                                 nargs = '?', const = True,  default = False)
     group.add_argument('-archive',      help = 'To archive patches with specific ref #',    type = int,             nargs = '*',                default = [])

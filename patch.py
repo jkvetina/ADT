@@ -62,7 +62,7 @@ class Patch(config.Config):
         self.patch_folder__     = self.repo_root + self.config.patch_root   + self.config.patch_folder
         self.patch_folder       = ''
         self.patch_folders      = {}
-        self.patch_sequences    = []
+        self.patch_sequences    = {}
         self.patch_current      = {}
         self.all_commits        = {}
         self.relevant_commits   = []
@@ -160,6 +160,11 @@ class Patch(config.Config):
                     if len(data):
                         util.print_header('TODAY\'S FOLDERS:')
                         util.print_table(data)
+
+            # check clash on patch sequence
+            elif len(self.patch_sequences.get(self.patch_seq, [])) > 0:
+                util.raise_error('CLASH ON PATCH SEQUENCE',
+                    'you should select a different sequence')
 
             # offer/hint next available sequence
             if self.patch_code != None:
@@ -369,8 +374,11 @@ class Patch(config.Config):
             info    = self.get_folder_split(folder)
 
             # for current day sequence clash check
-            if info['day'] == self.patch_current['day'] and not (info['seq'] in self.patch_sequences):
-                self.patch_sequences.append(info['seq'])
+            if info['day'] == self.patch_current['day']:
+                if not (info['seq'] in self.patch_sequences):
+                    self.patch_sequences[info['seq']] = []
+                if info['patch_code'] != self.patch_code:   # collect just other patches
+                    self.patch_sequences[info['seq']].append(info['patch_code'])
 
             # get some numbers from patch leading files
             # note that they might be on parent folder too...

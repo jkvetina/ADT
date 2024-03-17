@@ -293,6 +293,7 @@ class Patch(config.Config):
 
             # show progress
             util.print_table([results], columns = map, right_align = ['order', 'output', 'timer'], no_header = True)
+            util.beep(sound = 1)
         print()
 
 

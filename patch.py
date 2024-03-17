@@ -50,6 +50,7 @@ class Patch(config.Config):
         self.target_env         = self.args.target
         self.patch_ref          = self.args.get('ref')
         self.patch_rollback     = 'CONTINUE' if self.args.get('continue') else 'EXIT ROLLBACK'
+        self.patch_dry          = False
         #
         self.init_config()
 
@@ -127,12 +128,20 @@ class Patch(config.Config):
             util.assert_(self.patch_code, 'MISSING ARGUMENT: PATCH CODE')
 
         # create patch
-        if self.patch_code != None and len(self.patch_code) > 0 and self.patch_seq != '':
+        if self.patch_code != None and len(self.patch_code) > 0:
+            if self.args.deploy:
+                self.patch_seq = self.patch_seq or '0'
+                self.patch_dry = True
+
             # create patch for requested name and seq
-            self.create_patch()
+            if self.patch_seq != '':
+                self.create_patch()
+
             if self.args.deploy:
                 self.deploy_patch()
-            return
+
+            if self.patch_seq != '':
+                return
 
         # show help for processing specific commits
         if self.patch_code != None and len(self.patch_code) > 0:
@@ -190,8 +199,16 @@ class Patch(config.Config):
 
     def create_patch(self):
         self.create_patch_files()
+        self.create_deployment_plan()
 
         # show summary
+        folder = self.patch_folder.replace(self.repo_root + self.config.patch_root, '')
+        util.print_header('PATCH CREATED:', folder)
+        util.print_table(self.deploy_plan, right_align = ['app_id'])
+
+
+
+    def create_deployment_plan(self):
         for order, schema_with_app in enumerate(sorted(self.relevant_files.keys())):
             schema, app_id = self.get_schema_split(schema_with_app)
             self.deploy_plan.append({
@@ -207,10 +224,6 @@ class Patch(config.Config):
             if not (schema in self.deploy_schemas):
                 self.deploy_schemas[schema] = []
             self.deploy_schemas[schema].append(order)
-        #
-        folder = self.patch_folder.replace(self.repo_root + self.config.patch_root, '')
-        util.print_header('PATCH CREATED:', folder)
-        util.print_table(self.deploy_plan, right_align = ['app_id'])
 
 
 
@@ -592,7 +605,7 @@ class Patch(config.Config):
         # create snapshot folder
         if not os.path.exists(self.patch_folder):
             os.makedirs(self.patch_folder)
-        else:
+        elif not self.patch_dry:
             # delete everything in patch folder
             shutil.rmtree(self.patch_folder, ignore_errors = True, onerror = None)
 
@@ -999,8 +1012,9 @@ class Patch(config.Config):
         payload = '\n'.join([line for line in payload if line != None])
 
         # save in schema patch file
-        with open(self.patch_file, 'wt', encoding = 'utf-8', newline = '\n') as w:
-            w.write(payload)
+        if not self.patch_dry:
+            with open(self.patch_file, 'wt', encoding = 'utf-8', newline = '\n') as w:
+                w.write(payload)
         #
         if app_id:
             self.patch_files_apex.append(self.patch_file)
@@ -1062,8 +1076,9 @@ class Patch(config.Config):
         target_folder = os.path.dirname(target_file)
         if not os.path.exists(target_folder):
             os.makedirs(target_folder)
-        with open(target_file, 'wt', encoding = 'utf-8', newline = '\n') as w:
-            w.write(file_content)
+        if not self.patch_dry:
+            with open(target_file, 'wt', encoding = 'utf-8', newline = '\n') as w:
+                w.write(file_content)
         #
         return target_file
 

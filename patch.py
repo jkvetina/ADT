@@ -49,6 +49,7 @@ class Patch(config.Config):
         self.full_exports       = self.args.full
         self.target_env         = self.args.target
         self.patch_ref          = self.args.get('ref')
+        self.patch_rollback     = 'CONTINUE' if self.args.get('continue') else 'ROLLBACK'
         #
         self.init_config()
 
@@ -728,8 +729,8 @@ class Patch(config.Config):
                 'SET TIMING OFF',
                 'SET SQLBLANKLINES ON',
                 '--',
-                'WHENEVER OSERROR  EXIT ROLLBACK;',
-                'WHENEVER SQLERROR EXIT ROLLBACK;',
+                'WHENEVER OSERROR  EXIT {};'.format(self.patch_rollback),
+                'WHENEVER SQLERROR EXIT {};'.format(self.patch_rollback),
                 '--',
             ])
             if self.config.patch_spooling:
@@ -1222,6 +1223,7 @@ if __name__ == "__main__":
     group.add_argument('-force',        help = 'Force (re)deployment',                                              nargs = '?', const = True,  default = False)
     group.add_argument('-fetch',        help = 'Fetch Git changes before patching',                                 nargs = '?', const = True,  default = False)
     group.add_argument('-rebuild',      help = 'Rebuild temp files',                                                nargs = '?', const = True,  default = False)
+    group.add_argument('-continue',     help = 'Rollback or continue on DB error',                                  nargs = '?', const = True,  default = False)
     #
     group = parser.add_argument_group('SPECIFY ENVIRONMENT DETAILS')
     group.add_argument('-target',       help = 'Target environment',                                                nargs = '?')

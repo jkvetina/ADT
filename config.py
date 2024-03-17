@@ -276,10 +276,11 @@ class Config(util.Attributed):
 
                 # make yaml content more flat
                 self.connection = {}
-                self.connection['file']     = file
-                self.connection['key']      = self.args.key
-                self.connection['env']      = env_name
-                self.connection['schema']   = schema_name
+                self.connection['file']         = file
+                self.connection['key']          = self.args.key
+                self.connection['env']          = env_name
+                self.connection['schema']       = schema_name
+                self.connection['schema_apex']  = ''
                 #
                 for env, args in data.items():
                     if env != env_name:

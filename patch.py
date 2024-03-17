@@ -488,13 +488,18 @@ class Patch(config.Config):
                 if not (file.startswith(self.config.path_objects)) and not (file.startswith(self.config.path_apex)):
                     continue
 
-                # get APEX app info from the yaml file
+                # get APEX app info from filename
                 schema = self.info.schema
                 if self.config.path_apex in file:
                     app_id = util.extract(self.config.apex_path_app_id, file.replace(self.config.path_apex, ''))
                     if app_id == '':
                         continue
-                    schema += '.{}'.format(app_id)      # append app_id to separate APEX files
+
+                    # check if APEX app isnt in a different schema
+                    schema = self.connection.get('schema_apex', '') or schema
+
+                    # append app_id to separate APEX files
+                    schema += '.{}'.format(app_id)
                 #
                 if not (schema in self.relevant_files):
                     self.relevant_files[schema] = []

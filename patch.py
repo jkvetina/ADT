@@ -260,15 +260,22 @@ class Patch(config.Config):
             payload = '\n'.join(payload)
 
             # execute the script
-            output = self.deploy_conn[plan['schema']].sqlcl_request(payload, root = self.patch_folder, silent = True)
+            output  = self.deploy_conn[plan['schema']].sqlcl_request(payload, root = self.patch_folder, silent = True)
+            lines   = output.splitlines()
+
+            # search for error message
+            success = None
+            for line in lines:
+                if line.startswith('Error starting at line'):
+                    success = False
+                    break
 
             # search for the success prompt at last few lines
-            lines = output.splitlines()
-            success = ''
-            for line in lines[-10:]:                # last 10 lines
-                if line.startswith('-- SUCCESS'):   # this is in patch.py
-                    success = True
-                    break
+            if success == None:
+                for line in lines[-10:]:                # last 10 lines
+                    if line.startswith('-- SUCCESS'):   # this is in patch.py
+                        success = True
+                        break
 
             # prep results for the template
             results = {

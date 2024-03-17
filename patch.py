@@ -1043,8 +1043,10 @@ class Patch(config.Config):
 
         # make the folder structure more shallow
         if self.config.apex_snapshots:
-            target_file = target_file.replace(self.patch_folder, '').strip('/').replace('/', '.')
-            target_file = '{}/{}/{}'.format(self.patch_folder, self.config.apex_snapshots, target_file).replace('//', '/')
+            target_file     = target_file.replace(self.patch_folder, '').strip('/').split('/')
+            first_folder    = target_file.pop(0)
+            target_file     = '{}/{}'.format(first_folder, '.'.join(target_file))
+            target_file     = '{}/{}/{}'.format(self.patch_folder, self.config.apex_snapshots, target_file).replace('//', '/')
 
         # save file
         target_folder = os.path.dirname(target_file)

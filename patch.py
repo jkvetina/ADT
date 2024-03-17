@@ -41,7 +41,7 @@ class Patch(config.Config):
         util.assert_(self.args.target, 'MISSING ARGUMENT: TARGET ENV')
         #
         self.patch_code         = self.args.patch
-        self.patch_seq          = self.args.create if isinstance(self.args.create, str) else ('-' if self.args.create else '')
+        self.patch_seq          = self.args.create if isinstance(self.args.create, str) else ('0' if self.args.create else '')
         self.search_message     = self.args.search or [self.patch_code]
         self.info.branch        = self.args.branch or self.config.repo_branch or self.info.branch or str(self.repo.active_branch)
         self.add_commits        = self.args.add
@@ -178,7 +178,7 @@ class Patch(config.Config):
 
 
     def create_patch(self):
-        util.print_header('CREATING PATCH:', self.patch_code + (' (' + self.patch_seq + ')').replace(' ()', ''))
+        util.print_header('CREATING PATCH:', self.patch_code + (' (' + self.patch_seq + ')').replace(' (0)', ''))
         print()
 
         # show commits and files

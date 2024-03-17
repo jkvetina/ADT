@@ -443,7 +443,7 @@ class Patch(config.Config):
     def get_matching_commits(self):
         # add or remove specific commits from the queue
         for commit_id in sorted(self.all_commits.keys(), reverse = True):
-            commit = util.Attributed(self.all_commits[commit_id])
+            commit = self.all_commits[commit_id]
 
             # skip non requested commits
             if len(self.add_commits) > 0:
@@ -465,7 +465,7 @@ class Patch(config.Config):
             if self.search_message != []:
                 found_match = False
                 for word in [word for word in self.search_message if word is not None]:
-                    if word in commit.summary:
+                    if word in commit['summary']:
                         found_match = True
                         break
                 if not found_match:
@@ -475,7 +475,7 @@ class Patch(config.Config):
             self.relevant_commits.append(commit_id)
 
             # process files in commit
-            for file in commit.files:
+            for file in commit['files']:
                 # process just the listed extensions (in the config)
                 if os.path.splitext(file)[1] != '.sql':
                     continue

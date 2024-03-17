@@ -102,57 +102,65 @@ class Patch(config.Config):
 
         # make sure we have all commits ready
         self.get_all_commits()
+        self.get_matching_commits()
 
-        # show recent commits
-        if self.show_commits > 0:
-            self.show_recent_commits()
+        # show recent commits and patches
+        if self.patch_code != None and len(self.patch_code) > 0:
+            # show recent commits for selected patch
+            # show more details if we have them
+            self.show_matching_commits()
+            self.show_matching_patches()
+
+            # check number of commits
+            if len(self.relevant_commits) == 0:
+                util.raise_error('NO COMMITS FOUND',
+                    'please adjust your input parameters')
+        #
+        else:
+            if self.show_commits > 0:
+                self.show_recent_commits()
+            if self.show_patches > 0:
+                self.show_matching_patches()
 
         if self.patch_code == None:
             util.assert_(self.patch_code, 'MISSING ARGUMENT: PATCH CODE')
 
         # create patch
+        if self.patch_code != None and len(self.patch_code) > 0 and self.patch_seq != '':
+            # create patch for requested name and seq
+            self.create_patch()
+            return
+
+        # show help for processing specific commits
         if self.patch_code != None and len(self.patch_code) > 0:
-            # get through commits for specific patch name/code
-            self.get_matching_commits()
-            #
-            if self.patch_seq != '':
-                # create patch for requested name and seq
-                self.create_patch()
-            else:
-                # show recent commits for selected patch
-                # show more details if we have them
-                self.show_matching_commits()
-                self.show_matching_patches()
-
-                # show help for processing specific commits
-                if self.patch_seq == '':
-                    if self.patch_current['day'] and self.patch_current['day'] in self.patch_folders:
-                        data = []
-                        for folder, info in self.patch_folders[self.patch_current['day']].items():
-                            if info['seq']:
-                                data.append({
-                                    #'folder'    : folder
-                                    'day'           : info['day'],
-                                    'seq'           : info['seq'],
-                                    'patch_code'    : info['patch_code'],
-                                })
-                        #
-                        if len(data):
-                            util.print_header('TODAY\'S FOLDERS:')
-                            util.print_table(data)
-
-                # offer/hint next available sequence
-                if self.patch_code != None:
-                    try:
-                        next = max(self.patch_sequences)
-                        next = str(int(next) + 1) if next.isnumeric() else '#'
-                    except:
-                        next = '1'
+            if self.patch_seq == '':
+                if self.patch_current['day'] and self.patch_current['day'] in self.patch_folders:
+                    data = []
+                    for folder, info in self.patch_folders[self.patch_current['day']].items():
+                        if info['seq']:
+                            data.append({
+                                #'folder'    : folder
+                                'day'           : info['day'],
+                                'seq'           : info['seq'],
+                                'patch_code'    : info['patch_code'],
+                            })
                     #
-                    util.print_header('TO CREATE PATCH SPECIFY SEQUENCE:', next)
-                    util.print_help('add -create #  to create patch with specified sequence')
-                    util.print_help('add -create    to create patch without sequence')
-                    print()
+                    if len(data):
+                        util.print_header('TODAY\'S FOLDERS:')
+                        util.print_table(data)
+
+            # offer/hint next available sequence
+            if self.patch_code != None:
+                try:
+                    next = max(self.patch_sequences)
+                    next = str(int(next) + 1) if next.isnumeric() else '#'
+                except:
+                    next = '1'
+                #
+                util.print_header('TO CREATE PATCH SPECIFY SEQUENCE:', next)
+                util.print_help('add -create #  to create patch with specified sequence')
+                util.print_help('add -create    to create patch without sequence')
+                print()
 
 
 
@@ -178,19 +186,9 @@ class Patch(config.Config):
 
 
     def create_patch(self):
-        util.print_header('CREATING PATCH:', self.patch_code + (' (' + self.patch_seq + ')').replace(' (0)', ''))
-        print()
-
-        # show commits and files
-        for commit_id in sorted(self.relevant_commits, reverse = True):
-            commit = self.all_commits[commit_id]
-            print('  {}) {}'.format(commit_id, commit['summary']))
-        print()
+        self.create_patch_files()
 
         # show summary
-        short = self.patch_folder.replace(self.repo_root, './')
-        util.assert_(not ('{$' in self.patch_folder), 'LEFOVER TAGS IN FOLDER', short)
-        #
         summary = []
         for order, schema_with_app in enumerate(sorted(self.relevant_files.keys())):
             schema, app_id, _ = (schema_with_app + '..').split('.', maxsplit = 2)
@@ -202,11 +200,10 @@ class Patch(config.Config):
                 'commits'   : len(self.relevant_count[schema_with_app]),
                 'files'     : len(self.relevant_files[schema_with_app]),
             })
-        util.print_header('PATCH CREATED:', short)
+        #
+        folder = self.patch_folder.replace(self.repo_root + self.config.patch_root, '')
+        util.print_header('PATCH CREATED:', folder)
         util.print_table(summary, right_align = ['app_id'])
-
-        # create patch files
-        self.create_patch_files()
 
 
 
@@ -400,8 +397,7 @@ class Patch(config.Config):
 
         # check number of commits
         if len(self.relevant_commits) == 0:
-            util.raise_error('NO COMMITS FOUND',
-                'please adjust your input parameters')
+            return
 
         # get last version (max) and version before first change (min)
         self.first_commit_id    = min(self.relevant_commits) - 1

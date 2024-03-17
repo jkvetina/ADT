@@ -1048,10 +1048,7 @@ class Patch(config.Config):
 
         # make the folder structure more shallow
         if self.config.apex_snapshots:
-            target_file     = target_file.replace(self.patch_folder, '').strip('/').split('/')
-            first_folder    = target_file.pop(0)
-            target_file     = '{}/{}'.format(first_folder, '.'.join(target_file))
-            target_file     = '{}/{}/{}'.format(self.patch_folder, self.config.apex_snapshots, target_file).replace('//', '/')
+            target_file = self.get_target_file(target_file)
 
         # save file
         target_folder = os.path.dirname(target_file)
@@ -1086,12 +1083,20 @@ class Patch(config.Config):
         for target_file in apex_pages:
             # make the folder structure more shallow
             if self.config.apex_snapshots:
-                target_file = target_file.replace(self.patch_folder, '').strip('/').replace('/', '.')
-                target_file = '{}/{}'.format(self.config.apex_snapshots, target_file).replace('//', '/')
+                target_file = self.get_target_file(target_file).replace(self.patch_folder + '/', '')
             #
             payload.append(self.config.patch_file_link.replace('#FILE#', target_file))
         #
         return payload
+
+
+
+    def get_target_file(self, file):
+        file    = file.replace(self.patch_folder, '').strip('/').split('/')
+        first   = file.pop(0)
+        file    = '{}/{}'.format(first, '.'.join(file))
+        file    = '{}/{}/{}'.format(self.patch_folder, self.config.apex_snapshots, file).replace('//', '/')
+        return file
 
 
 

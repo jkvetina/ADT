@@ -484,20 +484,18 @@ class Patch(config.Config):
         # process files per schema
         for schema_with_app in self.relevant_files.keys():
             target_schema, app_id, _ = (schema_with_app + '..').split('.', maxsplit = 2)
-            payload = []
-
-            # generate patch file name for specific schema
-            self.patch_file      = '{}/{}.sql'.format(self.patch_folder, schema_with_app)
-            self.patch_spool_log = './{}.log'.format(schema_with_app)  # must start with ./ and ends with .log for proper function
+            #
+            self.patch_file         = '{}/{}.sql'.format(self.patch_folder, schema_with_app)
+            self.patch_spool_log    = './{}.log'.format(schema_with_app)  # must start with ./ and ends with .log for proper function
 
             # generate patch header
-            payload.extend([
+            payload = [
                 '--',
                 '-- {:>16} | {}'.format('PATCH CODE', self.patch_code),
                 '-- {:>16} | {}'.format('SCHEMA', target_schema),
                 '-- {:>16} | {}'.format('APP ID', app_id) if app_id else None,
                 '--',
-            ])
+            ]
 
             # get differences in between first and last commits
             # also fill the self.diffs() with files changed in commits

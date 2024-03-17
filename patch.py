@@ -57,7 +57,8 @@ class Patch(config.Config):
         self.patch_files_apex   = []
         self.patch_file         = ''
         self.patch_grants       = self.repo_root + self.config.path_objects + self.config.patch_grants
-        self.patch_folder       = self.repo_root + self.config.patch_root   + self.config.patch_folder
+        self.patch_folder__     = self.repo_root + self.config.patch_root   + self.config.patch_folder
+        self.patch_folder       = ''
         self.patch_folders      = {}
         self.patch_sequences    = []
         self.patch_current      = {}
@@ -86,7 +87,6 @@ class Patch(config.Config):
         # set current commit to the head and search through recent commits
         self.current_commit_obj = self.repo.commit('HEAD')
         self.current_commit     = self.current_commit_obj.count()
-        self.patch_folder       = self.replace_tags(self.patch_folder)  # replace tags in folder
 
         # fetch changes in Git
         if self.args.fetch:
@@ -205,39 +205,41 @@ class Patch(config.Config):
         util.print_header('PATCH CREATED:', short)
         util.print_table(summary, right_align = ['app_id'])
 
-        # create snapshot folder
-        if not os.path.exists(self.patch_folder):
-            os.makedirs(self.patch_folder)
-        else:
-            # delete everything in patch folder
-            shutil.rmtree(self.patch_folder, ignore_errors = True, onerror = None)
-
         # create patch files
         self.create_patch_files()
 
 
 
+    def get_folder_split(self, folder):
+        folder      = folder.replace(self.repo_root + self.config.patch_root, '')
+        splitter    = self.config.patch_folder_splitter.replace('~', '-')
+        result      = folder.split(splitter, maxsplit = 2)
+        #
+        if splitter == '':
+            return {
+                'day'           : '',
+                'seq'           : '',
+                'patch_code'    : folder,
+                'folder'        : folder,
+            }
+        return {
+            'day'           : result[0],
+            'seq'           : result[1] if len(result) > 1 else '',
+            'patch_code'    : result[2] if len(result) > 2 and result[2] != 'None' else '',
+            'folder'        : folder,
+        }
+
+
+
     def get_patch_folders(self):
         # extract values from folder name to find/compare today's patch
-        curr_folder = self.patch_folder.replace(self.repo_root + self.config.patch_root, '')
-        self.patch_current = {
-            'day'           : util.extract(self.config.patch_folder_day, curr_folder),
-            'seq'           : util.extract(self.config.patch_folder_seq, curr_folder),
-            'patch_code'    : util.extract(self.config.patch_folder_cod, curr_folder),
-        }
+        self.patch_current = self.get_folder_split(self.patch_folder)
 
         # identify patch folder
         for ref, folder in enumerate(util.get_files(self.repo_root + self.config.patch_root + '*', reverse = True, recursive = False), start = 1):
             # get more info from folder name
             root    = folder
-            folder  = folder.replace('\\', '/').replace(self.repo_root + self.config.patch_root, '')
-            info    = {
-                'ref'           : ref,
-                'day'           : util.extract(self.config.patch_folder_day, folder),
-                'seq'           : util.extract(self.config.patch_folder_seq, folder),
-                'patch_code'    : util.extract(self.config.patch_folder_cod, folder),
-                'folder'        : folder,
-            }
+            info    = self.get_folder_split(folder)
 
             # for current day sequence clash check
             if info['day'] == self.patch_current['day'] and not (info['seq'] in self.patch_sequences):
@@ -267,6 +269,7 @@ class Patch(config.Config):
                 else:
                     buckets[deployed] = result if result == 'ERROR' else min(buckets[deployed], result)
             #
+            info['ref']         = ref
             info['deployed_at'] = max(buckets.keys())                   if buckets != {} else ''
             info['result']      = buckets.get(info['deployed_at'], '')  if buckets != {} else ''
             self.patches[ref]   = info
@@ -462,6 +465,19 @@ class Patch(config.Config):
 
 
     def create_patch_files(self):
+        # generate patch file name for specific schema
+        self.patch_folder = util.replace(self.patch_folder__, {
+            '#PATCH_SEQ#'       : self.patch_seq,
+            '#PATCH_CODE#'      : self.patch_code,
+        })
+
+        # create snapshot folder
+        if not os.path.exists(self.patch_folder):
+            os.makedirs(self.patch_folder)
+        else:
+            # delete everything in patch folder
+            shutil.rmtree(self.patch_folder, ignore_errors = True, onerror = None)
+
         # simplify searching for ignored files
         skip_apex_files = '|{}|'.format('|'.join(self.config.apex_files_ignore))
 
@@ -963,7 +979,7 @@ class Patch(config.Config):
                 target_file = target_file.replace(self.patch_folder, '').strip('/').replace('/', '.')
                 target_file = '{}/{}'.format(self.config.apex_snapshots, target_file).replace('//', '/')
             #
-            payload.append(self.config.patch_file_link.replace('{$FILE}', target_file))
+            payload.append(self.config.patch_file_link.replace('#FILE#', target_file))
         #
         return payload
 

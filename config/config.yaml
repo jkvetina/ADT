@@ -59,11 +59,9 @@ patch_template_snap     : 'patch_template/'                 # folder name inside
 patch_scripts_dir       : 'patch_scripts/{$PATCH_CODE}/'    # source folder for specific patch
 patch_scripts_snap      : 'patch_scripts/'                  # folder name inside of your patch folder
 patch_grants            : 'grants/{$INFO_SCHEMA}.sql'       # location of your grants file
-patch_file_link         : '@"./{$FILE}"'                    # file line in patch file
-patch_folder            : '{$INFO_SCHEMA}{$TODAY_PATCH}-{$PATCH_SEQ}-{$PATCH_CODE}'
-patch_folder_day        : '^([^-]+)'                        # to extract day from patch_folder
-patch_folder_cod        : '[-]+(.*)$'                       # to extract patch_code from patch_folder
-patch_folder_seq        : '[-]([^-]*)[-]'                   # to extract patch_seq from patch_folder
+patch_file_link         : '@"./#FILE#"'                    # file line in patch file
+patch_folder            : '{$INFO_SCHEMA}{$TODAY_PATCH}-#PATCH_SEQ#-#PATCH_CODE#'
+patch_folder_splitter   : '~'                               # to extract day|seq|code from patch_folder, ~ = -
 patch_add_templates     : True                              # process templates
 patch_add_scripts       : True                              # process scripts
 patch_spooling          : True                              # to SPOOL into file or not

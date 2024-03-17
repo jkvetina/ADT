@@ -47,6 +47,8 @@ class Patch(config.Config):
         self.add_commits        = self.args.add
         self.ignore_commits     = self.args.ignore
         self.full_exports       = self.args.full
+        self.target_env         = self.args.target
+        self.patch_ref          = self.args.get('ref')
         #
         self.init_config()
 
@@ -69,8 +71,8 @@ class Patch(config.Config):
         self.first_commit       = None
         self.last_commit_id     = None
         self.last_commit        = None
-        self.postfix_before     = self.config.patch_postfix_before or '_before'
-        self.postfix_after      = self.config.patch_postfix_after  or '_after'
+        self.postfix_before     = self.config.patch_postfix_before
+        self.postfix_after      = self.config.patch_postfix_after
         self.commits_file       = self.config.repo_commits_file.replace('#BRANCH#', self.info.branch)
         self.show_commits       = (self.args.commits or 10) if self.patch_code == None else self.args.commits
         self.show_patches       = (self.args.patches or 10)
@@ -85,7 +87,6 @@ class Patch(config.Config):
             self.fetch_changes()
 
         # go through patch folders
-        self.patch_folder_splitter = '-'
         self.get_patch_folders()
 
         # reuse info from Deploy script
@@ -96,14 +97,6 @@ class Patch(config.Config):
         if self.args.archive != []:
             self.archive_patches(self.args.archive)
             util.quit()
-
-        # create patch
-        #if self.patch_code != None and len(self.patch_code) > 0 and self.patch_seq == '':
-        #    util.print_header('BUILDING PATCH FOR: {}'.format(self.patch_code))
-        #    util.print_help('use -search    to adjust the matched commits')
-        #    util.print_help('use -add #     to limit which commits will be processed')
-        #    util.print_help('use -ignore #  to limit which commits will not be processed')
-        #    print()
 
         # show matching patches
         existing_patches = []
@@ -223,7 +216,7 @@ class Patch(config.Config):
 
 
     def get_patch_folders(self):
-        # extract values from folder name
+        # extract values from folder name to find/compare today's patch
         curr_folder = self.patch_folder.replace(self.repo_root + self.config.patch_root, '')
         self.patch_current = {
             'day'           : util.extract(self.config.patch_folder_day, curr_folder),

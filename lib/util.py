@@ -541,9 +541,9 @@ def assert_(condition, message, *extras):
 
 
 
-def run_command(command):
+def run_command(command, stop = True, silent = False):
     result = subprocess.run(command, shell = True, capture_output = True, text = True)
-    if result.returncode != 0:
+    if result.returncode != 0 and not silent:
         # get all lines below error line
         lines = []
         for line in result.stdout.splitlines():
@@ -554,7 +554,8 @@ def run_command(command):
                 lines.append(line)
         #
         print('\n#\n# REQUEST FAILED:\n#\n{}\n'.format('\n'.join(lines)))
-        raise_error('COMMAND_ERROR: {} {}'.format(result.returncode, result.stderr.strip()))
+        if stop:
+            raise_error('COMMAND_ERROR: {} {}'.format(result.returncode, result.stderr.strip()))
     return (result.stdout or '')
 
 

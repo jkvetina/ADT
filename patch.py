@@ -259,7 +259,7 @@ class Patch(config.Config):
             payload = '\n'.join(payload)
 
             # execute the script
-            output = self.deploy_conn[plan['schema']].sqlcl_request(payload, root = self.patch_folder)
+            output = self.deploy_conn[plan['schema']].sqlcl_request(payload, root = self.patch_folder, silent = True)
 
             # search for the success prompt at last few lines
             lines = output.splitlines()

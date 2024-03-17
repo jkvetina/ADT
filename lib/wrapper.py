@@ -184,7 +184,7 @@ class Oracle:
 
 
 
-    def sqlcl_request(self, request, root = None):
+    def sqlcl_request(self, request, root = None, silent = False):
         if isinstance(request, list):
             request = '\n'.join(request)
 
@@ -234,7 +234,7 @@ class Oracle:
                 print(request)
             print()
         #
-        result = util.run_command(command).strip()
+        result = util.run_command(command, silent = silent).strip()
         #
         if self.debug:
             util.print_header('RESULT:')

@@ -127,22 +127,6 @@ class Patch(config.Config):
         if self.patch_code == None:
             util.assert_(self.patch_code, 'MISSING ARGUMENT: PATCH CODE')
 
-        # create patch
-        if self.patch_code != None and len(self.patch_code) > 0:
-            if self.args.deploy:
-                self.patch_seq = self.patch_seq or '0'
-                self.patch_dry = True
-
-            # create patch for requested name and seq
-            if self.patch_seq != '':
-                self.create_patch()
-
-            if self.args.deploy:
-                self.deploy_patch()
-
-            if self.patch_seq != '':
-                return
-
         # show help for processing specific commits
         if self.patch_code != None and len(self.patch_code) > 0:
             if self.patch_seq == '':
@@ -167,7 +151,7 @@ class Patch(config.Config):
                     'you should select a different sequence')
 
             # offer/hint next available sequence
-            if self.patch_code != None:
+            if self.patch_seq == '':
                 try:
                     next = max(self.patch_sequences)
                     next = str(int(next) + 1) if next.isnumeric() else '#'
@@ -178,6 +162,21 @@ class Patch(config.Config):
                 util.print_help('add -create #  to create patch with specified sequence')
                 util.print_help('add -create    to create patch without sequence')
                 print()
+
+        # create patch
+        if self.patch_code != None and len(self.patch_code) > 0:
+            if self.args.deploy:
+                self.patch_seq = self.patch_seq or '0'
+                self.patch_dry = True
+
+            # create patch for requested name and seq
+            if self.patch_seq != '':
+                self.create_patch()
+            if self.args.deploy:
+                self.deploy_patch()
+            #
+            if self.patch_seq != '':
+                return
 
 
 
@@ -365,6 +364,10 @@ class Patch(config.Config):
 
     def get_patch_folders(self):
         # extract values from folder name to find/compare today's patch
+        self.patch_folder = util.replace(self.patch_folder__, {
+            '#PATCH_SEQ#'       : self.patch_seq,
+            '#PATCH_CODE#'      : self.patch_code,
+        })
         self.patch_current = self.get_folder_split(self.patch_folder)
 
         # identify patch folder

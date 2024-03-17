@@ -129,6 +129,10 @@ class Patch(config.Config):
         if self.patch_code != None and len(self.patch_code) > 0 and self.patch_seq != '':
             # create patch for requested name and seq
             self.create_patch()
+
+            # deploy right away
+            if self.args.deploy:
+                self.check_connections()
             return
 
         # show help for processing specific commits
@@ -208,6 +212,19 @@ class Patch(config.Config):
         folder = self.patch_folder.replace(self.repo_root + self.config.patch_root, '')
         util.print_header('PATCH CREATED:', folder)
         util.print_table(self.deploy_plan, right_align = ['app_id'])
+
+
+
+    def check_connections(self):
+        # connect to all target schemas first so we know we can deploy all scripts
+        util.print_header('CONNECTING TO {}:'.format(self.target_env))
+        for schema in self.deploy_schemas.keys():
+            self.init_connection(env_name = self.target_env, schema_name = schema)
+            util.print_now('  {} '.format(schema).ljust(72, '.') + ' ')
+            self.deploy_conn[schema] = self.db_connect(ping_sqlcl = False, silent = True)
+            self.deploy_conn[schema].sqlcl_root = self.patch_folder
+            print('OK')
+        print()
 
 
 
@@ -1119,8 +1136,10 @@ if __name__ == "__main__":
     group.add_argument('-patch',        help = 'Patch code (name for the patch files)',                             nargs = '?')
     group.add_argument('-ref',          help = 'Patch reference (the number from screen)',  type = int,             nargs = '?')
     group.add_argument('-create',       help = 'To create patch with or without sequence',  type = util.is_boolstr, nargs = '?', const = True,  default = False)
-    group.add_argument('-fetch',        help = 'Fetch Git changes before patching',                                 nargs = '?', const = True,  default = False)
     group.add_argument('-archive',      help = 'To archive patches with specific ref #',    type = int,             nargs = '*',                default = [])
+    group.add_argument('-deploy',       help = 'Deploy created patch right away',                                   nargs = '?', const = True,  default = False)
+    group.add_argument('-force',        help = 'Force (re)deployment',                                              nargs = '?', const = True,  default = False)
+    group.add_argument('-fetch',        help = 'Fetch Git changes before patching',                                 nargs = '?', const = True,  default = False)
     group.add_argument('-rebuild',      help = 'Rebuild temp files',                                                nargs = '?', const = True,  default = False)
     #
     group = parser.add_argument_group('SPECIFY ENVIRONMENT DETAILS')

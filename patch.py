@@ -129,10 +129,8 @@ class Patch(config.Config):
         if self.patch_code != None and len(self.patch_code) > 0 and self.patch_seq != '':
             # create patch for requested name and seq
             self.create_patch()
-
-            # deploy right away
             if self.args.deploy:
-                self.check_connections()
+                self.deploy_patch()
             return
 
         # show help for processing specific commits
@@ -212,6 +210,89 @@ class Patch(config.Config):
         folder = self.patch_folder.replace(self.repo_root + self.config.patch_root, '')
         util.print_header('PATCH CREATED:', folder)
         util.print_table(self.deploy_plan, right_align = ['app_id'])
+
+
+
+    def deploy_patch(self):
+        self.check_connections()
+
+        # create folder for logs
+        log_folder = '{}/{}/'.format(self.patch_folder, self.logs_prefix)
+        if not os.path.exists(log_folder):
+            os.makedirs(log_folder)
+
+        # generate table headers before we know size of the data
+        max_file_len = 0
+        for plan in self.deploy_plan:
+            max_file_len = max(max_file_len, len(plan['file']))
+        #
+        map = {         # widths
+            'order'     : 5,
+            'file'      : max_file_len,
+            'output'    : 6,
+            'status'    : 7,
+            'timer'     : 5,
+        }
+        util.print_header('PATCHING PROGRESS AND RESULTS:')
+        util.print_table([], columns = map)
+
+        # run the target script(s) and spool the logs
+        for order, plan in enumerate(self.deploy_plan):
+            start = util.get_start()
+
+            # check if file exists
+            full = '{}/{}'.format(self.patch_folder, plan['file'])
+            if not os.path.exists(full):
+                util.raise_error('FILE MISSING', full)
+
+            # cleanup the script from comments, fix prompts
+            payload = []
+            with open(full, 'rt', encoding = 'utf-8') as f:
+                for line in f.readlines():
+                    line = line.strip()
+                    if line.startswith('--') or line == '':
+                        continue
+                    if line.startswith('PROMPT'):
+                        line = line.replace('PROMPT --;', 'PROMPT ---;')
+                    #
+                    payload.append(line)
+            payload = '\n'.join(payload)
+
+            # execute the script
+            output = self.deploy_conn[plan['schema']].sqlcl_request(payload, root = self.patch_folder)
+
+            # search for the success prompt at last few lines
+            lines = output.splitlines()
+            success = ''
+            for line in lines[-10:]:                # last 10 lines
+                if line.startswith('-- SUCCESS'):   # this is in patch.py
+                    success = True
+                    break
+
+            # prep results for the template
+            results = {
+                'order'     : order + 1,
+                'file'      : plan['file'],
+                'output'    : len(lines),
+                'status'    : 'SUCCESS' if success else 'ERROR',
+                'timer'     : int(round(util.get_start() - start + 0.5, 0)),  # ceil
+            }
+
+            # rename log to reflect the result in the file name
+            log_file    = full.replace('.sql', '.log')
+            log_status  = '{}/{} {} [{}].log'.format(log_folder, plan['file'].replace('.sql', ''), self.config.today_deploy, results['status'])
+            #
+            if os.path.exists(log_file):
+                os.rename(log_file, log_status)
+            else:
+                # if no spooling, create file manually
+                with open(log_status, 'wt', encoding = 'utf-8', newline = '\n') as w:
+                    output = util.cleanup_sqlcl(output, lines = False).replace('---\n', '--\n')
+                    w.write(output)
+
+            # show progress
+            util.print_table([results], columns = map, right_align = ['order', 'output', 'timer'], no_header = True)
+        print()
 
 
 

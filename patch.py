@@ -276,7 +276,7 @@ class Patch(config.Config):
         start           = util.get_start()
 
         # add missing commits
-        stop = max(list(self.all_commits.keys() or [self.config.repo_commits])) + 10
+        stop = max(list(self.all_commits.keys() or [self.config.repo_commits])) - 10
         for commit in list(self.repo.iter_commits(self.info.branch, max_count = self.config.repo_commits, skip = 0, reverse = False)):
             commit_id = commit.count()
             if self.head_commit == None:

@@ -130,7 +130,7 @@ class Oracle:
 
         # classic connect
         if not 'dsn' in self.tns:
-            if 'sid' in self.tns:
+            if self.tns.get('sid', '') != '':
                 self.tns.dsn = oracledb.makedsn(self.tns.host, self.tns.port, sid = self.tns.sid)
             else:
                 self.tns.dsn = oracledb.makedsn(self.tns.host, self.tns.port, service_name = self.tns.service)
@@ -202,7 +202,7 @@ class Oracle:
                 self.tns.pwd if self.tns.get('pwd!', '') != 'Y' else util.decrypt(self.tns.pwd, self.tns.key),
                 self.tns.host,
                 self.tns.port,
-                self.tns.sid if 'sid' in self.tns else self.tns.service
+                self.tns.sid if self.tns.get('sid', '') != '' else self.tns.service
             ])
 
         # prepare process for normal platforms

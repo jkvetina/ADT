@@ -438,6 +438,8 @@ class Export_APEX(config.Config):
         # get rid of install files
         for file in util.get_files(self.get_root(app_id, 'install*.sql')):
             os.remove(file)
+        for file in util.get_files(self.get_root(app_id, 'application/create_application.sql')):
+            os.remove(file)
 
 
 

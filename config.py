@@ -47,7 +47,6 @@ class Config(util.Attributed):
 
     # default location for new connections
     connection_default = '{$INFO_REPO}config/connections.yaml'
-    connection         = {}    # active connection
 
     # search for config files in current folder
     config_files = [
@@ -255,79 +254,56 @@ class Config(util.Attributed):
 
 
     def init_connection(self, env_name = '', schema_name = ''):
+        # use default values from environment, empty schema can be changed below
         env_name    = env_name      or self.info.env
         schema_name = schema_name   or self.info.schema or ''
 
-        # search for connection file
-        for file in self.replace_tags(list(self.connection_files)):  # copy, dont change original
-            if ('{$' in file or not os.path.exists(file)):
+        # gather connection details to a single dictionary
+        self.connection, schemas = {}, {}
+        for file in self.replace_tags(list(self.connection_files)):     # copy so we dont change the original
+            if ('{$' in file or not os.path.exists(file)):              # skip files with tags
                 continue
             #
             with open(file, 'rt', encoding = 'utf-8') as f:
-                data = dict(util.get_yaml(f, file))
+                conn_src        = dict(util.get_yaml(f, file)).get(env_name, {})
+                schemas_src     = conn_src.pop('schemas')
+                self.connection = {**self.connection, **conn_src}
+                schemas         = {**schemas, **schemas_src}
 
-                # check environment
-                if not (env_name in data):
-                    if self.args.get('create'):
-                        data[env_name] = {'schemas' : {schema_name : {}}}
-                if not (env_name in data):
-                    util.raise_error('UNKNOWN ENVIRONMENT NAME', env_name)
+        # check environment
+        if len(self.connection.keys()) == 0:
+            util.raise_error('UNKNOWN ENVIRONMENT NAME', env_name)
 
-                # make yaml content more flat
-                self.connection = {}
-                self.connection['file']         = file
-                self.connection['key']          = self.args.key
-                self.connection['env']          = env_name
-                self.connection['schema']       = schema_name
-                self.connection['schema_apex']  = ''
-                #
-                for env, args in data.items():
-                    if env != env_name:
-                        continue
-                    #
-                    for arg, value in args.items():
-                        if not isinstance(value, dict):
-                            self.connection[arg] = value
+        #  get schema marked as default
+        if schema_name == '':
+            schema_name = self.connection.get('schema_apex' if self.program == 'export_apex' else 'schema_db', '')
 
-                    # find first schema
-                    if schema_name == '' and 'schemas' in data[env_name]:
-                        schema_name = list(data[env_name]['schemas'].keys())[0]
-                        self.info.schema = schema_name
-                    break
+        # find first schema on list
+        if schema_name == '' and len(schemas.keys()) > 0:
+            schema_name = schemas.keys()[0]
 
-                # process schema overrides
-                if 'schemas' in data[env_name] and self.info.schema != None:
-                    schema_name = schema_name or self.info.schema
-                    if not (schema_name in data[env_name]['schemas']):
-                        util.raise_error('UNKNOWN SCHEMA - {}'.format(schema_name), '{}\n'.format(file))
-                #
-                self.info.schema = schema_name
-                for arg, value in data[env_name]['schemas'].get(schema_name, {}).items():
-                    self.connection[arg] = value
+        # check schema
+        if (schema_name == '' or not (schema_name in schemas.keys())):
+            util.raise_error('UNKNOWN SCHEMA', schema_name)
 
-                # fix wallet paths
-                if 'wallet' in self.connection:
-                    wallet = self.connection['wallet']
-                    if not os.path.exists(wallet):
-                        wallet = os.path.dirname(file) + '/' + wallet
-                        if os.path.exists(wallet):
-                            self.connection['wallet'] = wallet
-        #
-        if self.debug:
-            util.print_header('CONNECTION:')
-            util.print_args(self.connection, skip_keys = self.password_args)
-
-        # check presence, at least one file is required
-        if self.connection.get('file', '') == '':
-            util.raise_error('CONNECTION FILE REQUIRED:', '\n'.join(self.connection_files))
+        # merge with specific schema and adjust few things
+        self.connection = {**self.connection, **schemas[schema_name]}
+        self.connection['schema']   = schema_name
+        self.connection['key']      = self.args.key or ''
+        self.info.schema            = schema_name
 
         # if key is a file, retrieve content and use it as a key
-        if (not ('key' in self.connection) or self.connection['key'] == None):
-            self.connection['key'] = self.args.key or ''
-        if self.connection['key'] != '':
-            if os.path.exists(self.connection['key']):
-                with open(self.connection['key'], 'rt', encoding = 'utf-8') as f:
-                    self.connection['key'] = f.read().strip()
+        if self.connection['key'] != '' and os.path.exists(self.connection['key']):
+            with open(self.connection['key'], 'rt', encoding = 'utf-8') as f:
+                self.connection['key'] = f.read().strip()
+
+        # fix wallet paths
+        if 'wallet' in self.connection:
+            wallet = self.connection['wallet']
+            if not os.path.exists(wallet):
+                wallet = os.path.dirname(file) + '/' + wallet
+                if os.path.exists(wallet):
+                    self.connection['wallet'] = wallet
 
 
 
@@ -340,9 +316,11 @@ class Config(util.Attributed):
         #
         missing_args    = {}
         passed_args     = {
-            'schemas'   : {schema_name : {}},
-            'lang'      : '.AL32UTF8',          # default lang
-            'thick'     : self.args.thick,
+            'schemas'       : {schema_name : {}},
+            'lang'          : '.AL32UTF8',          # default lang
+            'thick'         : self.args.thick,
+            'schema_db'     : '',                   # default DB schema
+            'schema_apex'   : '',                   # default APEX schema
         }
 
         # check required arguments
@@ -394,11 +372,8 @@ class Config(util.Attributed):
                         passed_args.pop(arg, None)
 
         # prepare target folder
-        file    = self.replace_tags(output_file or self.connection_default)
-        dir     = os.path.dirname(file)
-        #
-        if not os.path.exists(dir):
-            os.makedirs(dir)
+        file = self.replace_tags(output_file or self.connection_default)
+        os.makedirs(os.path.dirname(file), exist_ok = True)
 
         # load current file
         connections = {}
@@ -412,6 +387,7 @@ class Config(util.Attributed):
         backup_schemas = {}
         if env_name in connections:
             backup_schemas = connections[env_name].get('schemas', {})
+        #
         connections[env_name] = dict(passed_args)   # copy
         for schema, data in backup_schemas.items():
             if schema != schema_name:

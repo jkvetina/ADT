@@ -74,7 +74,6 @@ class Config(util.Attributed):
         'cloud'     : ['env', 'user', 'pwd',                     'service', 'wallet', 'wallet_pwd'],
     }
     common_args = [
-        'env',
         'lang',
         'hostname',
         'port',
@@ -88,9 +87,9 @@ class Config(util.Attributed):
         'user',
         'pwd',
         'pwd_encrypted',
-        'prefix',           # specify the major things (differences) in connections.yaml
-        'ignore',           # but adjust the details in config.yaml
-        'folder',
+        'prefix',
+        'ignore',
+        'subfolder',
         'workspace',
         'app',
     ]

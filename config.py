@@ -266,7 +266,7 @@ class Config(util.Attributed):
 
         #  get schema marked as default
         if schema_name == '':
-            schema_name = self.connection.get('schema_apex' if self.program == 'export_apex' else 'schema_db', '')
+            schema_name = self.connection['defaults'].get('schema_apex' if self.program == 'export_apex' else 'schema_db', '')
 
         # find first schema on list
         if schema_name == '' and len(schemas.keys()) > 0:
@@ -403,7 +403,6 @@ class Config(util.Attributed):
         for arg, value in args.items():
             arg = arg.replace('host',   'hostname')
             arg = arg.replace('target', 'repo')
-            #
             self.args[arg] = value
 
         # need to set the repo to have correct paths

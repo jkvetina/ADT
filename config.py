@@ -375,7 +375,7 @@ class Config(util.Attributed):
             connections[env_name]['schemas'][schema_name].pop('export')
 
         # show parameters
-        print('\nCREATING {} CONNECTION:'.format(found_type.upper()))
+        print('\nCREATING {} CONNECTION:'.format(self.found_type.upper()))
         print('  - {}\n'.format(file))
 
         # store connection parameters in the yaml file
@@ -437,15 +437,15 @@ class Config(util.Attributed):
                     missing_args[type].append(arg)
 
         # create guidance for missing args
-        found_type = None
+        self.found_type = None
         for type, arguments in missing_args.items():
             if len(arguments) == 0:
-                found_type = type
+                self.found_type = type
                 break
         #
-        if not found_type:
+        if not self.found_type:
             for type, arguments in missing_args.items():
-                if type != found_type and len(arguments) > 0:
+                if type != self.found_type and len(arguments) > 0:
                     print('MISSING ARGUMENTS FOR {} CONNECTION:'.format(type.upper()))
                     for arg in arguments:
                         print('   - {}'.format(arg))

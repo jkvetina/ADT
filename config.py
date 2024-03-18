@@ -375,6 +375,11 @@ class Config(util.Attributed):
         if 'apex' in connections[env_name]['schemas'][schema_name]:
             connections[env_name]['schemas'][schema_name].pop('export')
 
+        # mark default scheme
+        if self.args.default:
+            schema_type = 'schema_apex' if connections[env_name]['schemas'][schema_name].get('apex', {}) != {} else 'schema_db'
+            connections[env_name]['defaults'][schema_type] = schema_name
+
         # show parameters
         print('\nCREATING {} CONNECTION:'.format(self.found_type.upper()))
         print('  - {}\n'.format(file))
@@ -645,6 +650,7 @@ if __name__ == "__main__":
     group.add_argument('-wallet',       help = 'Wallet file (for cloud connections)',                               nargs = '?')
     group.add_argument('-wallet_pwd',   help = 'Wallet password',                                                   nargs = '?')
     group.add_argument('-thick',        help = 'Thick client path or \'Y\' for auto resolve',                       nargs = '?')
+    group.add_argument('-default',      help = 'Mark current DB/APEX schema as default',    type = util.is_boolean, nargs = '?', const = True, default = False)
     #
     Config(parser)
 

@@ -154,10 +154,6 @@ class Config(util.Attributed):
         self.config = util.Attributed({})           # for user config
         self.info   = util.Attributed({})           # for info group
         self.debug  = self.args.get('debug')
-        #
-        if self.debug:
-            util.print_header('ARGS:')
-            util.print_args(self.args, skip_keys = self.password_args)
 
         # repo attributes
         self.root           = util.fix_path(os.path.dirname(os.path.realpath(__file__)))
@@ -168,9 +164,6 @@ class Config(util.Attributed):
         # set info group from command line arguments
         for arg in self.info_attributes:
             setattr(self.info, arg, self.args.get(arg, '') or '')
-        if self.debug:
-            util.print_header('INFO GROUP:')
-            util.print_args(self.info)
 
         # load config first
         self.init_config()
@@ -437,9 +430,6 @@ class Config(util.Attributed):
         self.repo_root      = self.args['repo']
         self.info.env       = self.args['env']
         self.info.schema    = self.args['user']
-        #
-        if self.debug:
-            util.print_args(self.args)
 
         # create new file as user would actually pass these arguments
         self.create_connection()
@@ -477,8 +467,6 @@ class Config(util.Attributed):
 
     def init_config(self):
         self.track_config = {}
-        if self.debug:
-            util.print_header('SEARCHING FOR CONFIG FILE')
 
         # search for config file(s)
         for file in self.replace_tags(list(self.config_files)):  # copy
@@ -491,16 +479,9 @@ class Config(util.Attributed):
                 if not ('{$' in file) and os.path.exists(file):
                     self.apply_config(file)
 
-        # reconnect to repo, it could change the location
-        if self.debug:
-            print()
-
 
 
     def apply_config(self, file):
-        if self.debug:
-            print(file, '\n')
-        #
         with open(file, 'rt', encoding = 'utf-8') as f:
             self.track_config[file] = {}
             for key, value in util.get_yaml(f, file):
@@ -522,8 +503,6 @@ class Config(util.Attributed):
 
     def init_repo(self):
         util.assert_(self.repo_root, 'MISSING ARGUMENT: REPO')
-        if self.debug:
-            util.print_header('SEARCHING FOR GIT REPO')
 
         # setup and connect to the repo
         try:

@@ -527,11 +527,8 @@ class Patch(config.Config):
                     if app_id == '':
                         continue
 
-                    # check if APEX app isnt in a different schema
-                    schema = self.connection.get('schema_apex', '') or schema
-
                     # append app_id to separate APEX files
-                    schema += '.{}'.format(app_id)
+                    schema = '{}.{}'.format(self.connection.get('schema_apex') or schema, app_id)
                 #
                 if not (schema in self.relevant_files):
                     self.relevant_files[schema] = []
@@ -625,7 +622,7 @@ class Patch(config.Config):
 
         # process files per schema
         for schema_with_app in self.relevant_files.keys():
-            target_schema, app_id, _ = (schema_with_app + '..').split('.', maxsplit = 2)
+            schema, app_id = self.get_schema_split(schema_with_app)
             #
             self.patch_file         = '{}/{}.sql'.format(self.patch_folder, schema_with_app)
             self.patch_spool_log    = './{}.log'.format(schema_with_app)  # must start with ./ and ends with .log for proper function
@@ -634,7 +631,7 @@ class Patch(config.Config):
             payload = [
                 '--',
                 '-- {:>16} | {}'.format('PATCH CODE', self.patch_code),
-                '-- {:>16} | {}'.format('SCHEMA', target_schema),
+                '-- {:>16} | {}'.format('SCHEMA', schema),
                 '-- {:>16} | {}'.format('APP ID', app_id) if app_id else None,
                 '--',
             ]

@@ -277,7 +277,14 @@ class Config(util.Attributed):
             util.raise_error('UNKNOWN SCHEMA', schema_name)
 
         # merge with specific schema and adjust few things
-        self.connection = {**self.connection, **schemas[schema_name]}
+        # flatten the config structure
+        self.connection = {
+            **self.connection['db'],
+            **self.connection['defaults'],
+            **schemas[schema_name]['db'],
+            **schemas[schema_name].get('apex', {}),
+            **schemas[schema_name].get('export', {}),
+        }
         self.connection['env']      = env_name
         self.connection['schema']   = schema_name
         self.connection['key']      = self.args.key or ''

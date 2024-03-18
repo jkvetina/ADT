@@ -72,34 +72,45 @@ class Config(util.Attributed):
         'legacy'    : ['env', 'user', 'pwd', 'hostname', 'port', 'sid'],
         'cloud'     : ['env', 'user', 'pwd',                     'service', 'wallet', 'wallet_pwd'],
     }
-    common_args = [
-        'lang',
-        'hostname',
-        'port',
-        'service',
-        'sid',
-        'wallet',
-        'wallet_pwd',
-        'wallet_encrypted',
-    ]
-    schema_args = [
-        'user',
-        'pwd',
-        'pwd_encrypted',
-        'prefix',
-        'ignore',
-        'subfolder',
-        'workspace',
-        'app',
-    ]
-    password_args = [
-        'key',
-        'pwd',
-        'wallet_pwd'
-    ]
-    password_flags = {
-        'pwd'           : 'pwd_encrypted',
-        'wallet_pwd'    : 'wallet_encrypted',
+
+    # map for root arguments
+    args_map = {
+        'db': {
+            'hostname'  : 'hostname',
+            'port'      : 'port',
+            'service'   : 'service',
+            'sid'       : 'sid',
+            'lang'      : '',
+            'thick'     : 'thick',
+        },
+        'wallet': {
+            'name'      : 'wallet',
+            'pwd'       : 'wallet_pwd',
+            'pwd!'      : '',       # encrypted flag
+        },
+        'defaults': {
+            'schema_apex'   : '',
+            'schema_db'     : '',
+        },
+        'schemas' : {},
+    }
+
+    # map for schema argments
+    args_schema = {
+        'apex': {
+            'workspace' : 'workspace',
+            'app'       : 'app',
+        },
+        'db': {
+            'user'      : 'user',
+            'pwd'       : 'pwd',
+            'pwd!'      : '',       # encrypted flag
+        },
+        'export': {
+            'prefix'    : 'prefix',
+            'subfolder' : 'subfolder',
+            'ignore'    : 'ignore',
+        },
     }
 
     # move some command line args to info group
@@ -294,64 +305,7 @@ class Config(util.Attributed):
         util.assert_(env_name,      'MISSING ARGUMENT: ENV')
         util.assert_(schema_name,   'MISSING ARGUMENT: SCHEMA')
         #
-        missing_args    = {}
-        passed_args     = {
-            'schemas'       : {schema_name : {}},
-        }
-        defaults = {
-            'lang'          : '.AL32UTF8',          # default lang
-            'thick'         : self.args.thick,
-            'schema_db'     : '',                   # default DB schema
-            'schema_apex'   : '',                   # default APEX schema
-        }
-
-        # check required arguments
-        for type, arguments in self.required_args.items():
-            missing_args[type]  = []
-            for arg in arguments:
-                if not (arg in self.args) or self.args[arg] == None or self.args[arg] == '':
-                    missing_args[type].append(arg)
-
-        # create guidance for missing args
-        found_type = None
-        for type, arguments in missing_args.items():
-            if len(arguments) == 0:
-                found_type = type
-                break
-        #
-        if not found_type:
-            for type, arguments in missing_args.items():
-                if type != found_type and len(arguments) > 0:
-                    print('MISSING ARGUMENTS FOR {} CONNECTION:'.format(type.upper()))
-                    for arg in arguments:
-                        print('   - {}'.format(arg))
-                    print()
-            #
-            util.raise_error('CAN\'T CONTINUE')
-
-        # create config structure
-        for arg in self.args:
-            value = self.args[arg]
-            if value == '' or value == None:
-                continue
-
-            # encrypt passwords and set correct flags
-            flag = ''
-            if arg in self.password_flags:
-                flag = self.password_flags[arg]
-                if not (self.args.decrypt) and arg in self.password_args:
-                    value = util.encrypt(value, self.args.key)
-
-            # add to the proper node
-            for arg in [arg, flag]:
-                if arg == flag:
-                    value = 'Y' if not self.args.decrypt else ''
-                if value != '':
-                    if arg in self.common_args:
-                        passed_args[arg] = value
-                    elif arg in self.schema_args:
-                        passed_args['schemas'][schema_name][arg] = value
-                        passed_args.pop(arg, None)
+        self.check_arguments()
 
         # prepare target folder
         file = self.replace_tags(output_file or self.connection_default)
@@ -365,20 +319,53 @@ class Config(util.Attributed):
                 for env, arguments in data:
                     connections[env] = arguments
 
-        # merge = overwrite root attributes, but keep other schemas
-        backup_schemas = {}
-        if env_name in connections:
-            backup_schemas = connections[env_name].get('schemas', {})
-        #
-        connections[env_name] = dict(passed_args)   # copy
-        for schema, data in backup_schemas.items():
-            if schema != schema_name:
-                connections[env_name]['schemas'][schema] = data
+        # create config structure
+        if not (env_name in connections):
+            connections[env_name] = {}
+        for group, items in self.args_map.items():
+            if not (group in connections[env_name]):
+                connections[env_name][group] = {}
+            for name, input in items.items():
+                if not (name in connections[env_name][group]):
+                    connections[env_name][group][name] = self.args.get(input) or ''
 
-        # add defaults
-        for key, value in defaults.items():
-            if not (key in connections[env_name]):
-                connections[env_name][key] = value
+                    # encrypt passwords and set correct flags
+                    if name.endswith('!') and not (self.args.decrypt):
+                        original    = name.rstrip('!')
+                        value       = connections[env_name][group][original]
+                        if value != '':
+                            connections[env_name][group][original]  = util.encrypt(value, self.args.key)
+                            connections[env_name][group][name]      = 'Y'
+
+        # add schema into schemas
+        if not (schema_name in connections[env_name]['schemas']):
+            connections[env_name]['schemas'][schema_name] = {}
+        for group, items in self.args_schema.items():
+            if not (group in connections[env_name]['schemas'][schema_name]):
+                connections[env_name]['schemas'][schema_name][group] = {}
+            for name, input in items.items():
+                if not (name in connections[env_name]['schemas'][schema_name][group]):
+                    connections[env_name]['schemas'][schema_name][group][name] = self.args.get(input) or ''
+
+                    # encrypt passwords and set correct flags
+                    if name.endswith('!') and not (self.args.decrypt):
+                        original    = name.rstrip('!')
+                        value       = connections[env_name]['schemas'][schema_name][group][original]
+                        if value != '':
+                            connections[env_name]['schemas'][schema_name][group][original]  = util.encrypt(value, self.args.key)
+                            connections[env_name]['schemas'][schema_name][group][name]      = 'Y'
+
+        # remove wallet if not used
+        if 'wallet' in connections[env_name]:
+            if connections[env_name]['wallet']['name'] == '':
+                connections[env_name].pop('wallet')
+
+        # remove wallet if not used
+        if 'apex' in connections[env_name]['schemas'][schema_name]:
+            if connections[env_name]['schemas'][schema_name]['apex']['workspace'] == '':
+                connections[env_name]['schemas'][schema_name].pop('apex')
+        if 'apex' in connections[env_name]['schemas'][schema_name]:
+            connections[env_name]['schemas'][schema_name].pop('export')
 
         # show parameters
         print('\nCREATING {} CONNECTION:'.format(found_type.upper()))
@@ -430,6 +417,34 @@ class Config(util.Attributed):
             ping_sqlcl  = ping_sqlcl,
             silent      = silent
         )
+
+
+
+    def check_arguments(self):
+        # check required arguments
+        missing_args = {}
+        for type, arguments in self.required_args.items():
+            missing_args[type]  = []
+            for arg in arguments:
+                if not (arg in self.args) or self.args[arg] == None or self.args[arg] == '':
+                    missing_args[type].append(arg)
+
+        # create guidance for missing args
+        found_type = None
+        for type, arguments in missing_args.items():
+            if len(arguments) == 0:
+                found_type = type
+                break
+        #
+        if not found_type:
+            for type, arguments in missing_args.items():
+                if type != found_type and len(arguments) > 0:
+                    print('MISSING ARGUMENTS FOR {} CONNECTION:'.format(type.upper()))
+                    for arg in arguments:
+                        print('   - {}'.format(arg))
+                    print()
+            #
+            util.raise_error('CAN\'T CONTINUE')
 
 
 

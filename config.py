@@ -280,7 +280,7 @@ class Config(util.Attributed):
 
         # find first schema on list
         if schema_name == '' and len(schemas.keys()) > 0:
-            schema_name = schemas.keys()[0]
+            schema_name = list(schemas.keys())[0]
 
         # check schema
         if (schema_name == '' or not (schema_name in schemas.keys())):
@@ -288,6 +288,7 @@ class Config(util.Attributed):
 
         # merge with specific schema and adjust few things
         self.connection = {**self.connection, **schemas[schema_name]}
+        self.connection['env']      = env_name
         self.connection['schema']   = schema_name
         self.connection['key']      = self.args.key or ''
         self.info.schema            = schema_name
@@ -317,6 +318,8 @@ class Config(util.Attributed):
         missing_args    = {}
         passed_args     = {
             'schemas'       : {schema_name : {}},
+        }
+        defaults = {
             'lang'          : '.AL32UTF8',          # default lang
             'thick'         : self.args.thick,
             'schema_db'     : '',                   # default DB schema
@@ -392,6 +395,11 @@ class Config(util.Attributed):
         for schema, data in backup_schemas.items():
             if schema != schema_name:
                 connections[env_name]['schemas'][schema] = data
+
+        # add defaults
+        for key, value in defaults.items():
+            if not (key in connections[env_name]):
+                connections[env_name][key] = value
 
         # show parameters
         print('\nCREATING {} CONNECTION:'.format(found_type.upper()))

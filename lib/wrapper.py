@@ -114,11 +114,11 @@ class Oracle:
             try:
                 self.conn = oracledb.connect(
                     user            = self.tns.user,
-                    password        = self.tns.pwd if self.tns.get('pwd_encrypted', '') != 'Y' else util.decrypt(self.tns.pwd, self.tns.key),
+                    password        = self.tns.pwd if self.tns.get('pwd!', '') != 'Y' else util.decrypt(self.tns.pwd, self.tns.key),
                     dsn             = self.tns.service,
                     config_dir      = wallet,
                     wallet_location = wallet,
-                    wallet_password = self.tns.wallet_pwd if self.tns.get('wallet_encrypted', '') != 'Y' else util.decrypt(self.tns.wallet_pwd, self.tns.key),
+                    wallet_password = self.tns.wallet_pwd if self.tns.get('wallet_pwd!', '') != 'Y' else util.decrypt(self.tns.wallet_pwd, self.tns.key),
                     encoding        = 'utf8'
                 )
             except Exception:
@@ -138,7 +138,7 @@ class Oracle:
         try:
             self.conn = oracledb.connect(
                 user        = self.tns.user,
-                password    = self.tns.pwd if self.tns.get('pwd_encrypted', '') != 'Y' else util.decrypt(self.tns.pwd, self.tns.key),
+                password    = self.tns.pwd if self.tns.get('pwd!', '') != 'Y' else util.decrypt(self.tns.pwd, self.tns.key),
                 dsn         = self.tns.dsn,
                 encoding    = 'utf8'
             )
@@ -193,13 +193,13 @@ class Oracle:
             request_conn = 'connect -cloudconfig {}.zip {}/"{}"@{}\n'.format(*[
                 self.tns.wallet.rstrip('.zip'),
                 self.tns.user,
-                self.tns.pwd if self.tns.get('pwd_encrypted', '') != 'Y' else util.decrypt(self.tns.pwd, self.tns.key),
+                self.tns.pwd if self.tns.get('pwd!', '') != 'Y' else util.decrypt(self.tns.pwd, self.tns.key),
                 self.tns.service
             ])
         else:
             request_conn = 'connect {}/"{}"@{}:{}/{}\n'.format(*[
                 self.tns.user,
-                self.tns.pwd if self.tns.get('pwd_encrypted', '') != 'Y' else util.decrypt(self.tns.pwd, self.tns.key),
+                self.tns.pwd if self.tns.get('pwd!', '') != 'Y' else util.decrypt(self.tns.pwd, self.tns.key),
                 self.tns.host,
                 self.tns.port,
                 self.tns.sid if 'sid' in self.tns else self.tns.service

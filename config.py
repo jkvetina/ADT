@@ -84,9 +84,9 @@ class Config(util.Attributed):
             'thick'     : 'thick',
         },
         'wallet': {
-            'name'      : 'wallet',
-            'pwd'       : 'wallet_pwd',
-            'pwd!'      : '',       # encrypted flag
+            'wallet'        : 'wallet',
+            'wallet_pwd'    : 'wallet_pwd',
+            'wallet_pwd!'   : '',       # encrypted flag
         },
         'defaults': {
             'schema_apex'   : '',
@@ -357,7 +357,7 @@ class Config(util.Attributed):
 
         # remove wallet if not used
         if 'wallet' in connections[env_name]:
-            if connections[env_name]['wallet']['name'] == '':
+            if connections[env_name]['wallet']['wallet'] == '':
                 connections[env_name].pop('wallet')
 
         # remove wallet if not used

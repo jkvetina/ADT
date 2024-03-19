@@ -991,7 +991,10 @@ class Patch(config.Config):
             ]
         payload.extend([
             'PROMPT -- {}: {}'.format(attach_type or 'FILE', file),
-            '@"./{}";'.format(file.lstrip('/')),
+            payload.append(util.replace(self.config.patch_file_link, {
+                '#FILE#'        : file.lstrip('/'),
+                '#PATCH_CODE#'  : self.patch_code,
+            })),
             '',
         ])
         return payload
@@ -1125,7 +1128,10 @@ class Patch(config.Config):
             if self.config.apex_snapshots:
                 target_file = self.get_target_file(target_file).replace(self.patch_folder + '/', '')
             #
-            payload.append(self.config.patch_file_link.replace('#FILE#', target_file))
+            payload.append(util.replace(self.config.patch_file_link, {
+                '#FILE#'        : target_file,
+                '#PATCH_CODE#'  : self.patch_code,
+            }))
         #
         return payload
 

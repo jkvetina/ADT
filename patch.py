@@ -187,7 +187,7 @@ class Patch(config.Config):
             if (self.patch_code == None or self.patch_code in info['patch_code']):
                 found_patches.append({
                     'ref'           : info['ref'],
-                    'patch_code'    : info['patch_code'],
+                    'patch_code'    : info['patch_code'] or info['folder'],
                     'commits'       : len(info['commits']),
                     'files'         : len(info['files']),
                     'deployed_at'   : info['deployed_at'],
@@ -342,17 +342,24 @@ class Patch(config.Config):
 
 
     def get_folder_split(self, folder):
-        folder      = folder.replace(self.repo_root + self.config.patch_root, '')
-        splitter    = self.config.patch_folder_splitter.replace('~', '-')
-        result      = folder.split(splitter, maxsplit = 2)
-        #
+        if os.path.isdir(folder):
+            folder      = folder.replace(self.repo_root + self.config.patch_root, '')
+            patch_code  = folder
+        else:
+            patch_code  = os.path.splitext(folder.replace(self.repo_root + self.config.patch_root, ''))[0]
+            folder      = ''
+
+        # split folder name
+        splitter = self.config.patch_folder_splitter.replace('~', '-')
         if splitter == '':
             return {
                 'day'           : '',
                 'seq'           : '',
-                'patch_code'    : folder,
+                'patch_code'    : patch_code,
                 'folder'        : folder,
             }
+        #
+        result = folder.split(splitter, maxsplit = 2)
         return {
             'day'           : result[0],
             'seq'           : result[1] if len(result) > 1 else '',

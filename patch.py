@@ -51,7 +51,7 @@ class Patch(config.Config):
         self.patch_ref          = self.args.get('ref')
         self.patch_rollback     = 'CONTINUE' if self.args.get('continue') else 'EXIT ROLLBACK'
         self.patch_dry          = False
-        self.move_patch_higher  = self.config.patch_folder_higher or self.args.moveup
+        self.patch_file_moveup  = self.args.moveup
         #
         self.init_config()
 
@@ -632,7 +632,7 @@ class Patch(config.Config):
 
         # move driving file a bit higher
         self.patch_file = '{}/../{}.sql'.format(self.patch_folder, self.patch_code)
-        if self.move_patch_higher:
+        if self.patch_file_moveup:
             with open(self.patch_file, 'wt', encoding = 'utf-8', newline = '\n') as w:
                 w.write('')
         elif os.path.exists(self.patch_file):
@@ -642,11 +642,11 @@ class Patch(config.Config):
         for schema_with_app in self.relevant_files.keys():
             schema, app_id = self.get_schema_split(schema_with_app)
             #
-            if not self.move_patch_higher:
+            if not self.patch_file_moveup:
                 self.patch_file     = '{}/{}.sql'.format(self.patch_folder, schema_with_app)
             self.patch_spool_log    = './{}.log'.format(schema_with_app)  # must start with ./ and ends with .log for proper function
             #
-            if self.move_patch_higher:
+            if self.patch_file_moveup:
                 self.patch_file     = '{}/../{}.sql'.format(self.patch_folder, self.patch_code)
 
             # generate patch header
@@ -1004,7 +1004,7 @@ class Patch(config.Config):
             ]
         payload.extend([
             'PROMPT -- {}: {}'.format(attach_type or 'FILE', file),
-            payload.append(util.replace(self.config.patch_file_link, {
+            payload.append(util.replace(self.config.patch_file_link if not self.patch_file_moveup else self.config.patch_file_link_moveup, {
                 '#FILE#'        : file.lstrip('/'),
                 '#PATCH_CODE#'  : self.patch_code,
             })),
@@ -1046,7 +1046,7 @@ class Patch(config.Config):
 
         # save in schema patch file
         if not self.patch_dry:
-            mode = 'at' if self.move_patch_higher else 'wt'
+            mode = 'at' if self.patch_file_moveup else 'wt'
             with open(self.patch_file, mode, encoding = 'utf-8', newline = '\n') as w:
                 w.write(payload)
         #
@@ -1142,7 +1142,7 @@ class Patch(config.Config):
             if self.config.apex_snapshots:
                 target_file = self.get_target_file(target_file).replace(self.patch_folder + '/', '')
             #
-            payload.append(util.replace(self.config.patch_file_link, {
+            payload.append(util.replace(self.config.patch_file_link if not self.patch_file_moveup else self.config.patch_file_link_moveup, {
                 '#FILE#'        : target_file,
                 '#PATCH_CODE#'  : self.patch_code,
             }))

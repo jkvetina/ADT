@@ -51,6 +51,7 @@ class Patch(config.Config):
         self.patch_ref          = self.args.get('ref')
         self.patch_rollback     = 'CONTINUE' if self.args.get('continue') else 'EXIT ROLLBACK'
         self.patch_dry          = False
+        self.move_patch_higher  = self.config.patch_folder_higher or self.args.moveup
         #
         self.init_config()
 
@@ -629,12 +630,24 @@ class Patch(config.Config):
         # simplify searching for ignored files
         skip_apex_files = '|{}|'.format('|'.join(self.config.apex_files_ignore))
 
+        # move driving file a bit higher
+        self.patch_file = '{}/../{}.sql'.format(self.patch_folder, self.patch_code)
+        if self.move_patch_higher:
+            with open(self.patch_file, 'wt', encoding = 'utf-8', newline = '\n') as w:
+                w.write('')
+        elif os.path.exists(self.patch_file):
+            os.remove(self.patch_file)
+
         # process files per schema
         for schema_with_app in self.relevant_files.keys():
             schema, app_id = self.get_schema_split(schema_with_app)
             #
-            self.patch_file         = '{}/{}.sql'.format(self.patch_folder, schema_with_app)
+            if not self.move_patch_higher:
+                self.patch_file     = '{}/{}.sql'.format(self.patch_folder, schema_with_app)
             self.patch_spool_log    = './{}.log'.format(schema_with_app)  # must start with ./ and ends with .log for proper function
+            #
+            if self.move_patch_higher:
+                self.patch_file     = '{}/../{}.sql'.format(self.patch_folder, self.patch_code)
 
             # generate patch header
             payload = [
@@ -1033,7 +1046,8 @@ class Patch(config.Config):
 
         # save in schema patch file
         if not self.patch_dry:
-            with open(self.patch_file, 'wt', encoding = 'utf-8', newline = '\n') as w:
+            mode = 'at' if self.move_patch_higher else 'wt'
+            with open(self.patch_file, mode, encoding = 'utf-8', newline = '\n') as w:
                 w.write(payload)
         #
         if app_id:
@@ -1282,6 +1296,7 @@ if __name__ == "__main__":
     group.add_argument('-fetch',        help = 'Fetch Git changes before patching',                                 nargs = '?', const = True,  default = False)
     group.add_argument('-rebuild',      help = 'Rebuild temp files',                                                nargs = '?', const = True,  default = False)
     group.add_argument('-continue',     help = 'Rollback or continue on DB error',                                  nargs = '?', const = True,  default = False)
+    group.add_argument('-moveup',       help = 'Move driving patch files higher',                                   nargs = '?', const = True,  default = False)
     #
     group = parser.add_argument_group('SPECIFY ENVIRONMENT DETAILS')
     group.add_argument('-target',       help = 'Target environment',                                                nargs = '?')

@@ -509,7 +509,7 @@ def quit(message = ''):
 
 
 
-def raise_error(message = '', stop = True, *extras):
+def raise_error(message = '', *extras):
     # print exception to screen
     splitter    = 80 * '#'
     exception   = traceback.format_exc().rstrip()
@@ -524,8 +524,7 @@ def raise_error(message = '', stop = True, *extras):
             print_help(line.rstrip())
     print()
     beep(sound = 3)
-    if stop:
-        sys.exit()
+    sys.exit()
 
 
 

@@ -362,13 +362,18 @@ class Patch(config.Config):
 
 
 
+    def get_patch_folder(self):
+        return util.replace(self.patch_folder__, {
+            '#PATCH_SEQ#'       : self.patch_seq if self.patch_seq != '0' else '',
+            '#PATCH_CODE#'      : self.patch_code,
+        }).rstrip()
+
+
+
     def get_patch_folders(self):
         # extract values from folder name to find/compare today's patch
-        self.patch_folder = util.replace(self.patch_folder__, {
-            '#PATCH_SEQ#'       : self.patch_seq,
-            '#PATCH_CODE#'      : self.patch_code,
-        })
-        self.patch_current = self.get_folder_split(self.patch_folder)
+        self.patch_folder   = self.get_patch_folder()
+        self.patch_current  = self.get_folder_split(self.patch_folder)
 
         # identify patch folder
         for ref, folder in enumerate(util.get_files(self.repo_root + self.config.patch_root + '*', reverse = True, recursive = False), start = 1):
@@ -605,10 +610,7 @@ class Patch(config.Config):
 
     def create_patch_files(self):
         # generate patch file name for specific schema
-        self.patch_folder = util.replace(self.patch_folder__, {
-            '#PATCH_SEQ#'       : self.patch_seq,
-            '#PATCH_CODE#'      : self.patch_code,
-        })
+        self.patch_folder = self.get_patch_folder()
 
         # create snapshot folder
         if not os.path.exists(self.patch_folder):

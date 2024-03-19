@@ -47,7 +47,7 @@ class Patch(config.Config):
         self.add_commits        = self.args.add
         self.ignore_commits     = self.args.ignore
         self.full_exports       = self.args.full
-        self.target_env         = self.args.target
+        self.target_env         = self.args.deploy if isinstance(self.args.deploy, str) and len(self.args.deploy) > 0 else self.args.target
         self.patch_ref          = self.args.get('ref')
         self.patch_rollback     = 'CONTINUE' if self.args.get('continue') else 'EXIT ROLLBACK'
         self.patch_dry          = False
@@ -151,7 +151,7 @@ class Patch(config.Config):
                     'you should select a different sequence')
 
             # offer/hint next available sequence
-            if self.patch_seq == '':
+            if self.patch_seq == '' and not self.args.deploy:
                 try:
                     next = max(self.patch_sequences)
                     next = str(int(next) + 1) if next.isnumeric() else '#'
@@ -207,7 +207,7 @@ class Patch(config.Config):
 
         # show summary
         folder = self.patch_folder.replace(self.repo_root + self.config.patch_root, '')
-        util.print_header('PATCH CREATED:', folder)
+        util.print_header('PATCH OVERVIEW:', folder)
         util.print_table(self.deploy_plan, right_align = ['app_id'])
 
 
@@ -1262,7 +1262,7 @@ if __name__ == "__main__":
     group.add_argument('-ref',          help = 'Patch reference (the number from screen)',  type = int,             nargs = '?')
     group.add_argument('-create',       help = 'To create patch with or without sequence',  type = util.is_boolstr, nargs = '?', const = True,  default = False)
     group.add_argument('-archive',      help = 'To archive patches with specific ref #',    type = int,             nargs = '*',                default = [])
-    group.add_argument('-deploy',       help = 'Deploy created patch right away',                                   nargs = '?', const = True,  default = False)
+    group.add_argument('-deploy',       help = 'Deploy created patch right away',           type = util.is_boolstr, nargs = '?', const = True,  default = False)
     group.add_argument('-force',        help = 'Force (re)deployment',                                              nargs = '?', const = True,  default = False)
     group.add_argument('-fetch',        help = 'Fetch Git changes before patching',                                 nargs = '?', const = True,  default = False)
     group.add_argument('-rebuild',      help = 'Rebuild temp files',                                                nargs = '?', const = True,  default = False)

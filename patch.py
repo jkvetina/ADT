@@ -639,7 +639,7 @@ class Patch(config.Config):
             os.remove(self.patch_file)
 
         # process files per schema
-        for schema_with_app in self.relevant_files.keys():
+        for schema_with_app in sorted(self.relevant_files.keys()):
             schema, app_id = self.get_schema_split(schema_with_app)
             #
             if not self.patch_file_moveup:

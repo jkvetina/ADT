@@ -668,10 +668,7 @@ class Patch(config.Config):
             # (2) self.patch_templates with template files (only if some files were changed), before and after (1)
             # (3) self.patch_script with adhoc files (add every time), before and after (1)
             #
-            files_to_process    = {}
-            files_processed     = []
-            scripts_processed   = []
-            #
+            files_to_process = {}
             for file in self.diffs.keys():
                 # skip file if it should be ignored in the patch (but keep it in snapshot folder)
                 try:
@@ -692,78 +689,67 @@ class Patch(config.Config):
                 #
                 files_to_process[file] = File(file, config = self.config)
 
-            # processed groups one by one in order defined by patch_map
+            # find files in groups so we can skip templates or not
+            files_grouped = {}
             for group in self.config.patch_map.keys():
-                if self.debug:
-                    print('  -', group)
-                #
-                for object_type in self.config.patch_map[group]:
-                    scripts_before  = []
-                    scripts_after   = []
+                files_grouped[group] = []
 
+                # process committed files
+                for object_type in self.config.patch_map[group]:
                     # scenario (1)
-                    files = []
                     for file in list(files_to_process.keys()):  # copy
                         obj = files_to_process[file]
                         if obj.is_object and obj.object_type == object_type:
-                            if not (file in files_processed):
-                                files.append(file)
+                            if not (file in files_grouped[group]):
+                                files_grouped[group].append(file)
                                 files_to_process.pop(file, '')
-                    #
-                    if not app_id and self.config.patch_add_scripts:
-                        scripts_before  = self.get_script_before_files(group)
-                        scripts_after   = self.get_script_after_files(group)
 
-                    # need to sort these files by dependencies
-                    #
-                    #
-                    #
+            # processed groups one by one in order defined by patch_map
+            files_processed     = []
+            scripts_processed   = []
+            #
+            for group in self.config.patch_map.keys():
+                # get adhoc scripts
+                scripts_before, scripts_after = [], []
+                if not app_id and self.config.patch_add_scripts:
+                    scripts_before  = self.get_script_before_files(group)
+                    scripts_after   = self.get_script_after_files(group)
 
-                    # dont process template folder if there are no group related files
-                    if len(files) == 0 and len(scripts_before) == 0 and len(scripts_after) == 0:
-                        continue
-                    #
-                    if self.debug:
-                        print('    -', object_type)
+                # continue only if we have committed files or scripts
+                files = files_grouped[group]
+                if len(files) == 0 and len(scripts_before) == 0 and len(scripts_after) == 0:
+                    continue
 
-                    # (2) before template
-                    if len(files) > 0 and self.config.patch_add_templates:
-                        for file in self.get_template_files(group + self.postfix_before):
-                            if not (file in files_processed):
-                                files_processed.append(file)
-                                if self.debug:
-                                    print('        >>', file)
-
-                    # (3) before script
-                    for file in scripts_before:
-                        if '/{}{}'.format(group, self.postfix_before) in file:
+                # (3) before script
+                for file in scripts_before:
+                    if '/{}{}'.format(group, self.postfix_before) in file:
+                        if not (file in files_processed):
                             files_processed.append(file)
                             scripts_processed.append(file)
-                            if self.debug:
-                                print('        >>>', file)
 
-                    # (1) add changed objects to the list
-                    for file in files:
+                # (2) before template
+                if self.config.patch_add_templates:
+                    for file in self.get_template_files(group + self.postfix_before):
+                        if not (file in files_processed):
+                            files_processed.append(file)
+
+                # @TODO: need to sort these files by dependencies
+                for file in files:
+                    if not (file in files_processed):
                         files_processed.append(file)
-                        files_to_process.pop(file, '')
-                        if self.debug:
-                            print('        >', file)
 
-                    # (3) after script
-                    for file in scripts_after:
-                        if '/{}{}'.format(group, self.postfix_after) in file:
+                # (3) after script
+                for file in scripts_after:
+                    if '/{}{}'.format(group, self.postfix_after) in file:
+                        if not (file in files_processed):
                             files_processed.append(file)
                             scripts_processed.append(file)
-                            if self.debug:
-                                print('        >>>', file)
 
-                    # (2) after template
-                    if len(files) > 0 and self.config.patch_add_templates:
-                        for file in self.get_template_files(group + self.postfix_after):
-                            if not (file in files_processed):
-                                files_processed.append(file)
-                                if self.debug:
-                                    print('        >>', file)
+                # (2) after template
+                if self.config.patch_add_templates:
+                    for file in self.get_template_files(group + self.postfix_after):
+                        if not (file in files_processed):
+                            files_processed.append(file)
 
             # attach APEX files
             if app_id:

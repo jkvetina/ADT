@@ -1,7 +1,5 @@
 import sys, os, re, yaml, glob, traceback, inspect, io, subprocess, datetime, timeit
 import secrets, base64
-#
-import beepy         # pip3 install beepy --upgrade
 
 # for encryptions
 from cryptography.fernet import Fernet
@@ -497,7 +495,11 @@ def is_boolstr(v):
 
 
 def beep(sound = 1):
-    beepy.beep(sound)
+    try:
+        import beepy         # pip3 install beepy --upgrade
+        beepy.beep(sound)
+    except:
+        pass
 
 
 

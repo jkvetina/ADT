@@ -163,6 +163,7 @@ class Patch(config.Config):
             if (self.patch_seq != '' or not self.args.create):
                 self.create_patch()
             if self.args.deploy:
+                self.patch_dry = False
                 self.deploy_patch()
 
             # offer/hint next available sequence

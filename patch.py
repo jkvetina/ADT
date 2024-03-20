@@ -151,8 +151,22 @@ class Patch(config.Config):
                 util.raise_error('CLASH ON PATCH SEQUENCE',
                     'you should select a different sequence')
 
+        # create patch
+        if self.patch_code != None and len(self.patch_code) > 0:
+            if (self.args.deploy or not self.args.create):
+                self.patch_seq = self.patch_seq or '0'
+                self.patch_dry = True
+            if not self.args.create:
+                self.patch_dry = True
+
+            # create patch for requested name and seq
+            if (self.patch_seq != '' or not self.args.create):
+                self.create_patch()
+            if self.args.deploy:
+                self.deploy_patch()
+
             # offer/hint next available sequence
-            if self.patch_seq == '' and not self.args.deploy:
+            if not self.args.deploy and not self.args.create:
                 try:
                     next = max(self.patch_sequences)
                     next = str(int(next) + 1) if next.isnumeric() else '#'
@@ -163,21 +177,6 @@ class Patch(config.Config):
                 util.print_help('add -create #  to create patch with specified sequence')
                 util.print_help('add -create    to create patch without sequence')
                 print()
-
-        # create patch
-        if self.patch_code != None and len(self.patch_code) > 0:
-            if self.args.deploy:
-                self.patch_seq = self.patch_seq or '0'
-                self.patch_dry = True
-
-            # create patch for requested name and seq
-            if self.patch_seq != '':
-                self.create_patch()
-            if self.args.deploy:
-                self.deploy_patch()
-            #
-            if self.patch_seq != '':
-                return
 
 
 
@@ -208,7 +207,7 @@ class Patch(config.Config):
 
         # show summary
         folder = self.patch_folder.replace(self.repo_root + self.config.patch_root, '')
-        util.print_header('PATCH OVERVIEW:', folder)
+        util.print_header('PATCH OVERVIEW:', folder if self.args.create else '')
         util.print_table(self.deploy_plan, right_align = ['app_id'])
 
 

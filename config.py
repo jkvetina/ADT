@@ -632,7 +632,9 @@ class Config(util.Attributed):
         file = os.getenv('ORACLE_HOME') + '/BASIC_README'
         if os.path.exists(file):
             with open(file, 'rt') as f:
-                results['Instant Client'] = f.readlines()[3].split(' - ')[1].strip()
+                for line in f.readlines():
+                    if 'Client Shared Library' in line:
+                        results['Instant Client'] = line.split(' - ')[1].strip()
 
         # show versions
         checks = {
@@ -643,7 +645,13 @@ class Config(util.Attributed):
             results[name] = util.run_command(command, stop = False, silent = True).strip().replace(' Release', '')
             if 'is not recognized' in results[name]:
                 results[name] = ''
-            if ' ' in results[name]:
+                continue
+            #
+            if name == 'SQLcl':
+                for line in results[name].splitlines():
+                    if line.startswith('SQLcl:'):
+                        results[name] = line.split()[1]
+            elif ' ' in results[name]:
                 results[name] = results[name].split()[1]
         #
         util.print_header('VERSIONS:')

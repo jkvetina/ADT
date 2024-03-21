@@ -563,8 +563,11 @@ def run_command(command, stop = True, silent = False):
 
 def cleanup_sqlcl(output, lines = False):
     output = output.splitlines()
-    if output[0].startswith('SQLcl') and output[2].startswith('Copyright') and output[4].startswith('Connected'):
-        output = output[5:]
+    for i, line in enumerate(output, start = 1):
+        if line.startswith('Connected.') and output[i - 3].startswith('Copyright') and output[i - 5].startswith('SQLcl:'):
+            output = output[i:]
+            break
+    #
     size = len(output)
     if output[size - 2].startswith('Disconnected') and output[size - 1].startswith('Version'):
         size -= 2

@@ -261,7 +261,9 @@ class Config(util.Attributed):
             #
             with open(file, 'rt', encoding = 'utf-8') as f:
                 conn_src        = dict(util.get_yaml(f, file)).get(env_name, {})
-                schemas_src     = conn_src.pop('schemas')
+                schemas_src     = {}
+                if 'schemas' in conn_src:
+                    schemas_src = conn_src.pop('schemas')
                 self.connection = {**self.connection, **conn_src}
                 schemas         = {**schemas, **schemas_src}
 
@@ -285,8 +287,8 @@ class Config(util.Attributed):
         # flatten the config structure
         self.connection = {
             **self.connection['db'],
-            **self.connection['defaults'],
-            **self.connection['wallet'],
+            **self.connection.get('defaults', {}),
+            **self.connection.get('wallet', {}),
             **schemas[schema_name]['db'],
             **schemas[schema_name].get('apex', {}),
             **schemas[schema_name].get('export', {}),

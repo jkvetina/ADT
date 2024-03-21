@@ -306,7 +306,9 @@ class Export_APEX(config.Config):
 
                 # move files
                 if '/pages/p' in file:
-                    os.rename(file, file.replace('/pages/p', '/pages/page_'))
+                    target = file.replace('/pages/p', '/pages/page_')
+                    if not os.path.exists(target):
+                        os.rename(file, target)
             #
             shutil.copytree(source_dir, target_dir, dirs_exist_ok = True)
             shutil.rmtree(source_dir, ignore_errors = True, onerror = None)
@@ -413,7 +415,8 @@ class Export_APEX(config.Config):
             if os.path.exists(file):
                 target = target.replace(source_dir, target_dir).replace('/readable/', '/')
                 os.makedirs(os.path.dirname(target), exist_ok = True)
-                os.rename(file, target)
+                if not os.path.exists(target):
+                    os.rename(file, target)
 
         # remove readable folder
         if os.path.exists(source_dir + 'readable/'):
@@ -423,14 +426,15 @@ class Export_APEX(config.Config):
         for file in util.get_files(source_dir + 'workspace/**/*.*'):
             target = file.replace('/f{}/workspace/'.format(app_id), '/' + self.config.apex_workspace_dir)
             os.makedirs(os.path.dirname(target), exist_ok = True)
-            os.rename(file, target)
+            if not os.path.exists(target):
+                os.rename(file, target)
         shutil.rmtree(source_dir + 'workspace/', ignore_errors = True, onerror = None)
 
         # move full export file
         source_file = '{}f{}.sql'.format(self.config.sqlcl_root, app_id)
         target_file = '{}f{}.sql'.format(self.get_root(app_id), app_id)
         #
-        if os.path.exists(source_file):
+        if os.path.exists(source_file) and not os.path.exists(target_file):
             self.cleanup_file(source_file)
             os.rename(source_file, target_file)
 
@@ -438,8 +442,9 @@ class Export_APEX(config.Config):
         for file in util.get_files(source_dir + '**/*.*'):
             target = file.replace(source_dir, target_dir)
             os.makedirs(os.path.dirname(target), exist_ok = True)
-            self.cleanup_file(file)
-            os.rename(file, target)
+            if not os.path.exists(target):
+                self.cleanup_file(file)
+                os.rename(file, target)
         #
         shutil.rmtree(source_dir, ignore_errors = True, onerror = None)
 
@@ -458,8 +463,9 @@ class Export_APEX(config.Config):
         for file in util.get_files(source_dir + '**/*.*'):
             target = file.replace(source_dir, target_dir)
             os.makedirs(os.path.dirname(target), exist_ok = True)
-            self.cleanup_file(file)
-            os.rename(file, target)
+            if not os.path.exists(target):
+                self.cleanup_file(file)
+                os.rename(file, target)
         #
         shutil.rmtree(source_dir, ignore_errors = True, onerror = None)
 

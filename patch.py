@@ -112,7 +112,7 @@ class Patch(config.Config):
         self.get_matching_commits()
 
         # show recent commits and patches
-        if self.patch_code != None and len(self.patch_code) > 0:
+        if self.patch_code:
             # show recent commits for selected patch
             # show more details if we have them
             self.show_matching_commits()
@@ -133,8 +133,8 @@ class Patch(config.Config):
             util.assert_(self.patch_code, 'MISSING ARGUMENT: PATCH CODE')
 
         # show help for processing specific commits
-        if self.patch_code != None and len(self.patch_code) > 0:
-            if self.patch_seq == '':
+        if self.patch_code and not self.args.create:
+            if self.patch_current['day']:
                 if self.patch_current['day'] and self.patch_current['day'] in self.patch_folders:
                     data = []
                     for folder, info in self.patch_folders[self.patch_current['day']].items():
@@ -156,18 +156,14 @@ class Patch(config.Config):
                     'you should select a different sequence')
 
         # create patch
-        if self.patch_code != None and len(self.patch_code) > 0:
+        if self.patch_code:
             if (self.args.deploy or not self.args.create):
-                self.patch_seq = self.patch_seq or '0'
-                self.patch_dry = True
-            if not self.args.create:
                 self.patch_dry = True
 
             # create patch for requested name and seq
-            if (self.patch_seq != '' or not self.args.create):
+            if (self.args.create or self.args.deploy):
                 self.create_patch()
             if self.args.deploy:
-                self.patch_dry = False
                 self.deploy_patch()
 
             # offer/hint next available sequence

@@ -83,6 +83,9 @@ class Export_APEX(config.Config):
 
         # show matching apps every time
         self.get_applications()
+        #
+        if len(self.apex_apps) == 0:
+            util.raise_error('NO APEX APPS FOUND')
 
         # for each requested app
         for app_id in sorted(self.apex_apps.keys()):
@@ -220,6 +223,8 @@ class Export_APEX(config.Config):
         #
         output  = self.execute_request('apex export -applicationid {$APP_ID} -list -changesSince {$TODAY}', app_id, lines = True)
         data    = util.parse_table(output)
+        if data == [{}]:
+            data = []
         #
         for i, row in enumerate(data):
             self.comp_changed.append(row['id'])

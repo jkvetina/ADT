@@ -58,9 +58,9 @@ class Export_APEX(config.Config):
         self.comp_changed   = []  # components changes recently
 
         # scope
-        self.arg_workspace  = self.args.ws      or self.config.default_workspace
-        self.arg_group      = self.args.group   or self.config.default_app_group
-        self.arg_apps       = self.args.app     or self.config.default_apps
+        self.arg_workspace  = self.args.ws      or self.conn.tns.get('workspace', '')
+        self.arg_group      = self.args.group
+        self.arg_apps       = self.args.app     or self.conn.tns.get('app', '')
         #
         self.arg_recent     = 1     # default walue = changes done today
         if isinstance(self.args.recent, bool):

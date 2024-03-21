@@ -1,17 +1,6 @@
 #
 # DATES
 #
-default_env             : DEV
-default_schema          : ''
-default_workspace       : ''
-default_apps            : []
-default_app_group       : ''
-
-
-
-#
-# DATES
-#
 today                   : '%Y-%m-%d'        # YYYY-MM-DD
 today_full              : '%Y-%m-%d %H:%M'  # YYYY-MM-DD HH24:MI
 today_full_raw          : '%Y%m%d%H%M00'

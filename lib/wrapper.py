@@ -93,8 +93,8 @@ class Oracle:
         # might need to adjust client for classic connections or for DPY-3015 password issues
         # https://python-oracledb.readthedocs.io/en/latest/user_guide/troubleshooting.html#dpy-3015
         client = self.tns.get('thick', None)
-        if client in ('Y', 'CLIENT_HOME'):
-            client = os.environ.get('CLIENT_HOME') or 'Y'
+        if client in ('Y', 'CLIENT_HOME', 'ORACLE_HOME'):
+            client = os.environ.get('CLIENT_HOME') or os.environ.get('ORACLE_HOME') or 'Y'
         #
         if client != None and client != '':
             if os.path.exists(client):

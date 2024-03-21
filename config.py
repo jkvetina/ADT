@@ -286,6 +286,7 @@ class Config(util.Attributed):
         self.connection = {
             **self.connection['db'],
             **self.connection['defaults'],
+            **self.connection['wallet'],
             **schemas[schema_name]['db'],
             **schemas[schema_name].get('apex', {}),
             **schemas[schema_name].get('export', {}),
@@ -300,14 +301,6 @@ class Config(util.Attributed):
         if self.connection['key'] != '' and os.path.exists(self.connection['key']):
             with open(self.connection['key'], 'rt', encoding = 'utf-8') as f:
                 self.connection['key'] = f.read().strip()
-
-        # fix wallet paths
-        if 'wallet' in self.connection:
-            wallet = self.connection['wallet']
-            if not os.path.exists(wallet):
-                wallet = os.path.dirname(file) + '/' + wallet
-                if os.path.exists(wallet):
-                    self.connection['wallet'] = wallet
 
 
 

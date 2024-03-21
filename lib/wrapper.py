@@ -92,19 +92,15 @@ class Oracle:
 
         # might need to adjust client for classic connections or for DPY-3015 password issues
         # https://python-oracledb.readthedocs.io/en/latest/user_guide/troubleshooting.html#dpy-3015
-        client = self.tns.get('thick', None)
-        if client in ('Y', 'CLIENT_HOME', 'ORACLE_HOME'):
-            client = os.environ.get('CLIENT_HOME') or os.environ.get('ORACLE_HOME') or 'Y'
+        self.thick = self.tns.get('thick', None)
+        if self.thick in ('Y', 'CLIENT_HOME', 'ORACLE_HOME'):
+            self.thick = os.environ.get('CLIENT_HOME') or os.environ.get('ORACLE_HOME') or 'Y'
         #
-        if client != None and client != '':
-            if os.path.exists(client):
-                oracledb.init_oracle_client(lib_dir = client)
+        if self.thick != None and self.thick != '':
+            if os.path.exists(self.thick):
+                oracledb.init_oracle_client(lib_dir = self.thick)
             else:
                 oracledb.init_oracle_client()
-            #
-            if not self.silent:
-                version = util.extract('(\d+_\d+)$', client).replace('_', '.')
-                print('USING THICK CLIENT: {}\n'.format(version or client))
 
         # use wallet to connect
         if 'wallet' in self.tns and len(self.tns.wallet) > 0:
@@ -180,6 +176,10 @@ class Oracle:
         #
         self.versions['DATABASE']   = '.'.join(version_db.split('.')[0:2])
         self.versions['APEX']       = '.'.join(version_apex.split('.')[0:2])
+        #
+        if self.thick:
+            version = util.extract('(\d+_\d+)$', self.thick).replace('_', '.')
+            self.versions['THICK'] = version or self.thick
 
 
 

@@ -103,7 +103,8 @@ class Oracle:
                 oracledb.init_oracle_client()
             #
             if not self.silent:
-                print('USING THICK CLIENT: {}\n'.format(client))
+                version = util.extract('(\d+_\d+)$', client).replace('_', '.')
+                print('USING THICK CLIENT: {}\n'.format(version or client))
 
         # use wallet to connect
         if 'wallet' in self.tns and len(self.tns.wallet) > 0:

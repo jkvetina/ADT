@@ -283,6 +283,17 @@ class Oracle:
 
 
 
+    def debug_query(self, query, **binds):
+        binds = self.get_binds(query, binds)
+        for arg in sorted(binds.keys(), reverse = True):
+            value = binds[arg]
+            value = "'{}'".format(value) if isinstance(value, str) else value
+            value = 'NULL' if value == "''" else value
+            query = query.replace(':' + arg, value)
+        return query.strip()
+
+
+
     def fetch_assoc(self, query, limit = 0, **binds):
         self.curs = self.conn.cursor()
         h = self.curs.execute(query.strip(), **self.get_binds(query, binds))

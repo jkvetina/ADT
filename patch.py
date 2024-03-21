@@ -41,7 +41,7 @@ class Patch(config.Config):
         util.assert_(self.args.target, 'MISSING ARGUMENT: TARGET ENV')
         #
         self.patch_code         = self.args.patch
-        self.patch_seq          = self.args.create if isinstance(self.args.create, str) else ('0' if self.args.create else '')
+        self.patch_seq          = self.args.create
         self.search_message     = self.args.search or [self.patch_code]
         self.info.branch        = self.args.branch or self.config.repo_branch or self.info.branch or str(self.repo.active_branch)
         self.add_commits        = self.args.add
@@ -54,6 +54,10 @@ class Patch(config.Config):
         self.patch_file_moveup  = self.args.moveup
         #
         self.init_config()
+
+        # adjust sequence
+        if isinstance(self.args.create, bool) and self.args.create:
+            self.patch_seq      = '0' if '#PATCH_SEQ#' in self.config.patch_folder else ''
 
         # prepare internal variables
         self.patch_files        = []
@@ -372,7 +376,7 @@ class Patch(config.Config):
 
     def get_patch_folder(self):
         return util.replace(self.patch_folder__, {
-            '#PATCH_SEQ#'       : self.patch_seq if self.patch_seq != '0' else '',
+            '#PATCH_SEQ#'       : self.patch_seq,
             '#PATCH_CODE#'      : self.patch_code,
         }).rstrip()
 

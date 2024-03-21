@@ -523,7 +523,8 @@ def raise_error(message = '', *extras):
     print('\n{}\n{}'.format(message, '-' * len(message)), extras if isinstance(extras, str) else '')
     if len(extras) > 0:
         for line in extras:
-            print_help(line.rstrip())
+            if line != None:
+                print_help(line.rstrip())
     print()
     beep(sound = 3)
     sys.exit()

@@ -378,7 +378,9 @@ class Config(util.Attributed):
             if connections[env_name]['schemas'][schema_name]['apex']['workspace'] == '':
                 connections[env_name]['schemas'][schema_name].pop('apex')
         if 'apex' in connections[env_name]['schemas'][schema_name]:
-            connections[env_name]['schemas'][schema_name].pop('export')
+            exp = connections[env_name]['schemas'][schema_name].get('export', {})
+            if exp.get('prefix', '') == '' and exp.get('ignore', '') == '' and exp.get('subfolder', '') == '':
+                connections[env_name]['schemas'][schema_name].pop('export')
 
         # mark default scheme
         if self.args.default:

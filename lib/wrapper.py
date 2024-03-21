@@ -118,8 +118,7 @@ class Oracle:
                     dsn             = self.tns.service,
                     config_dir      = wallet,
                     wallet_location = wallet,
-                    wallet_password = self.tns.wallet_pwd if self.tns.get('wallet_pwd!', '') != 'Y' else util.decrypt(self.tns.wallet_pwd, self.tns.key),
-                    encoding        = 'utf8'
+                    wallet_password = self.tns.wallet_pwd if self.tns.get('wallet_pwd!', '') != 'Y' else util.decrypt(self.tns.wallet_pwd, self.tns.key)
                 )
             except Exception:
                 if self.debug:
@@ -139,8 +138,7 @@ class Oracle:
             self.conn = oracledb.connect(
                 user        = self.tns.user,
                 password    = self.tns.pwd if self.tns.get('pwd!', '') != 'Y' else util.decrypt(self.tns.pwd, self.tns.key),
-                dsn         = self.tns.dsn,
-                encoding    = 'utf8'
+                dsn         = self.tns.dsn
             )
         except Exception:
             if self.debug:

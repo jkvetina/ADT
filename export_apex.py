@@ -240,7 +240,7 @@ class Export_APEX(config.Config):
         if len(self.comp_changed) == 0:
             return
         #
-        output = self.execute_request('apex export -applicationid {$APP_ID} -skipExportDate -expComments -expComponents "{$COMPONENTS}" -split', app_id)
+        output = self.execute_request('apex export -applicationid {$APP_ID} -expComments -expComponents "{$COMPONENTS}" -split', app_id)
 
         # remove some extra files
         source_dir = '{}f{}'.format(self.config.sqlcl_root, app_id)
@@ -253,12 +253,12 @@ class Export_APEX(config.Config):
 
 
     def export_full(self, app_id):
-        return self.execute_request('apex export -applicationid {$APP_ID} -nochecksum -skipExportDate -expComments -expTranslations', app_id)
+        return self.execute_request('apex export -applicationid {$APP_ID} -nochecksum -expComments -expTranslations', app_id)
 
 
 
     def export_split(self, app_id):
-        output = self.execute_request('apex export -applicationid {$APP_ID} -nochecksum -skipExportDate -expComments -expTranslations -expType APPLICATION_SOURCE{$FORMAT_JSON}{$FORMAT_YAML} -split', app_id)
+        output = self.execute_request('apex export -applicationid {$APP_ID} -nochecksum -expComments -expTranslations -expType APPLICATION_SOURCE{$FORMAT_JSON}{$FORMAT_YAML} -split', app_id)
 
         # cleanup target directory before moving new files there
         target_dir = self.get_root(app_id, 'application/')

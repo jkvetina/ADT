@@ -1,5 +1,5 @@
 # coding: utf-8
-import sys, os, re, argparse, shutil, datetime, timeit
+import sys, os, re, argparse, shutil, datetime, timeit, codecs
 #
 import config
 from lib import util
@@ -296,10 +296,13 @@ class Export_APEX(config.Config):
         if os.path.exists(source_dir):
             for file in util.get_files(source_dir + '**/*.*'):
                 # remove first 10 lines
-                with open(file, 'rt', encoding = 'utf-8') as f:
-                    old_content = f.readlines()
-                with open(file, 'wt', encoding = 'utf-8', newline = '\n') as w:
-                    w.writelines(old_content[10:])
+                try:
+                    with codecs.open(file, 'r', encoding = 'utf-8', errors='ignore') as f:
+                        old_content = f.readlines()
+                    with open(file, 'wt', encoding = 'utf-8', newline = '\n') as w:
+                        w.writelines(old_content[10:])
+                except:
+                    print('\nERROR:', file.replace(self.config.sqlcl_root, ''))
 
                 # move files
                 if '/pages/p' in file:

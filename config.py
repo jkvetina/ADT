@@ -166,6 +166,11 @@ class Config(util.Attributed):
         self.info   = util.Attributed({})           # for info group
         self.debug  = self.args.get('debug')
 
+        # show component versions
+        if __name__ == '__main__' and self.args.get('versions'):
+            self.show_versions()
+            util.quit()
+
         # repo attributes
         self.root           = util.fix_path(os.path.dirname(os.path.realpath(__file__)))
         self.repo_root      = util.fix_path(self.args.get('repo') or os.path.abspath(os.path.curdir))
@@ -188,11 +193,11 @@ class Config(util.Attributed):
 
         # connect to repo, we need valid repo for everything
         self.init_repo()
-        if __name__ != "__main__":
+        if __name__ != '__main__':
             self.init_connection()
 
         # different flow for direct call
-        if __name__ == "__main__":
+        if __name__ == '__main__':
             # import OPY connection file, basically adjust input arguments and then create a connection
             if 'opy' in self.args and self.args.opy:
                 self.import_connection()
@@ -611,10 +616,46 @@ class Config(util.Attributed):
 
 
 
+    def show_versions(self):
+        import oracledb
+
+        # path check + get version
+        results = {
+            'Python'            : sys.version.split()[0],
+            'Oracle DB module'  : oracledb.__version__,
+            'SQLcl'             : '',
+            'Java'              : '',
+            'Instant Client'    : '',
+        }
+
+        # get instant client version
+        file = os.getenv('ORACLE_HOME') + '/BASIC_README'
+        if os.path.exists(file):
+            with open(file, 'rt') as f:
+                results['Instant Client'] = f.readlines()[3].split(' - ')[1].strip()
+
+        # show versions
+        checks = {
+            'Java'      : 'java --version',
+            'SQLcl'     : 'sql -V',
+        }
+        for name, command in checks.items():
+            results[name] = util.run_command(command, stop = False, silent = True).strip().replace(' Release', '')
+            if 'is not recognized' in results[name]:
+                results[name] = ''
+            if ' ' in results[name]:
+                results[name] = results[name].split()[1]
+        #
+        util.print_header('VERSIONS:')
+        util.print_args(results, length = 24)
+
+        # instant client
 
 
 
-if __name__ == "__main__":
+
+
+if __name__ == '__main__':
     # parse arguments
     parser = argparse.ArgumentParser(add_help = False)
 
@@ -624,6 +665,7 @@ if __name__ == "__main__":
     group.add_argument('-create',       help = 'Create or update connection',               type = util.is_boolean, nargs = '?', const = True, default = False)
     group.add_argument('-opy',          help = 'Import connection from OPY file',                                   nargs = '?')
     group.add_argument('-init',         help = 'Copy template files to repo folder',                                nargs = '?', const = True, default = False)
+    group.add_argument('-versions',     help = 'Show versions of used subprograms',         type = util.is_boolean, nargs = '?', const = True, default = False)
     #
     group = parser.add_argument_group('SPECIFY ENVIRONMENT DETAILS')
     group.add_argument('-env',          help = 'Environment name like DEV, UAT, LAB1...',                           nargs = '?')

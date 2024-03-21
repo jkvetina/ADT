@@ -167,7 +167,7 @@ class Config(util.Attributed):
         self.debug  = self.args.get('debug')
 
         # show component versions
-        if __name__ == '__main__' and self.args.get('versions'):
+        if __name__ == '__main__' and self.args.get('version'):
             self.show_versions()
             util.quit()
 
@@ -631,7 +631,7 @@ class Config(util.Attributed):
                     if 'Client Shared Library' in line:
                         results['Instant Client'] = line.split(' - ')[1].strip()
 
-        # show versions
+        # get versions for Java and SQLcl
         checks = {
             'Java'      : 'java --version',
             'SQLcl'     : 'sql -V',
@@ -648,8 +648,12 @@ class Config(util.Attributed):
                         results[name] = line.split()[1]
             elif ' ' in results[name]:
                 results[name] = results[name].split()[1]
+
+        # cleanup trailing zeroes
+        for name, version in results.items():
+            results[name] = util.replace(version, '(\.0)+$', '')
         #
-        util.print_header('VERSIONS:')
+        util.print_header('VERSION:')
         util.print_args(results, length = 24)
 
         # instant client
@@ -668,7 +672,7 @@ if __name__ == '__main__':
     group.add_argument('-create',       help = 'Create or update connection',               type = util.is_boolean, nargs = '?', const = True, default = False)
     group.add_argument('-opy',          help = 'Import connection from OPY file',                                   nargs = '?')
     group.add_argument('-init',         help = 'Copy template files to repo folder',                                nargs = '?', const = True, default = False)
-    group.add_argument('-versions',     help = 'Show versions of used subprograms',         type = util.is_boolean, nargs = '?', const = True, default = False)
+    group.add_argument('-version',      help = 'Show versions of used subprograms',         type = util.is_boolean, nargs = '?', const = True, default = False)
     #
     group = parser.add_argument_group('SPECIFY ENVIRONMENT DETAILS')
     group.add_argument('-env',          help = 'Environment name like DEV, UAT, LAB1...',                           nargs = '?')

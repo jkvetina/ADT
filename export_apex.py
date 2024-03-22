@@ -97,6 +97,8 @@ class Export_APEX(config.Config):
 
         # for each requested app
         for app_id in sorted(self.apex_apps.keys()):
+            self.get_comments(app_id)
+
             # show recent changes
             if (self.config.apex_show_recent > 0 or self.arg_recent > 0):
                 self.show_recent_changes(app_id)
@@ -259,6 +261,44 @@ class Export_APEX(config.Config):
         # store connection parameters in the yaml file
         with open(self.developers_file, 'wt', encoding = 'utf-8', newline = '\n') as w:
             util.store_yaml(w, payload = developers, fix = True)
+
+
+
+    def get_comments(self, app_id):
+        comments = {}
+        for row in self.conn.fetch_assoc(query.page_comments, app_id = app_id):
+            comments[row.page_id] = {
+                'page' : {
+                    'page_name'     : row.page_name,
+                    'page_comment'  : row.page_comment,
+                    'updated_by'    : row.last_updated_by,
+                    'updated_at'    : row.last_updated_on,
+                },
+                'regions' : {},
+            }
+        #
+        for row in self.conn.fetch_assoc(query.page_region_comments, app_id = app_id):
+            if not (row.page_id in comments):
+                comments[row.page_id] = {
+                    'page' : {
+                        'page_name' : row.page_name,
+                    },
+                    'regions' : {},
+                }
+            comments[row.page_id]['regions'][row.region_id] = {
+                'region_name'       : row.region_name,
+                'region_comment'    : row.component_comment,
+                'updated_by'        : row.last_updated_by,
+                'updated_at'        : row.last_updated_on,
+            }
+
+        # store connection parameters in the yaml file
+        target_dir = '{}/comments/'.format(self.get_root(app_id))
+        os.makedirs(target_dir, exist_ok = True)
+        for page_id, content in comments.items():
+            file = '{}p{}.yaml'.format(target_dir, str(page_id).rjust(5, '0'))
+            with open(file, 'wt', encoding = 'utf-8', newline = '\n') as w:
+                util.store_yaml(w, payload = content, fix = True)
 
 
 

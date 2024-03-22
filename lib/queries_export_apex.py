@@ -120,3 +120,29 @@ GROUP BY
 ORDER BY 1, 2
 """
 
+page_comments = """
+SELECT
+    t.page_id,
+    t.page_name,
+    t.last_updated_by,
+    t.last_updated_on,
+    t.page_comment
+FROM apex_application_pages t
+WHERE t.application_id = :app_id
+    AND t.page_comment IS NOT NULL
+"""
+
+page_region_comments = """
+SELECT
+    t.page_id,
+    t.page_name,
+    t.region_id,
+    t.region_name,
+    t.last_updated_by,
+    t.last_updated_on,
+    t.component_comment
+    --t.display_sequence
+FROM apex_application_page_regions t
+WHERE t.application_id = :app_id
+    AND t.component_comment IS NOT NULL
+"""

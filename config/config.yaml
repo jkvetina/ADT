@@ -134,9 +134,8 @@ apex_version            : '{$TODAY} {$PATCH_CODE}'
 apex_path_app           : '{$APP_ID}_{$APP_ALIAS}'  # classic = 'f{$APP_ID}'
 apex_path_app_id        : '^f?(\d+)'            # to extract app_id from folder
 apex_path_files         : 'files/'
-apex_path_rest          : 'rest/'
+apex_path_rest          : 'workspace/rest/'
 apex_workspace_dir      : 'workspace/'
-apex_yaml_file          : 'config/apex.{$APP_WS}.yaml'
 apex_snapshots          : 'snapshots/'
 #
 apex_show_recent        : 1                     # show changes made in past # days

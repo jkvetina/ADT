@@ -81,11 +81,16 @@ class Export_APEX(config.Config):
         }
         self.parse_actions()
 
+        # to track export times so we can predict progress on next run
+        self.timers             = {}
+        self.timers_file        = '{}/config/apex_timers.yaml'.format(self.repo_root)
         #
         self.developers_file    = '{}/config/apex_developers.yaml'.format(self.repo_root)
+
         # show matching apps every time
         self.get_applications()
         self.get_workspace_developers()
+        self.load_timers()
         #
         if len(self.apex_apps) == 0:
             util.raise_error('NO APEX APPS FOUND')
@@ -113,15 +118,24 @@ class Export_APEX(config.Config):
                 {'action' : 'files_ws',     'header' : 'WORKSPACE FILES' },
             ]
             for row in todo:
-                if self.actions[row['action']]:
-                    h = self.print_start(row['header'])
-                    getattr(self, 'export_' + row['action'])(app_id)
+                action = row['action']
+                if self.actions[action]:
+                    start   = util.get_start()
+                    h       = self.print_start(row['header'])
+                    #
+                    getattr(self, 'export_' + action)(app_id)
                     self.print_end(**h)
                     util.beep(sound = 1)
+
+                    # update timers
+                    if not (app_id in self.timers):
+                        self.timers[app_id] = {}
+                    self.timers[app_id][action] = round(util.get_start() - start, 2)
 
             # move files from temp folders to target folders
             self.move_files(app_id)
             self.move_ws_files()
+            self.store_timers()
             print()
 
 
@@ -217,6 +231,21 @@ class Export_APEX(config.Config):
         self.enrich_ids = {}
         for row in self.conn.fetch_assoc(query.apex_id_names, **args):
             self.enrich_ids[row.component_id] = '{}: {}'.format(row.component_type, row.component_name)
+
+
+
+    def load_timers(self):
+        # store application list in the yaml file
+        file = '{}/config/apex_timers.yaml'.format(self.repo_root)
+        if os.path.exists(self.timers_file):
+            with open(self.timers_file, 'rt', encoding = 'utf-8') as f:
+                self.timers = dict(util.get_yaml(f, file))
+
+
+
+    def store_timers(self):
+        with open(self.timers_file, 'wt', encoding = 'utf-8', newline = '\n') as w:
+            util.store_yaml(w, payload = self.timers, fix = True)
 
 
 

@@ -100,3 +100,23 @@ FROM apex_appl_email_templates t
 WHERE t.application_id = :app_id
 """
 
+# get list of developers
+workspace_developers = """
+SELECT
+    d.workspace_name    AS workspace,
+    d.user_name,
+    d.email             AS user_mail
+FROM apex_workspace_developers d
+WHERE 1 = 1
+    AND d.is_application_developer = 'Yes'
+    AND d.account_locked = 'No'
+    --AND (d.account_expiry > TRUNC(SYSDATE) OR d.account_expiry IS NULL)
+    AND d.email NOT LIKE 'dba@%'
+    AND d.date_last_updated > TRUNC(SYSDATE) - 90
+GROUP BY
+    d.workspace_name,
+    d.user_name,
+    d.email
+ORDER BY 1, 2
+"""
+

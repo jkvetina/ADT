@@ -81,8 +81,11 @@ class Export_APEX(config.Config):
         }
         self.parse_actions()
 
+        #
+        self.developers_file    = '{}/config/apex_developers.yaml'.format(self.repo_root)
         # show matching apps every time
         self.get_applications()
+        self.get_workspace_developers()
         #
         if len(self.apex_apps) == 0:
             util.raise_error('NO APEX APPS FOUND')
@@ -214,6 +217,19 @@ class Export_APEX(config.Config):
         self.enrich_ids = {}
         for row in self.conn.fetch_assoc(query.apex_id_names, **args):
             self.enrich_ids[row.component_id] = '{}: {}'.format(row.component_type, row.component_name)
+
+
+
+    def get_workspace_developers(self):
+        developers = {}
+        for row in self.conn.fetch_assoc(query.workspace_developers):
+            if not (row.workspace in developers):
+                developers[row.workspace] = {}
+            developers[row.workspace][row.user_name] = row.user_mail
+
+        # store connection parameters in the yaml file
+        with open(self.developers_file, 'wt', encoding = 'utf-8', newline = '\n') as w:
+            util.store_yaml(w, payload = developers, fix = True)
 
 
 
@@ -512,6 +528,8 @@ class Export_APEX(config.Config):
 
     def execute_request(self, request, app_id, lines = False):
         request = util.replace(request, {
+            '{$WORKSPACE}'      : self.apex_apps[app_id].workspace,
+            '{$WORKSPACE_ID}'   : self.apex_apps[app_id].workspace_id,
             '{$APP_ID}'         : app_id,
             '{$TODAY}'          : self.today,
             '{$FORMAT_JSON}'    : ',READABLE_JSON' if self.config.apex_format_json else '',

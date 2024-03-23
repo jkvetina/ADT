@@ -436,30 +436,18 @@ def print_progress(done, target = 100, start = None, extra = '', width = 78, sle
     if done == None:
         return None
 
-    # adjust number of dots for extra content
-    dots    = width - 5             # count with 100%
-    extra   = str(extra)
-    #
-    if len(extra) > 0:
-        extra += ' '
-        dots -= len(extra)          # count with extra length
-    if start:
-        dots -= 9                   # shorten to fit the timer
+    dots, extra = get_progress_dots(start, extra, width)
     #
     perc    = min(done + 1, target) / target
     show    = min(int(perc * 100 + 0.5), 100)
     dots    = min(dots, int(dots * perc))
 
     # calculate/estimate time to the end
-    estimate = ''
-    if start:
-        sofar       = round(get_start() - start, 2)
-        estimate    = int((sofar / (perc * 100)) * 100 * (1 - perc))
-        estimate    = str(datetime.timedelta(seconds = estimate)).rjust(8, ' ')
+    estimate = int((round(get_start() - start, 2) / (perc * 100)) * 100 * (1 - perc)) if start else ''
 
     # refresh printed line
     line = '{} {}%'.format('.' * dots, show)
-    text = ('{:<' + str(width - 9) + '} {} ').format(extra + line, estimate)
+    text = ('{:<' + str(width - 9) + '} {} ').format(extra + line, get_progress_time(estimate))
     print_now(text)
     #
     if sleep > 0:
@@ -470,6 +458,18 @@ def print_progress(done, target = 100, start = None, extra = '', width = 78, sle
 
 
 def print_progress_done(start = None, extra = '', width = 78):
+    dots, extra = get_progress_dots(start, extra, width)
+    timer = int(get_start() - start + 0.5) if start else ''
+
+    # refresh printed line
+    line = '{} {}%'.format('.' * dots, 100)
+    text = ('{:<' + str(width - 9) + '} {} ').format(extra + line, get_progress_time(timer))
+    print_now(text, close = True)
+    beep(sound = 1)
+
+
+
+def get_progress_dots(start, extra, width):
     # adjust number of dots for extra content
     dots    = width - 5             # count with 100%
     extra   = str(extra)
@@ -479,18 +479,15 @@ def print_progress_done(start = None, extra = '', width = 78):
         dots -= len(extra)          # count with extra length
     if start:
         dots -= 9                   # shorten to fit the timer
+    #
+    return (dots, extra)
 
-    # show timer
-    timer = ''
-    if start:
-        timer = int(get_start() - start + 0.5)
-        timer = str(datetime.timedelta(seconds = timer)).rjust(8, ' ')
 
-    # refresh printed line
-    line = '{} {}%'.format('.' * dots, 100)
-    text = ('{:<' + str(width - 9) + '} {} ').format(extra + line, timer)
-    print_now(text, close = True)
-    beep(sound = 1)
+
+def get_progress_time(timer):
+    if isinstance(timer, str) and timer == '':
+        return ''
+    return str(datetime.timedelta(seconds = timer)).rjust(8, ' ')
 
 
 

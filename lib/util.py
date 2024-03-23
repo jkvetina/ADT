@@ -39,19 +39,19 @@ def replace(subject, pattern, replacement = '', flags = 0):
 
 
 
-def extract(regexp_search, text, group = 1):
+def extract(regexp_search, text, group = 1, flags = 0):
     if regexp_search == '':
         return ''
     #
-    found = re.search(regexp_search, text)
+    found = re.search(regexp_search, text, flags = flags)
     if found:
         return found.group(group)
     return ''
 
 
 
-def extract_int(regexp_search, text, group = 1):
-    val = extract(regexp_search, text, group)
+def extract_int(regexp_search, text, group = 1, flags = 0):
+    val = extract(regexp_search, text, group, flags = flags)
     if val == '':
         return None
     return int(val)

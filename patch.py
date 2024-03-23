@@ -189,6 +189,7 @@ class Patch(config.Config):
             if (self.patch_code == None or self.patch_code in info['patch_code']):
                 found_patches.append({
                     'ref'           : info['ref'],
+                    'my'            : info['my'],
                     'patch_code'    : info['patch_code'] or info['folder'],
                     'files'         : len(info['files']),
                     'commits'       : len(info['commits']),
@@ -398,9 +399,12 @@ class Patch(config.Config):
                     self.patch_sequences[info['seq']].append(info['patch_code'])
 
             # get some numbers & deduplicate
+            info['my'] = ''
             found_commits, found_files = [], []
             for commit_id, commit in self.all_commits.items():
                 if info['patch_code'] in commit['summary']:
+                    info['my'] = 'Y' if (self.repo_user_mail == commit['author'] or info['my']) else ''
+                    #
                     found_commits.append(commit_id)
                     found_files.extend(commit['files'])
             #

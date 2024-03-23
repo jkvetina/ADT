@@ -1316,6 +1316,8 @@ class Patch(config.Config):
             template_name   = ''
             options         = [
                 ' | '.join((statement_type, object_type, operation)),
+                ' | '.join((statement_type, operation)),
+                operation,
                 ' | '.join((statement_type, object_type)),
                 statement_type,
             ]

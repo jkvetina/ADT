@@ -1,14 +1,15 @@
 templates = {}
-templates['CREATE'] = ''
+
+# forward declarations for supported templates
 templates['DROP']   = ''
-#
-templates['ALTER | TABLE | ADD COLUMN']         = ''
-templates['ALTER | TABLE | ADD CONSTRAINT']     = ''
-templates['ALTER | TABLE | MODIFY COLUMN']      = ''
-templates['ALTER | TABLE | RENAME COLUMN']      = ''
-templates['ALTER | TABLE | RENAME CONSTRAINT']  = ''
-templates['ALTER | TABLE | DROP COLUMN']        = ''
-templates['ALTER | TABLE | DROP CONSTRAINT']    = ''
+templates['CREATE'] = ''
+templates['ALTER | ADD COLUMN']         = ''
+templates['ALTER | ADD CONSTRAINT']     = ''
+templates['ALTER | MODIFY COLUMN']      = ''
+templates['ALTER | RENAME COLUMN']      = ''
+templates['ALTER | RENAME CONSTRAINT']  = ''
+templates['ALTER | DROP COLUMN']        = ''
+templates['ALTER | DROP CONSTRAINT']    = ''
 
 
 

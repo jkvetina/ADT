@@ -1,4 +1,4 @@
-import sys, os, re, yaml, glob, traceback, inspect, io, subprocess, datetime, timeit
+import sys, os, re, yaml, glob, traceback, inspect, io, subprocess, datetime, time, timeit
 import secrets, base64
 
 # for encryptions
@@ -432,7 +432,7 @@ def print_now(line, close = False):
 
 
 
-def print_progress(done, target = 100, start = None, extra = '', width = 78):
+def print_progress(done, target = 100, start = None, extra = '', width = 78, sleep = 0):
     if done == None:
         return None
 
@@ -455,21 +455,42 @@ def print_progress(done, target = 100, start = None, extra = '', width = 78):
     if start:
         sofar       = round(get_start() - start, 2)
         estimate    = int((sofar / (perc * 100)) * 100 * (1 - perc))
-        if show == 100:
-            estimate = int(sofar + 0.5)     # time spent, not estimate
         estimate    = str(datetime.timedelta(seconds = estimate)).rjust(8, ' ')
 
     # refresh printed line
     line = '{} {}%'.format('.' * dots, show)
     text = ('{:<' + str(width - 9) + '} {} ').format(extra + line, estimate)
-    sys.stdout.write('\r{}'.format(text))
-    sys.stdout.flush()
+    print_now(text)
     #
-    if show == 100:
-        print()
-        beep(sound = 1)
-        return None
+    if sleep > 0:
+        time.sleep(sleep)
+    #
     return done + 1
+
+
+
+def print_progress_done(start = None, extra = '', width = 78):
+    # adjust number of dots for extra content
+    dots    = width - 5             # count with 100%
+    extra   = str(extra)
+    #
+    if len(extra) > 0:
+        extra += ' '
+        dots -= len(extra)          # count with extra length
+    if start:
+        dots -= 9                   # shorten to fit the timer
+
+    # show timer
+    timer = ''
+    if start:
+        timer = int(get_start() - start + 0.5)
+        timer = str(datetime.timedelta(seconds = timer)).rjust(8, ' ')
+
+    # refresh printed line
+    line = '{} {}%'.format('.' * dots, 100)
+    text = ('{:<' + str(width - 9) + '} {} ').format(extra + line, timer)
+    print_now(text, close = True)
+    beep(sound = 1)
 
 
 

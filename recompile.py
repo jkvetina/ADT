@@ -84,7 +84,7 @@ class Recompile(config.Config):
                 self.conn.execute(q)
             except Exception:
                 troublemakers.append(row)
-        print()
+        util.print_progress_done()
 
         # if there are some leftovers, try to recompile them
         if len(troublemakers) > 0:

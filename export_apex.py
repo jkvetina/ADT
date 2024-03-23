@@ -1,5 +1,5 @@
 # coding: utf-8
-import sys, os, re, argparse, shutil, datetime, time, timeit, codecs
+import sys, os, re, argparse, shutil, datetime, codecs
 from multiprocessing.pool import ThreadPool
 #
 import config
@@ -137,11 +137,10 @@ class Export_APEX(config.Config):
                         result = pool.apply_async(getattr(self, 'export_' + action), [app_id])
                         while True:
                             if result.ready():
-                                progress_done = util.print_progress(progress_target, progress_target, extra = row['header'], start = start)
+                                progress_done = util.print_progress_done(extra = row['header'], start = start)
                                 break
                             #
-                            progress_done = util.print_progress(progress_done, progress_target, extra = row['header'], start = start)
-                            time.sleep(1)
+                            progress_done = util.print_progress(progress_done, progress_target, extra = row['header'], start = start, sleep = 1)
 
                     util.beep(sound = 1)
 

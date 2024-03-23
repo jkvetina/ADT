@@ -470,6 +470,9 @@ class Patch(config.Config):
             # show progress on rebuild
             if self.args.rebuild:
                 progress_done = util.print_progress(progress_done, progress_target, start = start, extra = commit_id)
+        #
+        if self.args.rebuild:
+            util.print_progress_done()
 
         # what if the commit numbers repeats?
         # check files and changes on first and last commit

@@ -11,7 +11,7 @@ Checkout the [install guide](./doc/install.md) and <ins>quick start guide</ins>.
 
 &nbsp;
 
-## Actions (progress 31/59, 52%)
+## Actions (progress 32/60, 52%)
 
 | Filename                                 | Description                                    | Status          | Complexity | Done
 | :-------                                 | :----------                                    | :-----          | ---------: | ---:
@@ -19,7 +19,7 @@ Checkout the [install guide](./doc/install.md) and <ins>quick start guide</ins>.
 | [`export_db.py`](./doc/export_db.md)     | to export database objects                     | OPY **          |          9 |
 | [`export_apex.py`](./doc/export_apex.md) | to export APEX & REST services                 | __In Progress__ |          6 | 5
 | [`export_data.py`](./doc/export_data.md) | to export data into CSV files                  | OPY **          |          4 |
-| [`patch.py`](./doc/patch.md)             | to prepare patch files from your changes       | __Done__        |         11 | 11
+| [`patch.py`](./doc/patch.md)             | to prepare patch files from your changes       | __Done__        |         12 | 12
 | [`deploy.py`](./doc/deploy.md)           | to deploy your patch files                     | __In Progress__ |          8 | 7
 | [`compare.py`](./doc/compare.md)         | to compare two databases                       | Planned         |          9 |
 | [`recompile.py`](./doc/recompile.md)     | to recompile invalid objects                   | __Done__        |          1 | 1
@@ -70,6 +70,7 @@ Checkout the [install guide](./doc/install.md) and <ins>quick start guide</ins>.
     - ✅ show progress, results and save output in customized log files
     - ✅ include various checks and logs to limit deployment issues
     - ✅ option to quickly deploy or redeploy created patch
+    - ✅ statements in patch scripts converted to your templates so they can be rerun
     - ⭕️ remote REST app deployment
 - ⭕️ generate __install script__ for test/local environments to install everything into a clean schema
 - ⭕️ it can __compare two databases__ and show you the differences and what you need to do to sync them, including the data changes

@@ -352,7 +352,7 @@ def print_table(data, columns = [], right_align = [], spacer = 3, start = 2, no_
             #
             args = []
             for name in columns:
-                args.append(row.get(name.lower(), '') or '')
+                args.append(row.get(name.lower()) or row.get(name.upper()) or row.get(name) or '')
             print(pattern.format(*args))
         #
         if not no_header:   # no footer if no header

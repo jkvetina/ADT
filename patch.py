@@ -2,7 +2,7 @@
 import sys, os, re, shutil, argparse
 #
 import config
-import deploy
+from lib import queries_patch as query
 from lib import util
 from lib.file import File
 
@@ -1059,6 +1059,7 @@ class Patch(config.Config):
         # shorten target folder for script files
         if self.config.patch_scripts_dir in target_file:
             target_file     = target_file.replace(self.config.patch_scripts_dir, self.config.patch_scripts_snap)
+            file_content    = self.fix_patch_script(file)
 
         # get file content from commit, not local file
         if file_content == None:
@@ -1098,7 +1099,7 @@ class Patch(config.Config):
             os.makedirs(target_folder)
         if not self.patch_dry:
             with open(target_file, 'wt', encoding = 'utf-8', newline = '\n') as w:
-                w.write(file_content)
+                w.write(file_content.rstrip() + '\n')
         #
         return target_file
 
@@ -1261,6 +1262,126 @@ class Patch(config.Config):
                 root_dir    = patch_folder
             )
             shutil.rmtree(patch_folder, ignore_errors = True, onerror = None)
+
+
+
+    def fix_patch_script(self, file):
+        replacements, outcome = {}, []
+        buffers, buffer_start, buffer_end = [], None, None
+
+        # get lines from file
+        lines = []
+        with open(file, 'rt', encoding = 'utf-8') as f:
+            lines = f.readlines()
+
+        # find statements
+        for i, line in enumerate(lines):
+            # search for the type of command
+            if buffers == []:
+                first_word = line.strip().split(' ', maxsplit = 1)
+                if len(first_word) > 0:
+                    first_word = first_word[0].upper()
+                    if first_word in ('CREATE', 'DROP', 'ALTER'):
+                        statement_type = first_word
+                        buffers         = [line]
+                        buffer_start    = i
+                        buffer_end      = i
+
+            # skip unknown statements
+            if len(buffers) == 0:
+                continue
+
+            # search for the end of the statement
+            if len(buffers) > 0 and i != buffer_start:
+                buffers.append(line)
+                buffer_end = i
+            if not (';' in line):
+                continue
+
+            # statement end found, so join the buffers
+            statement = ''.join(buffers)
+            statement_type, object_type, object_name, operation = self.get_object_from_statement(statement)
+
+            # find proper template
+            template        = ''
+            template_name   = ''
+            options         = [
+                ' | '.join((statement_type, object_type, operation)),
+                ' | '.join((statement_type, object_type)),
+                statement_type,
+            ]
+            if statement_type:
+                for name in options:
+                    if name in query.templates:
+                        template        = query.templates[statement_type]
+                        template_name   = name
+                        break
+
+            outcome.append({
+                'LINE'          : (buffer_start + 1),
+                'TEMPLATE'      : template_name,
+                'STATEMENT'     : statement_type,
+                'OBJECT_TYPE'   : object_type,
+                'OBJECT_NAME'   : object_name,
+                'OPERATION'     : operation,
+            })
+
+            # check template for specified statement type
+            if template:
+                statement = util.replace(template.lstrip(), {
+                    '{$HEADER}'         : ' | '.join((statement_type, object_type, object_name, operation)).strip(' | '),
+                    '{$STATEMENT}'      : statement.replace("'", "''").strip().strip(';').strip(),
+                    '{$OBJECT_TYPE}'    : object_type,
+                    '{$OBJECT_NAME}'    : object_name,
+                })
+                replacements[buffer_start] = [buffer_start, buffer_end, statement]
+
+            # prep for next statement
+            buffers = []
+
+        # create header with overview
+        header  = '--' + util.print_header('SOURCE FILE:', file, capture = True).replace('\n', '\n--  ').rstrip()
+        outcome = util.print_table(outcome, capture = True).replace('\n', '\n--').rstrip().rstrip('--')
+
+        # replace lines in file from the end
+        for buffer in sorted(replacements.keys(), reverse = True):
+            buffer_start, buffer_end, statement = replacements[buffer]
+            for i in range(buffer_start, buffer_end + 1):
+                if i == buffer_start:
+                    lines[i] = statement
+                else:
+                    lines.pop(i)
+        #
+        return header + outcome + ''.join(lines)
+
+
+
+    def get_object_from_statement(self, statement):
+        statement   = util.replace(statement, '\s+', ' ', flags = re.M).strip().upper()
+        statement   = statement.replace(' UNIQUE ', ' ')
+        patterns    = [
+            '(CREATE|DROP|ALTER)\s({})\s["]?[A-Z0-9_-]+["]?\.["]?([A-Z0-9_-]+)["]?',
+            '(CREATE|DROP|ALTER)\s({})\s["]?([A-Z0-9_-]+)["]?',
+        ]
+        #
+        for check_type in sorted(self.config.object_types.keys(), reverse = True):
+            for pattern in patterns:
+                pattern         = pattern.format(check_type)
+                statement_type  = util.extract(pattern, statement, 1)
+                #
+                if statement_type:
+                    object_type     = util.extract(pattern, statement, 2)
+                    object_name     = util.extract(pattern, statement, 3)
+                    operation       = ''
+
+                    # special attention to ALTER TABLE statements
+                    if statement_type == 'ALTER' and object_type == 'TABLE':
+                        what        = statement.split(object_name, maxsplit = 1)[1].strip().split()
+                        operation   = '{} {}'.format(what[0], what[1] if what[1] in ('CONSTRAINT', 'PARTITION',) else 'COLUMN')
+                    #
+                    return (statement_type, object_type, object_name, operation)
+        #
+        return ('', '', '', '')
 
 
 

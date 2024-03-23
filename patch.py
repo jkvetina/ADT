@@ -1324,7 +1324,7 @@ class Patch(config.Config):
             if statement_type and cc_name != '?':   # skip multicolumn statements
                 for name in options:
                     if name in query.templates and len(query.templates[name]) > 0:
-                        template        = query.templates[statement_type]
+                        template        = query.templates[name]
                         template_name   = name
                         break
 

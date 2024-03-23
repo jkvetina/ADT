@@ -1,5 +1,5 @@
 # coding: utf-8
-import sys, os, re, argparse, datetime, timeit, pickle, shutil
+import sys, os, re, argparse, datetime, timeit, pickle, shutil, io
 import yaml         # pip3 install pyyaml       --upgrade
 import git          # pip3 install GitPython    --upgrade
 #
@@ -176,6 +176,10 @@ class Config(util.Attributed):
         self.repo_root      = util.fix_path(self.args.get('repo') or os.path.abspath(os.path.curdir))
         self.repo           = None      # set through init_repo()
         self.conn           = None      # database connection object
+
+        # check all repo .sql files for wrong UTF characters
+        if self.args.get('utf'):
+            self.check_utf_errors()
 
         # set info group from command line arguments
         for arg in self.info_attributes:
@@ -658,9 +662,30 @@ class Config(util.Attributed):
         util.print_header('VERSION:')
         util.print_args(results, length = 24)
 
-        # instant client
 
 
+    def check_utf_errors(self):
+        util.print_header('FILES WITH UTF ISSUES:')
+        #
+        for file in util.get_files('{}**/*.sql'.format(self.repo_root)):
+            try:
+                with open (file, 'rt', encoding = 'utf-8') as f:
+                    f.readlines()
+            except:
+                print('\n{}\n\n{}\n'.format('_' * 80, file.replace(self.repo_root, '')))
+
+                # find wrong lines
+                with io.open(file, encoding = 'utf-8', errors = 'replace') as f:
+                    replaced = f.readlines()
+                with io.open(file, encoding = 'utf-8', errors = 'ignore') as f:
+                    ignored = f.readlines()
+                #
+                for i, line in enumerate(replaced):
+                    if line != ignored[i]:
+                        print('  {}) {}'.format(i, line.strip()))
+        #
+        print()
+        util.quit()
 
 
 
@@ -675,6 +700,7 @@ if __name__ == '__main__':
     group.add_argument('-opy',          help = 'Import connection from OPY file',                                   nargs = '?')
     group.add_argument('-init',         help = 'Copy template files to repo folder',                                nargs = '?', const = True, default = False)
     group.add_argument('-version',      help = 'Show versions of used subprograms',         type = util.is_boolean, nargs = '?', const = True, default = False)
+    group.add_argument('-utf',          help = 'Check repo files for UTF issues',                                   nargs = '?', const = True, default = False)
     #
     group = parser.add_argument_group('SPECIFY ENVIRONMENT DETAILS')
     group.add_argument('-env',          help = 'Environment name like DEV, UAT, LAB1...',                           nargs = '?')

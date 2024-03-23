@@ -190,8 +190,8 @@ class Patch(config.Config):
                 found_patches.append({
                     'ref'           : info['ref'],
                     'patch_code'    : info['patch_code'] or info['folder'],
-                    'commits'       : len(info['commits']),
                     'files'         : len(info['files']),
+                    'commits'       : len(info['commits']),
                     'deployed_at'   : info['deployed_at'],
                     'result'        : info['result'],
                 })
@@ -222,8 +222,8 @@ class Patch(config.Config):
                 'file'      : schema_with_app + '.sql',
                 'schema'    : schema,
                 'app_id'    : int(app_id) if app_id.isnumeric() else '',
-                'commits'   : len(self.relevant_count[schema_with_app]),
                 'files'     : len(self.relevant_files[schema_with_app]),
+                'commits'   : len(self.relevant_count[schema_with_app]),
             })
 
             # create deployment plan
@@ -397,14 +397,13 @@ class Patch(config.Config):
                 if info['patch_code'] != self.patch_code:   # collect just other patches
                     self.patch_sequences[info['seq']].append(info['patch_code'])
 
-            # get some numbers from patch leading files
-            # note that they might be on parent folder too...
-            found_files, found_commits = [], []
-            for file in util.get_files(root + '/*.sql'):
-                found_commits.extend(self.get_file_commits(file))
-                found_files.extend(self.get_file_references(file))
-
-            # deduplicate
+            # get some numbers & deduplicate
+            found_commits, found_files = [], []
+            for commit_id, commit in self.all_commits.items():
+                if info['patch_code'] in commit['summary']:
+                    found_commits.append(commit_id)
+                    found_files.extend(commit['files'])
+            #
             info['files']   = list(set(found_files))
             info['commits'] = list(set(found_commits))
 
@@ -1181,40 +1180,6 @@ class Patch(config.Config):
         if payload != []:
             payload.append('')
         return payload
-
-
-
-    def get_file_references(self, file):
-        files = []
-        with open(file, 'rt', encoding = 'utf-8') as f:
-            for line in f.readlines():
-                if line.startswith('@'):
-                    if '"' in line:
-                        file = line.split('"', maxsplit = 2)[1]
-                    else:
-                        file = line.replace('@', '').split(' ')[0]
-                    files.append(file)
-        return files
-
-
-
-    def get_file_commits(self, file):
-        commits = []
-        with open(file, 'rt', encoding = 'utf-8') as f:
-            extracting = False
-            for line in f.readlines():
-                if line.startswith('-- COMMITS:'):      # find start of commits
-                    extracting = True
-                #
-                if extracting:
-                    if line.strip() == '--':            # find end of commits
-                        break
-
-                    # find commit number
-                    search = re.search('^[-][-]\s+(\d+)[)]?\s', line)
-                    if search:
-                        commits.append(int(search.group(1)))
-        return commits
 
 
 

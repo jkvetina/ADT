@@ -37,6 +37,7 @@ class Recompile(config.Config):
         super().__init__(parser)
 
         # connect to the database
+        self.args.target = self.args.target or self.args.env
         util.assert_(self.args.target, 'MISSING ARGUMENT: TARGET ENV')
         #
         self.init_connection(env_name = self.args.target)

@@ -1243,12 +1243,10 @@ class Patch(config.Config):
         data = []
         for ref in sorted(self.patches.keys(), reverse = True):
             if ref in requested:
-                name = self.patches[ref]['patch_code']
-                code = name.split('-', maxsplit = 2)[2]
                 data.append({
                     'ref'           : ref,
-                    'patch_code'    : name,
-                    'patch_code'    : code,
+                    'patch_code'    : self.patches[ref]['patch_code'],
+                    'folder'        : self.patches[ref]['folder'],
                 })
         #
         util.print_header('ARCHIVING PATCHES:')
@@ -1257,7 +1255,7 @@ class Patch(config.Config):
         for row in data:
             # zip custom source files first
             source_folder   = self.repo_root + self.config.patch_scripts_dir.replace('/None/', '/{}/'.format(row['patch_code']))
-            patch_folder    = self.repo_root + self.config.patch_root + row['patch_code'] + '/'
+            patch_folder    = self.repo_root + self.config.patch_root + row['folder'] + '/'
             #
             if os.path.exists(source_folder):
                 shutil.make_archive(

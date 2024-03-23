@@ -140,7 +140,7 @@ apex_snapshots          : 'snapshots/'
 #
 apex_show_recent        : 1                     # show changes made in past # days
 apex_export_full        : False                 # full export
-apex_export_split       : True                  # export individual components
+apex_export_split       : False                 # export individual components
 apex_format_json        : False                 # export also in JSON format
 apex_format_yaml        : True                  # export also in YAML format
 apex_export_embedded    : False                 # export Embedded Code report

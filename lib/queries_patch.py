@@ -1,17 +1,20 @@
 templates = {}
 
 # forward declarations for supported templates
-templates['DROP']                       = ''
-templates['CREATE']                     = ''    # [-00955, -01408]
+templates['DROP']                       = ''    # index [-01418]
+templates['CREATE']                     = ''    # index [-00955, -01408]
 templates['ALTER | ADD COLUMN']         = ''    # [-01430, -02260, -02275]
 templates['ALTER | ADD CONSTRAINT']     = ''    # [-02260, -02261, -02264, -02275]
 templates['ALTER | MODIFY COLUMN']      = ''    # [-01430, -02260, -02275]
-templates['ALTER | RENAME COLUMN']      = ''    # [-00957]
-templates['ALTER | RENAME CONSTRAINT']  = ''
+templates['ALTER | RENAME COLUMN']      = ''    # [-00942, -00957]
+templates['ALTER | RENAME CONSTRAINT']  = ''    # [-23292]
 templates['ALTER | DROP COLUMN']        = ''    # [-00904, -01430, -02275]
 templates['ALTER | DROP CONSTRAINT']    = ''    # [-02443]
 #
+# https://docs.oracle.com/en/database/oracle/oracle-database/19/errmg/ORA-19999.html
+#
 # ORA-00904: The identifier or column name that was invalid.
+# ORA-00942: table or view does not exist
 # ORA-00955: name is already used by an existing object
 # ORA-00957: duplicate column name
 # ORA-01408: such column list already indexed
@@ -19,7 +22,10 @@ templates['ALTER | DROP CONSTRAINT']    = ''    # [-02443]
 # ORA-02260: table can have only one primary key
 # ORA-02261: The unique or primary key already exists in the table.
 # ORA-02264: name already used by an existing constraint
+# ORA-02275: such a referential constraint already exists in the table
 # ORA-02443: Cannot drop constraint - nonexistent constraint
+# ORA-14511: cannot perform operation on a partitioned object
+# ORA-23292: The constraint does not exist
 #
 
 # delete any object, only if exists

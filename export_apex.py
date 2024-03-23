@@ -68,6 +68,8 @@ class Export_APEX(config.Config):
             self.arg_recent = self.arg_recent if self.args.recent else 0
         elif self.args.recent:
             self.arg_recent = int(self.args.recent)
+        elif self.config.apex_show_recent > 0:
+            self.arg_recent = self.config.apex_show_recent
         #
         self.today          = str(datetime.datetime.today() - datetime.timedelta(days = self.arg_recent - 1))[0:10]
         #
@@ -101,7 +103,7 @@ class Export_APEX(config.Config):
             self.get_comments(app_id)
 
             # show recent changes
-            if (self.config.apex_show_recent > 0 or self.arg_recent > 0):
+            if self.arg_recent > 0 and self.actions['recent']:
                 self.show_recent_changes(app_id)
 
             util.print_header('APP {}/{}, EXPORTING:'.format(app_id, self.apex_apps[app_id]['app_alias']))
@@ -174,7 +176,7 @@ class Export_APEX(config.Config):
                 self.actions[arg_name] = True
                 continue
         #
-        if self.arg_recent and self.actions['split']:
+        if (self.args.recent == 0 or self.actions['split']):
             self.actions['recent'] = False
 
 

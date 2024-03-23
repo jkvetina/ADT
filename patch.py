@@ -1285,6 +1285,10 @@ class Patch(config.Config):
 
         # find statements
         for i, line in enumerate(lines):
+            # replace comments with prompts
+            if line.startswith('--'):
+                lines[i] = 'PROMPT "{}";'.format(line.replace('"', ''))
+
             # search for the type of command
             if buffers == []:
                 first_word = line.strip().split(' ', maxsplit = 1)

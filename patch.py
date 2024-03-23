@@ -1309,7 +1309,7 @@ class Patch(config.Config):
 
             # statement end found, so join the buffers
             statement = ''.join(buffers)
-            statement_type, object_type, object_name, operation = self.get_object_from_statement(statement)
+            statement_type, object_type, object_name, operation, cc_name = self.get_object_from_statement(statement)
 
             # find proper template
             template        = ''
@@ -1337,16 +1337,17 @@ class Patch(config.Config):
                 'statement'     : statement_type,
                 'object_type'   : object_type,
                 'object_name'   : object_name,
-                'operation'     : operation,
+                'col./constr.'  : cc_name,
             })
 
             # check template for specified statement type
             if template:
                 statement = util.replace(template.lstrip(), {
-                    '{$HEADER}'         : ' | '.join((statement_type, object_type, object_name, operation)).strip(' | '),
+                    '{$HEADER}'         : ' | '.join((statement_type, object_type, object_name, operation, cc_name)).strip(' | '),
                     '{$STATEMENT}'      : statement.replace("'", "''").strip().strip(';').strip(),
                     '{$OBJECT_TYPE}'    : object_type,
                     '{$OBJECT_NAME}'    : object_name,
+                    '{$CC_NAME}'        : cc_name,
                 })
                 replacements[buffer_start] = [buffer_start, buffer_end, statement]
 
@@ -1372,7 +1373,7 @@ class Patch(config.Config):
 
     def get_object_from_statement(self, statement):
         statement   = util.replace(statement, '\s+', ' ', flags = re.M).strip().upper()
-        statement   = statement.replace(' UNIQUE ', ' ')
+        statement   = statement.replace(' UNIQUE ', ' ').rstrip(';').strip()
         patterns    = [
             '(CREATE|DROP|ALTER)\s({})\s["]?[A-Z0-9_-]+["]?\.["]?([A-Z0-9_-]+)["]?',
             '(CREATE|DROP|ALTER)\s({})\s["]?([A-Z0-9_-]+)["]?',
@@ -1387,15 +1388,21 @@ class Patch(config.Config):
                     object_type     = util.extract(pattern, statement, 2)
                     object_name     = util.extract(pattern, statement, 3)
                     operation       = ''
+                    cc_name         = ''
 
                     # special attention to ALTER TABLE statements
                     if statement_type == 'ALTER' and object_type == 'TABLE':
                         what        = statement.split(object_name, maxsplit = 1)[1].strip().split()
                         operation   = '{} {}'.format(what[0], what[1] if what[1] in ('CONSTRAINT', 'PARTITION',) else 'COLUMN')
+
+                        # get also column or constraint name
+                        if what[0] == 'ADD' and not (what[1] in ('CONSTRAINT', 'PARTITION',)):
+                            what.insert(1, 'COLUMN')
+                        cc_name = '?' if ('(' in what[2] or ')' in what[2]) else what[2]
                     #
-                    return (statement_type, object_type, object_name, operation)
+                    return (statement_type, object_type, object_name, operation, cc_name)
         #
-        return ('', '', '', '')
+        return ('', '', '', '', '')
 
 
 

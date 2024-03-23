@@ -1,17 +1,26 @@
 templates = {}
 
 # forward declarations for supported templates
-templates['DROP']   = ''
-templates['CREATE'] = ''
-templates['ALTER | ADD COLUMN']         = ''
-templates['ALTER | ADD CONSTRAINT']     = ''
-templates['ALTER | MODIFY COLUMN']      = ''
-templates['ALTER | RENAME COLUMN']      = ''
+templates['DROP']                       = ''
+templates['CREATE']                     = ''    # [-00955, -01408]
+templates['ALTER | ADD COLUMN']         = ''    # [-01430, -02260, -02275]
+templates['ALTER | ADD CONSTRAINT']     = ''    # [-02260, -02261, -02264, -02275]
+templates['ALTER | MODIFY COLUMN']      = ''    # [-01430, -02260, -02275]
+templates['ALTER | RENAME COLUMN']      = ''    # [-00957]
 templates['ALTER | RENAME CONSTRAINT']  = ''
-templates['ALTER | DROP COLUMN']        = ''
-templates['ALTER | DROP CONSTRAINT']    = ''
-
-
+templates['ALTER | DROP COLUMN']        = ''    # [-00904, -01430, -02275]
+templates['ALTER | DROP CONSTRAINT']    = ''    # [-02443]
+#
+# ORA-00904: The identifier or column name that was invalid.
+# ORA-00955: name is already used by an existing object
+# ORA-00957: duplicate column name
+# ORA-01408: such column list already indexed
+# ORA-01430: column being added already exists in table
+# ORA-02260: table can have only one primary key
+# ORA-02261: The unique or primary key already exists in the table.
+# ORA-02264: name already used by an existing constraint
+# ORA-02443: Cannot drop constraint - nonexistent constraint
+#
 
 # delete any object, only if exists
 templates['DROP'] = """

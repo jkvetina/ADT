@@ -1361,7 +1361,7 @@ class Patch(config.Config):
         # replace lines in file from the end
         for buffer in sorted(replacements.keys(), reverse = True):
             buffer_start, buffer_end, statement = replacements[buffer]
-            for i in range(buffer_start, buffer_end + 1):
+            for i in reversed(range(buffer_start, buffer_end + 1)):
                 if i == buffer_start:
                     lines[i] = statement
                 else:

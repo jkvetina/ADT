@@ -885,7 +885,7 @@ class Patch(config.Config):
                 #
                 if file in scripts_processed:
                     statements = 0
-                    for row in self.script_stats[file]:
+                    for row in self.script_stats.get(file, {}):
                         if row['template']:
                             statements += 1
                     print('  > {} [{}]'.format(file, statements).replace(' [0]', ''))
@@ -1247,6 +1247,9 @@ class Patch(config.Config):
     def fix_patch_script(self, file):
         replacements = {}
         buffers, buffer_start, buffer_end = [], None, None
+        #
+        if not (file in self.script_stats):
+            self.script_stats[file] = []
 
         # get lines from file
         lines = []
@@ -1303,8 +1306,6 @@ class Patch(config.Config):
                         break
 
             # create overview for new patch script file
-            if not (file in self.script_stats):
-                self.script_stats[file] = []
             self.script_stats[file].append({
                 'line'          : (buffer_start + 1),
                 'template'      : template_name,
@@ -1330,7 +1331,9 @@ class Patch(config.Config):
 
         # create header with overview
         header  = '--' + util.print_header('SOURCE FILE:', file, capture = True).replace('\n', '\n--  ').rstrip()
-        outcome = util.print_table(self.script_stats[file], capture = True).replace('\n', '\n--').rstrip().rstrip('--')
+        outcome = '\n'
+        if len(self.script_stats[file]) > 0:
+            outcome = util.print_table(self.script_stats[file], capture = True).replace('\n', '\n--').rstrip().rstrip('--')
 
         # replace lines in file from the end
         for buffer in sorted(replacements.keys(), reverse = True):

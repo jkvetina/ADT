@@ -107,6 +107,9 @@ BEGIN
 END;
 /
 """
+#
+templates['ALTER | RENAME COLUMN'] = templates['ALTER | DROP COLUMN']
+templates['ALTER | MODIFY COLUMN'] = templates['ALTER | DROP COLUMN']
 
 # add new constraint to the table
 templates['ALTER | ADD CONSTRAINT'] = """
@@ -130,7 +133,27 @@ END;
 /
 """
 
+# drop constraint, if exists
+templates['ALTER | DROP CONSTRAINT'] = """
+PROMPT "-- {$HEADER}";
+DECLARE
+    in_table_name           CONSTANT VARCHAR2(256) := '{$OBJECT_NAME}';
+    in_constraint_name      CONSTANT VARCHAR2(256) := '{$CC_NAME}';
+    --
+    v_found CHAR;
+BEGIN
+    SELECT MAX('Y') INTO v_found
+    FROM user_constraints
+    WHERE table_name        = in_table_name
+        AND constraint_name = in_constraint_name;
+    --
+    IF v_found = 'Y' THEN
+        EXECUTE IMMEDIATE
+            '{$STATEMENT}';
+    END IF;
 END;
 /
 """
+#
+templates['ALTER | RENAME CONSTRAINT'] = templates['ALTER | DROP CONSTRAINT']
 

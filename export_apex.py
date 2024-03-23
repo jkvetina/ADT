@@ -1,5 +1,6 @@
 # coding: utf-8
-import sys, os, re, argparse, shutil, datetime, timeit, codecs
+import sys, os, re, argparse, shutil, datetime, time, timeit, codecs
+from multiprocessing.pool import ThreadPool
 #
 import config
 from lib import util
@@ -122,17 +123,33 @@ class Export_APEX(config.Config):
             for row in todo:
                 action = row['action']
                 if self.actions[action]:
-                    start   = util.get_start()
-                    h       = self.print_start(row['header'])
+                    if not (app_id in self.timers):
+                        self.timers[app_id] = {}
+                    if not (action in self.timers[app_id]):
+                        self.timers[app_id][action] = 0
                     #
-                    getattr(self, 'export_' + action)(app_id)
-                    self.print_end(**h)
+                    progress_target = self.timers[app_id][action] or 999
+                    progress_done   = 0
+                    start           = util.get_start()
+
+                    # execute in a thread so we can show progress in main process
+                    with ThreadPool(processes = 1) as pool:
+                        result = pool.apply_async(getattr(self, 'export_' + action), [app_id])
+                        while True:
+                            if result.ready():
+                                progress_done = util.print_progress(progress_target, progress_target, extra = row['header'], start = start)
+                                break
+                            #
+                            progress_done = util.print_progress(progress_done, progress_target, extra = row['header'], start = start)
+                            time.sleep(1)
+
                     util.beep(sound = 1)
 
                     # update timers
-                    if not (app_id in self.timers):
-                        self.timers[app_id] = {}
-                    self.timers[app_id][action] = round(util.get_start() - start, 2)
+                    timer = util.get_start() - start
+                    if self.timers[app_id][action] > 0:
+                        timer = (timer + self.timers[app_id][action]) / 2
+                    self.timers[app_id][action] = round(timer, 2)
 
             # move files from temp folders to target folders
             self.move_files(app_id)
@@ -143,21 +160,6 @@ class Export_APEX(config.Config):
         # cleanup temp folder
         if not self.debug and os.path.exists(self.config.sqlcl_root):
             shutil.rmtree(self.config.sqlcl_root, ignore_errors = True, onerror = None)
-
-
-
-    def print_start(self, header):
-        header = '  {} ...'.format(header)
-        util.print_now(header)
-        #
-        return {'header' : header, 'start' : timeit.default_timer()}
-
-
-
-    def print_end(self, header, start):
-        timer   = int(round(timeit.default_timer() - start + 0.5, 0))
-        header  = '{}{}'.format(header.ljust(30, '.'), (' ' + str(timer)).rjust(6, '.'))
-        util.print_now(header, close = True)
 
 
 

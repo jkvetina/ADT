@@ -100,6 +100,10 @@ class Patch(config.Config):
         if self.args.fetch:
             self.fetch_changes()
 
+        # make sure we have all commits ready
+        self.get_all_commits()
+        self.get_matching_commits()
+
         # go through patch folders
         self.get_patch_folders()
 
@@ -107,10 +111,6 @@ class Patch(config.Config):
         if self.args.archive != []:
             self.archive_patches(self.args.archive)
             util.quit()
-
-        # make sure we have all commits ready
-        self.get_all_commits()
-        self.get_matching_commits()
 
         # show recent commits and patches
         if self.patch_code:

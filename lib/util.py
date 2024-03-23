@@ -437,27 +437,27 @@ def print_progress(done, target = 100, start = None, extra = '', width = 78):
         return None
 
     # adjust number of dots for extra content
-    dots    = width - 5               # count with 100%
+    dots    = width - 5             # count with 100%
     extra   = str(extra)
     #
     if len(extra) > 0:
-        dots -= len(extra)         # count with extra length
         extra += ' '
+        dots -= len(extra)          # count with extra length
     if start:
-        dots -= 9                  # shorten to fit the timer
+        dots -= 9                   # shorten to fit the timer
     #
     perc    = min(done + 1, target) / target
     show    = min(int(perc * 100 + 0.5), 100)
-    dots    = int(dots * perc)
+    dots    = min(dots, int(dots * perc))
 
     # calculate/estimate time to the end
     estimate = ''
     if start:
         sofar       = round(get_start() - start, 2)
         estimate    = int((sofar / (perc * 100)) * 100 * (1 - perc))
-        estimate    = str(datetime.timedelta(seconds = estimate)).rjust(8, ' ')
         if show == 100:
-            estimate = ''.rjust(8, ' ')
+            estimate = int(sofar + 0.5)     # time spent, not estimate
+        estimate    = str(datetime.timedelta(seconds = estimate)).rjust(8, ' ')
 
     # refresh printed line
     line = '{} {}%'.format('.' * dots, show)
@@ -465,7 +465,7 @@ def print_progress(done, target = 100, start = None, extra = '', width = 78):
     sys.stdout.write('\r{}'.format(text))
     sys.stdout.flush()
     #
-    if done + 1 == target:
+    if show == 100:
         print()
         beep(sound = 1)
         return None

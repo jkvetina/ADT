@@ -1321,7 +1321,7 @@ class Patch(config.Config):
                 ' | '.join((statement_type, object_type)),
                 statement_type,
             ]
-            if statement_type:
+            if statement_type and cc_name != '?':   # skip multicolumn statements
                 for name in options:
                     if name in query.templates and len(query.templates[name]) > 0:
                         template        = query.templates[statement_type]

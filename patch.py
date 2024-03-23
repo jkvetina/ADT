@@ -90,6 +90,7 @@ class Patch(config.Config):
         self.deploy_schemas     = {}
         self.deploy_conn        = {}
         self.logs_prefix        = self.config.patch_deploy_logs.replace('{$TARGET_ENV}', self.target_env)
+        self.script_stats       = {}
 
         # set current commit to the head and search through recent commits
         self.current_commit_obj = self.repo.commit('HEAD')
@@ -875,7 +876,15 @@ class Patch(config.Config):
                     file = file.replace(self.config.path_objects, '')
                 elif file.startswith(self.config.path_apex):
                     file = file.split('/application/')[1]
-                print('  {} {}'.format('>' if file in scripts_processed else '-', file))
+                #
+                if file in scripts_processed:
+                    statements = 0
+                    for row in self.script_stats[file]:
+                        if row['template']:
+                            statements += 1
+                    print('  > {} [{}]'.format(file, statements).replace(' [0]', ''))
+                else:
+                    print('  - {}'.format(file))
             print()
 
 
@@ -1266,7 +1275,7 @@ class Patch(config.Config):
 
 
     def fix_patch_script(self, file):
-        replacements, outcome = {}, []
+        replacements = {}
         buffers, buffer_start, buffer_end = [], None, None
 
         # get lines from file
@@ -1317,13 +1326,16 @@ class Patch(config.Config):
                         template_name   = name
                         break
 
-            outcome.append({
-                'LINE'          : (buffer_start + 1),
-                'TEMPLATE'      : template_name,
-                'STATEMENT'     : statement_type,
-                'OBJECT_TYPE'   : object_type,
-                'OBJECT_NAME'   : object_name,
-                'OPERATION'     : operation,
+            # create overview for new patch script file
+            if not (file in self.script_stats):
+                self.script_stats[file] = []
+            self.script_stats[file].append({
+                'line'          : (buffer_start + 1),
+                'template'      : template_name,
+                'statement'     : statement_type,
+                'object_type'   : object_type,
+                'object_name'   : object_name,
+                'operation'     : operation,
             })
 
             # check template for specified statement type
@@ -1341,7 +1353,7 @@ class Patch(config.Config):
 
         # create header with overview
         header  = '--' + util.print_header('SOURCE FILE:', file, capture = True).replace('\n', '\n--  ').rstrip()
-        outcome = util.print_table(outcome, capture = True).replace('\n', '\n--').rstrip().rstrip('--')
+        outcome = util.print_table(self.script_stats[file], capture = True).replace('\n', '\n--').rstrip().rstrip('--')
 
         # replace lines in file from the end
         for buffer in sorted(replacements.keys(), reverse = True):

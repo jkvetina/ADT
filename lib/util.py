@@ -253,10 +253,20 @@ def store_yaml(w, payload, fix = False):
 
 
 
-def print_header(message, append = ''):
+def print_header(message, append = '', capture = False):
+    if capture:
+        buffer = io.StringIO()
+        sys.stdout = buffer
+    #
     if append == None:
         append = ''
     print('\n{}{}\n{}'.format(message, (' ' + str(append)).rstrip(), '-' * len(message)))
+
+    # instead of printing to screen return content as string
+    if capture:
+        buffer      = buffer.getvalue()
+        sys.stdout  = sys.__stdout__
+        return buffer
 
 
 

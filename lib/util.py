@@ -1,5 +1,6 @@
-import sys, os, re, yaml, glob, traceback, inspect, io, subprocess, datetime, time, timeit, shutil
+import sys, os, re, glob, traceback, inspect, io, subprocess, datetime, time, timeit, shutil
 import secrets, base64
+import yaml         # pip3 install pyyaml       --upgrade
 
 # for encryptions
 from cryptography.fernet import Fernet

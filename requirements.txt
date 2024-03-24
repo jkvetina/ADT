@@ -1,0 +1,7 @@
+beepy >= 1
+cryptography >= 39
+GitPython >= 3.1
+oracledb >= 2.1
+pymsteams >= 0.2
+PyYAML >= 6
+

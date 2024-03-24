@@ -1,6 +1,5 @@
 # coding: utf-8
 import sys, os, re, argparse, datetime, timeit, pickle, io
-import yaml         # pip3 install pyyaml       --upgrade
 import git          # pip3 install GitPython    --upgrade
 import pymsteams    # pip3 install pymsteams    --upgrade
 #

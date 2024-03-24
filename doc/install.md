@@ -10,10 +10,15 @@
 
 ## How to install
 
-- clone this repo
+- clone this repo (lets say you clone it here: ~/Documents/PROJECTS/ADT/)
 - install neccessary tools like Python and SQLcl and put them in your path
 - for thick connections you would need Oracle Instant Client
 
+```
+cd ~/Documents/PROJECTS/ADT/
+pip3 install --upgrade pip
+pip3 install -r requirements.txt --upgrade
+```
 
 &nbsp;
 
@@ -44,6 +49,7 @@ you would just write:\
 
 ## Quick start guide
 
+- run `python config.py -version` to check your component versions
 - run `python config.py` which will guide you through the setup
     - read more about config file if needed
 - run `python export.py` to export database and/or APEX into your repo

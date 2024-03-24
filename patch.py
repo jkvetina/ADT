@@ -1,5 +1,5 @@
 # coding: utf-8
-import sys, os, re, shutil, argparse
+import sys, os, re, argparse
 #
 import config
 from lib import queries_patch as query
@@ -634,7 +634,7 @@ class Patch(config.Config):
             os.makedirs(self.patch_folder)
         elif not self.patch_dry:
             # delete everything in patch folder
-            shutil.rmtree(self.patch_folder, ignore_errors = True, onerror = None)
+            util.delete_folder(self.patch_folder)
 
         # simplify searching for ignored files
         skip_apex_files = '|{}|'.format('|'.join(self.config.apex_files_ignore))
@@ -1231,20 +1231,12 @@ class Patch(config.Config):
             patch_folder    = self.repo_root + self.config.patch_root + row['folder'] + '/'
             #
             if os.path.exists(source_folder):
-                shutil.make_archive(
-                    base_name   = patch_folder + row['patch_code'],
-                    format      = 'zip',
-                    root_dir    = source_folder
-                )
-                shutil.rmtree(source_folder, ignore_errors = True, onerror = None)
+                util.create_zip(patch_folder + row['patch_code'], source_folder)
+                util.delete_folder(source_folder)
 
             # zip whole patch folder
-            shutil.make_archive(
-                base_name   = archive_folder + row['patch_code'],
-                format      = 'zip',
-                root_dir    = patch_folder
-            )
-            shutil.rmtree(patch_folder, ignore_errors = True, onerror = None)
+            util.create_zip(archive_folder + row['patch_code'], patch_folder)
+            util.delete_folder(patch_folder)
 
 
 

@@ -1,5 +1,5 @@
 # coding: utf-8
-import sys, os, re, argparse, shutil, datetime, codecs
+import sys, os, re, argparse, datetime, codecs
 from multiprocessing.pool import ThreadPool
 #
 import config
@@ -168,8 +168,8 @@ class Export_APEX(config.Config):
             print()
 
         # cleanup temp folder
-        if not self.debug and os.path.exists(self.config.sqlcl_root):
-            shutil.rmtree(self.config.sqlcl_root, ignore_errors = True, onerror = None)
+        #if not self.debug and os.path.exists(self.config.sqlcl_root):
+        #    util.delete_folder(self.config.sqlcl_root)
 
 
 
@@ -373,7 +373,7 @@ class Export_APEX(config.Config):
         # cleanup target directory before moving new files there
         target_dir = self.get_root(app_id, 'application/')
         if os.path.exists(target_dir):
-            shutil.rmtree(target_dir, ignore_errors = True, onerror = None)
+            util.delete_folder(target_dir)
 
         # delete original (encoded) files, we can export/keep binaries instead
         if self.config.apex_delete_orig_files:
@@ -382,7 +382,7 @@ class Export_APEX(config.Config):
                 '{}f{}/application/shared_components/app_static_files/'.format(self.config.sqlcl_root, app_id),
             ]
             for source_dir in duplicates:
-                shutil.rmtree(source_dir, ignore_errors = True, onerror = None)
+                util.delete_folder(source_dir)
         #
         return output
 
@@ -396,7 +396,7 @@ class Export_APEX(config.Config):
         target_dir = self.get_root(app_id, 'embedded_code/')
         #
         if os.path.exists(target_dir):
-            shutil.rmtree(target_dir, ignore_errors = True, onerror = None)
+            util.delete_folder(target_dir)
         #
         if os.path.exists(source_dir):
             for source_file in util.get_files(source_dir + '**/*.*'):
@@ -416,8 +416,8 @@ class Export_APEX(config.Config):
                         os.remove(target_file)
                     os.rename(source_file, target_file)
             #
-            shutil.copytree(source_dir, target_dir, dirs_exist_ok = True)
-            shutil.rmtree(source_dir, ignore_errors = True, onerror = None)
+            util.copy_folder(source_dir, target_dir)
+            util.delete_folder(source_dir)
         #
         return output
 
@@ -426,7 +426,7 @@ class Export_APEX(config.Config):
     def export_rest(self, app_id):
         # prepare target folders
         if os.path.exists(self.target_rest):
-            shutil.rmtree(self.target_rest, ignore_errors = True, onerror = None)
+            util.delete_folder(self.target_rest)
         for dir in [self.target_rest]:
             os.makedirs(os.path.dirname(self.get_root(app_id, dir)), exist_ok = True)
 
@@ -477,7 +477,7 @@ class Export_APEX(config.Config):
             target_dir = self.get_root(app_id, self.target_files)
 
         # delete targer folders first
-        shutil.rmtree(target_dir, ignore_errors = True, onerror = None)
+        util.delete_folder(target_dir)
 
         # create files
         for row in self.conn.fetch_assoc(query.apex_files, app_id = app_id):
@@ -527,7 +527,7 @@ class Export_APEX(config.Config):
 
         # remove readable folder
         if os.path.exists(source_dir + 'readable/'):
-            shutil.rmtree(source_dir + 'readable/', ignore_errors = True, onerror = None)
+            util.delete_folder(source_dir + 'readable/')
 
         # move workspace files to workspace folder
         for source_file in util.get_files(source_dir + 'workspace/**/*.*'):
@@ -536,7 +536,7 @@ class Export_APEX(config.Config):
             if os.path.exists(target_file):
                 os.remove(target_file)
             os.rename(source_file, target_file)
-        shutil.rmtree(source_dir + 'workspace/', ignore_errors = True, onerror = None)
+        util.delete_folder(source_dir + 'workspace/')
 
         # move full export file
         source_file = '{}f{}.sql'.format(self.config.sqlcl_root, app_id)
@@ -557,7 +557,7 @@ class Export_APEX(config.Config):
                 os.remove(target_file)
             os.rename(source_file, target_file)
         #
-        shutil.rmtree(source_dir, ignore_errors = True, onerror = None)
+        util.delete_folder(source_dir)
 
         # get rid of install files
         for source_file in util.get_files(self.get_root(app_id, 'install*.sql')):
@@ -580,7 +580,7 @@ class Export_APEX(config.Config):
                 os.remove(target_file)
             os.rename(source_file, target_file)
         #
-        shutil.rmtree(source_dir, ignore_errors = True, onerror = None)
+        #util.delete_folder(source_dir)
 
 
 

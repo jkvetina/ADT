@@ -1,5 +1,5 @@
 # coding: utf-8
-import sys, os, re, argparse, datetime, timeit, pickle, shutil, io
+import sys, os, re, argparse, datetime, timeit, pickle, io
 import yaml         # pip3 install pyyaml       --upgrade
 import git          # pip3 install GitPython    --upgrade
 #
@@ -242,13 +242,13 @@ class Config(util.Attributed):
             source_dir = '{}{}'.format(self.root, source)
             target_dir = self.repo_root + target
             os.makedirs(target_dir, exist_ok = True)
-            shutil.copytree(source_dir, target_dir, dirs_exist_ok = True)
+            util.copy_folder(source_dir, target_dir)
 
         # copy config file
         config_file = '{}/config/config.yaml'.format(self.repo_root)
         source_file = '{}/config/config.yaml'.format(self.root)
         if not os.path.exists(config_file):
-            shutil.copyfile(source_file, config_file)
+            util.copy_file(source_file, config_file)
 
 
 

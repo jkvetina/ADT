@@ -1,4 +1,4 @@
-import sys, os, re, yaml, glob, traceback, inspect, io, subprocess, datetime, time, timeit
+import sys, os, re, yaml, glob, traceback, inspect, io, subprocess, datetime, time, timeit, shutil
 import secrets, base64
 
 # for encryptions
@@ -118,6 +118,36 @@ def get_files(glob_pattern, reverse = False, recursive = True):
         for ext in sorted(filenames[base], reverse = reverse):
             out.append(base + ext)
     return out
+
+
+
+def delete_folder(folder, subfolders_only = False):
+    #file, line = get_callstack()[-1]
+    #print('\nDELETING: {}\n  SOURCE: {} {}\n'.format(folder, file, line))
+    #if '/.temp.nosync/' in folder:
+        #if '{} {}'.format(file, line) not in ['export_apex.py 385']:
+            #print('KEEP')
+            #return
+    shutil.rmtree(folder, ignore_errors = True, onerror = None)
+
+
+
+def copy_folder(source_folder, target_folder):
+    shutil.copytree(source_folder, target_folder, dirs_exist_ok = True)
+
+
+
+def copy_file(source_file, target_file):
+    shutil.copyfile(source_file, target_file)
+
+
+
+def create_zip(name, root):
+    shutil.make_archive(
+        base_name   = name,
+        format      = 'zip',
+        root_dir    = root
+    )
 
 
 

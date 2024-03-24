@@ -152,6 +152,7 @@ apex_delete_orig_files  : True                  # delete original (encoded) file
 apex_comments           : True                  # add component names as comments
 apex_timestamps         : '20240101000000'      # convert page timestamp to a specific value
 apex_authors            : 'DEV'                 # convert page author to a specific value for non developers
+apex_keep_developers    : True                  # keep page author if it is a developer
 apex_authentication     : '[DEFAULT]'           # switch to marked authentication scheme
 apex_set_version        : '#TODAY#'             # overwrite application version
 apex_workspace_id       : ''                    # override APEX workspace id

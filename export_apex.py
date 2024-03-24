@@ -268,15 +268,15 @@ class Export_APEX(config.Config):
 
 
     def get_workspace_developers(self):
-        developers = {}
+        self.developers = {}
         for row in self.conn.fetch_assoc(query.workspace_developers):
-            if not (row.workspace in developers):
-                developers[row.workspace] = {}
-            developers[row.workspace][row.user_name] = row.user_mail
+            if not (row.workspace in self.developers):
+                self.developers[row.workspace] = {}
+            self.developers[row.workspace][row.user_name] = row.user_mail
 
         # store connection parameters in the yaml file
         with open(self.developers_file, 'wt', encoding = 'utf-8', newline = '\n') as w:
-            util.store_yaml(w, payload = developers, fix = True)
+            util.store_yaml(w, payload = self.developers, fix = True)
 
 
 
@@ -584,30 +584,39 @@ class Export_APEX(config.Config):
         if not file.endswith('.sql'):
             return
 
+        # get application id, workspace and type of file
+        app_id      = util.extract_int('/f(\d+)/', file) or util.extract_int('/f(\d+)\.sql$', file)
+        workspace   = self.apex_apps[app_id]['workspace'] if app_id else ''
+        is_full     = app_id and '/f{}.sql'.format(app_id) in file
+        is_page     = app_id and '/pages/page_' in file
+
         # get current file content
         old_content = ''
         with open(file, 'rt', encoding = 'utf-8') as f:
             old_content = f.read()
         new_content = old_content
 
+        # replace workspace id if exported from different instance
         if self.config.apex_workspace_id and self.config.apex_workspace_id > 0:
             new_content = util.replace(new_content,
                 ",p_default_workspace_id=>(\d+)",
                 ",p_default_workspace_id=>{}".format(self.config.apex_workspace_id))
 
-        # change page attributes to make changes in Git minimal
-        if self.config.apex_authors and ('/pages/page_' in file or util.extract('/f(\d+).sql$', file)):
-            new_content = util.replace(new_content,
-                ",p_last_updated_by=>'([^']+)'",
-                ",p_last_updated_by=>'{}'".format(self.config.apex_authors))
-        #
-        if self.config.apex_timestamps and ('/pages/page_' in file or util.extract('/f(\d+).sql$', file)):
-            new_content = util.replace(new_content,
-                ",p_last_upd_yyyymmddhh24miss=>'(\d+)'",
-                ",p_last_upd_yyyymmddhh24miss=>'{}'".format(self.config.apex_timestamps))
+        # keep only developers as page authors
+        if is_page and self.config.apex_keep_developers and self.config.apex_authors:
+            developer = util.extract(",p_last_updated_by=>'([^']+)'", new_content)
+            if (not (developer in self.developers[workspace]) or not self.config.apex_keep_developers):
+                new_content = util.replace(new_content,
+                    ",p_last_updated_by=>'([^']+)'",
+                    ",p_last_updated_by=>'{}'".format(self.config.apex_authors))
+                #
+                if self.config.apex_timestamps:
+                    new_content = util.replace(new_content,
+                        ",p_last_upd_yyyymmddhh24miss=>'(\d+)'",
+                        ",p_last_upd_yyyymmddhh24miss=>'{}'".format(self.config.apex_timestamps))
 
         # replace default authentication
-        if self.auth_scheme_id > 0:
+        if is_full and self.auth_scheme_id > 0:
             new_content = util.replace(new_content,
                 ",p_authentication_id=>wwv_flow_imp.id[(]([\d]+)[)]",
                 ",p_authentication_id=>wwv_flow_imp.id({})  -- {}".format(self.auth_scheme_id, self.auth_scheme_name))

@@ -464,7 +464,7 @@ def print_progress(done, target = 100, start = None, extra = '', width = 78, sle
 
 
 
-def print_progress_done(start = None, extra = '', width = 78):
+def print_progress_done(start = None, extra = '', width = 78, sound = 1):
     dots, extra = get_progress_dots(start, extra, width)
     timer = int(get_start() - start + 0.5) if start else ''
 
@@ -472,7 +472,8 @@ def print_progress_done(start = None, extra = '', width = 78):
     line = '{} {}%'.format('.' * dots, 100)
     text = ('{:<' + str(width - 9) + '} {} ').format(extra + line, get_progress_time(timer))
     print_now(text, close = True)
-    beep(sound = 1)
+    if sound > 0:
+        beep(sound = sound)
 
 
 

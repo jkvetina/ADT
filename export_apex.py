@@ -144,8 +144,6 @@ class Export_APEX(config.Config):
                             #
                             progress_done = util.print_progress(progress_done, progress_target, extra = row['header'], start = start, sleep = 1)
 
-                    util.beep(sound = 1)
-
                     # update timers
                     timer = util.get_start() - start
                     if self.timers[app_id][action] > 0:

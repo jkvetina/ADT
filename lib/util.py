@@ -344,12 +344,19 @@ def print_table(data, columns = [], right_align = [], spacer = 3, start = 2, no_
     #
     for i, w in enumerate(widths):
         pattern += '{:' + align[i].replace('L', '<').replace('R', '>') + str(w) + '}' + (' ' * spacer)
-        splitter.append(w * '-')
+        splitter.append(w * (' ' if isinstance(no_header, list) and i in no_header else '-'))
 
     # show data
-    if not no_header:
+    if (not no_header or isinstance(no_header, list)):
+        filtered_columns = [] + columns
+        if isinstance(no_header, list):
+            for i, name in sorted(enumerate(columns), reverse = True):
+                if i in no_header:
+                    filtered_columns[i] = ' '
+                    pass
+        #
         print()
-        print(pattern.format(*columns).upper().replace('_', ' '))
+        print(pattern.format(*filtered_columns).upper().replace('_', ' '))
         print(pattern.format(*splitter))
     #
     total_rows = len(data)

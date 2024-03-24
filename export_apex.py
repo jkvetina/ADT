@@ -87,7 +87,8 @@ class Export_APEX(config.Config):
         # to track export times so we can predict progress on next run
         self.timers             = {}
         self.timers_file        = '{}/config/apex_timers.yaml'.format(self.repo_root)
-        #
+
+        # to keep just developer names
         self.developers_file    = '{}/config/apex_developers.yaml'.format(self.repo_root)
 
         # show matching apps every time
@@ -394,21 +395,22 @@ class Export_APEX(config.Config):
             shutil.rmtree(target_dir, ignore_errors = True, onerror = None)
         #
         if os.path.exists(source_dir):
-            for file in util.get_files(source_dir + '**/*.*'):
+            for source_file in util.get_files(source_dir + '**/*.*'):
                 # remove first 10 lines
                 try:
-                    with codecs.open(file, 'r', encoding = 'utf-8', errors='ignore') as f:
+                    with codecs.open(source_file, 'r', encoding = 'utf-8', errors='ignore') as f:
                         old_content = f.readlines()
-                    with open(file, 'wt', encoding = 'utf-8', newline = '\n') as w:
+                    with open(source_file, 'wt', encoding = 'utf-8', newline = '\n') as w:
                         w.writelines(old_content[10:])
                 except:
-                    print('\nERROR:', file.replace(self.config.sqlcl_root, ''))
+                    print('\nERROR:', source_file.replace(self.config.sqlcl_root, ''))
 
                 # move files
-                if '/pages/p' in file:
-                    target = file.replace('/pages/p', '/pages/page_')
-                    if not os.path.exists(target):
-                        os.rename(file, target)
+                if '/pages/p' in source_file:
+                    target_file = source_file.replace('/pages/p', '/pages/page_')
+                    if os.path.exists(target_file):
+                        os.remove(target_file)
+                    os.rename(source_file, target_file)
             #
             shutil.copytree(source_dir, target_dir, dirs_exist_ok = True)
             shutil.rmtree(source_dir, ignore_errors = True, onerror = None)
@@ -493,66 +495,71 @@ class Export_APEX(config.Config):
         target_dir = self.get_root(app_id)
 
         # move readable files
-        for file in util.get_files(source_dir + 'readable/**/*.*'):
-            target = file
+        for source_file in util.get_files(source_dir + 'readable/**/*.*'):
+            target_file = source_file
 
             # application file close to app full export
-            if '/readable/application/f{}.'.format(app_id) in file:
-                target = file.replace('/readable/application/', '/')
+            if '/readable/application/f{}.'.format(app_id) in source_file:
+                target_file = source_file.replace('/readable/application/', '/')
 
             # move page files close to pages
-            if '/readable/application/page_groups.' in file:
-                target = file.replace('/application/', '/application/pages/')
+            if '/readable/application/page_groups.' in source_file:
+                target_file = source_file.replace('/application/', '/application/pages/')
             #
-            if '/readable/application/pages/p' in file:
-                target = file.replace('/pages/p', '/pages/page_')
+            if '/readable/application/pages/p' in source_file:
+                target_file = source_file.replace('/pages/p', '/pages/page_')
 
             # workspace files
-            if '/readable/workspace/' in file:
-                target = file.replace('/readable/', '/../')
+            if '/readable/workspace/' in source_file:
+                target_file = source_file.replace('/readable/', '/../')
 
             # move readable files close to original files
-            if os.path.exists(file):
-                target = target.replace(source_dir, target_dir).replace('/readable/', '/')
-                os.makedirs(os.path.dirname(target), exist_ok = True)
-                if not os.path.exists(target):
-                    os.rename(file, target)
+            if os.path.exists(source_file):
+                target_file = target_file.replace(source_dir, target_dir).replace('/readable/', '/')
+                os.makedirs(os.path.dirname(target_file), exist_ok = True)
+                if os.path.exists(target_file):
+                    os.remove(target_file)
+                os.rename(source_file, target_file)
 
         # remove readable folder
         if os.path.exists(source_dir + 'readable/'):
             shutil.rmtree(source_dir + 'readable/', ignore_errors = True, onerror = None)
 
         # move workspace files to workspace folder
-        for file in util.get_files(source_dir + 'workspace/**/*.*'):
-            target = file.replace('/f{}/workspace/'.format(app_id), '/' + self.config.apex_workspace_dir)
-            os.makedirs(os.path.dirname(target), exist_ok = True)
-            if not os.path.exists(target):
-                os.rename(file, target)
+        for source_file in util.get_files(source_dir + 'workspace/**/*.*'):
+            target_file = source_file.replace('/f{}/workspace/'.format(app_id), '/' + self.config.apex_workspace_dir)
+            os.makedirs(os.path.dirname(target_file), exist_ok = True)
+            if os.path.exists(target_file):
+                os.remove(target_file)
+            os.rename(source_file, target_file)
         shutil.rmtree(source_dir + 'workspace/', ignore_errors = True, onerror = None)
 
         # move full export file
         source_file = '{}f{}.sql'.format(self.config.sqlcl_root, app_id)
         target_file = '{}f{}.sql'.format(self.get_root(app_id), app_id)
         #
-        if os.path.exists(source_file) and not os.path.exists(target_file):
+        if os.path.exists(source_file):
             self.cleanup_file(source_file)
+            if os.path.exists(target_file):
+                os.remove(target_file)
             os.rename(source_file, target_file)
 
         # move leftovers
-        for file in util.get_files(source_dir + '**/*.*'):
-            target = file.replace(source_dir, target_dir)
-            os.makedirs(os.path.dirname(target), exist_ok = True)
-            if not os.path.exists(target):
-                self.cleanup_file(file)
-                os.rename(file, target)
+        for source_file in util.get_files(source_dir + '**/*.*'):
+            self.cleanup_file(source_file)
+            target_file = source_file.replace(source_dir, target_dir)
+            os.makedirs(os.path.dirname(target_file), exist_ok = True)
+            if os.path.exists(target_file):
+                os.remove(target_file)
+            os.rename(source_file, target_file)
         #
         shutil.rmtree(source_dir, ignore_errors = True, onerror = None)
 
         # get rid of install files
-        for file in util.get_files(self.get_root(app_id, 'install*.sql')):
-            os.remove(file)
-        for file in util.get_files(self.get_root(app_id, 'application/create_application.sql')):
-            os.remove(file)
+        for source_file in util.get_files(self.get_root(app_id, 'install*.sql')):
+            os.remove(source_file)
+        for source_file in util.get_files(self.get_root(app_id, 'application/create_application.sql')):
+            os.remove(source_file)
 
 
 
@@ -560,12 +567,14 @@ class Export_APEX(config.Config):
         source_dir = '{}workspace/'.format(self.config.sqlcl_root)
         target_dir = self.get_root_ws()
         #
-        for file in util.get_files(source_dir + '**/*.*'):
-            target = file.replace(source_dir, target_dir)
-            os.makedirs(os.path.dirname(target), exist_ok = True)
-            if not os.path.exists(target):
-                self.cleanup_file(file)
-                os.rename(file, target)
+        for source_file in util.get_files(source_dir + '**/*.*'):
+            target_file = source_file.replace(source_dir, target_dir)
+            self.cleanup_file(source_file)
+            #
+            os.makedirs(os.path.dirname(target_file), exist_ok = True)
+            if os.path.exists(target_file):
+                os.remove(target_file)
+            os.rename(source_file, target_file)
         #
         shutil.rmtree(source_dir, ignore_errors = True, onerror = None)
 

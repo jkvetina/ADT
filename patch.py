@@ -162,6 +162,15 @@ class Patch(config.Config):
             if (self.args.create or self.args.deploy):
                 if not self.args.create:
                     self.patch_dry = True
+
+                    # find most recent patch
+                    recent_patch = ''
+                    for ref in sorted(self.patches.keys(), reverse = True):
+                        info = self.patches[ref]
+                        if self.patch_code == info['patch_code']:
+                            if info['folder'] > recent_patch:
+                                self.patch_seq = info['seq']
+                #
                 self.create_patch()
 
             # also deploy, we can do create, deploy or create+deploy

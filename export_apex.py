@@ -424,6 +424,8 @@ class Export_APEX(config.Config):
 
 
     def export_rest(self, app_id):
+        return
+
         # prepare target folders
         if os.path.exists(self.target_rest):
             util.delete_folder(self.target_rest)

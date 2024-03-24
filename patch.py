@@ -413,7 +413,7 @@ class Patch(config.Config):
 
             # extract deployment result and date from log names
             buckets = {}    # use buckets to get overall status over multiple files
-            for file in util.get_files(root + self.logs_prefix + '/*.log'):
+            for file in util.get_files(root + '/' + self.logs_prefix + '/*.log'):
                 base        = os.path.splitext(os.path.basename(file))[0].split(' ')
                 schema      = base.pop(0)
                 result      = base.pop(-1).replace('[', '').replace(']', '')

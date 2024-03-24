@@ -237,7 +237,12 @@ class Config(util.Attributed):
 
         # prepare for Teams integration
         teams = pymsteams.connectorcard(self.config.teams_webhoook)
+        teams.title(title)
         teams.text(message)
+        #
+        if button_name and button_link:
+            teams.addLinkButton(button_name, button_link)
+        #
         teams.send()
 
 

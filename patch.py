@@ -1,5 +1,5 @@
 # coding: utf-8
-import sys, os, re, argparse
+import sys, os, re, argparse, datetime
 #
 import config
 from lib import queries_patch as query
@@ -268,6 +268,8 @@ class Patch(config.Config):
         util.print_header('PATCHING PROGRESS AND RESULTS:')
         util.print_table([], columns = map)
 
+        self.patch_status = ''
+
         # run the target script(s) and spool the logs
         for order, plan in enumerate(self.deploy_plan):
             start = util.get_start()
@@ -317,6 +319,8 @@ class Patch(config.Config):
                 'timer'     : int(round(util.get_start() - start + 0.5, 0)),  # ceil
             }
 
+            self.patch_status = 'SUCCESS' if (success and (self.patch_status == 'SUCCESS' or self.patch_status == '')) else 'ERROR'
+
             # rename log to reflect the result in the file name
             log_file    = full.replace('.sql', '.log')
             log_status  = '{}/{} {} [{}].log'.format(log_folder, plan['file'].replace('.sql', ''), self.config.today_deploy, results['status'])
@@ -333,6 +337,15 @@ class Patch(config.Config):
             util.print_table([results], columns = map, right_align = ['order', 'output', 'timer'], no_header = True)
             util.beep(sound = 1)
         print()
+
+        # send notification on success
+        if self.patch_status == 'SUCCESS':
+            title   = 'Patch {} was deployed to {}'.format(self.patch_code, self.target_env)
+            author  = '{}, {}'.format(self.repo_user_name, self.repo_user_mail)
+            stamp   = datetime.datetime.today().strftime('%Y-%m-%d %H:%M')
+            message = '{}\n{}'.format(author, stamp)
+            #
+            self.send_teams_notification(title, message)
 
 
 

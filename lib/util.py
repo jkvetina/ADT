@@ -348,7 +348,7 @@ def print_table(data, columns = [], right_align = [], spacer = 3, start = 2, no_
 
     # show data
     if (not no_header or isinstance(no_header, list)):
-        filtered_columns = [] + columns
+        filtered_columns = list(columns)
         if isinstance(no_header, list):
             for i, name in sorted(enumerate(columns), reverse = True):
                 if i in no_header:

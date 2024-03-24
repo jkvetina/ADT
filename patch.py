@@ -1090,12 +1090,14 @@ class Patch(config.Config):
         if '<<<<<<< ' in file_content and '>>>>>>> ' in file_content:
             util.raise_error('UNRESOLVED MERGE ISSUES', file)
 
-        # change page audit columns
+        # change page audit columns to current date and patch code
         if app_id and ('/application/pages/page_' in file or '/f{}/f{}.sql'.format(app_id, app_id) in file):
-            if self.config.apex_timestamps:
-                file_content = re.sub(r",p_last_updated_by=>'([^']+)'",         ",p_last_updated_by=>'{}'".format(self.patch_code), file_content)
-            if self.config.apex_authors:
-                file_content = re.sub(r",p_last_upd_yyyymmddhh24miss=>'(\d+)'", ",p_last_upd_yyyymmddhh24miss=>'{}'".format(self.config.today_full_raw), file_content)
+            file_content = util.replace(file_content,
+                ",p_last_updated_by=>'([^']+)'",
+                ",p_last_updated_by=>'{}'".format(self.patch_code))
+            file_content = util.replace(file_content,
+                ",p_last_upd_yyyymmddhh24miss=>'(\d+)'",
+                ",p_last_upd_yyyymmddhh24miss=>'{}'".format(self.config.today_full_raw))
 
         # replace file content
         file_content = self.replace_tags(file_content)

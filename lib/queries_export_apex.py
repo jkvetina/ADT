@@ -41,6 +41,15 @@ BEGIN
 END;
 """
 
+# get authentication schemes
+apex_authentication_schemes = """
+SELECT
+    a.authentication_scheme_id AS authentication_id,
+    a.authentication_scheme_name || ' (' || a.scheme_type || ')' AS authentication_name
+FROM apex_application_auth a
+WHERE a.application_id = :app_id
+"""
+
 # export APEX files in as a binary
 apex_files = """
 SELECT f.filename, f.blob_content f

@@ -109,6 +109,16 @@ class Export_APEX(config.Config):
             util.print_header('APP {}/{}, EXPORTING:'.format(app_id, self.apex_apps[app_id]['app_alias']))
             self.conn.execute(query.apex_security_context, app_id = app_id)
 
+            # get default authentication scheme
+            self.auth_scheme_id     = 0
+            self.auth_scheme_name   = ''
+            #
+            if len(self.config.apex_authentication) > 0:
+                for row in self.conn.fetch_assoc(query.apex_authentication_schemes, app_id = app_id):
+                    if self.config.apex_authentication in row.authentication_name:
+                        self.auth_scheme_id     = row.authentication_id
+                        self.auth_scheme_name   = row.authentication_name
+
             # create folders
             os.makedirs(os.path.dirname(self.get_root(app_id)), exist_ok = True)
 
@@ -586,6 +596,12 @@ class Export_APEX(config.Config):
             new_content = util.replace(new_content,
                 ",p_last_upd_yyyymmddhh24miss=>'(\d+)'",
                 ",p_last_upd_yyyymmddhh24miss=>'{}'".format(self.config.apex_timestamps))
+
+        # replace default authentication
+        if self.auth_scheme_id > 0:
+            new_content = util.replace(new_content,
+                ",p_authentication_id=>wwv_flow_imp.id[(]([\d]+)[)]",
+                ",p_authentication_id=>wwv_flow_imp.id({})  -- {}".format(self.auth_scheme_id, self.auth_scheme_name))
 
         # translate id to more meaningful names
         for component_id, component_name in self.enrich_ids.items():

@@ -26,7 +26,7 @@ def get_linenumber():
 def replace(subject, pattern, replacement = '', flags = 0):
     if isinstance(subject, dict):
         for key, value in subject.items():
-            subject[key] = replace(value, replacement)
+            subject[key] = replace(value, replacement, flags)
         return subject
     #
     if isinstance(pattern, dict):

@@ -1284,6 +1284,11 @@ class Patch(config.Config):
             if not (';' in line):
                 continue
 
+            # strip inline comments after statements
+            comment = util.extract('(;\s*--)', buffers[-1]) or ''   # on last line only and after ';'
+            if len(comment) > 0:
+                buffers[-1] = buffers[-1].split(comment)[0] + '\n'
+
             # statement end found, so join the buffers
             statement = ''.join(buffers)
             statement_type, object_type, object_name, operation, cc_name = self.get_object_from_statement(statement)

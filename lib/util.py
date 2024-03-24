@@ -23,6 +23,16 @@ def get_linenumber():
 
 
 
+def get_callstack():
+    stack = []
+    for row in traceback.format_stack():
+        file = os.path.basename(extract('["]([^"]+)', row))
+        line = extract(', line (\d+),', row)
+        stack.append((file, line,))
+    return stack[:-2]
+
+
+
 def replace(subject, pattern, replacement = '', flags = 0):
     if isinstance(subject, dict):
         for key, value in subject.items():

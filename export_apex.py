@@ -49,8 +49,7 @@ class Export_APEX(config.Config):
         self.conn = self.db_connect(ping_sqlcl = False)
 
         # make sure we have the temp folder ready
-        if os.path.exists(self.config.sqlcl_root):
-            shutil.rmtree(self.config.sqlcl_root, ignore_errors = True, onerror = None)
+        if not os.path.exists(self.config.sqlcl_root):
             os.makedirs(self.config.sqlcl_root, exist_ok = True)
 
         # for workspace and apps lists
@@ -101,6 +100,7 @@ class Export_APEX(config.Config):
 
         # for each requested app
         for app_id in sorted(self.apex_apps.keys()):
+            util.delete_folder('{}f{}/'.format(self.config.sqlcl_root, app_id))
             self.get_comments(app_id)
 
             # show recent changes

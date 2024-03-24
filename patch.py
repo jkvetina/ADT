@@ -799,13 +799,19 @@ class Patch(config.Config):
             # add properly sorted files (objects by dependencies) to the patch
             if app_id and app_id in self.full_exports:
                 # attach the whole application for full imports
+                path = '{}f{}/'.format(self.config.path_apex, app_id).replace('//', '/')
+                file = '{}f{}.sql'.format(path, app_id)
+                file = self.create_file_snapshot(file, app_id = app_id)
+                file = file.replace(self.patch_folder, '')       # replace first, full path
+                file = util.replace(self.config.patch_file_link if not self.patch_file_moveup else self.config.patch_file_link_moveup, {
+                    '#FILE#' : file.lstrip('/'),
+                })
+                payload.extend(self.attach_files(self.get_template_files('apex_init'), category = 'INIT', app_id = app_id))
                 payload.extend([
                     '--',
                     '-- APPLICATION {}'.format(app_id),
                     '--',
-                    'SET SERVEROUTPUT OFF',
-                    '@"./{}f{}/f{}.sql";'.format(self.config.path_apex, app_id, app_id),
-                    'SET SERVEROUTPUT ON',
+                    file,
                     '',
                 ])
             #
@@ -1016,10 +1022,10 @@ class Patch(config.Config):
             ]
         payload.extend([
             'PROMPT -- {}: {}'.format(attach_type or 'FILE', file),
-            payload.append(util.replace(self.config.patch_file_link if not self.patch_file_moveup else self.config.patch_file_link_moveup, {
+            util.replace(self.config.patch_file_link if not self.patch_file_moveup else self.config.patch_file_link_moveup, {
                 '#FILE#'        : file.lstrip('/'),
                 '#PATCH_CODE#'  : self.patch_code,
-            })),
+            }),
             '',
         ])
         return payload
@@ -1045,11 +1051,6 @@ class Patch(config.Config):
                 file = path + file
                 if os.path.exists(file):
                     self.create_file_snapshot(file, app_id = app_id, local = True)
-
-            # attach full export
-            #if self.full_export:
-            #file = '{}f{}.sql'.format(path, app_id)
-            #self.create_file_snapshot(file, app_id = app_id)
 
 
 

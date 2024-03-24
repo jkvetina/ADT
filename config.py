@@ -2,6 +2,7 @@
 import sys, os, re, argparse, datetime, timeit, pickle, io
 import yaml         # pip3 install pyyaml       --upgrade
 import git          # pip3 install GitPython    --upgrade
+import pymsteams    # pip3 install pymsteams    --upgrade
 #
 from lib import wrapper
 from lib import util
@@ -228,6 +229,17 @@ class Config(util.Attributed):
     def __del__(self):
         if self.start_timer:
             print('\nTIMER: {}s\n'.format(int(round(timeit.default_timer() - self.start_timer + 0.5, 0))))
+
+
+
+    def send_teams_notification(self, title, message, button_name = '', button_link = ''):
+        if not self.config.teams_webhoook:
+            return
+
+        # prepare for Teams integration
+        teams = pymsteams.connectorcard(self.config.teams_webhoook)
+        teams.text(message)
+        teams.send()
 
 
 

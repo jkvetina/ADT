@@ -114,13 +114,13 @@ class Export_APEX(config.Config):
 
             # create a queue
             todo = [
-                {'action' : 'recent',       'header' : 'CHANGED COMPONENTS' },
-                {'action' : 'full',         'header' : 'FULL APP EXPORT' },
-                {'action' : 'split',        'header' : 'SPLIT COMPONENTS' },
-                {'action' : 'embedded',     'header' : 'EMBEDDED CODE REPORT' },
-                {'action' : 'rest',         'header' : 'REST SERVICES' },
-                {'action' : 'files',        'header' : 'APPLICATION FILES' },
-                {'action' : 'files_ws',     'header' : 'WORKSPACE FILES' },
+                {'action' : 'recent',       'header' : '  CHANGED COMPONENTS' },
+                {'action' : 'full',         'header' : '  FULL APP EXPORT' },
+                {'action' : 'split',        'header' : '  SPLIT COMPONENTS' },
+                {'action' : 'embedded',     'header' : '  EMBEDDED CODE REPORT' },
+                {'action' : 'rest',         'header' : '  REST SERVICES' },
+                {'action' : 'files',        'header' : '  APPLICATION FILES' },
+                {'action' : 'files_ws',     'header' : '  WORKSPACE FILES' },
             ]
             for row in todo:
                 action = row['action']

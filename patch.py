@@ -156,14 +156,14 @@ class Patch(config.Config):
                 util.raise_error('CLASH ON PATCH SEQUENCE',
                     'you should select a different sequence')
 
-        # create patch
+        # create patch for requested name and seq
         if self.patch_code:
-            if (self.args.deploy or not self.args.create):
-                self.patch_dry = True
-
-            # create patch for requested name and seq
             if (self.args.create or self.args.deploy):
+                if not self.args.create:
+                    self.patch_dry = True
                 self.create_patch()
+
+            # also deploy, we can do create, deploy or create+deploy
             if self.args.deploy:
                 self.deploy_patch()
 

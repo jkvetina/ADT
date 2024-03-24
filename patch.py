@@ -69,6 +69,7 @@ class Patch(config.Config):
         self.patch_folders      = {}
         self.patch_sequences    = {}
         self.patch_current      = {}
+        self.patch_status       = ''
         self.all_commits        = {}
         self.relevant_commits   = []
         self.relevant_count     = {}
@@ -168,7 +169,7 @@ class Patch(config.Config):
                 self.deploy_patch()
 
             # offer/hint next available sequence
-            if not self.args.deploy and not self.args.create:
+            if not self.args.deploy and not self.args.create and self.patch_status != 'SUCCESS':
                 try:
                     next = max(self.patch_sequences)
                     next = str(int(next) + 1) if next.isnumeric() else '#'
@@ -196,6 +197,7 @@ class Patch(config.Config):
                     'deployed_at'   : info['deployed_at'],
                     'result'        : info['result'],
                 })
+                self.patch_status = info['result']
 
         # show recent patches
         if ((self.patch_code == None and self.show_patches > 0) or len(found_patches) > 0):

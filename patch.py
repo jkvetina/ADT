@@ -419,7 +419,7 @@ class Patch(config.Config):
                 base        = os.path.splitext(os.path.basename(file))[0].split(' ')
                 schema      = base.pop(0)
                 result      = base.pop(-1).replace('[', '').replace(']', '')
-                deployed    = util.replace(' '.join(base).replace('_', ' '), '( \d\d)[-](\d\d)$', '\\1:\\2')  # fix time
+                deployed    = util.replace(' '.join(base).replace('_', ' '), r'( \d\d)[-](\d\d)$', '\\1:\\2')  # fix time
                 #
                 if not (deployed in buckets):
                     buckets[deployed] = result
@@ -828,13 +828,13 @@ class Patch(config.Config):
                     # modify list of APEX files
                     if app_id:
                         # move APEX pages to the end + create script to delete them in patch
-                        search = re.search('/pages/page_(\d+)\.sql', file)
+                        search = re.search(r'/pages/page_(\d+)\.sql', file)
                         if search:
                             apex_pages.append(file)
                             continue
 
                         # skip full APEX exports
-                        if len(re.findall('/f\d+/f\d+\.sql$', file)) > 0:
+                        if len(re.findall(r'/f\d+/f\d+\.sql$', file)) > 0:
                             continue
 
                     # attach file reference
@@ -1093,10 +1093,10 @@ class Patch(config.Config):
         # change page audit columns to current date and patch code
         if app_id and ('/application/pages/page_' in file or '/f{}/f{}.sql'.format(app_id, app_id) in file):
             file_content = util.replace(file_content,
-                ",p_last_updated_by=>'([^']+)'",
+                r",p_last_updated_by=>'([^']+)'",
                 ",p_last_updated_by=>'{}'".format(self.patch_code))
             file_content = util.replace(file_content,
-                ",p_last_upd_yyyymmddhh24miss=>'(\d+)'",
+                r",p_last_upd_yyyymmddhh24miss=>'(\d+)'",
                 ",p_last_upd_yyyymmddhh24miss=>'{}'".format(self.config.today_full_raw))
 
         # replace file content
@@ -1133,7 +1133,7 @@ class Patch(config.Config):
         ]
         #
         for file in apex_pages:
-            page_id = util.extract_int('/pages/page_(\d+)\.sql', file)
+            page_id = util.extract_int(r'/pages/page_(\d+)\.sql', file)
             ##payload.append('    wwv_flow_imp_page.remove_page(p_flow_id => wwv_flow.g_flow_id, p_page_id => {});'.format(page_id))
         #
         payload.extend([
@@ -1177,7 +1177,7 @@ class Patch(config.Config):
                     continue
 
                 # find match on object name
-                find_name = util.extract('\sON\s+(.*)\s+TO\s', line).lower()
+                find_name = util.extract(r'\sON\s+(.*)\s+TO\s', line).lower()
                 #
                 for file in self.diffs:
                     object_name = os.path.basename(file).split('.')[0].lower()
@@ -1281,7 +1281,7 @@ class Patch(config.Config):
                 continue
 
             # strip inline comments after statements
-            comment = util.extract('(;\s*--)', buffers[-1]) or ''   # on last line only and after ';'
+            comment = util.extract(r'(;\s*--)', buffers[-1]) or ''   # on last line only and after ';'
             if len(comment) > 0:
                 buffers[-1] = buffers[-1].split(comment)[0] + '\n'
 
@@ -1350,11 +1350,11 @@ class Patch(config.Config):
 
 
     def get_object_from_statement(self, statement):
-        statement   = util.replace(statement, '\s+', ' ', flags = re.M).strip().upper()
+        statement   = util.replace(statement, r'\s+', ' ', flags = re.M).strip().upper()
         statement   = statement.replace(' UNIQUE ', ' ').rstrip(';').strip()
         patterns    = [
-            '(CREATE|DROP|ALTER)\s({})\s["]?[A-Z0-9_-]+["]?\.["]?([A-Z0-9_-]+)["]?',
-            '(CREATE|DROP|ALTER)\s({})\s["]?([A-Z0-9_-]+)["]?',
+            r'(CREATE|DROP|ALTER)\s({})\s["]?[A-Z0-9_-]+["]?\.["]?([A-Z0-9_-]+)["]?',
+            r'(CREATE|DROP|ALTER)\s({})\s["]?([A-Z0-9_-]+)["]?',
         ]
         #
         for check_type in sorted(self.config.object_types.keys(), reverse = True):

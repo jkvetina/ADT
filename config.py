@@ -590,7 +590,7 @@ class Config(util.Attributed):
             passed_keys = obj.__dict__.keys()       # get object attributes
 
         # extract unique tags
-        found_tags = list(dict.fromkeys(re.findall('\{\$[A-Z0-9_]+\}', payload)))
+        found_tags = list(dict.fromkeys(re.findall(r'\{\$[A-Z0-9_]+\}', payload)))
         if len(found_tags) > 0:
             for tag in found_tags:
                 if tag in payload:
@@ -668,7 +668,7 @@ class Config(util.Attributed):
 
         # cleanup trailing zeroes
         for name, version in results.items():
-            results[name] = util.replace(version, '(\.0)+$', '')
+            results[name] = util.replace(version, r'(\.0)+$', '')
         #
         util.print_header('VERSION:')
         util.print_args(results, length = 24)

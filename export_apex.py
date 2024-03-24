@@ -591,7 +591,7 @@ class Export_APEX(config.Config):
             return
 
         # get application id, workspace and type of file
-        app_id      = util.extract_int('/f(\d+)/', file) or util.extract_int('/f(\d+)\.sql$', file)
+        app_id      = util.extract_int(r'/f(\d+)/', file) or util.extract_int(r'/f(\d+)\.sql$', file)
         workspace   = self.apex_apps[app_id]['workspace'] if app_id else ''
         is_full     = app_id and '/f{}.sql'.format(app_id) in file
         is_page     = app_id and '/pages/page_' in file
@@ -605,7 +605,7 @@ class Export_APEX(config.Config):
         # replace workspace id if exported from different instance
         if self.config.apex_workspace_id and self.config.apex_workspace_id > 0:
             new_content = util.replace(new_content,
-                ",p_default_workspace_id=>(\d+)",
+                r",p_default_workspace_id=>(\d+)",
                 ",p_default_workspace_id=>{}".format(self.config.apex_workspace_id))
 
         # keep only developers as page authors
@@ -613,24 +613,24 @@ class Export_APEX(config.Config):
             developer = util.extract(",p_last_updated_by=>'([^']+)'", new_content)
             if (not (developer in self.developers[workspace]) or not self.config.apex_keep_developers):
                 new_content = util.replace(new_content,
-                    ",p_last_updated_by=>'([^']+)'",
+                    r",p_last_updated_by=>'([^']+)'",
                     ",p_last_updated_by=>'{}'".format(self.config.apex_authors))
                 #
                 if self.config.apex_timestamps:
                     new_content = util.replace(new_content,
-                        ",p_last_upd_yyyymmddhh24miss=>'(\d+)'",
+                        r",p_last_upd_yyyymmddhh24miss=>'(\d+)'",
                         ",p_last_upd_yyyymmddhh24miss=>'{}'".format(self.config.apex_timestamps))
 
         # replace default authentication
         if is_full and self.auth_scheme_id > 0:
             new_content = util.replace(new_content,
-                ",p_authentication_id=>wwv_flow_imp.id[(]([\d]+)[)]",
+                r",p_authentication_id=>wwv_flow_imp.id[(]([\d]+)[)]",
                 ",p_authentication_id=>wwv_flow_imp.id({})  -- {}".format(self.auth_scheme_id, self.auth_scheme_name))
 
         # translate id to more meaningful names
         for component_id, component_name in self.enrich_ids.items():
             new_content = new_content.replace (
-                '.id({})\n'.format(component_id),
+                r'.id({})\n'.format(component_id),
                 '.id({})  -- {}\n'.format(component_id, component_name))
 
         # store new content in the same file

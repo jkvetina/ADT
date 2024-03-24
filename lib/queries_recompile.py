@@ -69,8 +69,8 @@ SELECT
     e.name          AS object_name,
     COUNT(e.line)   AS errors,
     COALESCE(
-        MIN(REGEXP_SUBSTR(e.text, 'ORA-\d+')),
-        MIN(REGEXP_SUBSTR(e.text, 'PLS-\d+'))
+        MIN(REGEXP_SUBSTR(e.text, 'ORA-\\d+')),
+        MIN(REGEXP_SUBSTR(e.text, 'PLS-\\d+'))
     ) AS error
 FROM user_errors e
 WHERE 1 = 1

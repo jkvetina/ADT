@@ -135,10 +135,6 @@ def get_files(glob_pattern, reverse = False, recursive = True):
 def delete_folder(folder, subfolders_only = False):
     #file, line = get_callstack()[-1]
     #print('\nDELETING: {}\n  SOURCE: {} {}\n'.format(folder, file, line))
-    #if '/.temp.nosync/' in folder:
-        #if '{} {}'.format(file, line) not in ['export_apex.py 385']:
-            #print('KEEP')
-            #return
     shutil.rmtree(folder, ignore_errors = True, onerror = None)
 
 
@@ -589,6 +585,8 @@ def quit(message = ''):
 
 
 def raise_error(message = '', *extras):
+    file, line = get_callstack()[-1]
+
     # print exception to screen
     splitter    = 80 * '#'
     exception   = traceback.format_exc().rstrip()
@@ -597,7 +595,8 @@ def raise_error(message = '', *extras):
 
     # show more friendly message at the end
     message = 'ERROR: {}'.format(message)
-    print('\n{}\n{}'.format(message, '-' * len(message)), extras if isinstance(extras, str) else '')
+    print('\n{}   @{} {}\n{}'.format(message, file, line, '-' * len(message)), extras if isinstance(extras, str) else '')
+    #
     if len(extras) > 0:
         for line in extras:
             if line != None:

@@ -321,7 +321,7 @@ class Export_APEX(config.Config):
     def show_recent_changes(self, app_id):
         alias       = self.apex_apps[app_id]['app_alias']
         workspace   = self.apex_apps[app_id]['workspace']
-        author      = self.args.author if self.args.author in self.developers[workspace] else ''
+        author      = self.args.by if self.args.by in self.developers[workspace] else ''
         #
         util.print_header('APP {}/{}, CHANGES SINCE {}{}:'.format(app_id, alias, self.today, ' BY ' + author if author else ''))
         #
@@ -663,7 +663,7 @@ if __name__ == "__main__":
     # actions and flags
     group = parser.add_argument_group('MAIN ACTIONS')
     group.add_argument('-recent',       help = 'Show components changed in # days',     type = util.is_boolstr, nargs = '?')
-    group.add_argument('-author',       help = 'Export components changed by author',                           nargs = '?')
+    group.add_argument('-by',           help = 'Export components changed by developer',                        nargs = '?')
     group.add_argument('-full',         help = 'Export full application export',                                nargs = '?', const = True, default = False)
     group.add_argument('-split',        help = 'Export splitted export (components)',                           nargs = '?', const = True, default = False)
     group.add_argument('-embedded',     help = 'Export Embedded Code report',                                   nargs = '?', const = True, default = False)

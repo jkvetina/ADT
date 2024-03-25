@@ -133,6 +133,15 @@ class Recompile(config.Config):
             util.print_header('INVALID OBJECTS:')
             util.print_table(data)
 
+            # create message for team
+            title       = 'Invalid objects ({}) on {}'.format(len(data), self.args.target)
+            message     = ''
+            columns     = ['object_type', 'object_name', 'errors']
+            widths      = [2, 5, 1]
+            blocks      = self.create_table(data, columns, widths)
+            #
+            self.notify_team(title, message, blocks = blocks)
+
 
 
     def build_query(self, row):

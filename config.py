@@ -1,10 +1,10 @@
 # coding: utf-8
-import sys, os, re, argparse, datetime, timeit, pickle, io
+import sys, os, re, argparse, datetime, timeit, pickle, io, requests, copy
 import git          # pip3 install GitPython    --upgrade
-import pymsteams    # pip3 install pymsteams    --upgrade
 #
 from lib import wrapper
 from lib import util
+from lib import messages
 
 #
 #                                                      (R)
@@ -228,22 +228,6 @@ class Config(util.Attributed):
     def __del__(self):
         if self.start_timer:
             print('\nTIMER: {}s\n'.format(int(round(timeit.default_timer() - self.start_timer + 0.5, 0))))
-
-
-
-    def send_teams_notification(self, title, message, button_name = '', button_link = ''):
-        if not self.config.teams_webhoook:
-            return
-
-        # prepare for Teams integration
-        teams = pymsteams.connectorcard(self.config.teams_webhoook)
-        teams.title(title)
-        teams.text(message)
-        #
-        if button_name and button_link:
-            teams.addLinkButton(button_name, button_link)
-        #
-        teams.send()
 
 
 
@@ -702,6 +686,76 @@ class Config(util.Attributed):
         #
         print()
         util.quit()
+
+
+
+    def create_message(self, title, message, blocks = [], mentions = {}):
+        payload = copy.deepcopy(messages.simple)
+
+        # prepare title and message
+        payload['attachments'][0]['content']['body'][0]['text'] = title
+        payload['attachments'][0]['content']['body'][1]['text'] = message
+
+        # mark mentioned people
+        for item in re.findall(r"(<at>[^/]+</at>)", message):
+            mention     = copy.deepcopy(messages.mentions)
+            user_mail   = item.replace('<at>', '').replace('</at>', '').strip()
+            user_name   = mentions.get(user_mail) or self.config.mentions.get(user_mail) or ''
+            #
+            if '@' in user_name:            # allow multiple accounts
+                user_mail   = user_name
+                user_name   = mentions.get(user_mail) or self.config.mentions.get(user_mail) or ''
+            #
+            if len(user_name) > 0:
+                mention['text']              = item
+                mention['mentioned']['id']   = user_mail
+                mention['mentioned']['name'] = user_name
+                payload['attachments'][0]['content']['msteams']['entities'].append(mention)
+
+        # add extra blocks
+        for block in blocks:
+            payload['attachments'][0]['content']['body'].append(block)
+        #
+        return payload
+
+
+
+    def create_table(self, data, columns, widths):
+        blocks  = []
+        widths  = dict(zip(columns, widths))
+
+        # create table header
+        table_header = copy.deepcopy(messages.table_header)
+        for col_name in columns:
+            column = copy.deepcopy(messages.table_header_col)
+            column['items'][0]['text'] = col_name.replace('_', ' ').upper()
+            column['width'] = widths[col_name]
+            #
+            table_header['items'][0]['columns'].append(column)
+        #
+        blocks.append(table_header)
+
+        # create table body
+        for row in data:
+            table_row = copy.deepcopy(messages.table_row)
+            for col_name in columns:
+                column = copy.deepcopy(messages.table_row_col)
+                column['items'][0]['text'] = row[col_name]
+                column['width'] = widths[col_name]
+                #
+                table_row['columns'].append(column)
+            #
+            blocks.append(table_row)
+        #
+        return blocks
+
+
+
+    def notify_team(self, title, message, blocks = [], mentions = {}):
+        payload = self.create_message(title, message, blocks = blocks, mentions = mentions)
+        if not self.config.teams_webhoook:
+            return
+        requests.post(self.config.teams_webhoook, json = payload)
 
 
 

@@ -341,11 +341,11 @@ class Patch(config.Config):
         # send notification on success
         if self.patch_status == 'SUCCESS':
             title   = 'Patch {} was deployed to {}'.format(self.patch_code, self.target_env)
-            author  = '{}, {}'.format(self.repo_user_name, self.repo_user_mail)
+            author  = '<at>{}</at>'.format(self.repo_user_mail)
             stamp   = datetime.datetime.today().strftime('%Y-%m-%d %H:%M')
             message = '{}\n{}'.format(author, stamp)
             #
-            self.send_teams_notification(title, message)
+            self.notify_team(title, message)
 
 
 

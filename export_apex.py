@@ -630,7 +630,7 @@ class Export_APEX(config.Config):
         # translate id to more meaningful names
         for component_id, component_name in self.enrich_ids.items():
             new_content = new_content.replace (
-                r'.id({})\n'.format(component_id),
+                '.id({})\n'.format(component_id),
                 '.id({})  -- {}\n'.format(component_id, component_name))
 
         # store new content in the same file

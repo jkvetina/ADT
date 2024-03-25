@@ -258,7 +258,7 @@ class Patch(config.Config):
         for plan in self.deploy_plan:
             max_file_len = max(max_file_len, len(plan['file']))
         #
-        map = {         # widths
+        map = {         # widths (in charaters)
             'order'     : 5,
             'file'      : max_file_len,
             'output'    : 6,
@@ -268,7 +268,8 @@ class Patch(config.Config):
         util.print_header('PATCHING PROGRESS AND RESULTS:')
         util.print_table([], columns = map)
 
-        self.patch_status = ''
+        self.patch_status   = ''
+        self.patch_results  = []
 
         # run the target script(s) and spool the logs
         for order, plan in enumerate(self.deploy_plan):
@@ -318,7 +319,7 @@ class Patch(config.Config):
                 'status'    : 'SUCCESS' if success else 'ERROR',
                 'timer'     : int(round(util.get_start() - start + 0.5, 0)),  # ceil
             }
-
+            self.patch_results.append({**self.deploy_plan[order], **results})
             self.patch_status = 'SUCCESS' if (success and (self.patch_status == 'SUCCESS' or self.patch_status == '')) else 'ERROR'
 
             # rename log to reflect the result in the file name
@@ -340,12 +341,33 @@ class Patch(config.Config):
 
         # send notification on success
         if self.patch_status == 'SUCCESS':
-            title   = 'Patch {} was deployed to {}'.format(self.patch_code, self.target_env)
-            author  = '<at>{}</at>'.format(self.repo_user_mail)
-            stamp   = datetime.datetime.today().strftime('%Y-%m-%d %H:%M')
-            message = '{}\n{}'.format(author, stamp)
-            #
-            self.notify_team(title, message)
+            title       = 'Patch {} was deployed to {}'.format(self.patch_code, self.target_env)
+            author      = '<at>{}</at>'.format(self.repo_user_mail)
+            stamp       = datetime.datetime.today().strftime('%Y-%m-%d %H:%M')
+            message     = '{}\n{}'.format(author, stamp)
+
+            # add patch status table
+            columns     = ['order', 'file', 'schema', 'app_id', 'files', 'commits', 'status', 'timer']
+            right_align = ['order', 'app_id', 'files', 'commits', 'timer']
+            widths      = [1, 3, 1, 1, 1, 1, 2, 1]  # as a ratio in between columns
+            blocks      = self.create_table(self.patch_results, columns, widths, right_align = right_align)
+
+            # add commits
+            columns     = ['commit', 'summary']
+            widths      = [1, 7]  # as a ratio in between columns
+            data        = []
+            for commit_id in sorted(self.relevant_commits, reverse = True):
+                commit = self.all_commits[commit_id]
+                data.append({
+                    'commit'    : commit_id,
+                    'summary'   : util.get_string(commit['summary'], 50),
+                })
+            commits = self.create_table(data, columns, widths, right_align = 'commit')
+            blocks.append('')
+            blocks.extend(commits)
+
+            # put it together
+            self.notify_team(title, message, blocks = blocks)
 
 
 

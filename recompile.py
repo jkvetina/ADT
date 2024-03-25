@@ -137,7 +137,7 @@ class Recompile(config.Config):
             title       = 'Invalid objects ({}) on {}'.format(len(data), self.args.target)
             message     = ''
             columns     = ['object_type', 'object_name', 'errors']
-            widths      = [2, 5, 1]
+            widths      = [2, 5, 1]     # as a ratio in between columns
             blocks      = self.create_table(data, columns, widths, right_align = ['errors'])
             #
             self.notify_team(title, message, blocks = blocks)

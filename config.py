@@ -714,6 +714,11 @@ class Config(util.Attributed):
 
         # add extra blocks
         for block in blocks:
+            if block == '':
+                block = {
+                    'type'  : 'TextBlock',
+                    'text'  : '&nbsp;',
+                }
             payload['attachments'][0]['content']['body'].append(block)
         #
         return payload

@@ -138,7 +138,7 @@ class Recompile(config.Config):
             message     = ''
             columns     = ['object_type', 'object_name', 'errors']
             widths      = [2, 5, 1]
-            blocks      = self.create_table(data, columns, widths)
+            blocks      = self.create_table(data, columns, widths, right_align = ['errors'])
             #
             self.notify_team(title, message, blocks = blocks)
 

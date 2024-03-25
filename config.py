@@ -720,7 +720,7 @@ class Config(util.Attributed):
 
 
 
-    def create_table(self, data, columns, widths):
+    def create_table(self, data, columns, widths, right_align = []):
         blocks  = []
         widths  = dict(zip(columns, widths))
 
@@ -729,6 +729,8 @@ class Config(util.Attributed):
         for col_name in columns:
             column = copy.deepcopy(messages.table_header_col)
             column['items'][0]['text'] = col_name.replace('_', ' ').upper()
+            if col_name in right_align:
+                column['items'][0]['horizontalAlignment'] = 'Right'
             column['width'] = widths[col_name]
             #
             table_header['items'][0]['columns'].append(column)
@@ -741,6 +743,8 @@ class Config(util.Attributed):
             for col_name in columns:
                 column = copy.deepcopy(messages.table_row_col)
                 column['items'][0]['text'] = row[col_name]
+                if col_name in right_align:
+                    column['items'][0]['horizontalAlignment'] = 'Right'
                 column['width'] = widths[col_name]
                 #
                 table_row['columns'].append(column)

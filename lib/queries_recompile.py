@@ -83,3 +83,77 @@ GROUP BY
 ORDER BY 1, 2
 """
 
+object_dependencies = """
+SELECT
+    t.sequence_name         AS object_name,
+    'SEQUENCE'              AS object_type,
+    NULL                    AS referenced_name,
+    NULL                    AS referenced_type
+FROM user_sequences t
+WHERE t.sequence_name       LIKE :objects_prefix
+--
+UNION ALL
+SELECT
+    t.table_name            AS object_name,
+    'TABLE'                 AS object_type,
+    NULL                    AS referenced_name,
+    NULL                    AS referenced_type
+FROM user_tables t
+WHERE t.table_name          LIKE :objects_prefix
+--
+UNION ALL
+SELECT
+    c.table_name            AS object_name,
+    'TABLE'                 AS object_type,
+    r.table_name            AS referenced_name,
+    'TABLE'                 AS referenced_type
+FROM user_constraints c
+JOIN user_constraints r
+    ON r.constraint_name    = c.r_constraint_name
+    AND r.owner             = c.owner
+WHERE c.table_name          LIKE :objects_prefix
+    AND c.table_name        != r.table_name
+    AND c.constraint_type   = 'R'
+    AND c.owner             = c.r_owner
+    AND c.status            = 'ENABLED'
+GROUP BY
+    c.table_name,
+    r.table_name
+--
+UNION ALL
+SELECT
+    o.object_name,
+    o.object_type,
+    NULL                    AS referenced_name,
+    NULL                    AS referenced_type
+FROM user_objects o
+WHERE o.object_name         LIKE :objects_prefix
+    AND o.object_type       IN ('PACKAGE', 'PACKAGE BODY', 'PROCEDURE', 'FUNCTION', 'TRIGGER', 'VIEW', 'MATERIALIZED VIEW', 'SYNONYM', 'TYPE', 'TYPE BODY')
+--
+UNION ALL
+SELECT
+    d.name                  AS object_name,
+    d.type                  AS object_type,
+    d.referenced_name,
+    d.referenced_type
+FROM user_dependencies d
+WHERE d.name                LIKE :objects_prefix
+    AND d.referenced_owner  = USER
+    AND d.referenced_name   LIKE :objects_prefix
+    AND d.referenced_type   NOT IN ('TABLE', 'SEQUENCE')
+ORDER BY
+    1,
+    2,
+    3 NULLS FIRST,
+    4 NULLS FIRST
+"""
+"""
+CREATE MATERIALIZED VIEW ... AS ^;
+CREATE UNIQUE INDEX ..._uq ON ... (
+    object_name,
+    object_type,
+    referenced_name,
+    referenced_type
+);
+"""
+

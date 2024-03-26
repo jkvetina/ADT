@@ -5,6 +5,7 @@ import git          # pip3 install GitPython    --upgrade
 from lib import wrapper
 from lib import util
 from lib import messages
+from lib import queries_recompile as query
 from lib.file import File
 
 #
@@ -199,6 +200,10 @@ class Config(util.Attributed):
         # structure for dependencies
         self.repo_objects       = {}
         self.repo_files         = {}
+        self.dependencies       = {}
+        self.objects_todo       = []
+        self.objects_processed  = []
+        self.objects_path       = []
 
         # connect to repo, we need valid repo for everything
         self.init_repo()
@@ -441,6 +446,19 @@ class Config(util.Attributed):
             ping_sqlcl  = ping_sqlcl,
             silent      = silent
         )
+
+
+
+    def get_dependencies(self, prefix = ''):
+        self.dependencies = {}
+        for row in self.conn.fetch_assoc(query.object_dependencies, objects_prefix = prefix or self.object_prefix):
+            obj_code = '{}.{}'.format(row.object_type, row.object_name)
+            ref_code = '{}.{}'.format(row.referenced_type, row.referenced_name)
+            #
+            if not (obj_code in self.dependencies):
+                self.dependencies[obj_code] = []
+            if ref_code != 'None.None':
+                self.dependencies[obj_code].append(ref_code)
 
 
 

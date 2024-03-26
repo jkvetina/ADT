@@ -205,6 +205,11 @@ class Config(util.Attributed):
         self.objects_processed  = []
         self.objects_path       = []
 
+        # some helping files
+        self.dependencies_file  = '{}/config/db_dependencies.yaml'.format(self.repo_root)
+        self.timers_file        = '{}/config/apex_timers.yaml'.format(self.repo_root)
+        self.developers_file    = '{}/config/apex_developers.yaml'.format(self.repo_root)
+
         # connect to repo, we need valid repo for everything
         self.init_repo()
         if __name__ != '__main__':

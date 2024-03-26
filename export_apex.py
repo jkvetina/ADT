@@ -84,11 +84,7 @@ class Export_APEX(config.Config):
         self.parse_actions()
 
         # to track export times so we can predict progress on next run
-        self.timers             = {}
-        self.timers_file        = '{}/config/apex_timers.yaml'.format(self.repo_root)
-
-        # to keep just developer names
-        self.developers_file    = '{}/config/apex_developers.yaml'.format(self.repo_root)
+        self.timers = {}
 
         # show matching apps every time
         self.get_applications()

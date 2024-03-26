@@ -1144,14 +1144,15 @@ class Patch(config.Config):
         if '<<<<<<< ' in file_content and '>>>>>>> ' in file_content:
             util.raise_error('UNRESOLVED MERGE ISSUES', file)
 
-        # change page audit columns to current date and patch code
-        if app_id and ('/application/pages/page_' in file or '/f{}/f{}.sql'.format(app_id, app_id) in file):
-            file_content = util.replace(file_content,
-                r",p_last_updated_by=>'([^']+)'",
-                ",p_last_updated_by=>'{}'".format(self.patch_code))
-            file_content = util.replace(file_content,
-                r",p_last_upd_yyyymmddhh24miss=>'(\d+)'",
-                ",p_last_upd_yyyymmddhh24miss=>'{}'".format(self.config.today_full_raw))
+        # change page audit columns to current date and patch code, but not for full exports
+        if not (app_id in self.full_exports):
+            if app_id and ('/application/pages/page_' in file or '/f{}/f{}.sql'.format(app_id, app_id) in file):
+                file_content = util.replace(file_content,
+                    r",p_last_updated_by=>'([^']+)'",
+                    ",p_last_updated_by=>'{}'".format(self.patch_code))
+                file_content = util.replace(file_content,
+                    r",p_last_upd_yyyymmddhh24miss=>'(\d+)'",
+                    ",p_last_upd_yyyymmddhh24miss=>'{}'".format(self.config.today_full_raw))
 
         # replace file content
         file_content = self.replace_tags(file_content)

@@ -26,7 +26,7 @@ class File(util.Attributed):
         else:
             # database object
             self.is_object      = True
-            self.object_name    = os.path.basename(file).split('.')[0]
+            self.object_name    = os.path.basename(file).split('.')[0].upper()
 
             # assume that database objects are just on one folder
             # so the second folder represents object type, the third represents optional group

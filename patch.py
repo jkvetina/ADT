@@ -1222,10 +1222,10 @@ class Patch(config.Config):
                     continue
 
                 # find match on object name
-                find_name = util.extract(r'\sON\s+(.*)\s+TO\s', line).lower()
+                find_name = util.extract(r'\sON\s+(.*)\s+TO\s', line).upper()
                 #
                 for file in self.diffs:
-                    object_name = os.path.basename(file).split('.')[0].lower()
+                    object_name = os.path.basename(file).split('.')[0].upper()
                     if object_name == find_name:
                         payload.append(line.strip())
                         break

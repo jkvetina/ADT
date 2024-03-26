@@ -439,13 +439,15 @@ class Config(util.Attributed):
 
 
     def db_connect(self, ping_sqlcl = False, silent = False):
-        return wrapper.Oracle(
+        conn = wrapper.Oracle(
             tns         = dict(self.connection),
             config      = self.config,
             debug       = self.debug,
             ping_sqlcl  = ping_sqlcl,
             silent      = silent
         )
+        self.object_prefix = (conn.tns.get('prefix') or '') + '%'
+        return conn
 
 
 

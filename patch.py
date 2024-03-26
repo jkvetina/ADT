@@ -749,7 +749,8 @@ class Patch(config.Config):
                 if file == '{}f{}/f{}.sql'.format(self.config.path_apex, app_id, app_id).replace('//', '/'):
                     continue
                 #
-                files_to_process[file] = File(file, config = self.config)
+                short = file.replace(self.repo_root, '')
+                files_to_process[file] = self.repo_files.get(short) or File(file, config = self.config)
 
             # find files in groups so we can skip templates or not
             files_grouped = {}

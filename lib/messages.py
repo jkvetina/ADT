@@ -11,13 +11,15 @@ simple = {
                     "type": "TextBlock",
                     "size": "Large",
                     "weight": "Bolder",
-                    "text": "#TITLE#",
+                    "text": "#",
                     "style": "heading",
                 },
                 {
                     "type": "TextBlock",
-                    "text": "#MESSAGE#",
+                    "text": "#",
                 }
+            ],
+            "actions": [
             ],
             "$schema": "http://adaptivecards.io/schemas/adaptive-card.json",
             "version": "1.0",
@@ -29,12 +31,18 @@ simple = {
     }]
 }
 
+action_link = {
+    "type"  : "Action.OpenUrl",
+    "title" : "#",
+    "url"   : "#"
+}
+
 mentions = {
     "type"      : "mention",
-    "text"      : "#AUTHOR#",
+    "text"      : "#",
     "mentioned" : {
-        "id"    : "#AUTHOR_MAIL#",
-        "name"  : "#AUTHOR_NAME#"
+        "id"    : "#",
+        "name"  : "#"
     }
 }
 
@@ -56,10 +64,10 @@ table_header_col = {
         {
             "type"      : "TextBlock",
             "weight"    : "Bolder",
-            "text"      : "#TEXT#"
+            "text"      : "#"
         }
     ],
-    "width": "#WIDTH#"
+    "width": "stretch"
 }
 
 table_row = {
@@ -74,9 +82,9 @@ table_row_col = {
     "items": [
         {
             "type": "TextBlock",
-            "text": "#TEXT#",
+            "text": "#",
         }
     ],
-    "width": "#WIDTH#"
+    "width": "stretch"
 }
 

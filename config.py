@@ -475,6 +475,35 @@ class Config(util.Attributed):
 
 
 
+    def sort_objects(self, todo = []):
+        if todo != []:
+            self.objects_todo = todo
+        self.objects_processed  = []
+        self.objects_path       = []
+        #
+        for obj_code in self.objects_todo:
+            self.sort_objects__(obj_code)
+        #
+        return self.objects_processed
+
+
+
+    def sort_objects__(self, obj_code, caller = '', level = 0):
+        level = level + 1
+        if caller != '':
+            self.objects_path.append(caller)
+        #
+        for obj in self.dependencies.get(obj_code, []):
+            if (obj in self.objects_path or obj in self.objects_processed or obj == caller):
+                continue
+            #
+            self.sort_objects__(obj, caller = obj_code, level = level)
+        #
+        if not (obj_code in self.objects_processed):
+            self.objects_processed.append(obj_code)
+
+
+
     def check_arguments(self):
         # check required arguments
         missing_args = {}

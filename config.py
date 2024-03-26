@@ -689,7 +689,7 @@ class Config(util.Attributed):
 
 
 
-    def create_message(self, title, message, blocks = [], mentions = {}):
+    def create_message(self, title, message, blocks = [], mentions = {}, actions = []):
         payload = copy.deepcopy(messages.simple)
 
         # prepare title and message
@@ -711,6 +711,15 @@ class Config(util.Attributed):
                 mention['mentioned']['id']   = user_mail
                 mention['mentioned']['name'] = user_name
                 payload['attachments'][0]['content']['msteams']['entities'].append(mention)
+
+        # add buttons
+        if len(actions) > 0:
+            for action_data in actions:
+                for title, url in action_data.items():
+                    action = copy.deepcopy(messages.action_link)
+                    action['title'] = title
+                    action['url']   = url
+                    payload['attachments'][0]['content']['actions'].append(action)
 
         # add extra blocks
         for block in blocks:
@@ -760,8 +769,8 @@ class Config(util.Attributed):
 
 
 
-    def notify_team(self, title, message, blocks = [], mentions = {}):
-        payload = self.create_message(title, message, blocks = blocks, mentions = mentions)
+    def notify_team(self, title, message, blocks = [], mentions = {}, actions = []):
+        payload = self.create_message(title, message, blocks = blocks, mentions = mentions, actions = actions)
         if not self.config.teams_webhoook:
             return
         requests.post(self.config.teams_webhoook, json = payload)

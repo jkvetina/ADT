@@ -366,8 +366,17 @@ class Patch(config.Config):
             blocks.append('')
             blocks.extend(commits)
 
+            # find most recent patch commit
+            last_commit = self.relevant_commits[0]
+            last_commit = self.all_commits[last_commit]
+
+            # add links to GitHub
+            actions = [
+                {'View on GitHub' : self.repo_url.replace('.git', '/commit/' + last_commit['id'])},
+            ]
+
             # put it together
-            self.notify_team(title, message, blocks = blocks)
+            self.notify_team(title, message, blocks = blocks, actions = actions)
 
 
 

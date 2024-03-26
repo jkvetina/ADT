@@ -92,6 +92,8 @@ class Patch(config.Config):
         self.deploy_conn        = {}
         self.logs_prefix        = self.config.patch_deploy_logs.replace('{$TARGET_ENV}', self.target_env)
         self.script_stats       = {}
+        self.all_objects_sorted = []
+        self.dependencies_file  = '{}/config/db_dependencies.yaml'.format(self.repo_root)
 
         # set current commit to the head and search through recent commits
         self.current_commit_obj = self.repo.commit('HEAD')
@@ -113,6 +115,10 @@ class Patch(config.Config):
             self.archive_patches(self.args.archive)
             util.quit()
 
+        # load dependencies from file
+        if os.path.exists(self.dependencies_file):
+            with open(self.dependencies_file, 'rt', encoding = 'utf-8') as f:
+                self.all_objects_sorted = dict(util.get_yaml(f, self.dependencies_file))['sorted']
         # show recent commits and patches
         if self.patch_code:
             # show recent commits for selected patch
@@ -796,8 +802,19 @@ class Patch(config.Config):
                         if not (file in files_processed):
                             files_processed.append(file)
 
-                # @TODO: need to sort these files by dependencies
+                # sort files by dependencies
+                todo, indexes = [], []
                 for file in files:
+                    if not (file in files_processed):
+                        short       = file.replace(self.repo_root, '')
+                        obj         = self.repo_files.get(short) or File(file, config = self.config)
+                        obj_code    = '{}.{}'.format(obj['object_type'], obj['object_name'])
+                        index       = self.all_objects_sorted.index(obj_code)
+                        #
+                        todo.append(file)
+                        indexes.append(index)
+                #
+                for file in [x for _, x in sorted(zip(indexes, todo))]:
                     if not (file in files_processed):
                         files_processed.append(file)
 

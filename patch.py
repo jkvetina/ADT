@@ -44,7 +44,7 @@ class Patch(config.Config):
         self.patch_seq          = self.args.create
         self.search_message     = self.args.search or [self.patch_code]
         self.info.branch        = self.args.branch or self.config.repo_branch or self.info.branch or str(self.repo.active_branch)
-        self.add_commits        = self.args.add
+        self.add_commits        = self.args.commit
         self.ignore_commits     = self.args.ignore
         self.full_exports       = self.args.full
         self.target_env         = self.args.deploy if isinstance(self.args.deploy, str) and len(self.args.deploy) > 0 else self.args.target
@@ -640,7 +640,7 @@ class Patch(config.Config):
                 commits_map[commit] = ref
 
         # show relevant recent commits
-        header  = 'REQUESTED' if (self.args.add != [] or self.args.ignore != []) else 'RELEVANT'
+        header  = 'REQUESTED' if (self.add_commits != [] or self.ignore_commits != []) else 'RELEVANT'
         data    = []
         #
         for commit_id in sorted(self.relevant_commits, reverse = True):
@@ -1466,7 +1466,7 @@ if __name__ == "__main__":
     #
     group = parser.add_argument_group('LIMIT SCOPE')
     group.add_argument('-search',       help = 'Search commits summary for provided words',                         nargs = '*',                default = None)
-    group.add_argument('-add',          help = 'Process just specific commits',                                     nargs = '*',                default = [])
+    group.add_argument('-commit',       help = 'Process just specific commits',                                     nargs = '*',                default = [])
     group.add_argument('-ignore',       help = 'Ignore specific commits',                                           nargs = '*',                default = [])
     group.add_argument('-full',         help = 'Specify APEX app(s) where to use full export',                      nargs = '*',                default = [])
     group.add_argument('-local',        help = 'Use local files and not files from Git',                            nargs = '?', const = True,  default = False)

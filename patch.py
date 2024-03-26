@@ -1445,18 +1445,18 @@ if __name__ == "__main__":
 
     # actions and flags
     group = parser.add_argument_group('MAIN ACTIONS')
-    group.add_argument('-commits',      help = 'To show number of recent commits',          type = int,             nargs = '?',                default = 0)
-    group.add_argument('-my',           help = 'Show only my commits',                                              nargs = '?', const = True,  default = False)
-    group.add_argument('-patches',      help = 'To show number of recent patches',          type = int,             nargs = '?',                default = 0)
     group.add_argument('-patch',        help = 'Patch code (name for the patch files)',                             nargs = '?')
     group.add_argument('-ref',          help = 'Patch reference (the number from screen)',  type = int,             nargs = '?')
     group.add_argument('-create',       help = 'To create patch with or without sequence',  type = util.is_boolstr, nargs = '?', const = True,  default = False)
-    group.add_argument('-archive',      help = 'To archive patches with specific ref #',    type = int,             nargs = '*',                default = [])
     group.add_argument('-deploy',       help = 'Deploy created patch right away',           type = util.is_boolstr, nargs = '?', const = True,  default = False)
     group.add_argument('-force',        help = 'Force (re)deployment',                                              nargs = '?', const = True,  default = False)
+    group.add_argument('-continue',     help = 'Rollback or continue on DB error',                                  nargs = '?', const = True,  default = False)
+    #
+    group = parser.add_argument_group('ADDITIONAL ACTIONS')
     group.add_argument('-fetch',        help = 'Fetch Git changes before patching',                                 nargs = '?', const = True,  default = False)
     group.add_argument('-rebuild',      help = 'Rebuild temp files',                                                nargs = '?', const = True,  default = False)
-    group.add_argument('-continue',     help = 'Rollback or continue on DB error',                                  nargs = '?', const = True,  default = False)
+    group.add_argument('-archive',      help = 'To archive patches with specific ref #',    type = int,             nargs = '*',                default = [])
+    group.add_argument('-install',      help = 'Create install file',                                               nargs = '?', const = True,  default = False)
     group.add_argument('-moveup',       help = 'Move driving patch files higher',                                   nargs = '?', const = True,  default = False)
     #
     group = parser.add_argument_group('SPECIFY ENVIRONMENT DETAILS')
@@ -1465,6 +1465,9 @@ if __name__ == "__main__":
     group.add_argument('-key',          help = 'Key or key location for passwords',                                 nargs = '?')
     #
     group = parser.add_argument_group('LIMIT SCOPE')
+    group.add_argument('-my',           help = 'Show only my commits',                                              nargs = '?', const = True,  default = False)
+    group.add_argument('-commits',      help = 'To show number of recent commits',          type = int,             nargs = '?',                default = 0)
+    group.add_argument('-patches',      help = 'To show number of recent patches',          type = int,             nargs = '?',                default = 0)
     group.add_argument('-search',       help = 'Search commits summary for provided words',                         nargs = '*',                default = None)
     group.add_argument('-commit',       help = 'Process just specific commits',                                     nargs = '*',                default = [])
     group.add_argument('-ignore',       help = 'Ignore specific commits',                                           nargs = '*',                default = [])

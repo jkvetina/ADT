@@ -5,6 +5,7 @@ import git          # pip3 install GitPython    --upgrade
 from lib import wrapper
 from lib import util
 from lib import messages
+from lib.file import File
 
 #
 #                                                      (R)
@@ -195,10 +196,15 @@ class Config(util.Attributed):
         if not os.path.exists(self.config.sqlcl_root):
             os.makedirs(self.config.sqlcl_root)
 
+        # structure for dependencies
+        self.repo_objects       = {}
+        self.repo_files         = {}
+
         # connect to repo, we need valid repo for everything
         self.init_repo()
         if __name__ != '__main__':
             self.init_connection()
+            self.get_objects()
 
         # different flow for direct call
         if __name__ == '__main__':
@@ -435,6 +441,17 @@ class Config(util.Attributed):
             ping_sqlcl  = ping_sqlcl,
             silent      = silent
         )
+
+
+
+    def get_objects(self):
+        for file in util.get_files('{}{}**/*.sql'.format(self.repo_root, self.config.path_objects)):
+            basename    = file.replace(self.repo_root, '')
+            file        = File(file, config = self.config)
+            obj_code    = '{}.{}'.format(file['object_type'], file['object_name'])
+            #
+            self.repo_objects[obj_code] = file
+            self.repo_files[basename]   = self.repo_objects[obj_code]
 
 
 

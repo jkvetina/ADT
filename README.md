@@ -7,23 +7,21 @@ It does not store anything in your database.
 
 I have been building these CI/CD tools since 2008 and ADT is the newest version, heavily based on the previous [OPY](https://github.com/jkvetina/OPY/tree/master) tool, which unfortunately outgrown to a hefty spaghetti code and became more and more difficult to extend. So, I have decided to start from scratch for like 15th time...
 
-Checkout the [install guide](./doc/install.md) and <ins>quick start guide</ins>.
+Checkout the [INSTALL guide](./doc/install.md).
 
 &nbsp;
 
-## Actions (progress 32/60, 52%)
+## Actions/Roadmap (progress 33/60, 55%)
 
 | Filename                                 | Description                                    | Status          | Complexity | Done
 | :-------                                 | :----------                                    | :-----          | ---------: | ---:
 | [`config.py`](./doc/config.md)           | to manage database connections and settings    | __Done__        |          5 | 5
-| [`export_db.py`](./doc/export_db.md)     | to export database objects                     | OPY **          |          9 |
-| [`export_apex.py`](./doc/export_apex.md) | to export APEX & REST services                 | __In Progress__ |          6 | 5
+| [`export_db.py`](./doc/export_db.md)     | to export database objects                     | OPY **          |          8 |
+| [`export_apex.py`](./doc/export_apex.md) | to export APEX & REST services                 | __Done__        |          7 | 7
 | [`export_data.py`](./doc/export_data.md) | to export data into CSV files                  | OPY **          |          4 |
-| [`patch.py`](./doc/patch.md)             | to prepare patch files from your changes       | __Done__        |         12 | 12
-| [`deploy.py`](./doc/deploy.md)           | to deploy your patch files                     | __In Progress__ |          8 | 7
-| [`compare.py`](./doc/compare.md)         | to compare two databases                       | Planned         |          9 |
+| [`patch.py`](./doc/patch.md)             | to prepare patch files and deploy them         | __In Progress__ |         20 | 19
+| [`compare.py`](./doc/compare.md)         | to compare two databases                       | Planned         |         10 |
 | [`recompile.py`](./doc/recompile.md)     | to recompile invalid objects                   | __Done__        |          1 | 1
-| [`install.py`](./doc/install.md)         | to create install script for tests             | Planned         |          1 | 1
 |                                          | documentation                                  | Planned         |          5 | 1
 
 \* Almost done, need some final adjustments.\
@@ -58,20 +56,22 @@ Checkout the [install guide](./doc/install.md) and <ins>quick start guide</ins>.
     - ✅ including application and workspace files
     - ⭕️ option to deploy exported files to specified environment
     - ⭕️ live upload for files
-    - ⭕️ export REST services as tree structure
+    - ✅ export REST services
 - ✅ it can __create patch files__ so you can easily deploy your database and APEX changes since last deployment, or based on your features/cards
     - ✅ it can connect to Git/BB to create a release notes for you
     - ✅ it can also create a patch file __based on a feature/card__, it will lookup which files were committed under that name and create a patch based on that (and even for APEX components so you dont have to deploy the whole app)
     - ✅ it allows you to search Git/BB history for specific string
     - ✅ include various checks and scope limits for what will be part of the patch
     - ✅ you can use sequences to sort patches created on same day, it checks for clashes
+    - ✅ files ar eproperly sorted based on dependencies
+    - ✅ statements in patch scripts converted to your templates so they can be rerun
 - ✅ it can also __deploy these patches__ to different environments (basically any database you can reach via direct connection on via a REST service)
     - ✅ multiple schemas patching (so far you manually specify order with numeric prefix on each patch file)
     - ✅ show progress, results and save output in customized log files
     - ✅ include various checks and logs to limit deployment issues
     - ✅ option to quickly deploy or redeploy created patch
-    - ✅ statements in patch scripts converted to your templates so they can be rerun
     - ⭕️ remote REST app deployment
+    - ✅ show patch result on Teams channel
 - ⭕️ generate __install script__ for test/local environments to install everything into a clean schema
 - ⭕️ it can __compare two databases__ and show you the differences and what you need to do to sync them, including the data changes
     - ⭕️ no false positives on different column positions, different identity column sequences, whitespaces...

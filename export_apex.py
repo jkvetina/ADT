@@ -429,6 +429,7 @@ class Export_APEX(config.Config):
         lines       = self.execute_request('rest export', app_id, lines = True)
         content     = []
         modules     = []
+        first       = []
         append      = False
 
         # split one file into dedicated files for each module
@@ -456,6 +457,22 @@ class Export_APEX(config.Config):
             #
             with open(file, 'wt', encoding = 'utf-8', newline = '\n') as w:
                 w.write('BEGIN\n{}\nEND;\n/\n'.format('\n'.join(list(filter(None, content)))))
+
+        # schema definition
+        file    = self.target_rest + '/__enable_schema.sql'
+        content = []
+        #
+        for line in first:
+            if line.startswith('BEGIN'):
+                continue
+            if line.startswith('-- Schema:'):
+                line = line.split(' Date:')[0]  # strip date
+            if line.startswith('END;'):
+                break
+            content.append(line.rstrip())
+        #
+        with open(file, 'wt', encoding = 'utf-8', newline = '\n') as w:
+            w.write('BEGIN\n{}\nEND;\n/\n'.format('\n'.join(list(filter(None, content)))))
 
 
 

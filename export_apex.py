@@ -455,8 +455,15 @@ class Export_APEX(config.Config):
             name = re.findall('[\'][^\']+[\']', content[1])[0].replace('\'', '')
             file = self.target_rest + '/' + name + '.sql'
             #
-            with open(file, 'wt', encoding = 'utf-8', newline = '\n') as w:
-                w.write('BEGIN\n{}\nEND;\n/\n'.format('\n'.join(list(filter(None, content)))))
+            found = len(self.config.apex_rest_prefixes) == 0
+            for prefix in self.config.apex_rest_prefixes:
+                if name.startswith(prefix):
+                    found = True
+                    break
+            #
+            if found:
+                with open(file, 'wt', encoding = 'utf-8', newline = '\n') as w:
+                    w.write('BEGIN\n{}\nEND;\n/\n'.format('\n'.join(list(filter(None, content)))))
 
         # schema definition
         file    = self.target_rest + '/__enable_schema.sql'

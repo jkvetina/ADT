@@ -152,6 +152,7 @@ apex_format_json        : False                 # export also in JSON format
 apex_format_yaml        : True                  # export also in YAML format
 apex_export_embedded    : False                 # export Embedded Code report
 apex_export_rest        : False                 # export rest services
+apex_rest_prefixes      : ['']                  # prefixes for REST modules
 apex_export_files       : False                 # export application & workspace files
 apex_export_files_ws    : False                 # export application & workspace files
 apex_delete_orig_files  : True                  # delete original (encoded) files

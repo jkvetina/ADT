@@ -93,7 +93,7 @@ class Patch(config.Config):
         self.logs_prefix        = self.config.patch_deploy_logs.replace('{$TARGET_ENV}', self.target_env)
         self.script_stats       = {}
         self.all_objects_sorted = []
-        self.dependencies_file  = '{}/config/db_dependencies.yaml'.format(self.repo_root)
+        self.obj_not_found      = []
 
         # set current commit to the head and search through recent commits
         self.current_commit_obj = self.repo.commit('HEAD')
@@ -806,10 +806,14 @@ class Patch(config.Config):
                 todo, indexes = [], []
                 for file in files:
                     if not (file in files_processed):
-                        short       = file.replace(self.repo_root, '')
-                        obj         = self.repo_files.get(short) or File(file, config = self.config)
-                        obj_code    = '{}.{}'.format(obj['object_type'], obj['object_name'])
-                        index       = self.all_objects_sorted.index(obj_code)
+                        short   = file.replace(self.repo_root, '')
+                        obj     = self.repo_files.get(short) or File(file, config = self.config)
+                        #
+                        if obj['object_code'] in self.all_objects_sorted:
+                            index   = self.all_objects_sorted.index(obj['object_code'])
+                        else:
+                            index   = 1000000 + len(self.obj_not_found)
+                            self.obj_not_found.append(obj['object_code'])
                         #
                         todo.append(file)
                         indexes.append(index)
@@ -957,6 +961,8 @@ class Patch(config.Config):
             self.create_patch_file(payload, app_id = app_id)
             util.print_header('PROCESSED FILES:', schema_with_app)
             for file in files_processed:
+                obj_code = self.repo_files.get(file, {}).get('object_code') or ''
+                #
                 if file.startswith(self.config.path_objects):
                     file = file.replace(self.config.path_objects, '')
                 elif file.startswith(self.config.path_apex):
@@ -969,7 +975,7 @@ class Patch(config.Config):
                             statements += 1
                     print('  > {} [{}]'.format(file, statements).replace(' [0]', ''))
                 else:
-                    print('  - {}'.format(file))
+                    print('  - {}{}'.format(file, ' *' if obj_code in self.obj_not_found else ''))
             print()
 
 

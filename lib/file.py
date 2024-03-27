@@ -47,6 +47,8 @@ class File(util.Attributed):
                 if ext in file:
                     self.object_type = folders[ext]
 
+            self.object_code    = '{}.{}'.format(self.object_type, self.object_name)
+
         #'hash_old'    : '',
         #'hash_new'    : ''
 

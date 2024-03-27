@@ -472,10 +472,10 @@ class Config(util.Attributed):
     def get_objects(self):
         for file in util.get_files('{}{}**/*.sql'.format(self.repo_root, self.config.path_objects)):
             basename    = file.replace(self.repo_root, '')
-            file        = File(file, config = self.config)
-            obj_code    = '{}.{}'.format(file['object_type'], file['object_name'])
+            obj         = File(file, config = self.config)
+            obj_code    = obj['object_code']
             #
-            self.repo_objects[obj_code] = file
+            self.repo_objects[obj_code] = obj
             self.repo_files[basename]   = self.repo_objects[obj_code]
 
 

@@ -867,7 +867,7 @@ class Patch(config.Config):
                 # attach the whole application for full imports
                 path = '{}f{}/'.format(self.config.path_apex, app_id).replace('//', '/')
                 file = '{}f{}.sql'.format(path, app_id)
-                file = self.create_file_snapshot(file, app_id = app_id)
+                file, _ = self.create_file_snapshot(file, app_id = app_id)
                 file = file.replace(self.patch_folder, '')       # replace first, full path
                 file = util.replace(self.config.patch_file_link if not self.patch_file_moveup else self.config.patch_file_link_moveup, {
                     '#FILE#' : file.lstrip('/'),
@@ -1076,7 +1076,7 @@ class Patch(config.Config):
         elif self.config.patch_scripts_dir in file:
             attach_type = 'SCRIPT'
         #
-        file = self.create_file_snapshot(file, app_id = app_id)
+        file, commit = self.create_file_snapshot(file, app_id = app_id)
         file = file.replace(self.patch_folder, '')       # replace first, full path
         file = file.replace(self.repo_root, '')
         file = file.replace(self.config.patch_template_dir, '')
@@ -1089,7 +1089,7 @@ class Patch(config.Config):
                 'PROMPT --;',
             ]
         payload.extend([
-            'PROMPT -- {}: {}'.format(attach_type or 'FILE', file),
+            'PROMPT -- {}{}: {}'.format(attach_type or 'FILE', ' #{}'.format(commit) if commit else '', file),
             util.replace(self.config.patch_file_link if not self.patch_file_moveup else self.config.patch_file_link_moveup, {
                 '#FILE#'        : file.lstrip('/'),
                 '#PATCH_CODE#'  : self.patch_code,
@@ -1141,6 +1141,7 @@ class Patch(config.Config):
     def create_file_snapshot(self, file, file_content = None, app_id = None, local = False):
         # create folders and copy files
         target_file = '{}/{}'.format(self.patch_folder, file).replace('//', '/')
+        commit_id   = ''
 
         # get real file content, not the git
         if (local or self.args.local or self.config.patch_template_dir in target_file or file.startswith(self.config.patch_scripts_snap)):
@@ -1158,7 +1159,8 @@ class Patch(config.Config):
 
         # get file content from commit, not local file
         if file_content == None:
-            file_content    = self.get_file_from_commit(file, commit = str(self.last_commit))
+            commit_hash, commit_id = self.get_file_commit(file)
+            file_content    = self.get_file_from_commit(file, commit = commit_hash)
 
         # check for empty file
         if (file_content == None or len(file_content) == 0):
@@ -1199,7 +1201,7 @@ class Patch(config.Config):
             with open(target_file, 'wt', encoding = 'utf-8', newline = '\n') as w:
                 w.write(file_content.rstrip() + '\n')
         #
-        return target_file
+        return (target_file, commit_id)
 
 
 
@@ -1267,6 +1269,26 @@ class Patch(config.Config):
         if payload != []:
             payload.append('')
         return payload
+
+
+
+    def get_file_commit(self, file):
+        last_commit     = ''
+        last_commit_id  = None
+        #
+        for commit_id in sorted(self.all_commits.keys(), reverse = True):
+            if not self.args.head and commit_id > self.last_commit_id:
+                continue
+            #
+            commit = self.all_commits[commit_id]
+            if file in commit['files']:
+                last_commit     = commit['id']
+                last_commit_id  = commit_id
+                #
+                if not commit['summary'].startswith('Merge'):
+                    break
+        #
+        return last_commit, last_commit_id
 
 
 
@@ -1497,6 +1519,7 @@ if __name__ == "__main__":
     group.add_argument('-ignore',       help = 'Ignore specific commits',                                           nargs = '*',                default = [])
     group.add_argument('-full',         help = 'Specify APEX app(s) where to use full export',                      nargs = '*',                default = [])
     group.add_argument('-local',        help = 'Use local files and not files from Git',                            nargs = '?', const = True,  default = False)
+    group.add_argument('-head',         help = 'Use file version from head commit',                                 nargs = '?', const = True,  default = False)
     #
     Patch(parser)
 

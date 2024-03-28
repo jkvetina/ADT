@@ -172,7 +172,10 @@ def remove_cloud_junk(root = ''):
         if '/.git/' in path:
             continue
         if len(os.listdir(path)) == 0:
-            os.rmdir(path)
+            try:
+                os.rmdir(path)
+            except:
+                pass
 
 
 

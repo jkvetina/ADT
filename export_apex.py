@@ -53,9 +53,10 @@ class Export_APEX(config.Config):
             os.makedirs(self.config.sqlcl_root, exist_ok = True)
 
         # for workspace and apps lists
-        self.apex_apps      = {}
-        self.apex_ws        = {}
-        self.comp_changed   = []  # components changes recently
+        self.apex_apps          = {}
+        self.apex_ws            = {}
+        self.comp_changed       = []  # components changes recently
+        self.workspace_offset   = None
 
         # scope
         self.arg_workspace  = self.args.ws      or self.conn.tns.get('workspace', '')
@@ -643,8 +644,19 @@ class Export_APEX(config.Config):
                 r",p_authentication_id=>wwv_flow_imp.id[(]([\d]+)[)]",
                 ",p_authentication_id=>wwv_flow_imp.id({})  -- {}".format(self.auth_scheme_id, self.auth_scheme_name))
 
+        # dont track offset on individual pages
+        if self.workspace_offset == None:
+            self.workspace_offset = util.extract_int(r",p_default_id_offset=>([\d]+)", new_content)
+            print('WORKSPACE OFFSET =', self.workspace_offset)
+        #
+        if not is_full:
+            new_content = util.replace(new_content,
+                r",p_default_id_offset=>([\d]+)",
+                ",p_default_id_offset=>0")
+
         # translate id to more meaningful names
         for component_id, component_name in self.enrich_ids.items():
+            component_id -= self.workspace_offset
             new_content = new_content.replace (
                 '.id({})\n'.format(component_id),
                 '.id({})  -- {}\n'.format(component_id, component_name))

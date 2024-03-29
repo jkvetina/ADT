@@ -204,11 +204,17 @@ class Config(util.Attributed):
         self.objects_todo       = []
         self.objects_processed  = []
         self.objects_path       = []
+        self.all_objects_sorted = []
 
         # some helping files
         self.dependencies_file  = '{}/config/db_dependencies.yaml'.format(self.repo_root)
         self.timers_file        = '{}/config/apex_timers.yaml'.format(self.repo_root)
         self.developers_file    = '{}/config/apex_developers.yaml'.format(self.repo_root)
+
+        # load dependencies from file
+        if os.path.exists(self.dependencies_file):
+            with open(self.dependencies_file, 'rt', encoding = 'utf-8') as f:
+                self.all_objects_sorted = dict(util.get_yaml(f, self.dependencies_file))['sorted']
 
         # connect to repo, we need valid repo for everything
         self.init_repo()
@@ -475,8 +481,9 @@ class Config(util.Attributed):
             obj         = File(file, config = self.config)
             obj_code    = obj['object_code']
             #
-            self.repo_objects[obj_code] = obj
-            self.repo_files[basename]   = self.repo_objects[obj_code]
+            if obj['object_type'] != '':
+                self.repo_objects[obj_code] = obj
+                self.repo_files[basename]   = self.repo_objects[obj_code]
 
 
 
@@ -506,6 +513,32 @@ class Config(util.Attributed):
         #
         if not (obj_code in self.objects_processed):
             self.objects_processed.append(obj_code)
+
+
+
+    def sort_files_by_deps(self, files):
+        out_files = []
+
+        # sort files by dependencies
+        todo, indexes = [], []
+        for file in files:
+            short   = file.replace(self.repo_root, '')
+            obj     = self.repo_files.get(short) or File(file, config = self.config)
+            #
+            if obj['object_code'] in self.all_objects_sorted:
+                index   = self.all_objects_sorted.index(obj['object_code'])
+            else:
+                index   = 1000000 + len(self.obj_not_found)
+                self.obj_not_found.append(obj['object_code'])
+            #
+            todo.append(file)
+            indexes.append(index)
+        #
+        for file in [x for _, x in sorted(zip(indexes, todo))]:
+            if not (file in out_files):
+                out_files.append(file)
+        #
+        return out_files
 
 
 

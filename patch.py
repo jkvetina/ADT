@@ -92,7 +92,6 @@ class Patch(config.Config):
         self.deploy_conn        = {}
         self.logs_prefix        = self.config.patch_deploy_logs.replace('{$TARGET_ENV}', self.target_env)
         self.script_stats       = {}
-        self.all_objects_sorted = []
         self.obj_not_found      = []
 
         # set current commit to the head and search through recent commits
@@ -115,10 +114,6 @@ class Patch(config.Config):
             self.archive_patches(self.args.archive)
             util.quit()
 
-        # load dependencies from file
-        if os.path.exists(self.dependencies_file):
-            with open(self.dependencies_file, 'rt', encoding = 'utf-8') as f:
-                self.all_objects_sorted = dict(util.get_yaml(f, self.dependencies_file))['sorted']
         # show recent commits and patches
         if self.patch_code:
             # show recent commits for selected patch
@@ -803,22 +798,7 @@ class Patch(config.Config):
                             files_processed.append(file)
 
                 # sort files by dependencies
-                todo, indexes = [], []
-                for file in files:
-                    if not (file in files_processed):
-                        short   = file.replace(self.repo_root, '')
-                        obj     = self.repo_files.get(short) or File(file, config = self.config)
-                        #
-                        if obj['object_code'] in self.all_objects_sorted:
-                            index   = self.all_objects_sorted.index(obj['object_code'])
-                        else:
-                            index   = 1000000 + len(self.obj_not_found)
-                            self.obj_not_found.append(obj['object_code'])
-                        #
-                        todo.append(file)
-                        indexes.append(index)
-                #
-                for file in [x for _, x in sorted(zip(indexes, todo))]:
+                for file in self.sort_files_by_deps(files):
                     if not (file in files_processed):
                         files_processed.append(file)
 

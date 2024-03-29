@@ -159,6 +159,8 @@ class Search_APEX(config.Config):
         os.makedirs(self.target_dir, exist_ok = True)
         #
         script = [
+            'SET TIMING OFF',
+            ''
             '--',
             '-- REFERENCED OBJECTS',
             '--',
@@ -169,6 +171,7 @@ class Search_APEX(config.Config):
             #
             script.extend([
                 '',
+                'PROMPT "";',
                 'PROMPT "-- REF: {}{}";'.format(self.patch_ref_dir, short),
                 '@"./{}{}"'.format(self.patch_ref_dir, short),
             ])

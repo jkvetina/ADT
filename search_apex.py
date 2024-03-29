@@ -167,7 +167,11 @@ class Search_APEX(config.Config):
             short       = source_file.replace(self.repo_root + self.config.path_objects, '').replace('/', '.')
             target_file = self.target_dir + short
             #
-            script.append('@"./{}{}"'.format(self.patch_ref_dir, short))
+            script.extend([
+                '',
+                'PROMPT "-- REF: {}{}";'.format(self.patch_ref_dir, short),
+                '@"./{}{}"'.format(self.patch_ref_dir, short),
+            ])
             #
             if os.path.exists(target_file):
                 os.remove(target_file)

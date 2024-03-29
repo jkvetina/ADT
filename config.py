@@ -198,6 +198,7 @@ class Config(util.Attributed):
             os.makedirs(self.config.sqlcl_root)
 
         # structure for dependencies
+        self.patch_grants       = self.repo_root + self.config.path_objects + self.config.patch_grants
         self.repo_objects       = {}
         self.repo_files         = {}
         self.dependencies       = {}
@@ -539,6 +540,36 @@ class Config(util.Attributed):
                 out_files.append(file)
         #
         return out_files
+
+
+
+    def get_grants_made(self, object_names = []):
+        payload = []
+
+        # get list of object names
+        if object_names == []:  #hasattr(self, 'diffs'):
+            for file in self.diffs:
+                object_name = os.path.basename(file).split('.')[0].upper()
+                object_names.append(object_name)
+
+        # grab the file with grants made
+        with open(self.patch_grants, 'rt', encoding = 'utf-8') as f:
+            file_content = f.readlines()
+            for line in file_content:
+                if line.startswith('--'):
+                    continue
+
+                # find match on object name
+                find_name = util.extract(r'\sON\s+(.*)\s+TO\s', line).upper()
+                #
+                for object_name in object_names:
+                    if object_name == find_name:
+                        payload.append(line.strip())
+                        break
+        #
+        if payload != []:
+            payload.append('')
+        return payload
 
 
 

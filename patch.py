@@ -63,7 +63,6 @@ class Patch(config.Config):
         self.patch_files        = []
         self.patch_files_apex   = []
         self.patch_file         = ''
-        self.patch_grants       = self.repo_root + self.config.path_objects + self.config.patch_grants
         self.patch_folder__     = self.repo_root + self.config.patch_root   + self.config.patch_folder
         self.patch_folder       = ''
         self.patch_folders      = {}
@@ -1224,31 +1223,6 @@ class Patch(config.Config):
         file    = '{}/{}'.format(first, '.'.join(file))
         file    = '{}/{}/{}'.format(self.patch_folder, self.config.apex_snapshots, file).replace('//', '/')
         return file
-
-
-
-    def get_grants_made(self):
-        payload = []
-
-        # grab the file with grants made
-        with open(self.patch_grants, 'rt', encoding = 'utf-8') as f:
-            file_content = f.readlines()
-            for line in file_content:
-                if line.startswith('--'):
-                    continue
-
-                # find match on object name
-                find_name = util.extract(r'\sON\s+(.*)\s+TO\s', line).upper()
-                #
-                for file in self.diffs:
-                    object_name = os.path.basename(file).split('.')[0].upper()
-                    if object_name == find_name:
-                        payload.append(line.strip())
-                        break
-        #
-        if payload != []:
-            payload.append('')
-        return payload
 
 
 

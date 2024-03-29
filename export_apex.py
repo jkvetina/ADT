@@ -157,6 +157,9 @@ class Export_APEX(config.Config):
                         timer = (timer + self.timers[app_id][action]) / 2
                     self.timers[app_id][action] = round(timer, 2)
 
+                # move files from temp folders right away after each block
+                self.move_files(app_id)
+
             # move files from temp folders to target folders
             self.move_files(app_id)
             self.move_ws_files()

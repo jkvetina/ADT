@@ -30,7 +30,7 @@ from lib import util
 # https://github.com/jkvetina/ADT
 #
 
-class Search(config.Config):
+class Search_APEX(config.Config):
 
     def __init__(self, parser):
         super().__init__(parser)
@@ -208,8 +208,6 @@ class Search(config.Config):
                 print('  - {}'.format(object_name))
             print()
 
-        print()
-
 
 
 if __name__ == "__main__":
@@ -226,5 +224,5 @@ if __name__ == "__main__":
     group.add_argument('-type',         help = 'To limit object types',                                             nargs = '*', default = [])
     group.add_argument('-name',         help = 'To limit object name',                                              nargs = '*', default = [])
     #
-    Search(parser)
+    Search_APEX(parser)
 

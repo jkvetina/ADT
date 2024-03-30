@@ -55,12 +55,12 @@ class Search_APEX(config.Config):
         self.limit_type     = self.args.type or []
         self.limit_name     = self.args.name or []
         #
-        self.refs_dir       = 'refs/'
-        self.append_dir     = 'append/'
+        self.refs_name      = 'refs/'
+        self.append_name    = 'append/'
         #
         self.source_dir     = self.repo_root + self.config.path_apex + 'f{}/'.format(self.limit_app_id)
-        self.target_dir     = self.repo_root + self.config.patch_scripts_dir.replace('{$PATCH_CODE}', self.patch_code) + self.refs_dir
-        self.append_dir     = self.repo_root + self.config.patch_scripts_dir.replace('{$PATCH_CODE}', self.patch_code) + self.append_dir
+        self.target_dir     = self.repo_root + self.config.patch_scripts_dir.replace('{$PATCH_CODE}', self.patch_code) + self.refs_name
+        self.append_dir     = self.repo_root + self.config.patch_scripts_dir.replace('{$PATCH_CODE}', self.patch_code) + self.append_name
 
         # parse all embedded code files for object names based by schema prefix
         all_tags = {}
@@ -174,7 +174,7 @@ class Search_APEX(config.Config):
         ]
         for source_file in self.sort_files_by_deps(found_files):
             if self.config.patch_scripts_snap in source_file:
-                source_file = source_file.replace(self.append_dir, self.append_dir)
+                source_file = source_file.replace(self.append_dir, self.append_name)
                 script.extend([
                     '',
                     'PROMPT "";',
@@ -183,15 +183,15 @@ class Search_APEX(config.Config):
                 ])
                 #
                 if self.debug:
-                    print('  - {}'.format(source_file.replace(self.append_dir, '')))
+                    print('  - {}'.format(source_file.replace(self.append_name, '')))
             else:
                 short       = source_file.replace(self.repo_root + self.config.path_objects, '').replace('/', '.')
                 target_file = self.target_dir + short
                 script.extend([
                     '',
                     'PROMPT "";',
-                    'PROMPT "-- REF: {}{}";'.format(self.refs_dir, short),
-                    '@"./{}{}"'.format(self.refs_dir, short),
+                    'PROMPT "-- REF: {}{}";'.format(self.refs_name, short),
+                    '@"./{}{}"'.format(self.refs_name, short),
                 ])
                 #
                 if os.path.exists(target_file):
@@ -220,7 +220,7 @@ class Search_APEX(config.Config):
                 script.append(grant)
 
         # create script to install objects in proper oder
-        script_file = self.target_dir.replace(self.refs_dir, self.refs_dir.rstrip('/') + '.sql')
+        script_file = self.target_dir.replace(self.refs_name, self.refs_name.rstrip('/') + '.sql')
         with open(script_file, 'wt') as w:
             w.write('\n'.join(script) + '\n')
 

@@ -65,8 +65,7 @@ class Search_APEX(config.Config):
         self.append_dir     = self.repo_root + self.config.patch_scripts_dir.replace('{$PATCH_CODE}', self.patch_code) + self.append_name
 
         # parse all embedded code files for object names based by schema prefix
-        all_tags    = {}
-        ref_tags    = {}
+        page_tags   = {}
         found_files = []
         found_obj   = []
         data        = []
@@ -89,14 +88,11 @@ class Search_APEX(config.Config):
                         if not util.get_match(object_name, self.limit_name):
                             continue
                         #
-                        if not (tag in all_tags):
-                            all_tags[object_name] = 0
-                        all_tags[object_name] += 1
-                        #
-                        if not (object_name in ref_tags):
-                            ref_tags[object_name] = []
-                        if not (file in ref_tags[object_name]):
-                            ref_tags[object_name].append(file)
+                        page_id = util.extract_int('/page_(\d+)\.sql', file)
+                        if not (object_name in page_tags):
+                            page_tags[object_name] = []
+                        if page_id != None and not (page_id in page_tags[object_name]):
+                            page_tags[object_name].append(page_id)
 
         # connect to database to get list of referenced objects
         schema = self.connection.get('schema_apex') or self.connection.get('schema_db')
@@ -114,20 +110,19 @@ class Search_APEX(config.Config):
             if not util.get_match(obj.object_type, self.limit_type):
                 continue
             #
-            if not (tag in all_tags):
-                all_tags[row.object_name] = 0
-            if not (row.object_name in ref_tags):
-                ref_tags[row.object_name] = []
+            if not (row.object_name in page_tags):
+                page_tags[row.object_name] = []
+            if row.page_id != None and not (row.page_id in page_tags[row.object_name]):
+                page_tags[row.object_name].append(row.page_id)
 
         # create overview
-        for object_name in sorted(all_tags.keys()):
+        for object_name in sorted(page_tags.keys()):
             obj = self.get_object(object_name = object_name)
             if obj == {}:
                 data.append({
                     'object_name'   : object_name,
                     'type'          : '?',
-                    'pages'         : len(ref_tags[object_name]),
-                    'refs'          : all_tags[object_name],
+                    'pages'         : page_tags[object_name],
                 })
                 continue
 
@@ -149,8 +144,7 @@ class Search_APEX(config.Config):
             data.append({
                 'object_name'   : obj['object_name'],
                 'type'          : obj['object_type'].replace(' BODY', ''),
-                'pages'         : len(ref_tags[obj['object_name']]),
-                'refs'          : all_tags[obj['object_name']],
+                'pages'         : page_tags[obj['object_name']],
             })
 
         # append files from append folder
@@ -168,12 +162,15 @@ class Search_APEX(config.Config):
                         'object_name'   : obj['object_name'],
                         'type'          : obj['object_type'],
                         'pages'         : None,
-                        'refs'          : None,
                     })
+        #
+        for i, row in enumerate(data):
+            data[i]['pages']    = str(sorted(row['pages']))[1:-1]
+            data[i]['type']     = row['type'] if row['type'] == '?' else ''
 
         # show overview
         util.print_header('{} OBJECTS FROM EMBEDDED CODE:'.format(self.limit_schema), ' ({})'.format(len(data)))
-        util.print_table(data, right_align = ['pages', 'refs'])
+        util.print_table(data)
 
         # without patch code just show overview on screen
         if not self.patch_code:

@@ -175,3 +175,32 @@ CREATE UNIQUE INDEX ..._uq ON ... (
 );
 """
 
+referenced_objects = """
+SELECT
+    p.page_id,
+    'PROCESS:' || p.process_point_code  AS source,
+    p.attribute_02                      AS owner,
+    p.attribute_03                      AS object_name,
+    p.attribute_04                      AS module_name
+FROM apex_application_page_proc p
+WHERE p.application_id          = :app_id
+    AND p.process_type_code     = 'NATIVE_INVOKE_API'
+--
+UNION ALL
+SELECT
+    NULL                            AS page_id,
+    'LOV:' || t.list_of_values_name AS source,
+    t.table_owner                   AS owner,
+    t.table_name                    AS object_name,
+    NULL                            AS module_name
+FROM apex_application_lovs t
+WHERE t.application_id          = :app_id
+    AND t.location_code         = 'LOCAL'
+    AND t.source_type_code      = 'TABLE'
+ORDER BY
+    source,
+    page_id,
+    owner,
+    object_name
+"""
+

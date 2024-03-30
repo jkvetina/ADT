@@ -3,6 +3,7 @@ import sys, os, re, argparse
 #
 import config
 from lib import util
+from lib import queries_recompile as query
 from lib.file import File
 
 #
@@ -64,8 +65,13 @@ class Search_APEX(config.Config):
         self.append_dir     = self.repo_root + self.config.patch_scripts_dir.replace('{$PATCH_CODE}', self.patch_code) + self.append_name
 
         # parse all embedded code files for object names based by schema prefix
-        all_tags = {}
-        ref_tags = {}
+        all_tags    = {}
+        ref_tags    = {}
+        found_files = []
+        found_obj   = []
+        data        = []
+        objects     = self.repo_objects.keys()
+        #
         for file in util.get_files('{}embedded_code/**/*.sql'.format(self.source_dir)):
             # search for specific pages
             if len(self.limit_pages) > 0:
@@ -105,22 +111,18 @@ class Search_APEX(config.Config):
                         if not (file in ref_tags[tag]):
                             ref_tags[tag].append(file)
 
-        # append files from append folder
-        # so you can attach any files you want before they get sorted
-        # and also you dont have to care about the grants
-        found_files = []
-        data        = []
-        objects     = self.repo_objects.keys()
+        # connect to database to get list of referenced objects
+        schema = self.connection.get('schema_apex') or self.connection.get('schema_db')
+        self.init_connection(schema_name = schema)
+        self.conn = self.db_connect(ping_sqlcl = False, silent = True)
+        self.info['schema'] = self.connection.get('schema_db')  # to have proper grants
         #
-        for file in util.get_files(self.append_dir + '**/*.sql'):
-            found_files.append(file)
-            obj = File(file, config = self.config)
-            data.append({
-                'object_name'   : obj['object_name'],
-                'object_type'   : obj['object_type'],
-                'pages'         : None,
-                'references'    : None,
-            })
+        for row in self.conn.fetch_assoc(query.referenced_objects, app_id = self.limit_app_id):
+            tag = '{}.{}'.format(row.owner, row.object_name)
+            if not (tag in all_tags):
+                all_tags[tag] = 0
+            if not (tag in ref_tags):
+                ref_tags[tag] = []
 
         # create overview
         for tag in sorted(all_tags.keys()):
@@ -154,13 +156,32 @@ class Search_APEX(config.Config):
             if not (obj['file'] in found_files):
                 found_files.append(obj['file'])
             #
+            found_obj.append('{}.{}'.format(obj['object_name'], obj['object_type'].replace(' BODY', '')))
             data.append({
                 'object_name'   : obj['object_name'],
                 'object_type'   : obj['object_type'].replace(' BODY', ''),
                 'pages'         : len(ref_tags[tag]),
                 'references'    : all_tags[tag],
             })
-        #
+
+        # append files from append folder
+        # so you can attach any files you want before they get sorted
+        # and also you dont have to care about the grants
+        for file in util.get_files(self.append_dir + '**/*.sql'):
+            obj         = File(file, config = self.config)
+            obj_code    = '{}.{}'.format(obj['object_name'], obj['object_type'])
+            #
+            if not (obj_code in found_obj):
+                found_obj.append(obj_code)
+                found_files.append(file)
+                data.append({
+                    'object_name'   : obj['object_name'],
+                    'object_type'   : obj['object_type'],
+                    'pages'         : None,
+                    'references'    : None,
+                })
+
+        # show overview
         util.print_header('{} OBJECTS FROM EMBEDDED CODE:'.format(self.limit_schema), ' ({})'.format(len(data)))
         util.print_table(data)
 

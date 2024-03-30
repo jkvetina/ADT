@@ -118,6 +118,8 @@ class Search_APEX(config.Config):
         self.info['schema'] = self.connection.get('schema_db')  # to have proper grants
         #
         for row in self.conn.fetch_assoc(query.referenced_objects, app_id = self.limit_app_id):
+            if len(self.limit_pages) > 0 and not (row.page_id in self.limit_pages):
+                continue
             tag = '{}.{}'.format(row.owner, row.object_name)
             if not (tag in all_tags):
                 all_tags[tag] = 0
@@ -168,19 +170,20 @@ class Search_APEX(config.Config):
         # append files from append folder
         # so you can attach any files you want before they get sorted
         # and also you dont have to care about the grants
-        for file in util.get_files(self.append_dir + '**/*.sql'):
-            obj         = File(file, config = self.config)
-            obj_code    = '{}.{}'.format(obj['object_type'], obj['object_name'])
-            #
-            if not (obj_code in found_obj) and not (obj_code.replace(' BODY.', '.') in found_obj):
-                found_obj.append(obj_code)
-                found_files.append(file)
-                data.append({
-                    'object_name'   : obj['object_name'],
-                    'object_type'   : obj['object_type'],
-                    'pages'         : None,
-                    'references'    : None,
-                })
+        if len(self.limit_pages) == 0:
+            for file in util.get_files(self.append_dir + '**/*.sql'):
+                obj         = File(file, config = self.config)
+                obj_code    = '{}.{}'.format(obj['object_type'], obj['object_name'])
+                #
+                if not (obj_code in found_obj) and not (obj_code.replace(' BODY.', '.') in found_obj):
+                    found_obj.append(obj_code)
+                    found_files.append(file)
+                    data.append({
+                        'object_name'   : obj['object_name'],
+                        'type'          : obj['object_type'],
+                        'pages'         : None,
+                        'refs'          : None,
+                    })
 
         # show overview
         util.print_header('{} OBJECTS FROM EMBEDDED CODE:'.format(self.limit_schema), ' ({})'.format(len(data)))

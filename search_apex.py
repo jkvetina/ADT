@@ -163,10 +163,12 @@ class Search_APEX(config.Config):
                         'type'          : obj['object_type'],
                         'pages'         : None,
                     })
-        #
+
+        # adjust overview
         for i, row in enumerate(data):
-            data[i]['pages']    = str(sorted(row['pages']))[1:-1]
-            data[i]['type']     = row['type'] if row['type'] == '?' else ''
+            data[i]['pages']        = str(sorted(row['pages']))[1:-1]
+            data[i]['object_name']  = ('? ' if row['type'] == '?' else '') + row['object_name']
+            data[i].pop('type')
 
         # show overview
         util.print_header('{} OBJECTS FROM EMBEDDED CODE:'.format(self.limit_schema), ' ({})'.format(len(data)))

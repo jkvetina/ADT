@@ -179,6 +179,20 @@ def remove_cloud_junk(root = ''):
 
 
 
+def get_match(search, where, basic = False):
+    if len(where) > 0:
+        for name in where:
+            if basic and name in search:
+                return True
+            #
+            name = '^(' + name.replace('%', '.*') + ')$'
+            if extract(name, search):
+                return True
+        return False
+    return True
+
+
+
 def get_encryption_key(password, salt):
     k = PBKDF2HMAC(
         algorithm   = hashes.SHA256(),

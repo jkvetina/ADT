@@ -74,42 +74,29 @@ class Search_APEX(config.Config):
         #
         for file in util.get_files('{}embedded_code/**/*.sql'.format(self.source_dir)):
             # search for specific pages
-            if len(self.limit_pages) > 0:
-                found = False
-                for page in self.limit_pages:
-                    page = '/pages/page_{}.sql'.format(str(page).rjust(5, '0'))
-                    if page in file:
-                        found = True
-                        break
-                if not found:
-                    continue
+            limit_pages = []
+            for page in self.limit_pages:
+                limit_pages.append('page_{}.sql'.format(str(page).rjust(5, '0')))
+            #
+            if not util.get_match(os.path.basename(file), limit_pages):
+                continue
 
             # search for object names
-            file_tags = {}
             with open (file, 'rt', encoding = 'utf-8') as f:
                 for line in f.readlines():
                     for tag in re.findall(self.limit_schema + r'\.[A-Z0-9\$_-]+', line.upper()):
-                        found = False
-                        if len(self.limit_name) > 0:
-                            for name in self.limit_name:
-                                name = '^(' + name.replace('%', '.*') + ')$'
-                                if util.extract(name, tag):
-                                    found = True
-                                    break
-                            if not found:
-                                continue
+                        object_name = tag.split('.')[1]
+                        if not util.get_match(object_name, self.limit_name):
+                            continue
                         #
-                        if not (tag in file_tags):
-                            file_tags[tag] = 0
-                        file_tags[tag] += 1
                         if not (tag in all_tags):
-                            all_tags[tag] = 0
-                        all_tags[tag] += 1
+                            all_tags[object_name] = 0
+                        all_tags[object_name] += 1
                         #
-                        if not (tag in ref_tags):
-                            ref_tags[tag] = []
-                        if not (file in ref_tags[tag]):
-                            ref_tags[tag].append(file)
+                        if not (object_name in ref_tags):
+                            ref_tags[object_name] = []
+                        if not (file in ref_tags[object_name]):
+                            ref_tags[object_name].append(file)
 
         # connect to database to get list of referenced objects
         schema = self.connection.get('schema_apex') or self.connection.get('schema_db')
@@ -120,34 +107,33 @@ class Search_APEX(config.Config):
         for row in self.conn.fetch_assoc(query.referenced_objects, app_id = self.limit_app_id):
             if len(self.limit_pages) > 0 and not (row.page_id in self.limit_pages):
                 continue
-            tag = '{}.{}'.format(row.owner, row.object_name)
+            if not util.get_match(row.object_name, self.limit_name):
+                continue
+            #
+            obj = self.get_object(object_name = row.object_name)
+            if not util.get_match(obj.object_type, self.limit_type):
+                continue
+            #
             if not (tag in all_tags):
-                all_tags[tag] = 0
-            if not (tag in ref_tags):
-                ref_tags[tag] = []
+                all_tags[row.object_name] = 0
+            if not (row.object_name in ref_tags):
+                ref_tags[row.object_name] = []
 
         # create overview
-        for tag in sorted(all_tags.keys()):
-            obj = self.get_object(object_name = tag.split('.')[1])
+        for object_name in sorted(all_tags.keys()):
+            obj = self.get_object(object_name = object_name)
             if obj == {}:
                 data.append({
-                    'object_name'   : tag.split('.')[1],
+                    'object_name'   : object_name,
                     'type'          : '?',
-                    'pages'         : len(ref_tags[tag]),
-                    'refs'          : all_tags[tag],
+                    'pages'         : len(ref_tags[object_name]),
+                    'refs'          : all_tags[object_name],
                 })
                 continue
 
             # limit scope
-            if len(self.limit_type) > 0:
-                found = False
-                for type_ in self.limit_type:
-                    type_ = '^(' + type_.replace('%', '.*') + ')$'
-                    if util.extract(type_, obj['object_type']):
-                        found = True
-                        break
-                if not found:
-                    continue
+            if not util.get_match(obj['object_type'], self.limit_type):
+                continue
 
             # need to add specification too
             if ' BODY' in obj['object_type']:
@@ -163,8 +149,8 @@ class Search_APEX(config.Config):
             data.append({
                 'object_name'   : obj['object_name'],
                 'type'          : obj['object_type'].replace(' BODY', ''),
-                'pages'         : len(ref_tags[tag]),
-                'refs'          : all_tags[tag],
+                'pages'         : len(ref_tags[obj['object_name']]),
+                'refs'          : all_tags[obj['object_name']],
             })
 
         # append files from append folder

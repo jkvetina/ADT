@@ -197,6 +197,18 @@ FROM apex_application_lovs t
 WHERE t.application_id          = :app_id
     AND t.location_code         = 'LOCAL'
     AND t.source_type_code      = 'TABLE'
+--
+UNION ALL
+SELECT
+    t.page_id,
+    'REGION:' || t.region_name      AS source,
+    t.table_owner                   AS owner,
+    t.table_name                    AS object_name,
+    NULL                            AS module_name
+FROM apex_application_page_regions t
+WHERE t.application_id          = :app_id
+    AND t.location_code         = 'LOCAL'
+    AND t.table_name            IS NOT NULL
 ORDER BY
     source,
     page_id,

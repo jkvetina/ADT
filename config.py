@@ -523,9 +523,13 @@ class Config(util.Attributed):
         # sort files by dependencies
         todo, indexes = [], []
         for file in files:
-            short   = file.replace(self.repo_root, '')
-            obj     = self.repo_files.get(short) or File(file, config = self.config)
-            #
+            # if file is on different path, get object from the original file
+            short = file.replace(self.repo_root, '')
+            if '/' in short and not (self.config.path_objects in short):
+                short = self.config.path_objects + '/'.join(os.path.basename(short).split('.', maxsplit = 1))
+
+            # get file object with some details/metadata
+            obj = self.repo_files.get(short) or File(file, config = self.config)
             if obj['object_code'] in self.all_objects_sorted:
                 index   = self.all_objects_sorted.index(obj['object_code'])
             else:
@@ -547,7 +551,7 @@ class Config(util.Attributed):
         payload = []
 
         # get list of object names
-        if object_names == []:  #hasattr(self, 'diffs'):
+        if object_names == [] and 'diffs' in self:
             for file in self.diffs:
                 object_name = os.path.basename(file).split('.')[0].upper()
                 object_names.append(object_name)

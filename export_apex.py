@@ -647,7 +647,8 @@ class Export_APEX(config.Config):
         # dont track offset on individual pages
         if self.workspace_offset == None:
             self.workspace_offset = util.extract_int(r",p_default_id_offset=>([\d]+)", new_content)
-            print('WORKSPACE OFFSET =', self.workspace_offset)
+            if self.workspace_offset > 0 and self.debug:
+                print('    WORKSPACE OFFSET:', self.workspace_offset)
         #
         if not is_full:
             new_content = util.replace(new_content,

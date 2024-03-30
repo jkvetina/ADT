@@ -3,6 +3,7 @@ import sys, os, re, argparse
 #
 import config
 from lib import util
+from lib.file import File
 
 #
 #                                                      (R)
@@ -113,7 +114,7 @@ class Search_APEX(config.Config):
         #
         for file in util.get_files(self.append_dir + '**/*.sql'):
             found_files.append(file)
-            obj = self.get_object(object_name = os.path.basename(file).split('.')[1].upper(), file = file)
+            obj = File(file, config = self.config)
             data.append({
                 'object_name'   : obj['object_name'],
                 'object_type'   : obj['object_type'],
@@ -132,10 +133,8 @@ class Search_APEX(config.Config):
                     'references'    : all_tags[tag],
                 })
                 continue
-            #
-            if not (obj['file'] in found_files):
-                found_files.append(obj['file'])
-            #
+
+            # limit scope
             if len(self.limit_type) > 0:
                 found = False
                 for type_ in self.limit_type:
@@ -145,13 +144,19 @@ class Search_APEX(config.Config):
                         break
                 if not found:
                     continue
+
+            # need to add specification too
+            if ' BODY' in obj['object_type']:
+                spec = self.get_object(object_name = obj['object_name'], object_type = obj['object_type'].replace(' BODY', ''))
+                if not (spec['file'] in found_files):
+                    found_files.append(spec['file'])
             #
-            if ' BODY' in obj['object_type']:      # dont show bodies
-                continue
+            if not (obj['file'] in found_files):
+                found_files.append(obj['file'])
             #
             data.append({
                 'object_name'   : obj['object_name'],
-                'object_type'   : obj['object_type'],
+                'object_type'   : obj['object_type'].replace(' BODY', ''),
                 'pages'         : len(ref_tags[tag]),
                 'references'    : all_tags[tag],
             })
@@ -235,17 +240,6 @@ class Search_APEX(config.Config):
             for object_name in unknown:
                 print('  - {}'.format(object_name))
             print()
-
-
-
-    def get_object(self, object_name, file = ''):
-        objects = self.repo_objects.keys()
-        for obj_code in objects:
-            if obj_code.endswith('.' + object_name):
-                if '.spec.sql' in file and ' BODY' in obj_code:
-                    continue
-                return self.repo_objects[obj_code]
-        return {}
 
 
 

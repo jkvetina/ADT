@@ -12,6 +12,17 @@ class File(util.Attributed):
         self.is_template    = False
         self.is_script      = False
 
+        object_types = config.object_types.items()
+
+        # change file name on alternative file names (/type.name.sql) to correctly detect object type
+        base = os.path.basename(file).split('.')
+        if len(base) > 2:
+            for object_type, info in object_types:
+                folder, ext = info
+                if folder.rstrip('/') == base[0]:
+                    file = file.replace('/{}.{}'.format(base[0], base[1]), '/{}/{}'.format(base[0], base[1]))
+                    break
+
         # check for APEX stuff
         find_app    = re.search('/f(\d+)/', self.file)
         find_page   = re.search('/f\d+/application/pages/page_(\d+)\.sql$', self.file)
@@ -38,17 +49,14 @@ class File(util.Attributed):
 
             # fix type check for SPEC/BODY
             folders = {}
-            for object_type, info in config.object_types.items():
+            for object_type, info in object_types:
                 folder, ext = info
-                if config.path_objects + folder in file:
+                if '/' + folder in file:
                     folders[ext] = object_type
             #
             for ext in sorted(folders.keys(), key = len):
                 if ext in file:
                     self.object_type = folders[ext]
-
+            #
             self.object_code    = '{}.{}'.format(self.object_type, self.object_name)
-
-        #'hash_old'    : '',
-        #'hash_new'    : ''
 

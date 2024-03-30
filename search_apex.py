@@ -130,9 +130,9 @@ class Search_APEX(config.Config):
             if obj == {}:
                 data.append({
                     'object_name'   : tag.split('.')[1],
-                    'object_type'   : '?',
+                    'type'          : '?',
                     'pages'         : len(ref_tags[tag]),
-                    'references'    : all_tags[tag],
+                    'refs'          : all_tags[tag],
                 })
                 continue
 
@@ -160,9 +160,9 @@ class Search_APEX(config.Config):
             found_obj.append(obj_code)
             data.append({
                 'object_name'   : obj['object_name'],
-                'object_type'   : obj['object_type'].replace(' BODY', ''),
+                'type'          : obj['object_type'].replace(' BODY', ''),
                 'pages'         : len(ref_tags[tag]),
-                'references'    : all_tags[tag],
+                'refs'          : all_tags[tag],
             })
 
         # append files from append folder
@@ -184,7 +184,7 @@ class Search_APEX(config.Config):
 
         # show overview
         util.print_header('{} OBJECTS FROM EMBEDDED CODE:'.format(self.limit_schema), ' ({})'.format(len(data)))
-        util.print_table(data)
+        util.print_table(data, right_align = ['pages', 'refs'])
 
         # copy files to patch scripts folder
         if self.debug:

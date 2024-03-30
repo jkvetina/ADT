@@ -188,18 +188,6 @@ WHERE p.application_id          = :app_id
 --
 UNION ALL
 SELECT
-    NULL                            AS page_id,
-    'LOV:' || t.list_of_values_name AS source,
-    t.table_owner                   AS owner,
-    t.table_name                    AS object_name,
-    NULL                            AS module_name
-FROM apex_application_lovs t
-WHERE t.application_id          = :app_id
-    AND t.location_code         = 'LOCAL'
-    AND t.source_type_code      = 'TABLE'
---
-UNION ALL
-SELECT
     t.page_id,
     'REGION:' || t.region_name      AS source,
     t.table_owner                   AS owner,
@@ -209,6 +197,75 @@ FROM apex_application_page_regions t
 WHERE t.application_id          = :app_id
     AND t.location_code         = 'LOCAL'
     AND t.table_name            IS NOT NULL
+--
+UNION ALL
+SELECT
+    p.page_id,
+    'LOV:' || t.list_of_values_name AS source,
+    t.table_owner                   AS owner,
+    t.table_name                    AS object_name,
+    NULL                            AS module_name
+FROM apex_application_lovs t
+LEFT JOIN (
+    SELECT                      -- IG columns
+        g.lov_id,
+        g.page_id
+    FROM apex_appl_page_ig_columns g
+    WHERE g.application_id      = :app_id
+        AND g.lov_id            IS NOT NULL
+    --
+    UNION ALL
+    SELECT                      -- IG filters
+        g.lov_id,
+        g.page_id
+    FROM apex_appl_page_ig_columns g
+    WHERE g.application_id      = :app_id
+        AND g.filter_lov_id     IS NOT NULL
+) p
+    ON p.lov_id                 = t.lov_id
+WHERE t.application_id          = :app_id
+    AND t.location_code         = 'LOCAL'
+    AND t.source_type_code      = 'TABLE'
+    AND t.table_name            IS NOT NULL
+--
+UNION ALL
+SELECT DISTINCT
+    p.page_id,
+    'LOV:' || t.list_of_values_name AS source,
+    t.table_owner                   AS owner,
+    t.table_name                    AS object_name,
+    NULL                            AS module_name
+FROM apex_application_lovs t
+JOIN (
+    SELECT          -- page items
+        t.lov_named_lov AS lov_name,
+        t.page_id
+    FROM apex_application_page_items t
+    WHERE t.application_id      = :app_id
+        AND t.lov_named_lov     IS NOT NULL
+    --
+    UNION ALL
+    SELECT                      -- IR columns
+        t.named_lov,            -- also rpt_lov
+        t.page_id
+    FROM apex_application_page_ir_col t
+    WHERE t.application_id      = :app_id
+        AND t.named_lov         IS NOT NULL
+    --
+    UNION ALL
+    SELECT                      -- classic report columns
+        t.named_list_of_values, -- also inline_list_of_values
+        t.page_id
+    FROM apex_application_page_rpt_cols t
+    WHERE t.application_id          = :app_id
+        AND t.named_list_of_values  IS NOT NULL
+) p
+    ON p.lov_name               = t.list_of_values_name
+WHERE t.application_id          = :app_id
+    AND t.location_code         = 'LOCAL'
+    AND t.source_type_code      = 'TABLE'
+    AND t.table_name            IS NOT NULL
+--
 ORDER BY
     source,
     page_id,

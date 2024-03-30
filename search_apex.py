@@ -68,6 +68,7 @@ class Search_APEX(config.Config):
         page_tags   = {}
         found_files = []
         found_obj   = []
+        unknown     = []
         data        = []
         objects     = self.repo_objects.keys()
         #
@@ -166,8 +167,10 @@ class Search_APEX(config.Config):
 
         # adjust overview
         for i, row in enumerate(data):
-            data[i]['pages']        = str(sorted(row['pages']))[1:-1]
-            data[i]['object_name']  = ('? ' if row['type'] == '?' else '') + row['object_name']
+            if row['type'] == '?':
+                unknown.append(row['object_name'])
+            #
+            data[i]['pages'] = str(sorted(row.get('pages') or []))[1:-1]
             data[i].pop('type')
 
         # show overview
@@ -244,11 +247,6 @@ class Search_APEX(config.Config):
             w.write('\n'.join(script) + '\n')
 
         # show leftovers
-        unknown = []
-        for row in data:
-            if row['object_type'] == '?':
-                unknown.append(row['object_name'])
-        #
         if len(unknown) > 0:
             util.print_header('UNKNOWN OBJECTS:')
             for object_name in unknown:

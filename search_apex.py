@@ -50,7 +50,7 @@ class Search_APEX(config.Config):
         #   --> WE ARE MISING INVOKE API REFERENCES, NEED TO PARSE APEX_APPS_REGIONS VIEW
         #   --> IF WE DONT HAVE SCHEMA PREFIX, SEARCH FOR KNOWN OBJECT NAMES
         #
-        self.patch_code     = self.args.patch
+        self.patch_code     = self.args.patch or ''
         self.limit_app_id   = self.args.app
         self.limit_schema   = self.args.schema or ''
         self.limit_pages    = self.args.page or []
@@ -185,6 +185,10 @@ class Search_APEX(config.Config):
         # show overview
         util.print_header('{} OBJECTS FROM EMBEDDED CODE:'.format(self.limit_schema), ' ({})'.format(len(data)))
         util.print_table(data, right_align = ['pages', 'refs'])
+
+        # without patch code just show overview on screen
+        if not self.patch_code:
+            return
 
         # copy files to patch scripts folder
         if self.debug:

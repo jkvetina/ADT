@@ -553,6 +553,11 @@ class Config(util.Attributed):
                 object_names.append(object_name)
 
         # grab the file with grants made
+        if '#SCHEMA#' in self.patch_grants:
+            self.patch_grants = self.patch_grants.replace('#SCHEMA#', self.info['schema'])
+        if '/.sql' in self.patch_grants:
+            self.patch_grants = self.patch_grants.replace('/.sql', self.info['schema'])
+        #
         with open(self.patch_grants, 'rt', encoding = 'utf-8') as f:
             file_content = f.readlines()
             for line in file_content:

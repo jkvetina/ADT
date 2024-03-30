@@ -156,7 +156,8 @@ class Search_APEX(config.Config):
             if not (obj['file'] in found_files):
                 found_files.append(obj['file'])
             #
-            found_obj.append('{}.{}'.format(obj['object_name'], obj['object_type'].replace(' BODY', '')))
+            obj_code = '{}.{}'.format(obj['object_type'].replace(' BODY', ''), obj['object_name'])
+            found_obj.append(obj_code)
             data.append({
                 'object_name'   : obj['object_name'],
                 'object_type'   : obj['object_type'].replace(' BODY', ''),
@@ -169,9 +170,9 @@ class Search_APEX(config.Config):
         # and also you dont have to care about the grants
         for file in util.get_files(self.append_dir + '**/*.sql'):
             obj         = File(file, config = self.config)
-            obj_code    = '{}.{}'.format(obj['object_name'], obj['object_type'])
+            obj_code    = '{}.{}'.format(obj['object_type'], obj['object_name'])
             #
-            if not (obj_code in found_obj):
+            if not (obj_code in found_obj) and not (obj_code.replace(' BODY.', '.') in found_obj):
                 found_obj.append(obj_code)
                 found_files.append(file)
                 data.append({

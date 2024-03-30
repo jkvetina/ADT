@@ -55,12 +55,12 @@ class Search_APEX(config.Config):
         self.limit_type     = self.args.type or []
         self.limit_name     = self.args.name or []
         #
-        self.patch_ref_dir  = 'refs/'
-        self.source_dir     = self.repo_root + self.config.path_apex + 'f{}/'.format(self.limit_app_id)
-        self.target_dir     = self.repo_root + self.config.patch_scripts_dir.replace('{$PATCH_CODE}', self.patch_code) + self.patch_ref_dir
+        self.refs_dir       = 'refs/'
+        self.append_dir     = 'append/'
         #
-        if self.limit_schema:
-            self.patch_grants = self.patch_grants.replace('/.', '/{}.'.format(self.limit_schema))
+        self.source_dir     = self.repo_root + self.config.path_apex + 'f{}/'.format(self.limit_app_id)
+        self.target_dir     = self.repo_root + self.config.patch_scripts_dir.replace('{$PATCH_CODE}', self.patch_code) + self.refs_dir
+        self.append_dir     = self.repo_root + self.config.patch_scripts_dir.replace('{$PATCH_CODE}', self.patch_code) + self.append_dir
 
         # parse all embedded code files for object names based by schema prefix
         all_tags = {}
@@ -104,57 +104,64 @@ class Search_APEX(config.Config):
                         if not (file in ref_tags[tag]):
                             ref_tags[tag].append(file)
 
-        # create overview
+        # append files from append folder
+        # so you can attach any files you want before they get sorted
+        # and also you dont have to care about the grants
         found_files = []
         data        = []
         objects     = self.repo_objects.keys()
         #
+        for file in util.get_files(self.append_dir + '**/*.sql'):
+            found_files.append(file)
+            obj = self.get_object(object_name = os.path.basename(file).split('.')[1].upper(), file = file)
+            data.append({
+                'object_name'   : obj['object_name'],
+                'object_type'   : obj['object_type'],
+                'pages'         : None,
+                'references'    : None,
+            })
+
+        # create overview
         for tag in sorted(all_tags.keys()):
-            object_name     = tag.split('.')[1]
-            object_found    = False
-            #
-            for obj_code in objects:
-                if obj_code.endswith('.' + object_name):
-                    obj = self.repo_objects[obj_code]
-                    if not (obj['file'] in found_files):
-                        found_files.append(obj['file'])
-                    #
-                    object_type     = obj['object_type']
-                    object_found    = True
-                    #
-                    if len(self.limit_type) > 0:
-                        found = False
-                        for type_ in self.limit_type:
-                            type_ = '^(' + type_.replace('%', '.*') + ')$'
-                            if util.extract(type_, object_type):
-                                found = True
-                                break
-                        if not found:
-                            continue
-                    #
-                    if ' BODY' in object_type:      # dont show bodies
-                        continue
-                    #
-                    data.append({
-                        'object_name'   : object_name,
-                        'object_type'   : object_type,
-                        'pages'         : len(ref_tags[tag]),
-                        'references'    : all_tags[tag],
-                    })
-            #
-            if not object_found:
+            obj = self.get_object(object_name = tag.split('.')[1])
+            if obj == {}:
                 data.append({
-                    'object_name'   : object_name,
+                    'object_name'   : tag.split('.')[1],
                     'object_type'   : '?',
                     'pages'         : len(ref_tags[tag]),
                     'references'    : all_tags[tag],
                 })
+                continue
+            #
+            if not (obj['file'] in found_files):
+                found_files.append(obj['file'])
+            #
+            if len(self.limit_type) > 0:
+                found = False
+                for type_ in self.limit_type:
+                    type_ = '^(' + type_.replace('%', '.*') + ')$'
+                    if util.extract(type_, obj['object_type']):
+                        found = True
+                        break
+                if not found:
+                    continue
+            #
+            if ' BODY' in obj['object_type']:      # dont show bodies
+                continue
+            #
+            data.append({
+                'object_name'   : obj['object_name'],
+                'object_type'   : obj['object_type'],
+                'pages'         : len(ref_tags[tag]),
+                'references'    : all_tags[tag],
+            })
         #
         util.print_header('{} OBJECTS FROM EMBEDDED CODE:'.format(self.limit_schema), ' ({})'.format(len(data)))
         util.print_table(data)
 
         # copy files to patch scripts folder
-        #util.print_header('SORTED FILES BY DEPENDENCIES:')
+        if self.debug:
+            util.print_header('SORTED FILES BY DEPENDENCIES:')
         util.delete_folder(self.target_dir)
         os.makedirs(self.target_dir, exist_ok = True)
         #
@@ -166,40 +173,54 @@ class Search_APEX(config.Config):
             '--',
         ]
         for source_file in self.sort_files_by_deps(found_files):
-            short       = source_file.replace(self.repo_root + self.config.path_objects, '').replace('/', '.')
-            target_file = self.target_dir + short
-            #
-            script.extend([
-                '',
-                'PROMPT "";',
-                'PROMPT "-- REF: {}{}";'.format(self.patch_ref_dir, short),
-                '@"./{}{}"'.format(self.patch_ref_dir, short),
-            ])
-            #
-            if os.path.exists(target_file):
-                os.remove(target_file)
-            util.copy_file(source_file, target_file)
-            #
-            #print('  - {}'.format(short))
-        #print()
+            if self.config.patch_scripts_snap in source_file:
+                source_file = source_file.replace(self.append_dir, self.append_dir)
+                script.extend([
+                    '',
+                    'PROMPT "";',
+                    'PROMPT "-- APPEND: {}";'.format(os.path.basename(source_file)),
+                    '@"./{}"'.format(source_file),
+                ])
+                #
+                if self.debug:
+                    print('  - {}'.format(source_file.replace(self.append_dir, '')))
+            else:
+                short       = source_file.replace(self.repo_root + self.config.path_objects, '').replace('/', '.')
+                target_file = self.target_dir + short
+                script.extend([
+                    '',
+                    'PROMPT "";',
+                    'PROMPT "-- REF: {}{}";'.format(self.refs_dir, short),
+                    '@"./{}{}"'.format(self.refs_dir, short),
+                ])
+                #
+                if os.path.exists(target_file):
+                    os.remove(target_file)
+                util.copy_file(source_file, target_file)
+                #
+                if self.debug:
+                    print('  - {}'.format(short))
+        if self.debug:
+            print()
 
         # append object grants
         objects = []
         for row in data:
             objects.append(row['object_name'])
         #
-        script.extend([
-            '',
-            '--',
-            '-- RELATED GRANTS',
-            '--',
-        ])
         grants = self.get_grants_made(object_names = list(set(objects)))
-        for grant in grants:
-            script.append(grant)
+        if len(grants) > 0:
+            script.extend([
+                '',
+                '--',
+                '-- RELATED GRANTS',
+                '--',
+            ])
+            for grant in grants:
+                script.append(grant)
 
         # create script to install objects in proper oder
-        script_file = self.target_dir.replace(self.patch_ref_dir, self.patch_ref_dir.rstrip('/') + '.sql')
+        script_file = self.target_dir.replace(self.refs_dir, self.refs_dir.rstrip('/') + '.sql')
         with open(script_file, 'wt') as w:
             w.write('\n'.join(script) + '\n')
 
@@ -214,6 +235,17 @@ class Search_APEX(config.Config):
             for object_name in unknown:
                 print('  - {}'.format(object_name))
             print()
+
+
+
+    def get_object(self, object_name, file = ''):
+        objects = self.repo_objects.keys()
+        for obj_code in objects:
+            if obj_code.endswith('.' + object_name):
+                if '.spec.sql' in file and ' BODY' in obj_code:
+                    continue
+                return self.repo_objects[obj_code]
+        return {}
 
 
 

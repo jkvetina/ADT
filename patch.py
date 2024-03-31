@@ -331,9 +331,8 @@ class Patch(config.Config):
                 os.rename(log_file, log_status)
             else:
                 # if no spooling, create file manually
-                with open(log_status, 'wt', encoding = 'utf-8', newline = '\n') as w:
-                    output = util.cleanup_sqlcl(output, lines = False).replace('---\n', '--\n')
-                    w.write(output)
+                payload = util.cleanup_sqlcl(output, lines = False).replace('---\n', '--\n')
+                util.write_file(log_status, payload)
 
             # show progress
             util.print_table([results], columns = map, right_align = ['order', 'output', 'timer'], no_header = True)
@@ -549,10 +548,7 @@ class Patch(config.Config):
         pass
 
         # store commits in file for better performance
-        if not os.path.exists(os.path.dirname(self.commits_file)):
-            os.makedirs(os.path.dirname(self.commits_file))
-        with open(self.commits_file, 'wt', encoding = 'utf-8', newline = '\n') as w:
-            util.store_yaml(w, payload = self.all_commits)
+        util.write_file(self.commits_file, self.all_commits, yaml = True)
 
 
 
@@ -704,8 +700,7 @@ class Patch(config.Config):
         # move driving file a bit higher
         self.patch_file = '{}/../{}.sql'.format(self.patch_folder, self.patch_code)
         if self.patch_file_moveup:
-            with open(self.patch_file, 'wt', encoding = 'utf-8', newline = '\n') as w:
-                w.write('')
+            util.write_file(self.patch_file, '')
         elif os.path.exists(self.patch_file):
             os.remove(self.patch_file)
 
@@ -1133,8 +1128,7 @@ class Patch(config.Config):
         # save in schema patch file
         if not self.patch_dry:
             mode = 'at' if self.patch_file_moveup else 'wt'
-            with open(self.patch_file, mode, encoding = 'utf-8', newline = '\n') as w:
-                w.write(payload)
+            util.write_file(self.patch_file, payload, mode = mode)
         #
         if app_id:
             self.patch_files_apex.append(self.patch_file)
@@ -1199,12 +1193,8 @@ class Patch(config.Config):
             target_file = self.get_target_file(target_file)
 
         # save file
-        target_folder = os.path.dirname(target_file)
-        if not os.path.exists(target_folder):
-            os.makedirs(target_folder)
         if not self.patch_dry:
-            with open(target_file, 'wt', encoding = 'utf-8', newline = '\n') as w:
-                w.write(file_content.rstrip() + '\n')
+            util.write_file(target_file, file_content.rstrip())
         #
         return (target_file, commit_id)
 

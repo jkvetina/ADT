@@ -262,8 +262,7 @@ class Export_APEX(config.Config):
 
 
     def store_timers(self):
-        with open(self.timers_file, 'wt', encoding = 'utf-8', newline = '\n') as w:
-            util.store_yaml(w, payload = self.timers, fix = True)
+        util.write_file(self.timers_file, payload = self.timers, yaml = True, fix = True)
 
 
 
@@ -273,10 +272,8 @@ class Export_APEX(config.Config):
             if not (row.workspace in self.developers):
                 self.developers[row.workspace] = {}
             self.developers[row.workspace][row.user_name] = row.user_mail
-
-        # store connection parameters in the yaml file
-        with open(self.developers_file, 'wt', encoding = 'utf-8', newline = '\n') as w:
-            util.store_yaml(w, payload = self.developers, fix = True)
+        #
+        util.write_file(self.timers_file, payload = self.developers, yaml = True, fix = True)
 
 
 
@@ -313,8 +310,7 @@ class Export_APEX(config.Config):
         os.makedirs(target_dir, exist_ok = True)
         for page_id, content in comments.items():
             file = '{}p{}.yaml'.format(target_dir, str(page_id).rjust(5, '0'))
-            with open(file, 'wt', encoding = 'utf-8', newline = '\n') as w:
-                util.store_yaml(w, payload = content, fix = True)
+            util.write_file(file, content, yaml = True, fix = True)
 
 
 
@@ -404,8 +400,7 @@ class Export_APEX(config.Config):
                 try:
                     with codecs.open(source_file, 'r', encoding = 'utf-8', errors='ignore') as f:
                         old_content = f.readlines()
-                    with open(source_file, 'wt', encoding = 'utf-8', newline = '\n') as w:
-                        w.writelines(old_content[10:])
+                    util.write_file(source_file, old_content[10:])
                 except:
                     print('\nERROR:', source_file.replace(self.config.sqlcl_root, ''))
 
@@ -466,8 +461,8 @@ class Export_APEX(config.Config):
                     break
             #
             if found:
-                with open(file, 'wt', encoding = 'utf-8', newline = '\n') as w:
-                    w.write('BEGIN\n{}\nEND;\n/\n'.format('\n'.join(list(filter(None, content)))))
+                payload = 'BEGIN\n{}\nEND;\n/\n'.format('\n'.join(list(filter(None, content))))
+                util.write_file(file, payload)
 
         # schema definition
         if len(modules) > 0:
@@ -483,8 +478,8 @@ class Export_APEX(config.Config):
                     break
                 content.append(line.rstrip())
             #
-            with open(file, 'wt', encoding = 'utf-8', newline = '\n') as w:
-                w.write('BEGIN\n{}\nEND;\n/\n'.format('\n'.join(list(filter(None, content)))))
+            payload = 'BEGIN\n{}\nEND;\n/\n'.format('\n'.join(list(filter(None, content))))
+            util.write_file(file, payload)
 
 
 
@@ -664,8 +659,7 @@ class Export_APEX(config.Config):
 
         # store new content in the same file
         if new_content != old_content:
-            with open(file, 'wt', encoding = 'utf-8', newline = '\n') as w:
-                w.write(new_content)
+            util.write_file(file, new_content)
 
 
 

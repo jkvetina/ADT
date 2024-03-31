@@ -243,8 +243,7 @@ class Search_APEX(config.Config):
 
         # create script to install objects in proper oder
         script_file = self.target_dir.replace(self.refs_name, self.refs_name.rstrip('/') + '.sql')
-        with open(script_file, 'wt', encoding = 'utf-8', newline = '\n') as w:
-            w.write('\n'.join(script) + '\n')
+        util.write_file(script_file, script)
 
         # show leftovers
         if len(unknown) > 0:

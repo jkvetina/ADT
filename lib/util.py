@@ -158,6 +158,21 @@ def create_zip(name, root):
 
 
 
+def write_file(file, payload, mode = 'wt', yaml = False, fix = False):
+    if not os.path.exists(os.path.dirname(file)):
+        os.makedirs(os.path.dirname(file))
+    #
+    with open(file, mode, encoding = 'utf-8', newline = '\n') as w:
+        if yaml:
+            store_yaml(w, payload = payload, fix = fix)
+        elif isinstance(payload, list):
+            payload.append('')
+            w.writelines(payload)
+        else:
+            w.write(payload)
+
+
+
 def remove_cloud_junk(root = ''):
     root = root or os.path.abspath(os.path.curdir)
 

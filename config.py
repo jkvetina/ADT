@@ -414,8 +414,7 @@ class Config(util.Attributed):
         print('  - {}\n'.format(file))
 
         # store connection parameters in the yaml file
-        with open(file, 'wt', encoding = 'utf-8', newline = '\n') as w:
-            util.store_yaml(w, payload = connections, fix = True)
+        util.write_file(file, payload = connections, yaml = True, fix = True)
 
 
 

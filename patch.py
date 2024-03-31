@@ -787,18 +787,18 @@ class Patch(config.Config):
                 if len(files) == 0 and len(scripts_before) == 0 and len(scripts_after) == 0:
                     continue
 
+                # (2) before template
+                if self.config.patch_add_templates:
+                    for file in self.get_template_files(group + self.postfix_before):
+                        if not (file in files_processed):
+                            files_processed.append(file)
+
                 # (3) before script
                 for file in scripts_before:
                     if '/{}{}'.format(group, self.postfix_before) in file:
                         if not (file in files_processed):
                             files_processed.append(file)
                             scripts_processed.append(file)
-
-                # (2) before template
-                if self.config.patch_add_templates:
-                    for file in self.get_template_files(group + self.postfix_before):
-                        if not (file in files_processed):
-                            files_processed.append(file)
 
                 # sort files by dependencies
                 for file in self.sort_files_by_deps(files):

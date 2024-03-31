@@ -114,6 +114,11 @@ class Patch(config.Config):
             self.archive_patches(self.args.archive)
             util.quit()
 
+        # create install script
+        if self.args.install:
+            self.create_install()
+            util.quit()
+
         # show recent commits and patches
         if self.patch_code:
             # show recent commits for selected patch
@@ -1452,6 +1457,95 @@ class Patch(config.Config):
                     return (statement_type, object_type, object_name, operation, cc_name)
         #
         return ('', '', '', '', '')
+
+
+
+    def create_install(self):
+        util.print_header('INSTALL SCRIPT:')
+        #
+        files           = self.sort_files_by_deps(util.get_files('{}{}**/*.sql'.format(self.repo_root, self.config.path_objects)))
+        files_grouped   = {}
+        overview        = {}
+        payload         = []
+
+        # sort files into groups
+        for group in self.config.patch_map.keys():
+            files_grouped[group] = []
+            for object_type in self.config.patch_map[group]:
+                for file in files:
+                    if group.upper() == 'GRANTS' and not file.endswith('/{}.sql'.format(self.info['schema'])):
+                        continue
+                    #
+                    short   = file.replace(self.repo_root, '')
+                    obj     = self.repo_files.get(short) or File(file, config = self.config)
+                    #
+                    if obj.is_object and obj.object_type == object_type:
+                        if not (file in files_grouped[group]):
+                            files_grouped[group].append(file)
+                    #
+                    if not (obj['object_type'] in overview):
+                        overview[obj['object_type']] = []
+                    if not (short in overview[obj['object_type']]):
+                        overview[obj['object_type']].append(short)
+
+        # create overview
+        payload.append('--')
+        for object_type in sorted(overview.keys()):
+            if object_type and object_type != 'GRANT':
+                payload.append('-- {}{}'.format((object_type + ' ').ljust(20, '.'), ' {}'.format(len(overview[object_type])).rjust(6, '.')))
+
+        # init files
+        payload.extend([
+            '--',
+            '',
+            '--',
+            '-- INIT',
+            '--',
+        ])
+        for file in self.get_template_files('db_init'):
+            payload.append('@"../{}";'.format(file))
+
+        # files per groups
+        for group in self.config.patch_map.keys():
+            files = files_grouped[group]
+            if len(files) == 0:
+                continue
+
+            # (2) before template
+            if self.config.patch_add_templates:
+                for file in self.get_template_files(group + self.postfix_before):
+                    payload.append('@"../{}";'.format(file))
+
+            # (1) files
+            payload.extend([
+                '',
+                '--',
+                '-- {}'.format(group.upper()),
+                '--',
+            ])
+            for file in files:
+                payload.append('@"./{}";'.format(file.replace(self.repo_root + self.config.path_objects, '')))
+
+            # (2) after template
+            if self.config.patch_add_templates:
+                for file in self.get_template_files(group + self.postfix_after):
+                    payload.append('@"../{}";'.format(file))
+
+        # exit files
+        payload.extend([
+            '',
+            '--',
+            '-- FINISH',
+            '--',
+        ])
+        for file in self.get_template_files('db_end'):
+            payload.append('@"../{}";'.format(file))
+
+        # show install script on screen and save it to file
+        file    = self.repo_root + self.config.path_objects + 'INSTALL.sql'
+        payload = '\n'.join(payload) + '\n'
+        util.write_file(file, payload)
+        print(payload)
 
 
 

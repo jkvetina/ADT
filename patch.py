@@ -70,6 +70,7 @@ class Patch(config.Config):
         self.patch_current      = {}
         self.patch_status       = ''
         self.all_commits        = {}
+        self.all_files          = {}
         self.relevant_commits   = []
         self.relevant_count     = {}
         self.relevant_files     = {}
@@ -388,7 +389,7 @@ class Patch(config.Config):
             util.print_now('  {} '.format(schema).ljust(72, '.') + ' ')
             self.deploy_conn[schema] = self.db_connect(ping_sqlcl = False, silent = True)
             self.deploy_conn[schema].sqlcl_root = self.patch_folder
-            print('OK')
+            util.print_now('OK', close = True)
         print()
 
 
@@ -531,6 +532,14 @@ class Patch(config.Config):
         #
         if self.args.rebuild:
             util.print_progress_done()
+
+        # also store commits with files as keys
+        for commit_id in sorted(self.all_commits.keys()):
+            info = self.all_commits[commit_id]
+            for file in info['files']:
+                if not (file in self.all_files):
+                    self.all_files[file] = []
+                self.all_files[file].append(commit_id)
 
         # what if the commit numbers repeats?
         # check files and changes on first and last commit
@@ -940,7 +949,10 @@ class Patch(config.Config):
             self.create_patch_file(payload, app_id = app_id)
             util.print_header('PROCESSED FILES:', schema_with_app)
             for file in files_processed:
-                obj_code = self.repo_files.get(file, {}).get('object_code') or ''
+                orig_file       = file
+                curr_commit_id  = self.get_file_commit(orig_file)[1]
+                curr_commit     = self.all_commits[curr_commit_id]
+                obj_code        = self.repo_files.get(file, {}).get('object_code') or ''
                 #
                 if file.startswith(self.config.path_objects):
                     file = file.replace(self.config.path_objects, '')
@@ -955,6 +967,20 @@ class Patch(config.Config):
                     print('  > {} [{}]'.format(file, statements).replace(' [0]', ''))
                 else:
                     print('  - {}{}'.format(file, ' *' if obj_code in self.obj_not_found else ''))
+
+                # check if the file was part of newer commit
+                found_newer = []
+                for commit_id in sorted(self.all_files[orig_file]):
+                    if commit_id > curr_commit_id:
+                        commit = self.all_commits[commit_id]
+                        found_newer.append('{}) {}'.format(commit_id, commit['summary'][0:50]))
+                #
+                if len(found_newer) > 0:
+                    print('    ^')
+                    print('      CURRENT ... {}) {}'.format(curr_commit_id, curr_commit['summary'][0:50]))
+                    for row in found_newer:
+                        print('      NEWER .....', row)
+                    print('      --')
             print()
 
 

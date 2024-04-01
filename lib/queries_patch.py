@@ -163,3 +163,50 @@ END;
 #
 templates['ALTER | RENAME CONSTRAINT'] = templates['ALTER | DROP CONSTRAINT']
 
+
+
+# generate diff in between two tables
+generate_table_diff = """
+DECLARE
+    in_source_table CONSTANT VARCHAR2(64) := :source_table;     -- $1
+    in_target_table CONSTANT VARCHAR2(64) := :target_table;     -- $2
+    --
+    v_xml_source    CLOB;
+    v_xml_target    CLOB;
+    v_diff          CLOB;
+    v_result        CLOB;
+    v_handler       NUMBER;
+    v_transform     NUMBER;
+BEGIN
+    -- remove junk
+    DBMS_METADATA.SET_TRANSFORM_PARAM(DBMS_METADATA.SESSION_TRANSFORM, 'PARTITIONING', FALSE);
+    DBMS_METADATA.SET_TRANSFORM_PARAM(DBMS_METADATA.SESSION_TRANSFORM, 'PHYSICAL_PROPERTIES', FALSE);
+    DBMS_METADATA.SET_TRANSFORM_PARAM(DBMS_METADATA.SESSION_TRANSFORM, 'SEGMENT_ATTRIBUTES', FALSE);
+    DBMS_METADATA.SET_TRANSFORM_PARAM(DBMS_METADATA.SESSION_TRANSFORM, 'STORAGE', FALSE);
+    DBMS_METADATA.SET_TRANSFORM_PARAM(DBMS_METADATA.SESSION_TRANSFORM, 'TABLESPACE', FALSE);
+
+    -- export tables as Simple XML
+    v_xml_source    := REPLACE(DBMS_METADATA.GET_SXML('TABLE', in_source_table), '$1', '');
+    v_xml_target    := REPLACE(DBMS_METADATA.GET_SXML('TABLE', in_target_table), '$2', '');
+
+    -- get diff ALTER statements
+    v_handler       := DBMS_METADATA_DIFF.OPENC('TABLE');
+    --
+    DBMS_METADATA_DIFF.ADD_DOCUMENT(handle => v_handler, document => v_xml_source);
+    DBMS_METADATA_DIFF.ADD_DOCUMENT(handle => v_handler, document => v_xml_target);
+    --
+    v_result        := DBMS_METADATA_DIFF.FETCH_CLOB(v_handler);
+    DBMS_METADATA_DIFF.CLOSE(v_handler);
+    --
+    v_handler       := DBMS_METADATA.OPENW('TABLE');
+    v_transform     := DBMS_METADATA.ADD_TRANSFORM(v_handler, 'ALTERXML');
+    v_transform     := DBMS_METADATA.ADD_TRANSFORM(v_handler, 'ALTERDDL');
+    --
+    DBMS_LOB.CREATETEMPORARY(v_diff, TRUE);
+    DBMS_METADATA.CONVERT(v_handler, v_result, v_diff);
+    DBMS_METADATA.CLOSE(v_handler);
+    --
+    --DBMS_OUTPUT.PUT_LINE(v_diff);
+    :result := v_diff;
+END;
+"""

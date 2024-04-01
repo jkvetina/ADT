@@ -92,9 +92,9 @@ class Search_APEX(config.Config):
                         objects = []
                         for obj_code in self.repo_objects.keys():
                             object_type, object_name = obj_code.split('.')
-                            if object_type in ('TABLE', 'VIEW', 'PACKAGE', 'PROCEDURE', 'FUNCTION',):
+                            if object_type in ('TABLE', 'VIEW', 'PACKAGE', 'PROCEDURE', 'FUNCTION', 'SEQUENCE', 'TYPE', 'SYNONYM', 'MATERIALIZED VIEW'):
                                 objects.append(object_name)
-                        tags = re.findall('(' + '|'.join(sorted(objects)) + ')\W?', line.upper())
+                        tags = re.findall('(' + '|'.join(sorted(objects)) + ')', line.upper())
 
                     # map found tags to pages
                     for object_name in  list(set(tags)):

@@ -367,6 +367,14 @@ class Oracle:
 
 
 
+    def drop_object(self, object_type, object_name):
+        try:
+            self.execute('DROP {} {}'.format(object_type, object_name))
+        except:
+            pass
+
+
+
     def commit(self):
         try:
             self.conn.commit()

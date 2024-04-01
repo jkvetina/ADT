@@ -495,8 +495,6 @@ class Patch(config.Config):
     def get_all_commits(self):
         all_commits = {}
         all_hashes  = []
-        old_date    = datetime.datetime.now().date() - datetime.timedelta(days = self.config.repo_commit_days)
-        new_commits = []
 
         # read stored values
         if os.path.exists(self.commits_file):
@@ -522,25 +520,25 @@ class Patch(config.Config):
             print()
             print('REBUILDING:'.format(self.info.branch, commits))
 
-        # loop throught all commits, add missing commits
+        # loop throught all commits from newest to oldest, add missing commits
         progress_target = commits
         progress_done   = 0
         start           = util.get_start()
         commit_id       = max(all_commits.keys()) if len(all_commits) > 0 else 0
+        new_commits     = []
         #
-        for commit in self.repo.iter_commits(self.info.branch, skip = 0, reverse = True):
+        for commit in self.repo.iter_commits(self.info.branch, skip = 0, reverse = False):
             commit_hash = str(commit)
             if commit_hash in all_hashes:       # last known commit reached
                 break
             #
-            commit_id = commit_id + 1
-            all_commits[commit_id] = {          # number
+            new_commits.append({                # number
                 'id'        : commit_hash,      # hash
                 'summary'   : commit.summary,
                 'author'    : commit.author.email,
                 'date'      : commit.authored_datetime,
                 'files'     : list(sorted(commit.stats.files.keys())),
-            }
+            })
 
             # show progress
             if self.args.rebuild:
@@ -550,12 +548,19 @@ class Patch(config.Config):
             print()
 
         # remove 90 days old commits
+        old_date = datetime.datetime.now().date() - datetime.timedelta(days = self.config.repo_commit_days)
         for commit_id, commit in all_commits.items():
             if commit['date'].date() >= old_date:
                 self.all_commits[commit_id] = commit
 
+        # attach new commiths with proper id
+        commit_id = max(self.all_commits.keys())
+        for obj in reversed(new_commits):
+            commit_id += 1
+            self.all_commits[commit_id] = obj
+
         # prepare head commit, self.repo.commit('HEAD')
-        self.head_commit = self.all_commits[max(self.all_commits.keys())]
+        self.head_commit = self.all_commits[commit_id]
 
         # store commits in file for better performance
         if os.path.exists(self.commits_file):

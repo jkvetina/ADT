@@ -547,17 +547,17 @@ class Patch(config.Config):
             util.print_progress_done(start = start)
             print()
 
-        # remove 90 days old commits
-        old_date = datetime.datetime.now().date() - datetime.timedelta(days = self.config.repo_commit_days)
-        for commit_id, commit in all_commits.items():
-            if commit['date'].date() >= old_date:
-                self.all_commits[commit_id] = commit
-
-        # attach new commiths with proper id
+        # attach new commits with proper id
         commit_id = max(self.all_commits.keys()) if len(self.all_commits) > 0 else 0
         for obj in reversed(new_commits):
             commit_id += 1
             self.all_commits[commit_id] = obj
+
+        # remove 90 days old commits
+        old_date = datetime.datetime.now().date() - datetime.timedelta(days = self.config.repo_commit_days)
+        for commit_id, obj in dict(self.all_commits).items():
+            if obj['date'].date() < old_date:
+                self.all_commits.pop(commit_id)
 
         # prepare head commit, self.repo.commit('HEAD')
         self.head_commit = self.all_commits[commit_id]

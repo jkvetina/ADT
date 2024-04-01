@@ -147,10 +147,10 @@ class Export_APEX(config.Config):
                         result = pool.apply_async(getattr(self, 'export_' + action), [app_id])
                         while True:
                             if result.ready():
-                                progress_done = util.print_progress_done(extra = row['header'], start = start)
                                 break
                             #
                             progress_done = util.print_progress(progress_done, progress_target, extra = row['header'], start = start, sleep = 1)
+                        util.print_progress_done(extra = row['header'], start = start)
 
                     # update timers
                     timer = util.get_start() - start

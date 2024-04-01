@@ -167,7 +167,7 @@ def write_file(file, payload, mode = 'wt', yaml = False, fix = False):
             store_yaml(w, payload = payload, fix = fix)
         elif isinstance(payload, list):
             payload.append('')
-            w.writelines(payload)
+            w.write('\n'.join(payload))
         else:
             w.write(payload)
 

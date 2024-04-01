@@ -525,7 +525,6 @@ class Patch(config.Config):
         progress_target = commits
         progress_done   = 0
         start           = util.get_start()
-        commit_id       = max(all_commits.keys()) if len(all_commits) > 0 else 0
         new_commits     = []
         #
         for commit in self.repo.iter_commits(self.info.branch, skip = 0, reverse = False):
@@ -555,7 +554,7 @@ class Patch(config.Config):
                 self.all_commits[commit_id] = commit
 
         # attach new commiths with proper id
-        commit_id = max(self.all_commits.keys())
+        commit_id = max(self.all_commits.keys()) if len(self.all_commits) > 0 else 0
         for obj in reversed(new_commits):
             commit_id += 1
             self.all_commits[commit_id] = obj

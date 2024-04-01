@@ -199,7 +199,8 @@ class Search_APEX(config.Config):
                 unknown.append(row['object_name'])
             #
             data[i]['pages'] = str(sorted(row.get('pages') or []))[1:-1]
-            data[i].pop('type')
+            if len(self.limit_pages) == 0:
+                data[i].pop('type')
 
         # show overview
         util.print_header('{} OBJECTS FROM EMBEDDED CODE:'.format(self.limit_schema).strip(), '({})'.format(len(data)))

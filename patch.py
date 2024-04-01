@@ -94,10 +94,6 @@ class Patch(config.Config):
         self.script_stats       = {}
         self.obj_not_found      = []
 
-        # set current commit to the head and search through recent commits
-        self.current_commit_obj = self.repo.commit('HEAD')
-        self.current_commit     = self.current_commit_obj.count()
-
         # fetch changes in Git
         if self.args.fetch:
             self.fetch_changes()
@@ -497,50 +493,84 @@ class Patch(config.Config):
 
 
     def get_all_commits(self):
+        all_commits = {}
+        all_hashes  = []
+        old_date    = datetime.datetime.now().date() - datetime.timedelta(days = self.config.repo_commit_days)
+        new_commits = []
+        max_number  = 0
+
         # read stored values
         if os.path.exists(self.commits_file):
             with open(self.commits_file, 'rt', encoding = 'utf-8') as f:
-                self.all_commits = dict(util.get_yaml(f, self.commits_file))
+                all_commits = dict(util.get_yaml(f, self.commits_file))
+                for _, commit in all_commits.items():
+                    all_hashes.append(commit['id'])
         #
-        if len(self.all_commits.keys()) == 0:
+        if len(all_commits.keys()) == 0:
             self.args.rebuild = True
 
-        # loop through all recent commits
-        if self.args.rebuild:
-            if os.path.exists(self.commits_file):
-                os.remove(self.commits_file)
-            #
-            print('\nSEARCHING REPO:', self.info.branch)
+        # estimate number of commits to show progress
+        commits = 0
+        for commit in self.repo.iter_commits(self.info.branch, max_count = 1, skip = 0, reverse = False):
+            commits = commit.count()
         #
-        progress_target = self.config.repo_commits
-        progress_done   = 0
-        start           = util.get_start()
+        if self.args.rebuild:
+            all_commits, all_hashes = {}, []
+            #
+            print()
+            print('    BRANCH |', self.info.branch)
+            print('   COMMITS |', commits)
+            print()
+            print('REBUILDING:'.format(self.info.branch, commits))
+
+        # loop throught commits to remove old commits and find out max number
+        for commit_hash, commit in all_commits.items():
+            if commit['num'] and commit['num'] > max_number:
+                max_number = commit['num']
 
         # add missing commits
-        stop = max(list(self.all_commits.keys() or [self.config.repo_commits])) - 10
-        for commit in list(self.repo.iter_commits(self.info.branch, max_count = self.config.repo_commits, skip = 0, reverse = False)):
-            commit_id = commit.count()
-            if self.head_commit == None:
-                self.head_commit = commit_id
-                progress_target = min(progress_target, self.head_commit)
-            #
-            if commit_id <= stop and not self.args.rebuild:    # stop when we find record in local file
+        progress_target = commits
+        progress_done   = 0
+        start           = util.get_start()
+        #
+        for commit in self.repo.iter_commits(self.info.branch, skip = 0, reverse = False):
+            commit_hash = str(commit)
+            if commit_hash in all_hashes:       # last known commit reached
                 break
             #
-            self.all_commits[commit_id] = {     # number
-                'id'        : str(commit),      # hash
+            new_commits.append(commit_hash)
+            all_commits[commit_hash] = {   # hash
+                'num'       : None,             # number, we cant rely on commit.count()
+                'id'        : commit_hash,      # hash
                 'summary'   : commit.summary,
                 'author'    : commit.author.email,
                 'date'      : commit.authored_datetime,
                 'files'     : list(sorted(commit.stats.files.keys())),
             }
 
-            # show progress on rebuild
+            # show progress
             if self.args.rebuild:
-                progress_done = util.print_progress(progress_done, progress_target, start = start, extra = commit_id)
-        #
+                progress_done = util.print_progress(progress_done, progress_target, start = start)
         if self.args.rebuild:
-            util.print_progress_done()
+            util.print_progress_done(start = start)
+
+        # renumber commits
+        for num, commit_hash in enumerate(reversed(new_commits), start = max_number + 1):
+            all_commits[commit_hash]['num'] = num
+            max_number = max(max_number, num)
+
+        # remove 90 days old commits
+        for commit_hash, commit in all_commits.items():
+            if commit['date'].date() >= old_date:
+                self.all_commits[commit['num']] = commit
+
+        # prepare head commit, self.repo.commit('HEAD')
+        self.head_commit = self.all_commits[max(self.all_commits.keys())]
+
+        # store commits in file for better performance
+        if os.path.exists(self.commits_file):
+            os.remove(self.commits_file)
+        util.write_file(self.commits_file, self.all_commits, yaml = True)
 
         # also store commits with files as keys
         for commit_id in sorted(self.all_commits.keys()):
@@ -549,16 +579,6 @@ class Patch(config.Config):
                 if not (file in self.all_files):
                     self.all_files[file] = []
                 self.all_files[file].append(commit_id)
-
-        # what if the commit numbers repeats?
-        # check files and changes on first and last commit
-        pass
-
-        # trim the old records, keep recent only
-        pass
-
-        # store commits in file for better performance
-        util.write_file(self.commits_file, self.all_commits, yaml = True)
 
 
 
@@ -975,16 +995,17 @@ class Patch(config.Config):
 
                 # check if the file was part of newer commit
                 found_newer = []
-                for commit_id in sorted(self.all_files[orig_file]):
-                    if commit_id > curr_commit_id:
-                        commit = self.all_commits[commit_id]
-                        found_newer.append('{}) {}'.format(commit_id, commit['summary'][0:50]))
+                if not self.args.head:
+                    for commit_id in sorted(self.all_files[orig_file]):
+                        if commit_id > curr_commit_id:
+                            commit = self.all_commits[commit_id]
+                            found_newer.append('{}) {}'.format(commit_id, commit['summary'][0:50]))
                 #
                 if len(found_newer) > 0:
                     print('    ^')
+                    for row in reversed(found_newer):
+                        print('      NEW .......', row)
                     print('      CURRENT ... {}) {}'.format(curr_commit_id, curr_commit['summary'][0:50]))
-                    for row in found_newer:
-                        print('      NEWER .....', row)
                     print('      --')
             print()
 

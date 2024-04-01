@@ -494,17 +494,15 @@ class Patch(config.Config):
 
 
     def get_all_commits(self):
-        all_commits = {}
-        all_hashes  = []
-
         # read stored values
+        all_hashes = []
         if os.path.exists(self.commits_file):
             with open(self.commits_file, 'rt', encoding = 'utf-8') as f:
-                all_commits = dict(util.get_yaml(f, self.commits_file))
-                for _, commit in all_commits.items():
+                self.all_commits = dict(util.get_yaml(f, self.commits_file))
+                for _, commit in self.all_commits.items():
                     all_hashes.append(commit['id'])
         #
-        if len(all_commits.keys()) == 0:
+        if len(self.all_commits.keys()) == 0:
             self.args.rebuild = True
 
         # estimate number of commits to show progress
@@ -513,7 +511,7 @@ class Patch(config.Config):
             commits = commit.count()
         #
         if self.args.rebuild:
-            all_commits, all_hashes = {}, []
+            self.all_commits, all_hashes = {}, []
             #
             print()
             print('    BRANCH |', self.info.branch)
@@ -563,14 +561,15 @@ class Patch(config.Config):
         self.head_commit = self.all_commits[commit_id]
 
         # store commits in file for better performance
-        if os.path.exists(self.commits_file):
-            os.remove(self.commits_file)
-        util.write_file(self.commits_file, self.all_commits, yaml = True)
+        if len(new_commits) > 0:
+            if os.path.exists(self.commits_file):
+                os.remove(self.commits_file)
+            util.write_file(self.commits_file, self.all_commits, yaml = True)
 
         # also store commits with files as keys
         for commit_id in sorted(self.all_commits.keys()):
-            info = self.all_commits[commit_id]
-            for file in info['files']:
+            obj = self.all_commits[commit_id]
+            for file in obj['files']:
                 if not (file in self.all_files):
                     self.all_files[file] = []
                 self.all_files[file].append(commit_id)

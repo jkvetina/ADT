@@ -84,8 +84,22 @@ class Search_APEX(config.Config):
             # search for object names
             with open (file, 'rt', encoding = 'utf-8') as f:
                 for line in f.readlines():
-                    for tag in re.findall(self.limit_schema + r'\.[A-Z0-9\$_-]+', line.upper()):
-                        object_name = tag.split('.')[1]
+                    if self.limit_schema:
+                        # more precise, if we have schema prefix
+                        tags = re.findall(self.limit_schema + r'\.([A-Z0-9\$_-]+)', line.upper())
+                    else:
+                        # less precise, but ok if we have unique object names
+                        objects = []
+                        for obj_code in self.repo_objects.keys():
+                            object_type, object_name = obj_code.split('.')
+                            if object_type in ('TABLE', 'VIEW', 'PACKAGE', 'PROCEDURE', 'FUNCTION',):
+                                objects.append(object_name)
+                        tags = re.findall('(' + '|'.join(sorted(objects)) + ')\W?', line.upper())
+
+                    # map found tags to pages
+                    for object_name in  list(set(tags)):
+                        if '.' in object_name:
+                            object_name = object_name.split('.')[1]
                         if not util.get_match(object_name, self.limit_name):
                             continue
                         #

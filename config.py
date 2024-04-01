@@ -486,6 +486,9 @@ class Config(util.Attributed):
 
     def get_objects(self):
         for file in util.get_files('{}{}**/*.sql'.format(self.repo_root, self.config.path_objects)):
+            if util.extract(r'\.(\d+)\.sql$', file):
+                continue
+            #
             basename    = file.replace(self.repo_root, '')
             obj         = File(file, config = self.config)
             obj_code    = obj['object_code']

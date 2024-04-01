@@ -106,6 +106,11 @@ class Patch(config.Config):
         self.get_all_commits()
         self.get_matching_commits()
 
+        # show history of specific file/object
+        if self.args.history != []:
+            self.show_history(self.args.history)
+            util.quit()
+
         # go through patch folders
         self.get_patch_folders()
 
@@ -1553,6 +1558,32 @@ class Patch(config.Config):
 
 
 
+    def show_history(self, objects):
+        for object_name in objects:
+            obj     = self.get_object(object_name)
+            file    = obj['file'].replace(self.repo_root, '')
+
+            # show commits
+            util.print_header('SEARCHING REPO:', '{} {}'.format(obj['object_type'], obj['object_name']))
+            for commit_id in sorted(self.all_files[file], reverse = True):
+                if self.args.restore and self.args.restore != commit_id:
+                    continue
+                commit = self.all_commits[commit_id]
+                print('  {}) {}'.format(commit_id, commit['summary']))
+            print()
+
+            latest  = self.args.restore if self.args.restore else max(self.all_files[file])
+            payload = self.get_file_from_commit(file, commit = latest)
+
+            # restore file close to the original file
+            if self.args.restore:
+                version_file = obj['file'].replace('.sql', '.{}.sql'.format(latest))
+                util.write_file(version_file, payload)
+                util.print_header('RESTORED FILE:')
+                print('  - {}\n'.format(version_file.replace(self.repo_root, '')))
+
+
+
 if __name__ == "__main__":
     # parse arguments
     parser = argparse.ArgumentParser(add_help = False)
@@ -1566,9 +1597,7 @@ if __name__ == "__main__":
     group.add_argument('-force',        help = 'Force (re)deployment',                                              nargs = '?', const = True,  default = False)
     group.add_argument('-continue',     help = 'Rollback or continue on DB error',                                  nargs = '?', const = True,  default = False)
     #
-    group = parser.add_argument_group('ADDITIONAL ACTIONS')
-    group.add_argument('-fetch',        help = 'Fetch Git changes before patching',                                 nargs = '?', const = True,  default = False)
-    group.add_argument('-rebuild',      help = 'Rebuild temp files',                                                nargs = '?', const = True,  default = False)
+    group = parser.add_argument_group('SUPPORTING ACTIONS')
     group.add_argument('-archive',      help = 'To archive patches with specific ref #',    type = int,             nargs = '*',                default = [])
     group.add_argument('-install',      help = 'Create install file',                                               nargs = '?', const = True,  default = False)
     group.add_argument('-moveup',       help = 'Move driving patch files higher',                                   nargs = '?', const = True,  default = False)
@@ -1589,5 +1618,10 @@ if __name__ == "__main__":
     group.add_argument('-local',        help = 'Use local files and not files from Git',                            nargs = '?', const = True,  default = False)
     group.add_argument('-head',         help = 'Use file version from head commit',                                 nargs = '?', const = True,  default = False)
     #
+    group = parser.add_argument_group('ADDITIONAL ACTIONS')
+    group.add_argument('-fetch',        help = 'Fetch Git changes before patching',                                 nargs = '?', const = True,  default = False)
+    group.add_argument('-rebuild',      help = 'Rebuild temp files',                                                nargs = '?', const = True,  default = False)
+    group.add_argument('-history',      help = 'Show history of specific file/object',                              nargs = '*',                default = [])
+    group.add_argument('-restore',      help = 'Restore specific version of file',          type = int,             nargs = '?')
     Patch(parser)
 

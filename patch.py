@@ -108,7 +108,7 @@ class Patch(config.Config):
 
         # show history of specific file/object
         if self.args.history != []:
-            self.show_history(self.args.history)
+            self.show_history()
             util.quit()
 
         # go through patch folders
@@ -1558,7 +1558,18 @@ class Patch(config.Config):
 
 
 
-    def show_history(self, objects):
+    def show_history(self):
+        # split object names and version/commit number
+        version     = None
+        objects     = self.args.history
+        restore     = self.args.restore
+        #
+        for arg in self.args.history:
+            if arg.isnumeric():
+                version = int(arg)
+                objects.remove(arg)
+
+        # process requested objects
         for object_name in objects:
             obj     = self.get_object(object_name)
             file    = obj['file'].replace(self.repo_root, '')
@@ -1566,21 +1577,94 @@ class Patch(config.Config):
             # show commits
             util.print_header('SEARCHING REPO:', '{} {}'.format(obj['object_type'], obj['object_name']))
             for commit_id in sorted(self.all_files[file], reverse = True):
-                if self.args.restore and self.args.restore != commit_id:
-                    continue
-                commit = self.all_commits[commit_id]
-                print('  {}) {}'.format(commit_id, commit['summary']))
+                flag    = '>' if version and version == commit_id else ' '
+                commit  = self.all_commits[commit_id]
+                print('  {} {}) {}'.format(flag, commit_id, commit['summary']))
             print()
 
-            latest  = self.args.restore if self.args.restore else max(self.all_files[file])
-            payload = self.get_file_from_commit(file, commit = latest)
-
             # restore file close to the original file
-            if self.args.restore:
-                version_file = obj['file'].replace('.sql', '.{}.sql'.format(latest))
-                util.write_file(version_file, payload)
-                util.print_header('RESTORED FILE:')
-                print('  - {}\n'.format(version_file.replace(self.repo_root, '')))
+            if restore:
+                versions = [version] if version else list(sorted(self.all_files[file], reverse = True))
+                if len(versions) > 0:
+                    util.print_header('RESTORED FILE:')
+                    for ver in versions:
+                        ver_file    = obj['file'].replace('.sql', '.{}.sql'.format(ver))
+                        payload     = self.get_file_from_commit(file, commit = ver)
+                        #
+                        util.write_file(ver_file, payload)
+                        print('  - {}'.format(ver_file.replace(self.repo_root, '')))
+                    print()
+
+            # generate scripts to compare tables
+            if version and obj['object_type'] == 'TABLE':
+                if not self.conn:
+                    self.conn = self.db_connect(ping_sqlcl = False, silent = True)
+                #
+                source_obj = self.get_table_for_diff(self.get_file_from_commit(file, commit = version))
+                target_obj = self.get_table_for_diff(self.get_file_from_commit(file, commit = max(self.all_files[file])))
+
+                # show file content on screen
+                if source_obj != target_obj:
+                    util.print_header('GENERATED TABLE DIFF:')
+
+                    # create source table
+                    source_obj      = source_obj.replace('$#', '$1')
+                    source_table    = object_name.upper() + '$1'
+                    #
+                    self.conn.drop_object('TABLE', source_table)
+                    self.conn.execute(source_obj)
+
+                    # create target table
+                    target_obj      = target_obj.replace('$#', '$2')
+                    target_table    = object_name.upper() + '$2'
+                    #
+                    self.conn.drop_object('TABLE', target_table)
+                    self.conn.execute(target_obj)
+
+                    # compare tables
+                    result = str(self.conn.fetch_clob_result(query.generate_table_diff, source_table = source_table, target_table = target_table))
+                    for line in result.splitlines():
+                        line = line.strip()
+                        line = util.replace(line, r'("[^"]+"\.)', '')  # remove schema
+                        #
+                        for object_name in re.findall(r'"[^"]+"', line):
+                            line = line.replace(object_name, object_name.replace('"', '').lower())
+                        #
+                        print(line + ';')
+                    print()
+
+                    # remove tables
+                    self.conn.drop_object('TABLE', source_table)
+                    self.conn.drop_object('TABLE', target_table)
+
+
+
+    def get_table_for_diff(self, payload):
+        payload = payload.split(';')[0]
+        payload = payload.split('\nPARTITION BY')[0]
+        payload = payload.split('\n')
+        #
+        for i, line in enumerate(payload):
+            line = util.replace(line, '\s+', ' ')
+
+            # remove auto sequence (identity)
+            if ' GENERATED BY ' in line:
+                line = line.split(' GENERATED BY')[0] + (' NOT NULL ' if ' NOT NULL' in line else '').rstrip() + ','
+
+            # rename constraints
+            constraint = util.extract('CONSTRAINT ([^\s]+)', line)
+            if constraint:
+                line = line.replace(constraint, constraint + '$#')
+
+            # rename table
+            table = util.extract('TABLE ([^\s]+)', line)
+            if table:
+                line = line.replace(table, table + '$#')
+
+            # store udpated line
+            payload[i] = line
+        #
+        return '\n'.join(payload)
 
 
 
@@ -1622,6 +1706,6 @@ if __name__ == "__main__":
     group.add_argument('-fetch',        help = 'Fetch Git changes before patching',                                 nargs = '?', const = True,  default = False)
     group.add_argument('-rebuild',      help = 'Rebuild temp files',                                                nargs = '?', const = True,  default = False)
     group.add_argument('-history',      help = 'Show history of specific file/object',                              nargs = '*',                default = [])
-    group.add_argument('-restore',      help = 'Restore specific version of file',          type = int,             nargs = '?')
+    group.add_argument('-restore',      help = 'Restore specific version of file',                                  nargs = '?', const = True,  default = False)
     Patch(parser)
 

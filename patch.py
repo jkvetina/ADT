@@ -497,7 +497,6 @@ class Patch(config.Config):
         all_hashes  = []
         old_date    = datetime.datetime.now().date() - datetime.timedelta(days = self.config.repo_commit_days)
         new_commits = []
-        max_number  = 0
 
         # read stored values
         if os.path.exists(self.commits_file):
@@ -523,24 +522,19 @@ class Patch(config.Config):
             print()
             print('REBUILDING:'.format(self.info.branch, commits))
 
-        # loop throught commits to remove old commits and find out max number
-        for commit_hash, commit in all_commits.items():
-            if commit['num'] and commit['num'] > max_number:
-                max_number = commit['num']
-
-        # add missing commits
+        # loop throught all commits, add missing commits
         progress_target = commits
         progress_done   = 0
         start           = util.get_start()
+        commit_id       = max(all_commits.keys()) if len(all_commits) > 0 else 0
         #
-        for commit in self.repo.iter_commits(self.info.branch, skip = 0, reverse = False):
+        for commit in self.repo.iter_commits(self.info.branch, skip = 0, reverse = True):
             commit_hash = str(commit)
             if commit_hash in all_hashes:       # last known commit reached
                 break
             #
-            new_commits.append(commit_hash)
-            all_commits[commit_hash] = {   # hash
-                'num'       : None,             # number, we cant rely on commit.count()
+            commit_id = commit_id + 1
+            all_commits[commit_id] = {          # number
                 'id'        : commit_hash,      # hash
                 'summary'   : commit.summary,
                 'author'    : commit.author.email,
@@ -553,16 +547,12 @@ class Patch(config.Config):
                 progress_done = util.print_progress(progress_done, progress_target, start = start)
         if self.args.rebuild:
             util.print_progress_done(start = start)
-
-        # renumber commits
-        for num, commit_hash in enumerate(reversed(new_commits), start = max_number + 1):
-            all_commits[commit_hash]['num'] = num
-            max_number = max(max_number, num)
+            print()
 
         # remove 90 days old commits
-        for commit_hash, commit in all_commits.items():
+        for commit_id, commit in all_commits.items():
             if commit['date'].date() >= old_date:
-                self.all_commits[commit['num']] = commit
+                self.all_commits[commit_id] = commit
 
         # prepare head commit, self.repo.commit('HEAD')
         self.head_commit = self.all_commits[max(self.all_commits.keys())]

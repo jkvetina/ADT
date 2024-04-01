@@ -275,6 +275,22 @@ class Oracle:
 
 
 
+    def fetch_clob_result(self, query, **binds):
+        self.curs   = self.conn.cursor()
+        result      = self.curs.var(oracledb.DB_TYPE_CLOB)
+        #
+        self.curs.execute(query.strip(), result = result, **self.get_binds(query, binds))
+        #
+        return result.getvalue()
+
+
+
+    def cursor(self):
+        self.curs = self.conn.cursor()
+        return self.curs
+
+
+
     def row_as_dict(self, cursor):
         columns = [d[0].lower() for d in cursor.description]
         def row(*args):

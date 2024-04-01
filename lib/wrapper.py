@@ -143,6 +143,15 @@ class Oracle:
                 print(sys.exc_info()[2])
             util.raise_error('CONNECTION FAILED', self.get_error_code())
 
+        # convert CLOB to string
+        self.conn.outputtypehandler = self.output_type_handler
+
+
+
+    def output_type_handler(self, cursor, name, defaultType, size, precision, scale):
+        if defaultType == oracledb.CLOB:
+            return cursor.var(oracledb.LONG_STRING, arraysize = cursor.arraysize)
+
 
 
     def disconnect(self):

@@ -83,18 +83,32 @@ class Search_APEX(config.Config):
 
             # search for object names
             with open (file, 'rt', encoding = 'utf-8') as f:
+                # prepare list of objects
+                if not self.limit_schema:
+                    objects = []
+                    for obj_code in self.repo_objects.keys():
+                        object_type, object_name = obj_code.split('.')
+                        object_type = object_type.replace(' BODY', '')
+                        #
+                        if not util.get_match(object_type, self.limit_type):
+                            continue
+                        if not util.get_match(object_name, self.limit_name):
+                            continue
+                        #
+                        if object_type in ('TABLE', 'VIEW', 'PACKAGE', 'PROCEDURE', 'FUNCTION', 'SEQUENCE', 'TYPE', 'SYNONYM', 'MATERIALIZED VIEW'):
+                            objects.append(object_name)
+                    #
+                    objects = '|'.join(sorted(objects, reverse = True))
+
+                # parse lines in file
                 for line in f.readlines():
                     if self.limit_schema:
                         # more precise, if we have schema prefix
-                        tags = re.findall(self.limit_schema + r'\.([A-Z0-9\$_-]+)', line.upper())
+                        tags    = re.findall(self.limit_schema + r'\.([A-Z0-9\$_-]+)', line.upper())
                     else:
                         # less precise, but ok if we have unique object names
-                        objects = []
-                        for obj_code in self.repo_objects.keys():
-                            object_type, object_name = obj_code.split('.')
-                            if object_type in ('TABLE', 'VIEW', 'PACKAGE', 'PROCEDURE', 'FUNCTION', 'SEQUENCE', 'TYPE', 'SYNONYM', 'MATERIALIZED VIEW'):
-                                objects.append(object_name)
-                        tags = re.findall('(' + '|'.join(sorted(objects)) + ')', line.upper())
+                        tags    = re.findall('(' + objects + ')\W|(' + objects + ')$', line.upper())
+                        tags    = list(filter(None, [j for i in tags for j in i]))
 
                     # map found tags to pages
                     for object_name in  list(set(tags)):
@@ -142,7 +156,7 @@ class Search_APEX(config.Config):
                 continue
 
             # limit scope
-            if not util.get_match(obj['object_type'], self.limit_type):
+            if not util.get_match(obj['object_type'].replace(' BODY', ''), self.limit_type) and not util.get_match(obj['object_type'], self.limit_type):
                 continue
 
             # need to add specification too
@@ -188,7 +202,7 @@ class Search_APEX(config.Config):
             data[i].pop('type')
 
         # show overview
-        util.print_header('{} OBJECTS FROM EMBEDDED CODE:'.format(self.limit_schema), ' ({})'.format(len(data)))
+        util.print_header('{} OBJECTS FROM EMBEDDED CODE:'.format(self.limit_schema).strip(), '({})'.format(len(data)))
         util.print_table(data)
 
         # without patch code just show overview on screen

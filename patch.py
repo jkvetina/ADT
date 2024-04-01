@@ -38,7 +38,8 @@ class Patch(config.Config):
         super().__init__(parser)
 
         # process arguments and reinitiate config
-        util.assert_(self.args.target, 'MISSING ARGUMENT: TARGET ENV')
+        if not self.args.rebuild:
+            util.assert_(self.args.target, 'MISSING ARGUMENT: TARGET ENV')
         #
         self.patch_code         = self.args.patch
         self.patch_seq          = self.args.create
@@ -90,7 +91,7 @@ class Patch(config.Config):
         self.deploy_plan        = []
         self.deploy_schemas     = {}
         self.deploy_conn        = {}
-        self.logs_prefix        = self.config.patch_deploy_logs.replace('{$TARGET_ENV}', self.target_env)
+        self.logs_prefix        = self.config.patch_deploy_logs.replace('{$TARGET_ENV}', self.target_env or '')
         self.script_stats       = {}
         self.obj_not_found      = []
 

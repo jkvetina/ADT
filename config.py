@@ -322,7 +322,7 @@ class Config(util.Attributed):
         }
         self.connection['env']      = env_name
         self.connection['schema']   = schema_name
-        self.connection['key']      = self.args.key or ''
+        self.connection['key']      = self.args.get('key') or ''
         self.connection['lang']     = self.connection.get('lang') or '.AL32UTF8'
         self.info.schema            = schema_name
 

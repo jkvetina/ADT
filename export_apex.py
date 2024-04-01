@@ -254,10 +254,9 @@ class Export_APEX(config.Config):
 
     def load_timers(self):
         # store application list in the yaml file
-        file = '{}/config/apex_timers.yaml'.format(self.repo_root)
         if os.path.exists(self.timers_file):
             with open(self.timers_file, 'rt', encoding = 'utf-8') as f:
-                self.timers = dict(util.get_yaml(f, file))
+                self.timers = dict(util.get_yaml(f, self.timers_file))
 
 
 
@@ -273,7 +272,7 @@ class Export_APEX(config.Config):
                 self.developers[row.workspace] = {}
             self.developers[row.workspace][row.user_name] = row.user_mail
         #
-        util.write_file(self.timers_file, payload = self.developers, yaml = True, fix = True)
+        util.write_file(self.developers_file, payload = self.developers, yaml = True, fix = True)
 
 
 

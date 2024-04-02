@@ -1280,8 +1280,9 @@ class Patch(config.Config):
                 last_commit     = commit['id']
                 last_commit_id  = commit_id
                 #
-                if not commit['summary'].startswith('Merge'):
-                    break
+                if self.config.patch_skip_merge and commit['summary'].startswith('Merge'):
+                    continue    # look for another commit
+                break           # commit found
         #
         return last_commit, last_commit_id
 

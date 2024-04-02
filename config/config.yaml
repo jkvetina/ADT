@@ -58,6 +58,7 @@ patch_spooling          : True                              # to SPOOL into file
 patch_postfix_before    : '_before'                         # for templates and scripts
 patch_postfix_after     : '_after'                          # for templates and scripts
 patch_deploy_logs       : 'logs_{$TARGET_ENV}'              # prefix for log folder for deployments
+patch_skip_merge        : True                              # skip commits starting with "Merge"
 
 # patch map to create patch files in this very order
 # and to add files from templates at before/after points

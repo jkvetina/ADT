@@ -356,7 +356,7 @@ class Patch(config.Config):
             # add patch status table
             columns     = ['order', 'file', 'schema', 'app_id', 'files', 'commits', 'status', 'timer']
             right_align = ['order', 'app_id', 'files', 'commits', 'timer']
-            widths      = [1, 3, 1, 1, 1, 1, 2, 1]  # as a ratio in between columns
+            widths      = [2, 5, 2, 2, 2, 2, 3, 2]  # as a ratio in between columns
             blocks      = self.create_table(self.patch_results, columns, widths, right_align = right_align)
 
             # add commits
@@ -395,7 +395,7 @@ class Patch(config.Config):
             util.print_now('  {} '.format(schema).ljust(72, '.') + ' ')
             self.deploy_conn[schema] = self.db_connect(ping_sqlcl = False, silent = True)
             self.deploy_conn[schema].sqlcl_root = self.patch_folder
-            util.print_now('OK', close = True)
+            print('OK')
         print()
 
 

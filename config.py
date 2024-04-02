@@ -558,7 +558,7 @@ class Config(util.Attributed):
 
 
 
-    def get_grants_made(self, object_names = []):
+    def get_grants_made(self, object_names = [], schema = None):
         payload = []
 
         # get list of object names
@@ -568,24 +568,24 @@ class Config(util.Attributed):
                 object_names.append(object_name)
 
         # grab the file with grants made
-        if '#SCHEMA#' in self.patch_grants:
-            self.patch_grants = self.patch_grants.replace('#SCHEMA#', self.info['schema'])
-        if '/.sql' in self.patch_grants:
-            self.patch_grants = self.patch_grants.replace('/.sql', self.info['schema'])
+        self.patch_grants = self.repo_root + self.config.path_objects + self.config.patch_grants  # reset
+        self.patch_grants = self.patch_grants.replace('#SCHEMA#', schema or self.info['schema'])
+        self.patch_grants = self.patch_grants.replace('/.sql', schema or self.info['schema'])
         #
-        with open(self.patch_grants, 'rt', encoding = 'utf-8') as f:
-            file_content = f.readlines()
-            for line in file_content:
-                if line.startswith('--'):
-                    continue
+        if os.path.exists(self.patch_grants):
+            with open(self.patch_grants, 'rt', encoding = 'utf-8') as f:
+                file_content = f.readlines()
+                for line in file_content:
+                    if line.startswith('--'):
+                        continue
 
-                # find match on object name
-                find_name = util.extract(r'\sON\s+(.*)\s+TO\s', line).upper()
-                #
-                for object_name in object_names:
-                    if object_name == find_name:
-                        payload.append(line.strip())
-                        break
+                    # find match on object name
+                    find_name = util.extract(r'\sON\s+(.*)\s+TO\s', line).upper()
+                    #
+                    for object_name in object_names:
+                        if object_name == find_name:
+                            payload.append(line.strip())
+                            break
         #
         if payload != []:
             payload.append('')

@@ -941,7 +941,7 @@ class Patch(config.Config):
                     payload.extend(self.attach_file(file, header = 'APEX END', category = 'STATIC', app_id = app_id))
 
             # add grants made on referenced objects
-            grants = self.get_grants_made()
+            grants = self.get_grants_made(schema = schema)
             if len(grants) > 0:
                 payload.extend([
                     'PROMPT --;',

@@ -63,6 +63,7 @@ class Search_APEX(config.Config):
         self.source_dir     = self.repo_root + self.config.path_apex + 'f{}/'.format(self.limit_app_id)
         self.target_dir     = self.repo_root + self.config.patch_scripts_dir.replace('{$PATCH_CODE}', self.patch_code) + self.refs_name
         self.append_dir     = self.repo_root + self.config.patch_scripts_dir.replace('{$PATCH_CODE}', self.patch_code) + self.append_name
+        self.obj_not_found  = []
 
         # parse all embedded code files for object names based by schema prefix
         page_tags   = {}

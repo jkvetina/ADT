@@ -134,11 +134,16 @@ class Recompile(config.Config):
             util.print_table(data)
 
             # create message for team
-            title       = 'Invalid objects ({}) on {}'.format(len(data), self.args.target)
+            title       = '{} - {} invalid object{}'.format(self.args.target, len(data), 's' if len(data) > 1 else '')
             message     = ''
-            columns     = ['object_type', 'object_name', 'errors']
-            widths      = [2, 5, 1]     # as a ratio in between columns
-            blocks      = self.create_table(data, columns, widths, right_align = ['errors'])
+            blocks      = []
+            #
+            blocks.extend(self.create_table(
+                data        = data,
+                columns     = ['object_type', 'object_name', 'errors'],
+                widths      = [2, 5, 1],  # as a ratio in between columns
+                right_align = ['errors']
+            ))
             #
             self.notify_team(title, message, blocks = blocks)
 

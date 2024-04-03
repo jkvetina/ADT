@@ -889,7 +889,26 @@ class Config(util.Attributed):
 
 
 
-    def create_table(self, data, columns, widths, right_align = []):
+    def build_header(self, text):
+        return {
+            'type'      : 'TextBlock',
+            'size'      : 'Medium',
+            'weight'    : 'Bolder',
+            'text'      : text,
+        }
+
+
+
+    def build_mono(self, text):
+        return {
+            'type'      : 'TextBlock',
+            'text'      : text,
+            'wrap'      : True,
+            'fontType'  : 'Monospace',
+        }
+
+
+    def build_table(self, data, columns, widths, right_align = []):
         blocks  = []
         widths  = dict(zip(columns, widths))
 

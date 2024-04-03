@@ -278,6 +278,7 @@ class Patch(config.Config):
 
         self.patch_status   = ''
         self.patch_results  = []
+        build_logs          = {}
 
         # run the target script(s) and spool the logs
         for order, plan in enumerate(self.deploy_plan):
@@ -333,12 +334,14 @@ class Patch(config.Config):
             # rename log to reflect the result in the file name
             log_file    = full.replace('.sql', '.log')
             log_status  = '{}/{} {} [{}].log'.format(log_folder, plan['file'].replace('.sql', ''), self.config.today_deploy, results['status'])
+            payload     = util.cleanup_sqlcl(output, lines = False).replace('---\n', '--\n')
+            #
+            build_logs[os.path.basename(full)] = payload
             #
             if os.path.exists(log_file):
                 os.rename(log_file, log_status)
             else:
                 # if no spooling, create file manually
-                payload = util.cleanup_sqlcl(output, lines = False).replace('---\n', '--\n')
                 util.write_file(log_status, payload)
 
             # show progress
@@ -347,31 +350,42 @@ class Patch(config.Config):
         print()
 
         # send notification on success
-        if self.patch_status == 'SUCCESS':
-            title       = 'Patch {} was deployed to {}'.format(self.patch_code, self.target_env)
+        if self.patch_status == 'SUCCESS' or 1 == 1:
+            title       = '{} - Patch {} deployed'.format(self.target_env, self.patch_code)
             author      = '<at>{}</at>'.format(self.repo_user_mail)
             stamp       = datetime.datetime.today().strftime('%Y-%m-%d %H:%M')
             message     = '{}\n{}'.format(author, stamp)
+            blocks      = []
 
             # add patch status table
-            columns     = ['order', 'file', 'schema', 'app_id', 'files', 'commits', 'status', 'timer']
-            right_align = ['order', 'app_id', 'files', 'commits', 'timer']
-            widths      = [2, 5, 2, 2, 2, 2, 3, 2]  # as a ratio in between columns
-            blocks      = self.create_table(self.patch_results, columns, widths, right_align = right_align)
+            blocks.extend(self.build_table(
+                data        = self.patch_results,
+                columns     = ['order', 'file', 'schema', 'app_id', 'files', 'commits', 'status', 'timer'],
+                widths      = [2, 5, 2, 2, 2, 2, 3, 2],  # as a ratio in between columns,
+                right_align = ['order', 'app_id', 'files', 'commits', 'timer']
+            ))
 
             # add commits
-            columns     = ['commit', 'summary']
-            widths      = [1, 7]  # as a ratio in between columns
-            data        = []
+            data = []
             for commit_id in sorted(self.relevant_commits, reverse = True):
                 commit = self.all_commits[commit_id]
                 data.append({
                     'commit'    : commit_id,
                     'summary'   : util.get_string(commit['summary'], 50),
                 })
-            commits = self.create_table(data, columns, widths, right_align = 'commit')
             blocks.append('')
-            blocks.extend(commits)
+            blocks.extend(self.build_table(
+                data        = data,
+                columns     = ['commit', 'summary'],
+                widths      = [1, 7],  # as a ratio in between columns,
+                right_align = ['commit']
+            ))
+
+            # append build logs
+            for file in sorted(build_logs.keys()):
+                blocks.append('')
+                blocks.append(self.build_header('Build log: ' + file))
+                blocks.append(self.build_mono(build_logs[file]))
 
             # find most recent patch commit
             last_commit = self.relevant_commits[0]

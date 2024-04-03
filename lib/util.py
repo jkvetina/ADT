@@ -112,7 +112,8 @@ def get_files(glob_pattern, reverse = False, recursive = True):
     if '/**/*' in glob_pattern and recursive:
         glob_pattern = glob_pattern.replace('/**/*', '/*')
         for file in glob.glob(glob_pattern):
-            files.append(file)
+            if os.path.isfile(file):
+                files.append(file)
 
     # to sort files without extensions, to have 1) schema.sql, 2) schema.100.sql
     filenames = {}

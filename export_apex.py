@@ -402,9 +402,9 @@ class Export_APEX(config.Config):
             for source_file in util.get_files(source_dir + '**/*.*'):
                 # remove first 10 lines
                 try:
-                    with codecs.open(source_file, 'r', encoding = 'utf-8', errors='ignore') as f:
+                    with codecs.open(source_file, 'r', encoding = 'utf-8', errors = 'ignore') as f:
                         old_content = f.readlines()
-                    util.write_file(source_file, old_content[10:])
+                    util.write_file(source_file, ''.join(old_content[10:]))
                 except:
                     print('\nERROR:', source_file.replace(self.config.sqlcl_root, ''))
 

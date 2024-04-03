@@ -47,15 +47,16 @@ Checkout the [INSTALL guide](./doc/install.md).
     - ✅ it allows you to search Git/BB history for specific string
     - ✅ include various checks and scope limits for what will be part of the patch
     - ✅ you can use sequences to sort patches created on same day, it checks for clashes
-    - ✅ files ar eproperly sorted based on dependencies
+    - ✅ files are properly sorted based on dependencies
     - ✅ statements in patch scripts converted to your templates so they can be rerun
 - ✅ it can also __deploy these patches__ to different environments (basically any database you can reach via direct connection on via a REST service)
     - ✅ multiple schemas patching (so far you manually specify order with numeric prefix on each patch file)
     - ✅ show progress, results and save output in customized log files
-    - ✅ include various checks and logs to limit deployment issues
+    - ✅ include various checks and logs to limit deployment issues (like using old files)
     - ✅ option to quickly deploy or redeploy created patch
+    - ✅ show patch result (build log) on Teams channel
+    - ✅ generate ALTER statements on same table and different commits
     - ⭕️ remote REST app deployment
-    - ✅ show patch result on Teams channel
 - ⭕️ it can __export database objects__
     - ✅ generate list of dependencies
     - ⭕️ you can filter objects by type, name and time (export for example everything starting with XX% and changed in past 3 days)

@@ -133,19 +133,19 @@ class Recompile(config.Config):
             util.print_header('INVALID OBJECTS:')
             util.print_table(data)
 
-        # create message for team
-        title       = '{} - {} invalid object{}'.format(self.args.target, len(data), 's' if len(data) > 1 else '')
-        message     = ''
-        blocks      = []
-        #
-        blocks.extend(self.build_table(
-            data        = data,
-            columns     = ['object_type', 'object_name', 'errors'],
-            widths      = [2, 5, 1],  # as a ratio in between columns
-            right_align = ['errors']
-        ))
-        #
-        self.notify_team(title, message, blocks = blocks)
+            # create message for team
+            title       = '{} - {} invalid object{}'.format(self.args.target, len(data), 's' if len(data) > 1 else '')
+            message     = ''
+            blocks      = []
+            #
+            blocks.extend(self.build_table(
+                data        = data,
+                columns     = ['object_type', 'object_name', 'errors'],
+                widths      = [2, 5, 1],  # as a ratio in between columns
+                right_align = ['errors']
+            ))
+            #
+            self.notify_team(title, message, blocks = blocks)
 
 
 

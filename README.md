@@ -11,7 +11,7 @@ Checkout the [INSTALL guide](./doc/install.md).
 
 &nbsp;
 
-## Actions/Roadmap (progress 33/60, 55%)
+## Actions/Roadmap (progress 34/61, 56%)
 
 | Filename                                 | Description                                    | Status          | Complexity | Done
 | :-------                                 | :----------                                    | :-----          | ---------: | ---:
@@ -19,7 +19,8 @@ Checkout the [INSTALL guide](./doc/install.md).
 | [`export_db.py`](./doc/export_db.md)     | to export database objects                     | OPY **          |          8 |
 | [`export_apex.py`](./doc/export_apex.md) | to export APEX & REST services                 | __Done__        |          7 | 7
 | [`export_data.py`](./doc/export_data.md) | to export data into CSV files                  | OPY **          |          4 |
-| [`patch.py`](./doc/patch.md)             | to prepare patch files and deploy them         | __In Progress__ |         20 | 19
+| [`live_upload.py`](./doc/live_upload.md) | to upload files to APEX                        | __Done__        |          1 | 1
+| [`patch.py`](./doc/patch.md)             | to prepare patch files and deploy them         | __Done__ *      |         20 | 20
 | [`compare.py`](./doc/compare.md)         | to compare two databases                       | Planned         |         10 |
 | [`recompile.py`](./doc/recompile.md)     | to recompile invalid objects                   | __Done__        |          1 | 1
 |                                          | documentation                                  | Planned         |          5 | 1
@@ -32,30 +33,13 @@ Checkout the [INSTALL guide](./doc/install.md).
 ## Main features (also a Roadmap)
 
 - ✅ it can __connect to on-premise and cloud__ Oracle databases
-- ⭕️ it can __export database objects__
-    - ⭕️ you can filter objects by type, name and time (export for example everything starting with XX% and changed in past 3 days)
-        - ⭕️ tables, view, materialized views + logs, indexes, sequences
-        - ⭕️ packages, procedures, functions, triggers, TYPEs**
-        - ⭕️ jobs (resp. schedulers)
-        - ⭕️ grants (made and received)
-    - ⭕️ there are also multiple whitelist and blacklist filters so you can specify which prefixes you want to include or you want to skip
-    - ⭕️ you can create your own list of objects which will be exported (see locked.log), which is handy when you have multiple projects in the same schema; it now even support autolock feature
-        - ⭕️ locked mode vs filter based mode
-    - ⭕️ multiple schemas are supported via subfolders
-    - ⭕️ you can also manually create subfolders for objects (so you can put for example views into groups/folders)
-    - ⭕️ see supported object types
-    - ⭕️ option to deploy exported files to specified environment
-- ⭕️ it can __export data__ into CSV files
-    - ⭕️ althought it will skip LOB columns (for now)
-    - ⭕️ creates SQL MERGE statements for patching
-    - ⭕️ option to deploy exported files to specified environment
 - ✅ it can __export APEX application(s)__
     - ✅ you can request specific components based on page or date
     - ✅ also in YAML/JSON formats
     - ✅ possible with embedded code reports
     - ✅ including application and workspace files
-    - ⭕️ option to deploy exported files to specified environment
-    - ⭕️ live upload for files
+    - ✅ option to deploy exported files to specified environment
+    - ✅ live upload for files
     - ✅ export REST services
 - ✅ it can __create patch files__ so you can easily deploy your database and APEX changes since last deployment, or based on your features/cards
     - ✅ it can connect to Git/BB to create a release notes for you
@@ -72,14 +56,32 @@ Checkout the [INSTALL guide](./doc/install.md).
     - ✅ option to quickly deploy or redeploy created patch
     - ⭕️ remote REST app deployment
     - ✅ show patch result on Teams channel
-- ⭕️ generate __install script__ for test/local environments to install everything into a clean schema
+- ⭕️ it can __export database objects__
+    - ✅ generate list of dependencies
+    - ⭕️ you can filter objects by type, name and time (export for example everything starting with XX% and changed in past 3 days)
+        - ⭕️ tables, view, materialized views + logs, indexes, sequences
+        - ⭕️ packages, procedures, functions, triggers, TYPEs**
+        - ⭕️ jobs (resp. schedulers)
+        - ⭕️ grants (made and received)
+    - ⭕️ there are also multiple whitelist and blacklist filters so you can specify which prefixes you want to include or you want to skip
+    - ⭕️ you can create your own list of objects which will be exported (see locked.log), which is handy when you have multiple projects in the same schema; it now even support autolock feature
+        - ⭕️ locked mode vs filter based mode
+    - ⭕️ multiple schemas are supported via subfolders
+    - ⭕️ you can also manually create subfolders for objects (so you can put for example views into groups/folders)
+    - ⭕️ see supported object types
+    - ⭕️ option to deploy exported files to specified environment
+- ⭕️ it can __export data__ into CSV files
+    - ⭕️ althought it will skip LOB columns (for now)
+    - ⭕️ creates SQL MERGE statements for patching
+    - ⭕️ option to deploy exported files to specified environment
+- ✅ generate __install script__ for test/local environments to install everything into a clean schema
 - ⭕️ it can __compare two databases__ and show you the differences and what you need to do to sync them, including the data changes
     - ⭕️ no false positives on different column positions, different identity column sequences, whitespaces...
     - ⭕️ it can also quickly compare APEX applications based on the signatures
     - ⭕️ generate ALTER statements for table changes, align columns order, sync sequences...
 - ✅ it can recompile invalid objects + limit the scope based on type and name
     - ✅ it can also force recompile objects and set specific PL/SQL attributes on them  
-- ⭕️ see config.yaml file for __200+ parameters__ you can customize
+- ✅ see config.yaml file for __200+ parameters__ you can customize
     - ✅ to use your config.yaml file, just place it in the config folder in root of your project repo
 
 &nbsp;

@@ -68,22 +68,27 @@ class Recompile(config.Config):
         progress_done   = 0
         troublemakers   = []
         #
-        for row in data_todo:
-            q = self.build_query(row)
-            if self.args.force:
-                objects[row.object_type][1] += 1
+        try:
+            for row in data_todo:
+                q = self.build_query(row)
+                if self.args.force:
+                    objects[row.object_type][1] += 1
 
-            # show progress
-            if self.args.verbose:
-                print('  - {}'.format(row.object_name))
-            else:
-                progress_done = util.print_progress(progress_done, progress_target)
+                # show progress
+                if self.args.verbose:
+                    print('  - {}'.format(row.object_name))
+                else:
+                    progress_done = util.print_progress(progress_done, progress_target)
 
-            # recompile object
-            try:
-                self.conn.execute(q)
-            except Exception:
-                troublemakers.append(row)
+                # recompile object
+                try:
+                    self.conn.execute(q)
+                except Exception:
+                    troublemakers.append(row)
+                #
+        except KeyboardInterrupt:
+            print('\n')
+            return
         util.print_progress_done()
 
         # if there are some leftovers, try to recompile them

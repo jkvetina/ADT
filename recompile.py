@@ -86,10 +86,11 @@ class Recompile(config.Config):
                 except Exception:
                     troublemakers.append(row)
                 #
+            util.print_progress_done()
+            #
         except KeyboardInterrupt:
             print('\n')
             return
-        util.print_progress_done()
 
         # if there are some leftovers, try to recompile them
         if len(troublemakers) > 0:

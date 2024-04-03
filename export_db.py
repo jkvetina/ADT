@@ -54,6 +54,13 @@ class Export_DB(config.Config):
         with open(self.dependencies_file, 'wt', encoding = 'utf-8', newline = '\n') as w:
             util.store_yaml(w, payload = payload)
 
+        # detect deleted objects
+        for file, obj in self.repo_files.items():
+            if obj.is_object and obj.object_type and not (obj.object_type in ('GRANT',)):
+                obj_code = obj['object_code']
+                if not (obj_code in self.dependencies):
+                    print(obj_code)
+
 
 
 if __name__ == "__main__":

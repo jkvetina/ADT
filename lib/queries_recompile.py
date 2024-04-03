@@ -110,6 +110,15 @@ FROM (
     --
     UNION ALL
     SELECT
+        t.index_name            AS object_name,
+        'INDEX'                 AS object_type,
+        NULL                    AS referenced_name,
+        NULL                    AS referenced_type
+    FROM user_indexes t
+    WHERE t.table_name          LIKE :objects_prefix
+    --
+    UNION ALL
+    SELECT
         c.table_name            AS object_name,
         'TABLE'                 AS object_type,
         r.table_name            AS referenced_name,
@@ -148,6 +157,17 @@ FROM (
         AND d.referenced_owner  = USER
         AND d.referenced_name   LIKE :objects_prefix
         AND d.referenced_type   NOT IN ('TABLE', 'SEQUENCE')
+    --
+    UNION ALL
+    SELECT
+        t.job_name              AS object_name,
+        'JOB'                   AS object_type,
+        NULL                    AS referenced_name,
+        NULL                    AS referenced_type
+    FROM user_scheduler_jobs t
+    WHERE t.job_creator         NOT IN ('APEX_PUBLIC_USER', 'SYS')
+        AND t.schedule_type     NOT IN ('ONCE')
+        AND t.job_name          LIKE :objects_prefix
 ) t
 ORDER BY
     CASE t.object_type

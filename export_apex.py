@@ -5,7 +5,6 @@ from multiprocessing.pool import ThreadPool
 import config
 from lib import util
 from lib import queries_export_apex as query
-from lib.file import File
 
 #
 #                                                      (R)
@@ -146,11 +145,17 @@ class Export_APEX(config.Config):
                     with ThreadPool(processes = 1) as pool:
                         result = pool.apply_async(getattr(self, 'export_' + action), [app_id])
                         while True:
-                            if result.ready():
-                                break
-                            #
-                            progress_done = util.print_progress(progress_done, progress_target, extra = row['header'], start = start, sleep = 1)
-                        util.print_progress_done(extra = row['header'], start = start)
+                            try:
+                                if result.ready():
+                                    break
+                                #
+                                progress_done = util.print_progress(progress_done, progress_target, extra = row['header'], start = start, sleep = 1)
+                                #
+                            except KeyboardInterrupt:
+                                print('\n')
+                                return
+                        if progress_done != -1:
+                            util.print_progress_done(extra = row['header'], start = start)
 
                     # update timers
                     timer = util.get_start() - start

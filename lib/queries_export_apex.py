@@ -59,6 +59,33 @@ WHERE f.flow_id                 = :app_id
     AND f.content_type          IS NULL
 """
 
+# upload file to application static files
+apex_upload_app_file = """
+BEGIN
+    WWV_FLOW_API.CREATE_APP_STATIC_FILE (
+        p_flow_id       => :app_id,
+        p_file_name     => :name,
+        p_mime_type     => :mime,
+        p_file_charset  => 'utf-8',
+        p_file_content  => :payload
+    );
+    COMMIT;
+END;
+"""
+
+# upload file to application static files
+apex_upload_ws_file = """
+BEGIN
+    WWV_FLOW_API.CREATE_WORKSPACE_STATIC_FILE (
+        p_file_name     => :name,
+        p_mime_type     => :mime,
+        p_file_charset  => 'utf-8',
+        p_file_content  => :payload
+    );
+    COMMIT;
+END;
+"""
+
 # translate ids to more meaningful names
 apex_id_names = """
 SELECT

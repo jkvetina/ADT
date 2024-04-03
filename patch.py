@@ -381,12 +381,6 @@ class Patch(config.Config):
                 right_align = ['commit']
             ))
 
-            # append build logs
-            for file in sorted(build_logs.keys()):
-                blocks.append('')
-                blocks.append(self.build_header('Build log: ' + file))
-                blocks.append(self.build_mono(build_logs[file]))
-
             # find most recent patch commit
             last_commit = self.relevant_commits[0]
             last_commit = self.all_commits[last_commit]
@@ -395,9 +389,13 @@ class Patch(config.Config):
             actions = [
                 {'View on GitHub' : self.repo_url.replace('.git', '/commit/' + last_commit['id'])},
             ]
-
-            # put it together
             self.notify_team(title, message, blocks = blocks, actions = actions)
+
+            # also post build logs
+            for file in sorted(build_logs.keys()):
+                message = self.build_header('Build log: ' + file)
+                blocks  = self.build_mono(build_logs[file])
+                self.notify_team('', message, blocks = blocks)
 
 
 
@@ -970,6 +968,7 @@ class Patch(config.Config):
 
             # add flag so deploy script can evaluate it as successful
             payload.extend([
+                'PROMPT "";',
                 'PROMPT --;',
                 'PROMPT -- SUCCESS',
                 'PROMPT --;',

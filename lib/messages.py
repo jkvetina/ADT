@@ -1,90 +1,79 @@
 simple = {
     # https://adaptivecards.io/designer/
-    "type": "message",
-    "attachments": [
+    'type': 'message',
+    'attachments': [
         {
-        "contentType": "application/vnd.microsoft.card.adaptive",
-        "content": {
-            "type": "AdaptiveCard",
-            "body": [
-                {
-                    "type": "TextBlock",
-                    "size": "Large",
-                    "weight": "Bolder",
-                    "text": "#",
-                    "style": "heading",
-                },
-                {
-                    "type": "TextBlock",
-                    "text": "#",
-                }
+        'contentType': 'application/vnd.microsoft.card.adaptive',
+        'content': {
+            'type': 'AdaptiveCard',
+            'body': [
             ],
-            "actions": [
+            'actions': [
             ],
-            "$schema": "http://adaptivecards.io/schemas/adaptive-card.json",
-            "version": "1.0",
-            "msteams": {
-                "entities": [],
-                "width": "Full"
+            '$schema'           : 'http://adaptivecards.io/schemas/adaptive-card.json',
+            'version'           : '1.6',
+            'msteams'           : {
+                'entities'      : [],
+                'width'         : 'Full'
             }
         }
     }]
 }
 
 action_link = {
-    "type"  : "Action.OpenUrl",
-    "title" : "#",
-    "url"   : "#"
+    'type'  : 'Action.OpenUrl',
+    'title' : '#',
+    'url'   : '#'
 }
 
 mentions = {
-    "type"      : "mention",
-    "text"      : "#",
-    "mentioned" : {
-        "id"    : "#",
-        "name"  : "#"
+    'type'      : 'mention',
+    'text'      : '#',
+    'mentioned' : {
+        'id'    : '#',
+        'name'  : '#'
     }
 }
 
 table_header = {
-    "type": "Container",
-    "items": [
+    'type': 'Container',
+    'items': [
         {
-            "type": "ColumnSet",
-            "columns": [
+            'type': 'ColumnSet',
+            'columns': [
             ]
         }
     ],
-    "bleed": False
+    'bleed': False
 }
 
 table_header_col = {
-    "type": "Column",
-    "items": [
+    'type': 'Column',
+    'items': [
         {
-            "type"      : "TextBlock",
-            "weight"    : "Bolder",
-            "text"      : "#"
+            'type'      : 'TextBlock',
+            'weight'    : 'Bolder',
+            'text'      : '#'
         }
     ],
-    "width": "stretch"
+    'width': 'stretch'
 }
 
 table_row = {
-    "type": "ColumnSet",
-    "columns": [
+    'type': 'ColumnSet',
+    'columns': [
     ],
-    "bleed": False
+    'bleed': False
 }
 
 table_row_col = {
-    "type": "Column",
-    "items": [
+    'type': 'Column',
+    'items': [
         {
-            "type": "TextBlock",
-            "text": "#",
+            'type': 'TextBlock',
+            'text': '#',
         }
     ],
-    "width": "stretch"
+    'width': 'stretch'
 }
 

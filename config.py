@@ -1,5 +1,5 @@
 # coding: utf-8
-import sys, os, re, argparse, datetime, timeit, pickle, io, requests, copy
+import sys, os, re, argparse, datetime, timeit, pickle, io, requests, copy, json
 import git          # pip3 install GitPython    --upgrade
 #
 from lib import wrapper
@@ -847,25 +847,41 @@ class Config(util.Attributed):
     def create_message(self, title, message, blocks = [], mentions = {}, actions = []):
         payload = copy.deepcopy(messages.simple)
 
-        # prepare title and message
-        payload['attachments'][0]['content']['body'][0]['text'] = title
-        payload['attachments'][0]['content']['body'][1]['text'] = message
+        # prepare title
+        if title != '':
+            payload['attachments'][0]['content']['body'].append({
+                'type'      : 'TextBlock',
+                'size'      : 'Large',
+                'weight'    : 'Bolder',
+                'text'      : title,
+                'style'     : 'heading',
+            })
 
-        # mark mentioned people
-        for item in re.findall(r"(<at>[^/]+</at>)", message):
-            mention     = copy.deepcopy(messages.mentions)
-            user_mail   = item.replace('<at>', '').replace('</at>', '').strip()
-            user_name   = mentions.get(user_mail) or self.config.mentions.get(user_mail) or ''
-            #
-            if '@' in user_name:            # allow multiple accounts
-                user_mail   = user_name
+        # prepare message
+        if message != '':
+            if not isinstance(message, dict):
+                message = {
+                    'type'  : 'TextBlock',
+                    'text'  : message,
+                }
+            payload['attachments'][0]['content']['body'].append(message)
+            message = message['text']
+
+            # mark mentioned people
+            for item in re.findall(r"(<at>[^/]+</at>)", message):
+                mention     = copy.deepcopy(messages.mentions)
+                user_mail   = item.replace('<at>', '').replace('</at>', '').strip()
                 user_name   = mentions.get(user_mail) or self.config.mentions.get(user_mail) or ''
-            #
-            if len(user_name) > 0:
-                mention['text']              = item
-                mention['mentioned']['id']   = user_mail
-                mention['mentioned']['name'] = user_name
-                payload['attachments'][0]['content']['msteams']['entities'].append(mention)
+                #
+                if '@' in user_name:            # allow multiple accounts
+                    user_mail   = user_name
+                    user_name   = mentions.get(user_mail) or self.config.mentions.get(user_mail) or ''
+                #
+                if len(user_name) > 0:
+                    mention['text']              = item
+                    mention['mentioned']['id']   = user_mail
+                    mention['mentioned']['name'] = user_name
+                    payload['attachments'][0]['content']['msteams']['entities'].append(mention)
 
         # add buttons
         if len(actions) > 0:
@@ -900,12 +916,17 @@ class Config(util.Attributed):
 
 
     def build_mono(self, text):
-        return {
-            'type'      : 'TextBlock',
-            'text'      : text,
-            'wrap'      : True,
-            'fontType'  : 'Monospace',
-        }
+        out = []
+        for line in text.split('\n--\n--'):
+            out.append({
+                'type'      : 'TextBlock',
+                'text'      : '-- ' + line.replace('\n\n', '\n&nbsp;\n').replace('\n', '\r\n'),
+                'wrap'      : True,
+                'fontType'  : 'Monospace',
+                'sizing'    : 'Small',   # not working
+            })
+        return out
+
 
 
     def build_table(self, data, columns, widths, right_align = []):
@@ -947,7 +968,21 @@ class Config(util.Attributed):
         payload = self.create_message(title, message, blocks = blocks, mentions = mentions, actions = actions)
         if not self.config.teams_webhoook:
             return
-        requests.post(self.config.teams_webhoook, json = payload)
+        #
+        payload = json.dumps(payload, indent = None, separators = (',', ':'), ensure_ascii = True)
+        result  = requests.post(self.config.teams_webhoook, data = payload, headers = {
+            'Content-Type': 'application/json; charset=ascii',
+        })
+        #result = requests.post(self.config.teams_webhoook, json = payload)
+
+        # debug result
+        if result.text != '1' or self.debug:
+            print()
+            print('MESSAGE:',   payload)
+            print('LENGTH:',    len(payload))
+            print('CODE:',      result.status_code)
+            print('RESPONSE:',  result.text)
+            print()
 
 
 

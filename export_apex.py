@@ -411,9 +411,7 @@ class Export_APEX(config.Config):
                 # move files
                 if '/pages/p' in source_file:
                     target_file = source_file.replace('/pages/p', '/pages/page_')
-                    if os.path.exists(target_file):
-                        os.remove(target_file)
-                    os.rename(source_file, target_file)
+                    util.move_file(source_file, target_file)
             #
             util.copy_folder(source_dir, target_dir)
             util.delete_folder(source_dir)
@@ -538,10 +536,7 @@ class Export_APEX(config.Config):
             # move readable files close to original files
             if os.path.exists(source_file):
                 target_file = target_file.replace(source_dir, target_dir).replace('/readable/', '/')
-                os.makedirs(os.path.dirname(target_file), exist_ok = True)
-                if os.path.exists(target_file):
-                    os.remove(target_file)
-                os.rename(source_file, target_file)
+                util.move_file(source_file, target_file)
 
         # remove readable folder
         if os.path.exists(source_dir + 'readable/'):
@@ -550,10 +545,7 @@ class Export_APEX(config.Config):
         # move workspace files to workspace folder
         for source_file in util.get_files(source_dir + 'workspace/**/*.*'):
             target_file = source_file.replace('/f{}/workspace/'.format(app_id), '/' + self.config.apex_workspace_dir)
-            os.makedirs(os.path.dirname(target_file), exist_ok = True)
-            if os.path.exists(target_file):
-                os.remove(target_file)
-            os.rename(source_file, target_file)
+            util.move_file(source_file, target_file)
         util.delete_folder(source_dir + 'workspace/')
 
         # move full export file
@@ -562,18 +554,13 @@ class Export_APEX(config.Config):
         #
         if os.path.exists(source_file):
             self.cleanup_file(source_file)
-            if os.path.exists(target_file):
-                os.remove(target_file)
-            os.rename(source_file, target_file)
+            util.move_file(source_file, target_file)
 
         # move leftovers
         for source_file in util.get_files(source_dir + '**/*.*'):
             self.cleanup_file(source_file)
             target_file = source_file.replace(source_dir, target_dir)
-            os.makedirs(os.path.dirname(target_file), exist_ok = True)
-            if os.path.exists(target_file):
-                os.remove(target_file)
-            os.rename(source_file, target_file)
+            util.move_file(source_file, target_file)
         #
         util.delete_folder(source_dir)
 
@@ -592,11 +579,7 @@ class Export_APEX(config.Config):
         for source_file in util.get_files(source_dir + '**/*.*'):
             target_file = source_file.replace(source_dir, target_dir)
             self.cleanup_file(source_file)
-            #
-            os.makedirs(os.path.dirname(target_file), exist_ok = True)
-            if os.path.exists(target_file):
-                os.remove(target_file)
-            os.rename(source_file, target_file)
+            util.move_file(source_file, target_file)
         #
         #util.delete_folder(source_dir)
 

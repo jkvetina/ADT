@@ -1,4 +1,4 @@
-import sys, os, re, glob, traceback, inspect, io, subprocess, datetime, time, timeit, shutil
+import sys, os, re, glob, traceback, inspect, io, subprocess, datetime, time, timeit, shutil, hashlib
 import secrets, base64
 import yaml         # pip3 install pyyaml       --upgrade
 
@@ -159,18 +159,52 @@ def create_zip(name, root):
 
 
 
-def write_file(file, payload, mode = 'wt', yaml = False, fix = False):
+def get_hash(payload):
+    return hashlib.sha1(payload.encode('ascii')).hexdigest()
+
+
+
+def get_file_hash(file):
+    if os.path.exists(file):
+        return hashlib.sha1(open(file, 'rb').read()).hexdigest()
+
+
+
+def write_file(file, payload, mode = 'wt', yaml = False, fix = False, check_hash = False):
     if not os.path.exists(os.path.dirname(file)):
         os.makedirs(os.path.dirname(file))
+    #
+    if check_hash and not yaml and os.path.exists(file):
+        old_hash = get_file_hash(file)
     #
     with open(file, mode, encoding = 'utf-8', newline = '\n') as w:
         if yaml:
             store_yaml(w, payload = payload, fix = fix)
-        elif isinstance(payload, list):
-            payload.append('')
-            w.write('\n'.join(payload))
-        else:
-            w.write(payload)
+            return
+        #
+        if isinstance(payload, list):
+            payload = '\n'.join(payload) + '\n'
+        #
+        if check_hash and not yaml and old_hash == get_hash(payload):
+            return
+        #
+        w.write(payload)
+
+
+
+def move_file(source_file, target_file, check_hash = False):
+    old_hash = get_file_hash(source_file) if check_hash else ''
+    new_hash = get_file_hash(target_file) if check_hash else ''
+    #
+    if new_hash and new_hash == old_hash:   # keep file untouched
+        os.remove(source_file)
+        return
+    #
+    os.makedirs(os.path.dirname(target_file), exist_ok = True)
+    if os.path.exists(target_file):
+        os.remove(target_file)
+    #
+    os.rename(source_file, target_file)
 
 
 

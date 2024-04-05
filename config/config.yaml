@@ -130,6 +130,7 @@ sqlcl_temp_file     : 'sqlcl.tmp'
 # TEAMS INCOMING WEBHOOK
 #
 teams_webhoook          : ''
+mentions : {}
 
 
 

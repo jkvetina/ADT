@@ -835,10 +835,9 @@ class Patch(config.Config):
 
                 # (3) before script
                 for file in scripts_before:
-                    if '/{}{}'.format(group, self.postfix_before) in file:
-                        if not (file in files_processed):
-                            files_processed.append(file)
-                            scripts_processed.append(file)
+                    if not (file in files_processed):
+                        files_processed.append(file)
+                        scripts_processed.append(file)
 
                 # sort files by dependencies
                 for file in self.sort_files_by_deps(files):
@@ -847,10 +846,9 @@ class Patch(config.Config):
 
                 # (3) after script
                 for file in scripts_after:
-                    if '/{}{}'.format(group, self.postfix_after) in file:
-                        if not (file in files_processed):
-                            files_processed.append(file)
-                            scripts_processed.append(file)
+                    if not (file in files_processed):
+                        files_processed.append(file)
+                        scripts_processed.append(file)
 
                 # (2) after template
                 if self.config.patch_add_templates:

@@ -819,8 +819,8 @@ class Patch(config.Config):
                 # get adhoc scripts
                 scripts_before, scripts_after = [], []
                 if not app_id and self.config.patch_add_scripts:
-                    scripts_before  = self.get_script_before_files(group)
-                    scripts_after   = self.get_script_after_files(group)
+                    scripts_before  = self.get_script_files(group, before = True)
+                    scripts_after   = self.get_script_files(group, before = False, ignore_timing = True)
 
                 # continue only if we have committed files or scripts
                 files = files_grouped[group]
@@ -983,24 +983,33 @@ class Patch(config.Config):
             self.create_patch_file(payload, app_id = app_id)
             util.print_header('PROCESSED FILES:', schema_with_app)
             for file in files_processed:
-                orig_file       = file
-                curr_commit_id  = self.get_file_commit(orig_file)[1]
-                curr_commit     = self.all_commits[curr_commit_id]
-                obj_code        = self.repo_files.get(file, {}).get('object_code') or ''
-                #
+                # shorten file name
+                orig_file = file
                 if file.startswith(self.config.path_objects):
                     file = file.replace(self.config.path_objects, '')
                 elif file.startswith(self.config.path_apex):
                     file = file.split('/application/')[1]
+
+                # get commit info
+                curr_commit_id  = self.get_file_commit(orig_file)[1]
+                obj_code        = self.repo_files.get(orig_file, {}).get('object_code') or ''
+
+                # show processed file with some flags
+                flag    = '-'
+                extra   = ''
                 #
                 if file in scripts_processed:
+                    flag = '!' if not curr_commit_id else '>'
                     statements = 0
                     for row in self.script_stats.get(file, {}):
                         if row['template']:
                             statements += 1
-                    print('  > {} [{}]'.format(file, statements).replace(' [0]', ''))
+                    extra = '[ALT:{}]'.format(statements).replace('[ALT:0]', '')
                 else:
-                    print('  - {}{}'.format(file, ' *' if obj_code in self.obj_not_found else ''))
+                    extra = '[NEW]' if obj_code in self.obj_not_found else ''
+                #
+                pad = (72 - len(file) - len(extra)) * '.' if extra else ''
+                print('  {} {} {} {}'.format(flag, file, pad, extra))
 
                 # check if the file was part of newer commit
                 if not curr_commit_id:
@@ -1015,6 +1024,7 @@ class Patch(config.Config):
                             found_newer.append('{}) {}'.format(commit_id, commit['summary'][0:50]))
                 #
                 if len(found_newer) > 0:
+                    curr_commit = self.all_commits[curr_commit_id]
                     print('    ^')
                     for row in reversed(found_newer):
                         print('      NEW .......', row)
@@ -1095,21 +1105,29 @@ class Patch(config.Config):
 
 
 
-    def get_script_before_files(self, group):
-        name    = '{}{}'.format(group, self.postfix_before)
-        folders = util.get_files('{}{}/*.sql'.format(self.config.patch_scripts_dir, name))
-        files   = util.get_files('{}{}*.sql'.format(self.config.patch_scripts_dir, name))
+    def get_script_files(self, group, before, ignore_timing = False):
+        timing_before   = util.replace(self.postfix_before, '[^a-z]+', '').strip()
+        timing_after    = util.replace(self.postfix_after,  '[^a-z]+', '').strip()
+        timing          = timing_before if before else timing_after
         #
-        return folders + files
-
-
-
-    def get_script_after_files(self, group):
-        name    = '{}{}'.format(group, self.postfix_after)
-        folders = util.get_files('{}{}/*.sql'.format(self.config.patch_scripts_dir, name))
-        files   = util.get_files('{}{}*.sql'.format(self.config.patch_scripts_dir, name))
+        found = []
+        for file in util.get_files(self.config.patch_scripts_dir + '**/*.sql'):
+            short = file.replace(self.config.patch_scripts_dir, '').replace('.sql', '')
+            words = util.replace(short.lower(), '[^a-z]+', ' ').split()
+            #
+            if group in words and (timing in words or ignore_timing) and (before or not (timing_before) in words):
+                found.append(file)
         #
-        return folders + files
+        return list(set(found))
+
+
+
+    def get_script_unknow_files(self, scripts_processed):
+        unknown = []
+        for file in util.get_files(self.config.patch_scripts_dir + '**/*.sql'):
+            if not (file in scripts_processed):
+                unknown.append(file)
+        return unknown
 
 
 

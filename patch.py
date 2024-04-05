@@ -856,6 +856,15 @@ class Patch(config.Config):
                         if not (file in files_processed):
                             files_processed.append(file)
 
+            # check unknown files
+            if not app_id and self.config.patch_add_scripts:
+                unknown = self.get_script_unknow_files(scripts_processed)
+                if len(unknown) > 0:
+                    util.print_header('WARNING - UNKOWN SCRIPTS:')
+                    for file in unknown:
+                        print('  - {}'.format(file))
+                    print()
+
             # attach APEX files
             if app_id:
                 for file in list(files_to_process.keys()):  # copy

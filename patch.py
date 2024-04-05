@@ -813,6 +813,7 @@ class Patch(config.Config):
             # processed groups one by one in order defined by patch_map
             files_processed     = []
             scripts_processed   = []
+            uncommitted_files   = []
             #
             for group in self.config.patch_map.keys():
                 # get adhoc scripts
@@ -986,9 +987,6 @@ class Patch(config.Config):
             for file in files_processed:
                 orig_file       = file
                 curr_commit_id  = self.get_file_commit(orig_file)[1]
-                if not curr_commit_id:
-                    util.raise_error('FILE NOT COMMITTED', file)
-                #
                 curr_commit     = self.all_commits[curr_commit_id]
                 obj_code        = self.repo_files.get(file, {}).get('object_code') or ''
                 #
@@ -1007,6 +1005,10 @@ class Patch(config.Config):
                     print('  - {}{}'.format(file, ' *' if obj_code in self.obj_not_found else ''))
 
                 # check if the file was part of newer commit
+                if not curr_commit_id:
+                    uncommitted_files.append(file)
+                    continue
+                #
                 found_newer = []
                 if not self.args.head:
                     for commit_id in sorted(self.all_files[orig_file]):
@@ -1021,6 +1023,13 @@ class Patch(config.Config):
                     print('      CURRENT ... {}) {}'.format(curr_commit_id, curr_commit['summary'][0:50]))
                     print('      --')
             print()
+
+            # show warnings for files which are not committed
+            if len(uncommitted_files) > 0:
+                util.print_header('WARNING - UNCOMMITTED FILES:')
+                for file in uncommitted_files:
+                    print('  - {}'.format(file))
+                print()
 
 
 

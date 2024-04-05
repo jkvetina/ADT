@@ -668,8 +668,11 @@ class Patch(config.Config):
                     self.first_commit_id = id
                     break
         #
-        self.first_commit   = self.repo.commit(self.all_commits[self.first_commit_id]['id'])
-        self.last_commit    = self.repo.commit(self.all_commits[self.last_commit_id]['id'])
+        try:
+            self.first_commit   = self.repo.commit(self.all_commits[self.first_commit_id]['id'])
+            self.last_commit    = self.repo.commit(self.all_commits[self.last_commit_id]['id'])
+        except:
+            util.raise_error('REBUILD NEEDED')
 
 
 

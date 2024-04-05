@@ -986,6 +986,9 @@ class Patch(config.Config):
             for file in files_processed:
                 orig_file       = file
                 curr_commit_id  = self.get_file_commit(orig_file)[1]
+                if not curr_commit_id:
+                    util.raise_error('FILE NOT COMMITTED', file)
+                #
                 curr_commit     = self.all_commits[curr_commit_id]
                 obj_code        = self.repo_files.get(file, {}).get('object_code') or ''
                 #

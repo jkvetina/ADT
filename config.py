@@ -761,7 +761,7 @@ class Config(util.Attributed):
                         payload = payload.replace(tag, value)
 
         # verify left over tags
-        payload = payload.strip().rstrip('-').rstrip('_').strip()
+        #payload = payload.strip().rstrip('-').rstrip('_').strip()
         if '{$' in payload:
             if loops > 0:
                 return self.replace_tags(payload, obj = obj, ignore_missing = ignore_missing, loops = loops - 1)

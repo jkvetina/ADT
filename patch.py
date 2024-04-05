@@ -1120,7 +1120,7 @@ class Patch(config.Config):
         elif self.config.patch_scripts_dir in file:
             attach_type = 'SCRIPT'
         #
-        file, commit = self.create_file_snapshot(file, app_id = app_id)
+        file, commit = self.create_file_snapshot(file, app_id = app_id, replace_tags = (attach_type in ('TEMPLATE', 'SCRIPT',)))
         file = file.replace(self.patch_folder, '')       # replace first, full path
         file = file.replace(self.repo_root, '')
         file = file.replace(self.config.patch_template_dir, '')
@@ -1181,7 +1181,7 @@ class Patch(config.Config):
 
 
 
-    def create_file_snapshot(self, file, file_content = None, app_id = None, local = False):
+    def create_file_snapshot(self, file, file_content = None, app_id = None, local = False, replace_tags = False):
         # create folders and copy files
         target_file = '{}/{}'.format(self.patch_folder, file).replace('//', '/')
         commit_id   = ''
@@ -1238,7 +1238,7 @@ class Patch(config.Config):
 
         # save file
         if not self.patch_dry:
-            util.write_file(target_file, file_content.rstrip())
+            util.write_file(target_file, file_content)
         #
         return (target_file, commit_id)
 

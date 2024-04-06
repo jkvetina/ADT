@@ -91,6 +91,7 @@ class Export_APEX(config.Config):
         self.apex_ws            = {}
         self.comp_changed       = []  # components changes recently
         self.workspace_offset   = None
+        self.timers             = {}  # to track export times so we can predict progress on next run
 
         # scope
         self.arg_workspace  = self.args.ws      or self.conn.tns.get('workspace', '')
@@ -106,7 +107,8 @@ class Export_APEX(config.Config):
             self.arg_recent = self.config.apex_show_recent
         #
         self.today          = str(datetime.datetime.today() - datetime.timedelta(days = self.arg_recent - 1))[0:10]
-        #
+
+        # sanitize requested actions
         self.actions = {
             'recent'    : False,
             'full'      : False,
@@ -116,10 +118,9 @@ class Export_APEX(config.Config):
             'files'     : False,
             'files_ws'  : False,
         }
+        if __name__ != "__main__":  # dont continue if this class is called from other module
+            return
         self.parse_actions()
-
-        # to track export times so we can predict progress on next run
-        self.timers = {}
 
         # show matching apps every time
         self.get_applications()

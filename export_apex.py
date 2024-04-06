@@ -382,11 +382,11 @@ class Export_APEX(config.Config):
 
 
 
-    def export_recent(self, app_id):
-        if len(self.comp_changed) == 0:
+    def export_recent(self, app_id, components = None):
+        if len(self.comp_changed) == 0 and not components:
             return
         #
-        output = self.execute_request('apex export -applicationid {$APP_ID} -expcomments -expcomponents "{$COMPONENTS}" -split', app_id)
+        output = self.execute_request('apex export -applicationid {$APP_ID} -expcomments -expcomponents "{$COMPONENTS}" -split', app_id, components = components)
 
         # remove some extra files
         source_dir = '{}f{}'.format(self.config.sqlcl_root, app_id)
@@ -686,7 +686,7 @@ class Export_APEX(config.Config):
 
 
 
-    def execute_request(self, request, app_id, lines = False):
+    def execute_request(self, request, app_id, lines = False, components = None):
         request = util.replace(request, {
             '{$WORKSPACE}'      : self.apex_apps[app_id].workspace,
             '{$WORKSPACE_ID}'   : self.apex_apps[app_id].workspace_id,
@@ -694,7 +694,7 @@ class Export_APEX(config.Config):
             '{$TODAY}'          : self.today,
             '{$FORMAT_JSON}'    : ',READABLE_JSON' if self.config.apex_format_json else '',
             '{$FORMAT_YAML}'    : ',READABLE_YAML' if self.config.apex_format_yaml else '',
-            '{$COMPONENTS}'     : ' '.join(self.comp_changed),
+            '{$COMPONENTS}'     : ' '.join(components or self.comp_changed),
         })
         request = 'SET LINESIZE 200;\n{};\n'.format(request)
         #

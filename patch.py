@@ -1087,6 +1087,10 @@ class Patch(config.Config):
                     print('  - {}'.format(file))
                 print()
 
+            # refresh objects and APEX components
+            if self.args.refresh:
+                self.check_connections()
+
 
 
     def get_differences(self, rel_files):

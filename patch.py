@@ -439,6 +439,11 @@ class Patch(config.Config):
 
 
     def check_connections(self):
+        # maybe we are already connected
+        for schema in self.deploy_schemas.keys():
+            if schema in self.deploy_conn and self.deploy_conn[schema]:
+                return
+
         # connect to all target schemas first so we know we can deploy all scripts
         util.print_header('CONNECTING TO {}:'.format(self.target_env))
         for schema in self.deploy_schemas.keys():

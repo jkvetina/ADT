@@ -34,7 +34,7 @@ from lib import queries_export_apex as query
 
 class Export_APEX(config.Config):
 
-    def __init__(self, args = None):
+    def __init__(self, args = None, silent = False):
         self.parser = argparse.ArgumentParser(add_help = False)
 
         # actions and flags
@@ -80,7 +80,7 @@ class Export_APEX(config.Config):
         self.target_files       = self.config.apex_path_files
         #
         self.init_config()
-        self.conn = self.db_connect(ping_sqlcl = False)
+        self.conn = self.db_connect(ping_sqlcl = False, silent = silent)
 
         # make sure we have the temp folder ready
         if not os.path.exists(self.config.sqlcl_root):

@@ -34,8 +34,20 @@ from lib.file import File
 
 class Search_APEX(config.Config):
 
-    def __init__(self, parser):
-        super().__init__(parser)
+    def __init__(self, args = None):
+        self.parser = argparse.ArgumentParser(add_help = False)
+        #
+        group = self.parser.add_argument_group('MAIN ACTIONS')
+        group.add_argument('-patch',        help = 'Patch code (name for the patch files)',                             nargs = '?')
+        group.add_argument('-schema',       help = 'Schema prefix')
+        #
+        group = self.parser.add_argument_group('LIMIT SCOPE')
+        group.add_argument('-app',          help = 'Limit the the scope to specific app',       type = int)
+        group.add_argument('-page',         help = 'To limit APEX pages',                       type = int,             nargs = '*', default = [])
+        group.add_argument('-type',         help = 'To limit object types',                                             nargs = '*', default = [])
+        group.add_argument('-name',         help = 'To limit object name',                                              nargs = '*', default = [])
+
+        super().__init__(self.parser, args)
 
         # setup env and paths
         self.init_config()
@@ -285,18 +297,5 @@ class Search_APEX(config.Config):
 
 
 if __name__ == "__main__":
-    # parse arguments
-    parser = argparse.ArgumentParser(add_help = False)
-    #
-    group = parser.add_argument_group('MAIN ACTIONS')
-    group.add_argument('-patch',        help = 'Patch code (name for the patch files)',                             nargs = '?')
-    group.add_argument('-schema',       help = 'Schema prefix')
-    #
-    group = parser.add_argument_group('LIMIT SCOPE')
-    group.add_argument('-app',          help = 'Limit the the scope to specific app',       type = int)
-    group.add_argument('-page',         help = 'To limit APEX pages',                       type = int,             nargs = '*', default = [])
-    group.add_argument('-type',         help = 'To limit object types',                                             nargs = '*', default = [])
-    group.add_argument('-name',         help = 'To limit object name',                                              nargs = '*', default = [])
-    #
-    Search_APEX(parser)
+    Search_APEX()
 

@@ -33,8 +33,29 @@ from lib import queries_recompile as query
 
 class Recompile(config.Config):
 
-    def __init__(self, parser):
-        super().__init__(parser)
+    def __init__(self, args = None):
+        self.parser = argparse.ArgumentParser(add_help = False)
+        #
+        group = self.parser.add_argument_group('SPECIFY ENVIRONMENT DETAILS')
+        group.add_argument('-target',       help = 'Target environment',                                                nargs = '?')
+        group.add_argument('-schema',       help = 'Schema/connection name',                                            nargs = '?')
+        group.add_argument('-key',          help = 'Key or key location for passwords',                                 nargs = '?')
+
+        # limit scope by object type and name (prefix)
+        group = self.parser.add_argument_group('LIMIT SCOPE')
+        group.add_argument('-type',         help = 'Object type (you can use LIKE syntax)',                             nargs = '?')
+        group.add_argument('-name',         help = 'Object name/prefix (you can use LIKE syntax)',                      nargs = '?')
+
+        # compilation flags
+        group = self.parser.add_argument_group('COMPILATION FLAGS')
+        group.add_argument('-force',        help = 'Recompile even valid objects',              type = util.is_boolean, nargs = '?', const = True,  default = False)
+        group.add_argument('-level',        help = 'Level of PL/SQL optimization',                                      nargs = '?', type = int)
+        group.add_argument('-interpreted',  help = 'Interpreted or native compilation',         type = util.is_boolean, nargs = '?', const = True,  default = False)
+        group.add_argument('-native',       help = 'Interpreted or native compilation',         type = util.is_boolean, nargs = '?', const = True,  default = False)
+        group.add_argument('-scope',        help = 'Gather identifiers',                                                nargs = '*',                default = None)
+        group.add_argument('-warnings',     help = 'Allow PL/SQL warnings',                                             nargs = '*',                default = None)
+
+        super().__init__(self.parser, args)
 
         # connect to the database
         self.args.target = self.args.target or self.args.env
@@ -194,27 +215,5 @@ class Recompile(config.Config):
 
 
 if __name__ == "__main__":
-    # parse arguments
-    parser = argparse.ArgumentParser(add_help = False)
-    #
-    group = parser.add_argument_group('SPECIFY ENVIRONMENT DETAILS')
-    group.add_argument('-target',       help = 'Target environment',                                                nargs = '?')
-    group.add_argument('-schema',       help = 'Schema/connection name',                                            nargs = '?')
-    group.add_argument('-key',          help = 'Key or key location for passwords',                                 nargs = '?')
-
-    # limit scope by object type and name (prefix)
-    group = parser.add_argument_group('LIMIT SCOPE')
-    group.add_argument('-type',         help = 'Object type (you can use LIKE syntax)',                             nargs = '?')
-    group.add_argument('-name',         help = 'Object name/prefix (you can use LIKE syntax)',                      nargs = '?')
-
-    # compilation flags
-    group = parser.add_argument_group('COMPILATION FLAGS')
-    group.add_argument('-force',        help = 'Recompile even valid objects',              type = util.is_boolean, nargs = '?', const = True,  default = False)
-    group.add_argument('-level',        help = 'Level of PL/SQL optimization',                                      nargs = '?', type = int)
-    group.add_argument('-interpreted',  help = 'Interpreted or native compilation',         type = util.is_boolean, nargs = '?', const = True,  default = False)
-    group.add_argument('-native',       help = 'Interpreted or native compilation',         type = util.is_boolean, nargs = '?', const = True,  default = False)
-    group.add_argument('-scope',        help = 'Gather identifiers',                                                nargs = '*',                default = None)
-    group.add_argument('-warnings',     help = 'Allow PL/SQL warnings',                                             nargs = '*',                default = None)
-    #
-    Recompile(parser)
+    Recompile()
 

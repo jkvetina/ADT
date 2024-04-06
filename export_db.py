@@ -34,8 +34,20 @@ from lib.file import File
 
 class Export_DB(config.Config):
 
-    def __init__(self, parser):
-        super().__init__(parser)
+    def __init__(self, args = None):
+        self.parser = argparse.ArgumentParser(add_help = False)
+
+        # actions and flags
+        group = self.parser.add_argument_group('MAIN ACTIONS')
+        group.add_argument('-recent',       help = 'Show objects changed in # days',        type = util.is_boolstr, nargs = '?')
+
+        # env details
+        group = self.parser.add_argument_group('SPECIFY ENVIRONMENT DETAILS')
+        group.add_argument('-schema',       help = '',                                                              nargs = '?')
+        group.add_argument('-env',          help = 'Source environment (for overrides)',                            nargs = '?')
+        group.add_argument('-key',          help = 'Key or key location for passwords',                             nargs = '?')
+
+        super().__init__(self.parser, args)
 
         # setup env and paths
         self.target_root    = self.repo_root + self.config.path_objects
@@ -64,18 +76,5 @@ class Export_DB(config.Config):
 
 
 if __name__ == "__main__":
-    # parse arguments
-    parser = argparse.ArgumentParser(add_help = False)
-
-    # actions and flags
-    group = parser.add_argument_group('MAIN ACTIONS')
-    group.add_argument('-recent',       help = 'Show objects changed in # days',        type = util.is_boolstr, nargs = '?')
-
-    # env details
-    group = parser.add_argument_group('SPECIFY ENVIRONMENT DETAILS')
-    group.add_argument('-schema',       help = '',                                                              nargs = '?')
-    group.add_argument('-env',          help = 'Source environment (for overrides)',                            nargs = '?')
-    group.add_argument('-key',          help = 'Key or key location for passwords',                             nargs = '?')
-    #
-    Export_DB(parser)
+    Export_DB()
 

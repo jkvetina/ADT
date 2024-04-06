@@ -33,13 +33,14 @@ from lib import queries_recompile as query
 
 class Recompile(config.Config):
 
-    def __init__(self, args = None):
+    def __init__(self, args = None, conn = None, silent = False):
         self.parser = argparse.ArgumentParser(add_help = False)
         #
         group = self.parser.add_argument_group('SPECIFY ENVIRONMENT DETAILS')
         group.add_argument('-target',       help = 'Target environment',                                                nargs = '?')
         group.add_argument('-schema',       help = 'Schema/connection name',                                            nargs = '?')
         group.add_argument('-key',          help = 'Key or key location for passwords',                                 nargs = '?')
+        group.add_argument('-silent',       help = 'Dont show anything to screen',              type = util.is_boolean, nargs = '?', const = True,  default = False)
 
         # limit scope by object type and name (prefix)
         group = self.parser.add_argument_group('LIMIT SCOPE')
@@ -63,13 +64,14 @@ class Recompile(config.Config):
         #
         self.init_connection(env_name = self.args.target)
         #
-        self.conn = self.db_connect(ping_sqlcl = False)
+        self.conn = conn or self.db_connect(ping_sqlcl = False, silent = silent)
 
         # show objects overview
-        if self.args.verbose:
-            util.print_header('RECOMPILING:')
-        else:
-            print('\nRECOMPILING')
+        if not self.args.silent:
+            if self.args.get('verbose'):
+                util.print_header('RECOMPILING:')
+            else:
+                print('\nRECOMPILING')
         #
         objects = {}
         args = {
@@ -96,10 +98,11 @@ class Recompile(config.Config):
                     objects[row.object_type][1] += 1
 
                 # show progress
-                if self.args.verbose:
-                    print('  - {}'.format(row.object_name))
-                else:
-                    progress_done = util.print_progress(progress_done, progress_target)
+                if not self.args.silent:
+                    if self.args.get('verbose'):
+                        print('  - {}'.format(row.object_name))
+                    else:
+                        progress_done = util.print_progress(progress_done, progress_target)
 
                 # recompile object
                 try:
@@ -107,10 +110,12 @@ class Recompile(config.Config):
                 except Exception:
                     troublemakers.append(row)
                 #
-            util.print_progress_done()
+            if not self.args.silent:
+                util.print_progress_done()
             #
         except KeyboardInterrupt:
-            print('\n')
+            if not self.args.silent:
+                print('\n')
             return
 
         # if there are some leftovers, try to recompile them
@@ -130,20 +135,21 @@ class Recompile(config.Config):
         self.conn = self.db_connect(ping_sqlcl = False, silent = True)
 
         # calculate difference
-        data = self.conn.fetch_assoc(query.overview, **args)
-        for row in data:
-            if not self.args.force:
-                objects[row.object_type][1] = objects[row.object_type][1] - (row.invalid or 0)
-            if objects[row.object_type][1] == 0:
-                objects[row.object_type][1] = ''
-            objects[row.object_type].append(row.invalid or '')
+        if __name__ == "__main__":
+            data = self.conn.fetch_assoc(query.overview, **args)
+            for row in data:
+                if not self.args.force:
+                    objects[row.object_type][1] = objects[row.object_type][1] - (row.invalid or 0)
+                if objects[row.object_type][1] == 0:
+                    objects[row.object_type][1] = ''
+                objects[row.object_type].append(row.invalid or '')
 
-        # show to user
-        util.print_header('OBJECTS OVERVIEW:')
-        util.print_table(data,
-            columns     = self.conn.cols,
-            right_align = ['total', 'fixed', 'invalid'],
-        )
+            # show to user
+            util.print_header('OBJECTS OVERVIEW:')
+            util.print_table(data,
+                columns     = self.conn.cols,
+                right_align = ['total', 'fixed', 'invalid'],
+            )
 
         # show invalid objects
         errors  = self.conn.fetch_assoc(query.objects_errors_summary, **args)

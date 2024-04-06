@@ -6,6 +6,7 @@ from lib import queries_patch as query
 from lib import util
 from lib.file import File
 from export_apex import Export_APEX
+from recompile import Recompile
 
 #
 #                                                      (R)
@@ -436,6 +437,12 @@ class Patch(config.Config):
                 message = self.build_header('Build log: ' + file)
                 blocks  = self.build_mono(build_logs[file])
                 self.notify_team('', message, blocks = blocks)
+
+        # recompile invalid objects
+        for order, plan in enumerate(self.deploy_plan):
+            schema  = plan['schema']
+            args    = ['-target', self.target_env, '-schema', schema, '-silent', 'Y']
+            reco    = Recompile(args = args, conn = self.deploy_conn[schema], silent = True)
 
 
 
@@ -1096,13 +1103,13 @@ class Patch(config.Config):
             # refresh objects and APEX components
             if self.args.refresh:
                 components = []
-                for file in files_processed:
-                    page_id = util.extract_int(r'/pages/page_(\d+)\.sql$', file)
-                    if page_id:
-                        components.append('PAGE:{}'.format(page_id))
-
                 if app_id:
                     app_id = int(app_id)
+                    for file in files_processed:
+                        page_id = util.extract_int(r'/pages/page_(\d+)\.sql$', file)
+                        if page_id:
+                            components.append('PAGE:{}'.format(page_id))
+                    #
                     args = ['-schema', schema]
                     util.print_header('REFRESHING OBJECTS:')
                     for comp in components:

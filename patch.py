@@ -1290,8 +1290,12 @@ class Patch(config.Config):
 
         # get real file content, not the git
         if (local or self.args.local or self.config.patch_template_dir in target_file or file.startswith(self.config.patch_scripts_snap)):
-            with open(file, 'rt', encoding = 'utf-8') as f:
-                file_content = f.read()
+            if os.path.exists(file):
+                with open(file, 'rt', encoding = 'utf-8') as f:
+                    file_content = f.read()
+            else:
+                commit_hash, commit_id = self.head_commit['id'], max(self.all_commits)
+                file_content    = self.get_file_from_commit(file, commit = commit_hash)
 
         # shorten target folder for template files
         if self.config.patch_template_dir in target_file:

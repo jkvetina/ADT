@@ -5,6 +5,7 @@ import config
 from lib import queries_patch as query
 from lib import util
 from lib.file import File
+from export_apex import Export_APEX
 
 #
 #                                                      (R)
@@ -103,7 +104,7 @@ class Patch(config.Config):
         self.patch_files        = []
         self.patch_files_apex   = []
         self.patch_file         = ''
-        self.patch_folder__     = self.repo_root + self.config.patch_root   + self.config.patch_folder
+        self.patch_folder__     = self.repo_root + self.config.patch_root + self.config.patch_folder
         self.patch_folder       = ''
         self.patch_folders      = {}
         self.patch_sequences    = {}
@@ -1094,7 +1095,26 @@ class Patch(config.Config):
 
             # refresh objects and APEX components
             if self.args.refresh:
-                self.check_connections()
+                components = []
+                for file in files_processed:
+                    page_id = util.extract_int(r'/pages/page_(\d+)\.sql$', file)
+                    if page_id:
+                        components.append('PAGE:{}'.format(page_id))
+
+                if app_id:
+                    app_id = int(app_id)
+                    args = ['-schema', schema]
+                    util.print_header('REFRESHING OBJECTS:')
+                    for comp in components:
+                        print('  - {}'.format(comp))
+                    print()
+                    #
+                    apex = Export_APEX(args = args, silent = True)
+                    apex.args.app, apex.arg_apps = [app_id], [app_id]
+                    #
+                    apex.get_enrichments()
+                    apex.export_recent(app_id = app_id, components = components)
+                    apex.move_files(app_id)
 
 
 

@@ -124,6 +124,7 @@ class Export_APEX(config.Config):
 
         # show matching apps every time
         self.get_applications()
+        self.get_enrichments()
         self.get_workspace_developers()
         self.load_timers()
         #
@@ -286,7 +287,16 @@ class Export_APEX(config.Config):
             util.print_header('APEX APPLICATIONS:', group if group != '-' else '')
             util.print_table(rows)
 
-        # for cleanup files get some extra info
+
+
+    def get_enrichments(self):
+        # enrich meaningless ids with component names
+        args = {
+            'owner'     : self.info.schema,
+            'workspace' : self.arg_workspace,
+            'group_id'  : self.arg_group,
+            'app_id'    : '|'.join(str(x) for x in self.arg_apps),
+        }
         self.enrich_ids = {}
         for row in self.conn.fetch_assoc(query.apex_id_names, **args):
             self.enrich_ids[row.component_id] = '{}: {}'.format(row.component_type, row.component_name)
@@ -385,6 +395,11 @@ class Export_APEX(config.Config):
     def export_recent(self, app_id, components = None):
         if len(self.comp_changed) == 0 and not components:
             return
+        #
+        if components:
+            # we need to pull info about the app
+            self.args.app_id = int(app_id)
+            self.get_application(app_id)
         #
         output = self.execute_request('apex export -applicationid {$APP_ID} -expcomments -expcomponents "{$COMPONENTS}" -split', app_id, components = components)
 
@@ -644,7 +659,7 @@ class Export_APEX(config.Config):
                 ",p_default_workspace_id=>{}".format(self.config.apex_workspace_id))
 
         # keep only developers as page authors
-        if is_page and self.config.apex_keep_developers and self.config.apex_authors:
+        if is_page and self.config.apex_keep_developers and self.config.apex_authors and 'developers' in self:
             developer = util.extract(",p_last_updated_by=>'([^']+)'", new_content)
             if (not (developer in self.developers[workspace]) or not self.config.apex_keep_developers):
                 new_content = util.replace(new_content,
@@ -674,11 +689,12 @@ class Export_APEX(config.Config):
                 ",p_default_id_offset=>0")
 
         # translate id to more meaningful names
-        for component_id, component_name in self.enrich_ids.items():
-            component_id -= self.workspace_offset
-            new_content = new_content.replace (
-                '.id({})\n'.format(component_id),
-                '.id({})  -- {}\n'.format(component_id, component_name))
+        if 'enrich_ids' in self:
+            for component_id, component_name in self.enrich_ids.items():
+                component_id -= self.workspace_offset
+                new_content = new_content.replace (
+                    '.id({})\n'.format(component_id),
+                    '.id({})  -- {}\n'.format(component_id, component_name))
 
         # store new content in the same file
         if new_content != old_content:
@@ -687,6 +703,7 @@ class Export_APEX(config.Config):
 
 
     def execute_request(self, request, app_id, lines = False, components = None):
+        app_id  = int(app_id)
         request = util.replace(request, {
             '{$WORKSPACE}'      : self.apex_apps[app_id].workspace,
             '{$WORKSPACE_ID}'   : self.apex_apps[app_id].workspace_id,

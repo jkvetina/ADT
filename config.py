@@ -541,12 +541,25 @@ class Config(util.Attributed):
 
 
 
-    def get_object(self, object_name, object_type = ''):
-        objects = self.repo_objects.keys()
-        for obj_code in objects:
-            if (object_type == '' or obj_code.startswith(object_type + '.')) and obj_code.endswith('.' + object_name):
-                return self.repo_objects[obj_code]
-        return {}
+    def get_object_type(self, file):
+        file = file.replace(self.repo_root, '')
+
+        # check type by checking all file extenstions
+        folders = {}
+        for object_type, info in self.config.object_types.items():
+            folder, ext = info
+            if '/' + folder in file:
+                folders[ext] = object_type
+        #
+        for ext in sorted(folders.keys(), key = len, reverse = True):
+            if ext in file:
+                return folders[ext]
+        return
+
+
+
+    def get_object_name(self, file):
+        return os.path.basename(file).split('.')[0].upper()
 
 
 
@@ -630,8 +643,7 @@ class Config(util.Attributed):
         # get list of object names
         if object_names == [] and 'diffs' in self:
             for file in self.diffs:
-                object_name = os.path.basename(file).split('.')[0].upper()
-                object_names.append(object_name)
+                object_names.append(self.get_object_name(file))
 
         # grab the file with grants made
         self.patch_grants = self.repo_root + self.config.path_objects + self.config.patch_grants  # reset

@@ -304,7 +304,7 @@ class Oracle:
         pass_binds = {}
         for key, value in binds.items():
             if ':{}'.format(key) in query:
-                pass_binds[key] = value
+                pass_binds[key] = None if value == '' else value
         return pass_binds
 
 
@@ -315,7 +315,7 @@ class Oracle:
             value = binds[arg]
             value = "'{}'".format(value) if isinstance(value, str) else value
             value = 'NULL' if value == "''" else value
-            query = query.replace(':' + arg, value)
+            query = query.replace(':' + arg, str(value))
         return query.strip()
 
 

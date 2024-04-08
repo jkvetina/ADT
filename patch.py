@@ -1132,7 +1132,7 @@ class Patch(config.Config):
                     apex.args.app, apex.arg_apps = [app_id], [app_id]
                     #
                     apex.get_enrichments()
-                    apex.export_recent(app_id = app_id, components = components)
+                    apex.export_recent(app_id = app_id, schema = schema, components = components)
                     apex.move_files(app_id)
 
 

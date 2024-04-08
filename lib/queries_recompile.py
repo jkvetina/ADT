@@ -318,3 +318,20 @@ ORDER BY
     a.application_id
 """
 
+apex_security_context = """
+BEGIN
+    FOR c IN (
+        SELECT a.workspace
+        FROM apex_applications a
+        WHERE a.application_id = :app_id
+    ) LOOP
+        APEX_UTIL.SET_WORKSPACE (
+            p_workspace => c.workspace
+        );
+        APEX_UTIL.SET_SECURITY_GROUP_ID (
+            p_security_group_id => APEX_UTIL.FIND_SECURITY_GROUP_ID(p_workspace => c.workspace)
+        );
+    END LOOP;
+END;
+"""
+

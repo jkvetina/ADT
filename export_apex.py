@@ -227,7 +227,7 @@ class Export_APEX(config.Config):
                 self.actions[arg_name] = True
                 continue
         #
-        if (self.args.recent == 0 or self.actions['split']):
+        if (self.args.recent == 0 or self.args.split):
             self.actions['recent'] = False
 
 
@@ -392,14 +392,13 @@ class Export_APEX(config.Config):
 
 
 
-    def export_recent(self, app_id, components = None):
+    def export_recent(self, app_id, schema = None, components = None):
         if len(self.comp_changed) == 0 and not components:
             return
         #
         if components:
             # we need to pull info about the app
-            self.args.app_id = int(app_id)
-            self.get_application(app_id)
+            self.get_application(app_id, schema = schema)
         #
         output = self.execute_request('apex export -applicationid {$APP_ID} -expcomments -expcomponents "{$COMPONENTS}" -split', app_id, components = components)
 

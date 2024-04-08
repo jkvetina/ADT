@@ -501,16 +501,22 @@ class Config(util.Attributed):
 
 
 
-    def get_application(self, app_id):
+    def get_application(self, app_id, schema = None):
         args = {
-            'owner'     : self.info.schema,
+            'owner'     : schema or self.info.schema,
             'workspace' : '',
             'group_id'  : '',
-            'app_id'    : str(app_id),
+            'app_id'    : app_id,
         }
+        #
+        if schema and schema != self.info.schema:
+            self.conn.execute(query.apex_security_context, app_id = app_id)
         #
         for row in self.conn.fetch_assoc(query.apex_applications, **args):
             self.apex_apps[row.app_id] = row
+        #
+        if not (app_id in self.apex_apps):
+            util.raise_error('APP {} NOT FOUND AT {}, {}'.format(app_id, schema or self.info.schema, self.info.env))
 
 
 

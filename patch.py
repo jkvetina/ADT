@@ -867,10 +867,12 @@ class Patch(config.Config):
                 if not (file in self.diffs):
                     object_name     = self.get_object_name(file)
                     object_type     = self.get_object_type(file)
-                    script_drop     = 'DROP {} {};\n'.format(object_type, object_name)
-                    script_file     = '{}objects_after/drop.{}.{}.sql'.format(self.config.patch_scripts_dir, object_type.replace(' ', '_').lower(), object_name.lower())
                     #
-                    util.write_file(script_file, script_drop)
+                    if object_name and object_type:
+                        script_drop = 'DROP {} {};\n'.format(object_type, object_name)
+                        script_file = '{}objects_after/drop.{}.{}.sql'.format(self.config.patch_scripts_dir, object_type.replace(' ', '_').lower(), object_name.lower())
+                        #
+                        util.write_file(script_file, script_drop)
 
             # processed groups one by one in order defined by patch_map
             files_processed     = []

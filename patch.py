@@ -246,6 +246,9 @@ class Patch(config.Config):
         for ref in sorted(self.patches.keys(), reverse = True):
             info = self.patches[ref]
             if (self.patch_code == None or self.patch_code in info['patch_code']):
+                if self.args.my and info['my'] != 'Y':
+                    continue
+                #
                 found_patches.append({
                     'ref'           : info['ref'],
                     'my'            : info['my'],

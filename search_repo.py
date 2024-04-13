@@ -105,12 +105,21 @@ class Search_Repo(config.Config):
                 util.print_dots(' ' * (len(str(commit_num)) + 2) + commit['author'], right = str(commit['date'])[0:16])
                 print()
                 #
+                groups = {}
                 for file in found_files:
-                    obj = File(file, config = self.config)
-                    if obj['object_name']:
-                        print('  {:>16} | {}'.format(obj['object_type'], obj['object_name']))
-                    else:
-                        print('  - {}'.format(file))
+                    obj         = File(file, config = self.config)
+                    obj_type    = obj['object_type']
+                    obj_name    = obj['object_name']
+                    #
+                    if obj_name:
+                        if not (obj_type in groups):
+                            groups[obj_type] = []
+                        groups[obj_type].append(obj_name)
+                #
+                for obj_type in self.config.object_types.keys():
+                    if obj_type in groups:
+                        for i, obj_name in enumerate(groups[obj_type]):
+                            print('  {:>16} | {}'.format(obj_type if i == 0 else '', obj_name))
                 print()
 
 

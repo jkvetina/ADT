@@ -596,6 +596,15 @@ def get_progress_dots(start, extra, width):
 
 
 
+def print_dots(start, right, width = 78):
+    start   = str(start) + (' ' if len(start) > 0 else '')
+    right   = (' ' if len(right) > 0 else '') + str(right)
+    width   = width - len(start) - len(right)
+    #
+    print(start + ('.' * width) + right)
+
+
+
 def get_progress_time(timer):
     if isinstance(timer, str) and timer == '':
         return ''

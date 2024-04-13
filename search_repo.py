@@ -67,8 +67,8 @@ class Search_Repo(config.Config):
 
         # go from newest to oldest
         for commit_num in sorted(self.all_commits.keys(), reverse = True):
-            commit = self.all_commits[commit_num]
-            if self.old_date and self.old_date >= commit['date'].date():    # limit searching by date
+            commit_obj = self.all_commits[commit_num]
+            if self.old_date and self.old_date >= commit_obj['date'].date():    # limit searching by date
                 break
 
             # search for specific commits
@@ -78,7 +78,7 @@ class Search_Repo(config.Config):
             # search for all words
             found_all = True
             for word in self.args.summary:
-                if not (word.upper() in commit['summary'].upper()):
+                if not (word.upper() in commit_obj['summary'].upper()):
                     found_all = False
                     break
             #
@@ -86,8 +86,10 @@ class Search_Repo(config.Config):
                 continue
 
             # show commit details
-            found_files = []
-            for file in commit['files']:
+            found_files     = []
+            deleted_files   = []
+            #
+            for file in commit_obj['files']:
                 if not (file.startswith(self.config.path_objects)):
                     continue
                 #
@@ -99,10 +101,13 @@ class Search_Repo(config.Config):
                             break
                 if found_all:
                     found_files.append(file)
-            #
+                    if file in commit_obj['deleted']:
+                        deleted_files.append(file)
+
+            # show findings to user
             if found_files:
-                print('\n{}) {}'.format(commit_num, commit['summary']))
-                util.print_dots(' ' * (len(str(commit_num)) + 2) + commit['author'], right = str(commit['date'])[0:16])
+                print('\n{}) {}'.format(commit_num, commit_obj['summary']))
+                util.print_dots(' ' * (len(str(commit_num)) + 2) + commit_obj['author'], right = str(commit_obj['date'])[0:16])
                 print()
                 #
                 groups = {}
@@ -113,13 +118,14 @@ class Search_Repo(config.Config):
                     #
                     if obj_name:
                         if not (obj_type in groups):
-                            groups[obj_type] = []
-                        groups[obj_type].append(obj_name)
+                            groups[obj_type] = {}
+                        groups[obj_type][obj_name] = file
                 #
                 for obj_type in self.config.object_types.keys():
                     if obj_type in groups:
-                        for i, obj_name in enumerate(groups[obj_type]):
-                            print('  {:>16} | {}'.format(obj_type if i == 0 else '', obj_name))
+                        for i, obj_name in enumerate(sorted(groups[obj_type].keys())):
+                            flag = '  [DELETED]' if groups[obj_type][obj_name] in deleted_files else ''
+                            print('  {:>16} | {}{}'.format(obj_type if i == 0 else '', obj_name, flag))
                 print()
 
 

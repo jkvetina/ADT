@@ -612,7 +612,8 @@ class Patch(config.Config):
             util.print_progress_done(start = start)
             print()
 
-        print('DELETED FILES:')
+        if self.args.rebuild:
+            print('DELETED FILES:')
 
         # attach new commits with proper id
         progress_target = len(new_commits)
@@ -636,8 +637,10 @@ class Patch(config.Config):
             #
             self.all_commits[commit_id] = obj
             #
-            progress_done = util.print_progress(progress_done, progress_target, start = start)
-        util.print_progress_done(start = start)
+            if self.args.rebuild:
+                progress_done = util.print_progress(progress_done, progress_target, start = start)
+        if self.args.rebuild:
+            util.print_progress_done(start = start)
 
         # remove 90 days old commits
         old_date = datetime.datetime.now().date() - datetime.timedelta(days = self.config.repo_commit_days)

@@ -71,6 +71,10 @@ class Search_Repo(config.Config):
             if self.old_date and self.old_date >= commit['date'].date():    # limit searching by date
                 break
 
+            # search for specific commits
+            if self.args.commit and not (commit_num in self.args.commit):
+                continue
+
             # search for all words
             found_all = True
             for word in self.args.summary:

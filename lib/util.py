@@ -596,12 +596,12 @@ def get_progress_dots(start, extra, width):
 
 
 
-def print_dots(start, right, trim = False, width = 78):
+def print_dots(start, right, trim = False, width = 78, dot = '.'):
     start   = str(start) + (' ' if len(start) > 0 else '')
     right   = (' ' if len(right) > 0 else '') + str(right)
     width   = width - len(start) - len(right)
     #
-    print(start + ((('.' * width) + right) if (not trim or right) else ''))
+    print(start + (((dot * width) + right) if (not trim or right) else ''))
 
 
 

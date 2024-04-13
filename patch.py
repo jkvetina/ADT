@@ -581,7 +581,7 @@ class Patch(config.Config):
             print('    BRANCH |', self.info.branch)
             print('   COMMITS |', commits)
             print()
-            print('REBUILDING:'.format(self.info.branch, commits))
+            print('REBUILDING:')
 
         # loop throught all commits from newest to oldest, add missing commits
         progress_target = commits
@@ -609,11 +609,32 @@ class Patch(config.Config):
             util.print_progress_done(start = start)
             print()
 
+        print('DELETED FILES:')
+
         # attach new commits with proper id
-        commit_id = max(self.all_commits.keys()) if len(self.all_commits) > 0 else 0
+        progress_target = len(new_commits)
+        progress_done   = 0
+        start           = util.get_start()
+        commit_id       = max(self.all_commits.keys()) if len(self.all_commits) > 0 else 0
+        #
         for obj in reversed(new_commits):
+            obj['deleted'] = []
+            #
             commit_id += 1
+            if commit_id > 1:
+                # store list of deleted files
+                prev_commit_id  = self.all_commits[commit_id - 1]['id']
+                curr_commit_id  = obj['id']
+                #
+                for diff in self.repo.commit(prev_commit_id).diff(curr_commit_id):
+                    rows = str(diff).splitlines()
+                    if 'file deleted in rhs' in rows[-1]:
+                        obj['deleted'].append(rows[0])
+            #
             self.all_commits[commit_id] = obj
+            #
+            progress_done = util.print_progress(progress_done, progress_target, start = start)
+        util.print_progress_done(start = start)
 
         # remove 90 days old commits
         old_date = datetime.datetime.now().date() - datetime.timedelta(days = self.config.repo_commit_days)

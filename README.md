@@ -19,8 +19,8 @@ Checkout the [INSTALL guide](./doc/install.md).
 | `export_db.py`                           | to export database objects                     | __In Progress__ |          8 |      |
 | `export_apex.py`                         | to export APEX & REST services                 | Done            |          7 | 7    |
 | `export_data.py`                         | to export data into CSV files                  | OPY **          |          4 |      |
-| [`live_upload.py`](./doc/live_upload.py) | to upload files to APEX                        | Done            |          1 | 1    |
-| [`patch.py`](./doc/patch.py)             | to prepare patch files and deploy them         | Done            |         20 | 20   |
+| [`live_upload.py`](./doc/live_upload.md) | to upload files to APEX                        | Done            |          1 | 1    |
+| [`patch.py`](./doc/patch.md)             | to prepare patch files and deploy them         | Done            |         20 | 20   |
 | `compare.py`                             | to compare two databases                       | Planned         |         10 |      |
 | [`recompile.py`](./doc/recompile.md)     | to recompile invalid objects                   | Done            |          1 | 1    |
 | [`search_apex.py`](./doc/search_apex.md) | to search for objects in APEX                  | Done            |          2 | 2    |

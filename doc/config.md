@@ -34,6 +34,8 @@ adt config -create
 
 If you are using wallet, you have to copy it zipped and unzipped into yout project config/ folder.
 
+&nbsp;
+
 ## Config folder
 
 Whole application use .yaml files for all internal files, so you should be able to edit them directly on your own.
@@ -45,12 +47,16 @@ All config things and some temp files are stored in the config/ folder.
 
 There are some other files in config repo, don't worry about them now.
 
+&nbsp;
+
 ## Version check
 
 You can check version of components used by ADT:
 ```
 adt config -version
 ```
+
+&nbsp;
 
 ## Variables
 

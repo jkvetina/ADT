@@ -32,6 +32,8 @@ export ADT_KEY = SECRET_PASSWORD_TO_ENCRYPT_OTHER_PASSWORDS
 adt config -create
 ```
 
+If you are using wallet, you have to copy it zipped and unzipped into yout project config/ folder.
+
 ## Config folder
 
 Whole application use .yaml files for all internal files, so you should be able to edit them directly on your own.

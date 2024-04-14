@@ -3,6 +3,12 @@
 A great way how to make sure your schema objects are valid.
 It shows you how many objects you have, how many were fixed and how many remains invalid.
 
+To check all available arguments:
+
+```
+adt recompile
+```
+
 You can limit the scope by passing the object type and/or object name:
 
 ```

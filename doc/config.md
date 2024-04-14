@@ -3,7 +3,7 @@
 Config script helps you to setup your project. You have to use it at the start, but there is generally no need to use it after that.
 
 Main use is to setup a connection to your environment. You can connect to both on-premise and OCI. It will kind of guide you to ask for missing parameters.
-When you have everything, it will connect and print SYSDATE.
+When you have everything, it will connect and print database and APEX versions.
 
 ```
 adt config

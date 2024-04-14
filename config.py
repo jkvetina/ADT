@@ -569,6 +569,15 @@ class Config(util.Attributed):
 
 
 
+    def get_object(self, object_name, object_type = ''):
+        objects = self.repo_objects.keys()
+        for obj_code in objects:
+            if (object_type == '' or obj_code.startswith(object_type + '.')) and obj_code.endswith('.' + object_name):
+                return self.repo_objects[obj_code]
+        return {}
+
+
+
     def get_objects(self):
         for file in util.get_files('{}{}**/*.sql'.format(self.repo_root, self.config.path_objects)):
             if util.extract(r'\.(\d+)\.sql$', file):

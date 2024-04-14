@@ -111,7 +111,9 @@ class Recompile(config.Config):
                     troublemakers.append(row)
                 #
             if not self.args.silent:
-                util.print_progress_done()
+                if not self.args.verbose:
+                    util.print_progress_done()
+                print()
             #
         except KeyboardInterrupt:
             if not self.args.silent:

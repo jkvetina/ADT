@@ -585,9 +585,9 @@ class Config(util.Attributed):
             #
             basename    = file.replace(self.repo_root, '')
             obj         = File(file, config = self.config)
-            obj_code    = obj['object_code']
+            obj_code    = obj.get('object_code')
             #
-            if obj['object_type'] != '':
+            if obj_code and obj['object_type'] != '':
                 self.repo_objects[obj_code] = obj
                 self.repo_files[basename]   = self.repo_objects[obj_code]
 

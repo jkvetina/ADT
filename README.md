@@ -13,18 +13,18 @@ Checkout the [INSTALL guide](./doc/install.md).
 
 ## Actions/Roadmap (progress 37/59, 62%)
 
-| Filename                                 | Description                                    | Status          | Complexity | Done | Doc
-| :-------                                 | :----------                                    | :-----          | ---------: | ---: | :-:
-| [`config.py`](./doc/config.md)           | to manage database connections and settings    | __Done__        |          5 | 5    | 
-| [`export_db.py`](./doc/export_db.md)     | to export database objects                     | OPY **          |          8 |      | 
-| [`export_apex.py`](./doc/export_apex.md) | to export APEX & REST services                 | __Done__        |          7 | 7    | 
-| [`export_data.py`](./doc/export_data.md) | to export data into CSV files                  | OPY **          |          4 |      | 
-| [`live_upload.py`](./doc/live_upload.md) | to upload files to APEX                        | __Done__        |          1 | 1    | 
-| [`patch.py`](./doc/patch.md)             | to prepare patch files and deploy them         | __Done__ *      |         20 | 20   | 
-| [`compare.py`](./doc/compare.md)         | to compare two databases                       | Planned         |         10 |      | 
-| [`recompile.py`](./doc/recompile.md)     | to recompile invalid objects                   | __Done__        |          1 | 1    | Y
-| [`search_apex.py`](./doc/search_apex.md) | to search for objects in APEX                  | __Done__        |          2 | 2    | 
-| [`search_repo.py`](./doc/search_repo.md) | to search repo history                         | __Done__        |          1 | 1    | 
+| Filename                                 | Description                                    | Status          | Complexity | Done |
+| :-------                                 | :----------                                    | :-----          | ---------: | ---: |
+| [`config.py`](./doc/config.md)           | to manage database connections and settings    | __Done__        |          5 | 5    |
+| `export_db.py`                           | to export database objects                     | OPY **          |          8 |      |
+| `export_apex.py`                         | to export APEX & REST services                 | __Done__        |          7 | 7    |
+| `export_data.py`                         | to export data into CSV files                  | OPY **          |          4 |      |
+| `live_upload.py`                         | to upload files to APEX                        | __Done__        |          1 | 1    |
+| `patch.py`                               | to prepare patch files and deploy them         | __Done__ *      |         20 | 20   |
+| `compare.py`                             | to compare two databases                       | Planned         |         10 |      |
+| [`recompile.py`](./doc/recompile.md)     | to recompile invalid objects                   | __Done__        |          1 | 1    |
+| [`search_apex.py`](./doc/search_apex.md) | to search for objects in APEX                  | __Done__        |          2 | 2    |
+| [`search_repo.py`](./doc/search_repo.md) | to search repo history                         | __Done__        |          1 | 1    |
 
 \* Almost done, need some final adjustments.\
 \** OPY is covered by [OPY](https://github.com/jkvetina/OPY/tree/master) tool, but I will refactor all of that into ADT after I am done with other things.

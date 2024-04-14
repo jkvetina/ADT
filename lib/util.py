@@ -676,7 +676,7 @@ def raise_error(message = '', *extras):
     if len(extras) > 0:
         for line in extras:
             if line != None:
-                print_help(line.rstrip())
+                print_help(str(line).rstrip())
     print()
     beep(sound = 3)
     sys.exit()

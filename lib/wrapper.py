@@ -322,7 +322,24 @@ class Oracle:
 
     def fetch_assoc(self, query, limit = 0, **binds):
         self.curs = self.conn.cursor()
-        h = self.curs.execute(query.strip(), **self.get_binds(query, binds))
+        #
+        try:
+            binds   = self.get_binds(query, binds)
+            h       = self.curs.execute(query.strip(), **binds)
+            #
+        except oracledb.DatabaseError as e:
+            if self.debug:
+                print('#' * 80)
+                print(self.debug_query(query, **binds))
+                print()
+            #
+            print('#' * 80)
+            print('CALLSTACK:')
+            for row in util.get_callstack():
+                print('  @{} {}'.format(row[0], row[1]))
+            #
+            util.raise_error('QUERY_ERROR', str(e).splitlines()[0])
+        #
         self.cols = [row[0].lower() for row in self.curs.description]
         self.desc = {}
         for row in self.curs.description:

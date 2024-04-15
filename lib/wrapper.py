@@ -235,19 +235,27 @@ class Oracle:
             process
         )
         #
-        if self.debug:
-            util.print_header('REQUEST:')
-            print(command)
-            if os.name == 'nt':
-                print(request)
+        result  = util.run_command(command, silent = silent).strip()
+        failed  = 'Error starting at line' in result
+        #
+        if (self.debug or failed):
             print()
-        #
-        result = util.run_command(command, silent = silent).strip()
-        #
-        if self.debug:
+            util.print_header('REQUEST:')
+            print(command.rstrip())
+            if os.name == 'nt':
+                print(request.rstrip())
+            print()
             util.print_header('RESULT:')
             print(result)
             print()
+            #
+            if failed:
+                error = ''
+                lines = result.splitlines()
+                for i, line in enumerate(lines):
+                    if 'Error report' in line:
+                        error = lines[i + 1]
+                util.raise_error('COMMAND ERROR', error.upper())
 
         # for Windows remove temp file
         if os.name == 'nt' and os.path.exists(full_tmp):

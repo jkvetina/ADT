@@ -73,9 +73,7 @@ class Export_APEX(config.Config):
         super().__init__(self.parser, args)
 
         # setup env and paths
-        self.app_folder         = '$APP_FOLDER/'
         self.target_root        = self.repo_root + self.config.path_apex
-        self.target_path        = self.target_root + self.app_folder        # replace later
         self.target_rest        = self.target_root + self.config.apex_path_rest
         self.target_files       = self.config.apex_path_files
         #
@@ -87,8 +85,6 @@ class Export_APEX(config.Config):
             os.makedirs(self.config.sqlcl_root, exist_ok = True)
 
         # for workspace and apps lists
-        self.apex_apps          = {}
-        self.apex_ws            = {}
         self.comp_changed       = []  # components changes recently
         self.workspace_offset   = None
         self.timers             = {}  # to track export times so we can predict progress on next run
@@ -133,6 +129,9 @@ class Export_APEX(config.Config):
 
         # for each requested app
         for app_id in sorted(self.apex_apps.keys()):
+            if not (app_id in self.arg_apps):
+                continue
+            #
             util.delete_folder('{}f{}/'.format(self.config.sqlcl_root, app_id))
             self.get_comments(app_id)
 
@@ -232,54 +231,31 @@ class Export_APEX(config.Config):
 
 
 
-    def get_root(self, app_id, folders = ''):
-        transl = {
-            '{$APP_ID}'     : app_id,
-            '{$APP_ALIAS}'  : self.apex_apps[app_id]['app_alias'],
-            '{$APP_NAME}'   : self.apex_apps[app_id]['app_name'],
-            '{$APP_GROUP}'  : self.apex_apps[app_id]['app_group'],
-        }
-        app_folder  = '/{}/'.format(util.replace(self.config.apex_path_app, transl))
-        path        = self.target_path.replace(self.app_folder, app_folder) + folders
-        #
-        return path.replace('//', '/')
-
-
-
-    def get_root_ws(self, folders = ''):
-        return (self.target_root + self.config.apex_workspace_dir + folders).replace('//', '/')
-
-
-
     def get_applications(self):
         # get list of applications
         args = {
-            'owner'     : self.info.schema,
-            'workspace' : self.arg_workspace,
-            'group_id'  : self.arg_group,
-            'app_id'    : '|'.join(str(x) for x in self.arg_apps),
+            'owner'         : self.info.schema,
+            'workspace'     : self.arg_workspace,
+            'group_id'      : self.arg_group,
+            'app_id'        : '',  # '|'.join(str(x) for x in self.arg_apps),
         }
+        self.apex_apps = {}
         #
         groups = {}
         for row in self.conn.fetch_assoc(query.apex_applications, **args):
             # split to groups for screen output
             row.app_group = row.app_group or '-'
-            if not (row.app_group in groups):
-                groups[row.app_group] = []
-            groups[row.app_group].append({
-                'app_id'        : row.app_id,
-                'alias'         : row.app_alias,
-                #'name'          : row.app_name,
-                'pages'         : row.pages,
-                'updated_at'    : row.updated_at,
-            })
+            if row.app_id in self.arg_apps:
+                if not (row.app_group in groups):
+                    groups[row.app_group] = []
+                groups[row.app_group].append({
+                    'app_id'        : row.app_id,
+                    'alias'         : row.app_alias,
+                    #'name'          : row.app_name,
+                    'pages'         : row.pages,
+                    'updated_at'    : row.updated_at,
+                })
             #
-            if not (row.workspace in self.apex_ws):
-                self.apex_ws[row.workspace] = {}
-            if not (row.app_group in self.apex_ws[row.workspace]):
-                self.apex_ws[row.workspace][row.app_group] = {}
-            #self.apex_ws[row.workspace][row.app_group][row.app_id] = row
-            self.apex_ws[row.workspace][row.app_id] = row
             self.apex_apps[row.app_id] = row
 
         # show groups

@@ -544,6 +544,11 @@ class Config(util.Attributed):
 
 
 
+    def get_root_ws(self, folders = ''):
+        return (self.target_root + self.config.apex_workspace_dir + folders).replace('//', '/')
+
+
+
     def get_dependencies(self, prefix = ''):
         self.dependencies = {}
         for row in self.conn.fetch_assoc(query.object_dependencies, objects_prefix = prefix or self.object_prefix):

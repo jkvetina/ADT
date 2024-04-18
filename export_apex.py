@@ -287,6 +287,13 @@ class Export_APEX(config.Config):
             util.print_header('APEX APPLICATIONS:', group if group != '-' else '')
             util.print_table(rows)
 
+        # store in file for later use
+        payload = {}
+        for app_id, row in self.apex_apps.items():
+            payload[app_id] = dict(row)
+        #
+        util.write_file(self.apex_apps_file, payload = payload, yaml = True, fix = True)
+
 
 
     def get_enrichments(self):

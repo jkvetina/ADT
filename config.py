@@ -245,16 +245,23 @@ class Config(util.Attributed):
         self.objects_processed  = []
         self.objects_path       = []
         self.all_objects_sorted = []
+        self.apex_apps          = {}
 
         # some helping files
         self.dependencies_file  = '{}/config/db_dependencies.yaml'.format(self.repo_root)
         self.timers_file        = '{}/config/apex_timers.yaml'.format(self.repo_root)
         self.developers_file    = '{}/config/apex_developers.yaml'.format(self.repo_root)
+        self.apex_apps_file     = '{}/config/apex_apps.yaml'.format(self.repo_root)
 
         # load dependencies from file
         if os.path.exists(self.dependencies_file):
             with open(self.dependencies_file, 'rt', encoding = 'utf-8') as f:
                 self.all_objects_sorted = dict(util.get_yaml(f, self.dependencies_file))['sorted']
+
+        # get yaml file with list of APEX applications
+        if os.path.exists(self.apex_apps_file):
+            with open(self.apex_apps_file, 'rt', encoding = 'utf-8') as f:
+                self.apex_apps = dict(util.get_yaml(f, self.apex_apps_file))
 
         # connect to repo, we need valid repo for everything
         self.init_repo()
@@ -502,6 +509,9 @@ class Config(util.Attributed):
 
 
     def get_application(self, app_id, schema = None):
+        if app_id in self.apex_apps:
+            return self.apex_apps[row.app_id]
+        #
         args = {
             'owner'     : schema or self.info.schema,
             'workspace' : '',
@@ -528,7 +538,7 @@ class Config(util.Attributed):
             '{$APP_GROUP}'  : self.apex_apps[app_id]['app_group'],
         }
         app_folder  = '/{}/'.format(util.replace(self.config.apex_path_app, transl))
-        path        = self.target_path.replace(self.app_folder, app_folder) + folders
+        path        = self.repo_root + self.config.path_apex + app_folder + folders
         #
         return path.replace('//', '/')
 

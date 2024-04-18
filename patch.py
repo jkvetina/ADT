@@ -718,12 +718,13 @@ class Patch(config.Config):
                 # get APEX app info from filename
                 schema = self.info.schema
                 if self.config.path_apex in file:
-                    app_id = util.extract(self.config.apex_path_app_id, file.replace(self.config.path_apex, ''))
-                    if app_id == '':
-                        continue
+                    app_id = util.extract_int(self.config.apex_path_app_id, file.replace(self.config.path_apex, ''))
+                    if app_id:
+                        if not file.startswith(self.get_root(app_id).replace(self.repo_root, '')):
+                            continue
 
-                    # append app_id to separate APEX files
-                    schema = '{}.{}'.format(self.connection.get('schema_apex') or schema, app_id)
+                        # append app_id to separate APEX files
+                        schema = '{}.{}'.format(self.connection.get('schema_apex') or schema, app_id)
                 #
                 if not (schema in self.relevant_files):
                     self.relevant_files[schema] = []

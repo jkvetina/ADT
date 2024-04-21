@@ -1,5 +1,6 @@
 # coding: utf-8
 import sys, os, argparse, time, mimetypes
+import rcssmin, rjsmin
 #
 import config
 from lib import util
@@ -76,6 +77,9 @@ class Live_Upload(config.Config):
         if self.args.workspace:
             self.monitored_dir  = self.args.folder or (self.target_root + self.config.apex_workspace_dir + self.target_files).replace('//', '/')
         #
+        if not os.path.exists(self.monitored_dir):
+            util.raise_error('FOLDER MISSING', self.monitored_dir)
+        #
         util.print_header('MONITORING FOLDER:', self.monitored_dir)
         util.print_help('press Control+C to quit')
         print()
@@ -109,6 +113,7 @@ class Live_Upload(config.Config):
                     for file in changed_files:
                         util.print_now('  - {} '.format(file.replace(self.monitored_dir, '')))
                         self.upload_file(file)
+                        minified = self.minify_file(file)
                         util.print_now('[OK]', append = True, close = True)
                 #
                 util.print_now('.', append = True)
@@ -130,6 +135,23 @@ class Live_Upload(config.Config):
                 self.conn.execute(query.apex_upload_ws_file, name = name, mime = mime, payload = payload)
             else:
                 self.conn.execute(query.apex_upload_app_file, app_id = self.curr_app_id, name = name, mime = mime, payload = payload)
+
+
+
+    def minify_file(self, file):
+        if (file.endswith('.css') or file.endswith('.js')) and not ('.min.' in file):
+            with open(file, 'rt', encoding = 'utf-8') as f:
+                payload = f.read()
+            #
+            if file.endswith('.js'):
+                payload = rcssmin.cssmin(payload, keep_bang_comments = True)
+                #
+            elif file.endswith('.js'):
+                payload = rjsmin.jsmin(payload, keep_bang_comments = True)
+            #
+            target_file = file.replace('.css', '.min.css').replace('.js', '.min.js')
+            util.write_file(target_file, payload)
+            return target_file
 
 
 

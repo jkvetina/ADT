@@ -104,17 +104,17 @@ class Oracle:
 
         # use wallet to connect
         if 'wallet' in self.tns and len(self.tns.wallet) > 0:
-            wallet = os.path.abspath(self.tns.wallet).rstrip('.zip')
-            if not os.path.exists(wallet):
-                util.raise_error('INVALID WALLET', wallet)
+            self.tns.wallet = os.path.abspath(self.tns.wallet).rstrip('.zip')
+            if not os.path.exists(self.tns.wallet):
+                util.raise_error('INVALID WALLET', self.tns.wallet)
             #
             try:
                 self.conn = oracledb.connect(
                     user            = self.tns.user,
                     password        = self.tns.pwd if self.tns.get('pwd!', '') != 'Y' else util.decrypt(self.tns.pwd, self.tns.key),
                     dsn             = self.tns.service,
-                    config_dir      = wallet,
-                    wallet_location = wallet,
+                    config_dir      = self.tns.wallet,
+                    wallet_location = self.tns.wallet,
                     wallet_password = self.tns.wallet_pwd if self.tns.get('wallet_pwd!', '') != 'Y' else util.decrypt(self.tns.wallet_pwd, self.tns.key)
                 )
             except Exception:
@@ -198,7 +198,7 @@ class Oracle:
 
         # prepare connection string
         if 'wallet' in self.tns:
-            request_conn = 'connect -cloudconfig {}.zip {}/"{}"@{}\n'.format(*[
+            request_conn = 'connect -cloudconfig "{}.zip" {}/"{}"@{}\n'.format(*[
                 self.tns.wallet.rstrip('.zip'),
                 self.tns.user,
                 self.tns.pwd if self.tns.get('pwd!', '') != 'Y' else util.decrypt(self.tns.pwd, self.tns.key),

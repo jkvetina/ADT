@@ -45,6 +45,10 @@ class Search_Repo(config.Config):
         group = self.parser.add_argument_group('LIMIT SCOPE')
         group.add_argument('-recent',       help = 'Limit scope to # of recent days',           type = int,             nargs = '?')
         group.add_argument('-branch',       help = 'Limit scope to specific branch',                                    nargs = '?')
+        #
+        group = self.parser.add_argument_group('EXTRA ACTIONS')
+        group.add_argument('-history',      help = 'Show history of specific file/object',                              nargs = '*',                default = [])
+        group.add_argument('-restore',      help = 'Restore specific version of file',                                  nargs = '?', const = True,  default = False)
 
         super().__init__(self.parser, args)
 
@@ -69,6 +73,11 @@ class Search_Repo(config.Config):
         #
         with open(self.commits_file, 'rt', encoding = 'utf-8') as f:
             self.all_commits = dict(util.get_yaml(f, self.commits_file))
+
+        # show history of specific file/object
+        if self.args.history != []:
+            self.show_history()
+            util.quit()
 
         # go from newest to oldest
         for commit_num in sorted(self.all_commits.keys(), reverse = True):
@@ -118,8 +127,8 @@ class Search_Repo(config.Config):
                 groups = {}
                 for file in found_files:
                     obj         = File(file, config = self.config)
-                    obj_type    = obj['object_type']
-                    obj_name    = obj['object_name']
+                    obj_type    = obj.get('object_type') or ''
+                    obj_name    = obj.get('object_name') or ''
                     #
                     if obj_name:
                         if not (obj_type in groups):
@@ -132,6 +141,88 @@ class Search_Repo(config.Config):
                             flag = '  [DELETED]' if groups[obj_type][obj_name] in deleted_files else ''
                             print('  {:>16} | {}{}'.format(obj_type if i == 0 else '', obj_name, flag))
                 print()
+
+
+
+    def show_history(self):
+        # split object names and version/commit number
+        version     = None
+        objects     = self.args.history
+        restore     = self.args.restore
+        #
+        for arg in self.args.history:
+            if arg.isnumeric():
+                version = int(arg)
+                objects.remove(arg)
+
+        # process requested objects
+        for object_name in objects:
+            obj     = self.get_object(object_name)
+            file    = obj['file'].replace(self.repo_root, '')
+
+            # show commits
+            util.print_header('SEARCHING REPO:', '{} {}'.format(obj['object_type'], obj['object_name']))
+            #
+            for commit_id in sorted(self.all_files[file], reverse = True):
+                flag    = '>' if version and version == commit_id else ' '
+                commit  = self.all_commits[commit_id]
+                print('  {} {}) {}'.format(flag, commit_id, commit['summary']))
+            print()
+
+            # restore file close to the original file
+            if restore:
+                versions = [version] if version else list(sorted(self.all_files[file], reverse = True))
+                if len(versions) > 0:
+                    util.print_header('RESTORED FILE:')
+                    for ver in versions:
+                        ver_file    = obj['file'].replace('.sql', '.{}.sql'.format(ver))
+                        payload     = self.get_file_from_commit(file, commit = ver)
+                        #
+                        util.write_file(ver_file, payload)
+                        print('  - {}'.format(ver_file.replace(self.repo_root, '')))
+                    print()
+
+            # generate scripts to compare tables
+            if version and obj['object_type'] == 'TABLE':
+                if not self.conn:
+                    self.conn = self.db_connect(ping_sqlcl = False, silent = True)
+                #
+                source_obj = self.get_table_for_diff(self.get_file_from_commit(file, commit = version))
+                target_obj = self.get_table_for_diff(self.get_file_from_commit(file, commit = max(self.all_files[file])))
+
+                # show file content on screen
+                if source_obj != target_obj:
+                    util.print_header('GENERATED TABLE DIFF:')
+
+                    # create source table
+                    source_obj      = source_obj.replace('$#', '$1')
+                    source_table    = object_name.upper() + '$1'
+                    #
+                    self.conn.drop_object('TABLE', source_table)
+                    self.conn.execute(source_obj)
+
+                    # create target table
+                    target_obj      = target_obj.replace('$#', '$2')
+                    target_table    = object_name.upper() + '$2'
+                    #
+                    self.conn.drop_object('TABLE', target_table)
+                    self.conn.execute(target_obj)
+
+                    # compare tables
+                    result = str(self.conn.fetch_clob_result(query.generate_table_diff, source_table = source_table, target_table = target_table))
+                    for line in result.splitlines():
+                        line = line.strip()
+                        line = util.replace(line, r'("[^"]+"\.)', '')  # remove schema
+                        #
+                        for object_name in re.findall(r'"[^"]+"', line):
+                            line = line.replace(object_name, object_name.replace('"', '').lower())
+                        #
+                        print(line + ';')
+                    print()
+
+                    # remove tables
+                    self.conn.drop_object('TABLE', source_table)
+                    self.conn.drop_object('TABLE', target_table)
 
 
 

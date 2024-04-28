@@ -56,6 +56,9 @@ class Export_DB(config.Config):
 
         # setup env and paths
         self.target_root    = self.repo_root + self.config.path_objects
+        self.objects        = {}
+        self.objects_total  = 0
+        self.overview       = {}
         #
         self.init_config()
         self.conn = self.db_connect(ping_sqlcl = False)
@@ -79,6 +82,7 @@ class Export_DB(config.Config):
                         print('  - {}'.format(obj_code))
 
         self.show_overview()
+        self.export()
 
 
 
@@ -91,20 +95,36 @@ class Export_DB(config.Config):
         util.print_header('OBJECTS OVERVIEW:', '{} {} [{}]'.format(args['object_type'], args['object_name'], args['recent']).replace(' % ', ' ').replace(' []', ''))
 
         # get objects to recompile
-        objects     = {}
-        overview    = {}
-        #
         for row in self.conn.fetch_assoc(query.matching_objects, **args):
-            if not (row.object_type in objects):
-                objects[row.object_type] = []
-                overview[row.object_type] = 0
-            objects[row.object_type].append(row.object_name)
-            overview[row.object_type] += 1
+            if not (row.object_type in self.objects):
+                self.objects[row.object_type] = []
+                self.overview[row.object_type] = 0
+            self.objects[row.object_type].append(row.object_name)
+            self.overview[row.object_type] += 1
         #
         objects_overview = []
-        for object_type in sorted(overview.keys()):
-            objects_overview.append({'object_type' : object_type, 'count' : overview[object_type]})
+        for object_type in sorted(self.objects.keys()):
+            objects_overview.append({'object_type' : object_type, 'count' : self.overview[object_type]})
+            self.objects_total += self.overview[object_type]
+        objects_overview.append({'object_type' : '', 'count' : self.objects_total})  # add total
         util.print_table(objects_overview)
+        print()
+
+
+
+    def export(self):
+        print('EXPORTING')
+        progress_target = self.objects_total
+        progress_done   = 0
+        #
+        for object_type in sorted(self.objects.keys()):
+            for object_name in self.objects[object_type]:
+                #
+                #
+                #
+                progress_done = util.print_progress(progress_done, progress_target)
+        #
+        util.print_progress_done()
         print()
 
 

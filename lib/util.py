@@ -24,6 +24,12 @@ def get_linenumber():
 
 
 
+def print_line():
+    cf = inspect.currentframe()
+    print(cf.f_back.f_lineno)
+
+
+
 def get_callstack():
     stack = []
     for row in traceback.format_stack():

@@ -61,9 +61,14 @@ class Search_Repo(config.Config):
             self.old_date = datetime.datetime.now().date() - datetime.timedelta(days = self.args.recent)
 
         # get all commits
-        if os.path.exists(self.commits_file):
-            with open(self.commits_file, 'rt', encoding = 'utf-8') as f:
-                self.all_commits = dict(util.get_yaml(f, self.commits_file))
+        if not os.path.exists(self.commits_file):
+            util.raise_error('COMMIT FILE MISSING',
+                self.commits_file,
+                'run: adt patch -rebuild'
+            )
+        #
+        with open(self.commits_file, 'rt', encoding = 'utf-8') as f:
+            self.all_commits = dict(util.get_yaml(f, self.commits_file))
 
         # go from newest to oldest
         for commit_num in sorted(self.all_commits.keys(), reverse = True):

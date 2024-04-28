@@ -3,7 +3,7 @@ import sys, os, re, argparse
 #
 import config
 from lib import util
-from lib import queries_recompile as query
+from lib import queries_export_db as query
 from lib.file import File
 
 #
@@ -39,13 +39,18 @@ class Export_DB(config.Config):
 
         # actions and flags
         group = self.parser.add_argument_group('MAIN ACTIONS')
-        group.add_argument('-recent',       help = 'Show objects changed in # days',        type = util.is_boolstr, nargs = '?')
+        group.add_argument('-recent',       help = 'Show objects changed in # days',        type = util.is_boolstr,     nargs = '?')
+
+        # limit scope by object type and name (prefix)
+        group = self.parser.add_argument_group('LIMIT SCOPE')
+        group.add_argument('-type',         help = 'Object type (you can use LIKE syntax)',                             nargs = '?')
+        group.add_argument('-name',         help = 'Object name/prefix (you can use LIKE syntax)',                      nargs = '?')
 
         # env details
         group = self.parser.add_argument_group('SPECIFY ENVIRONMENT DETAILS')
-        group.add_argument('-schema',       help = '',                                                              nargs = '?')
-        group.add_argument('-env',          help = 'Source environment (for overrides)',                            nargs = '?')
-        group.add_argument('-key',          help = 'Key or key location for passwords',                             nargs = '?')
+        group.add_argument('-schema',       help = '',                                                                  nargs = '?')
+        group.add_argument('-env',          help = 'Source environment (for overrides)',                                nargs = '?')
+        group.add_argument('-key',          help = 'Key or key location for passwords',                                 nargs = '?')
 
         super().__init__(self.parser, args)
 
@@ -56,7 +61,7 @@ class Export_DB(config.Config):
         self.conn = self.db_connect(ping_sqlcl = False)
 
         # store object dependencies for several purposes
-        self.get_dependencies()
+        self.get_dependencies(prefix = self.connection.get('prefix', ''))
         self.all_objects_sorted = self.sort_objects(self.dependencies.keys())
         payload = {
             'dependencies'  : self.dependencies,
@@ -66,12 +71,41 @@ class Export_DB(config.Config):
 
         # detect deleted objects
         if self.args.verbose:
-            util.print_header('New dependencies:')
+            util.print_header('NEW DEPENDENCIES:')
             for file, obj in self.repo_files.items():
                 if obj.is_object and obj.object_type and not (obj.object_type in ('GRANT',)):
                     obj_code = obj['object_code']
                     if not (obj_code in self.dependencies):
                         print('  - {}'.format(obj_code))
+
+        self.show_overview()
+
+
+
+    def show_overview(self):
+        args = {
+            'object_name'   : self.args.name    or self.connection.get('prefix', '') + '%',
+            'object_type'   : self.args.type    or '',
+            'recent'        : self.args.recent  or '',
+        }
+        util.print_header('OBJECTS OVERVIEW:', '{} {} [{}]'.format(args['object_type'], args['object_name'], args['recent']).replace(' % ', ' ').replace(' []', ''))
+
+        # get objects to recompile
+        objects     = {}
+        overview    = {}
+        #
+        for row in self.conn.fetch_assoc(query.matching_objects, **args):
+            if not (row.object_type in objects):
+                objects[row.object_type] = []
+                overview[row.object_type] = 0
+            objects[row.object_type].append(row.object_name)
+            overview[row.object_type] += 1
+        #
+        objects_overview = []
+        for object_type in sorted(overview.keys()):
+            objects_overview.append({'object_type' : object_type, 'count' : overview[object_type]})
+        util.print_table(objects_overview)
+        print()
 
 
 

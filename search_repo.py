@@ -238,6 +238,16 @@ class Search_Repo(config.Config):
 
 
 
+    def get_file_from_commit(self, file, commit):
+        # convert commit_id (number) to commit hash
+        if isinstance(commit, int):
+            commit = self.all_commits[commit]['id']
+
+        # run command line and capture the output, text file is expected
+        return util.run_command('git show {}:{}'.format(commit, file))
+
+
+
 if __name__ == "__main__":
     Search_Repo()
 

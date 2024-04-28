@@ -58,6 +58,7 @@ class Search_Repo(config.Config):
         self.info.branch        = self.args.branch or self.config.repo_branch or self.info.branch or str(self.repo.active_branch)
         self.commits_file       = self.config.repo_commits_file.replace('#BRANCH#', self.info.branch)
         self.all_commits        = {}
+        self.all_files          = {}
         self.old_date           = None
 
         # to limit dates
@@ -73,6 +74,14 @@ class Search_Repo(config.Config):
         #
         with open(self.commits_file, 'rt', encoding = 'utf-8') as f:
             self.all_commits = dict(util.get_yaml(f, self.commits_file))
+
+        # also store commits with files as keys
+        for commit_id in sorted(self.all_commits.keys()):
+            obj = self.all_commits[commit_id]
+            for file in obj['files']:
+                if not (file in self.all_files):
+                    self.all_files[file] = []
+                self.all_files[file].append(commit_id)
 
         # show history of specific file/object
         if self.args.history != []:
@@ -162,6 +171,9 @@ class Search_Repo(config.Config):
 
             # show commits
             util.print_header('SEARCHING REPO:', '{} {}'.format(obj['object_type'], obj['object_name']))
+            #
+            if not (file in self.all_files):
+                continue
             #
             for commit_id in sorted(self.all_files[file], reverse = True):
                 flag    = '>' if version and version == commit_id else ' '

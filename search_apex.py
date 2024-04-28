@@ -108,7 +108,7 @@ class Search_APEX(config.Config):
                         if not util.get_match(object_name, self.limit_name):
                             continue
                         #
-                        if object_type in ('TABLE', 'VIEW', 'PACKAGE', 'PROCEDURE', 'FUNCTION', 'SEQUENCE', 'TYPE', 'SYNONYM', 'MATERIALIZED VIEW'):
+                        if object_type:
                             objects.append(object_name)
                     #
                     objects = '|'.join(sorted(objects, reverse = True))
@@ -149,8 +149,9 @@ class Search_APEX(config.Config):
                 continue
             #
             obj = self.get_object(object_name = row.object_name)
-            if not util.get_match(obj.object_type, self.limit_type):
-                continue
+            if 'object_type' in obj and self.limit_type:
+                if not util.get_match(obj.object_type, self.limit_type):
+                    continue
             #
             if not (row.object_name in page_tags):
                 page_tags[row.object_name] = []

@@ -167,7 +167,10 @@ class Search_Repo(config.Config):
         # process requested objects
         for object_name in objects:
             obj     = self.get_object(object_name)
-            file    = obj['file'].replace(self.repo_root, '')
+            file    = obj.get('file', '').replace(self.repo_root, '')
+            #
+            if not file:
+                util.raise_error('UNKNOWN OBJECT')
 
             # show commits
             util.print_header('SEARCHING REPO:', '{} {}'.format(obj['object_type'], obj['object_name']))

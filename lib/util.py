@@ -222,6 +222,12 @@ def remove_cloud_junk(root = ''):
         number = extract('(\s+[0-9]+\.)[^\.]+$', file)
         if number and os.path.exists(file.replace(number, '.')):
             os.remove(file)
+            continue
+        #
+        number = extract('(\s+[0-9]+[/])', file)
+        if number and os.path.exists(file.replace(number, '/')):
+            os.remove(file)
+            continue
 
     # remove empty folders
     for path, _, _ in os.walk(root, topdown = False):

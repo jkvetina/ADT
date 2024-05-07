@@ -79,6 +79,7 @@ class Search_APEX(config.Config):
 
         # parse all embedded code files for object names based by schema prefix
         page_tags   = {}
+        comp_tags   = {}
         found_files = []
         found_obj   = []
         unknown     = []
@@ -91,7 +92,7 @@ class Search_APEX(config.Config):
             for page in self.limit_pages:
                 limit_pages.append('page_{}.sql'.format(str(page).rjust(5, '0')))
             #
-            if not util.get_match(os.path.basename(file), limit_pages):
+            if not util.get_match(os.path.basename(file), limit_pages) and len(limit_pages) > 0:
                 continue
 
             # search for object names
@@ -103,9 +104,9 @@ class Search_APEX(config.Config):
                         object_type, object_name = obj_code.split('.')
                         object_type = object_type.replace(' BODY', '')
                         #
-                        if not util.get_match(object_type, self.limit_type):
+                        if not util.get_match(object_type, self.limit_type) and len(self.limit_type) > 0:
                             continue
-                        if not util.get_match(object_name, self.limit_name):
+                        if not util.get_match(object_name, self.limit_name) and len(self.limit_name) > 0:
                             continue
                         #
                         if object_type:
@@ -127,14 +128,19 @@ class Search_APEX(config.Config):
                     for object_name in  list(set(tags)):
                         if '.' in object_name:
                             object_name = object_name.split('.')[1]
-                        if not util.get_match(object_name, self.limit_name):
+                        if not util.get_match(object_name, self.limit_name) and len(self.limit_name) > 0:
                             continue
                         #
                         page_id = util.extract_int('/page_(\d+)\.sql', file)
                         if not (object_name in page_tags):
                             page_tags[object_name] = []
-                        if page_id != None and not (page_id in page_tags[object_name]):
-                            page_tags[object_name].append(page_id)
+                        if page_id != None:
+                            if not (page_id in page_tags[object_name]):
+                                page_tags[object_name].append(page_id)
+                        else:
+                            if not object_name in comp_tags:
+                                comp_tags[object_name] = []
+                            comp_tags[object_name].append('Y')
 
         # connect to database to get list of referenced objects
         schema = self.connection.get('schema_apex') or self.connection.get('schema_db')
@@ -155,8 +161,13 @@ class Search_APEX(config.Config):
             #
             if not (row.object_name in page_tags):
                 page_tags[row.object_name] = []
-            if row.page_id != None and not (row.page_id in page_tags[row.object_name]):
-                page_tags[row.object_name].append(row.page_id)
+            if row.page_id != None:
+                if not (row.page_id in page_tags[row.object_name]):
+                    page_tags[row.object_name].append(row.page_id)
+            else:
+                if not row.object_name in comp_tags:
+                    comp_tags[row.object_name] = []
+                comp_tags[row.object_name].append('Y')
 
         # create overview
         for object_name in sorted(page_tags.keys()):
@@ -165,7 +176,8 @@ class Search_APEX(config.Config):
                 data.append({
                     'object_name'   : object_name,
                     'type'          : '?',
-                    'pages'         : page_tags[object_name],
+                    'pages'         : page_tags.get(object_name) or '',
+                    'comps'         : len(comp_tags.get(object_name) or ''),
                 })
                 continue
 
@@ -187,7 +199,8 @@ class Search_APEX(config.Config):
             data.append({
                 'object_name'   : obj['object_name'],
                 'type'          : obj['object_type'].replace(' BODY', ''),
-                'pages'         : page_tags[obj['object_name']],
+                'pages'         : page_tags.get(obj['object_name']) or '',
+                'comps'         : len(comp_tags.get(obj['object_name']) or ''),
             })
 
         # append files from append folder
@@ -217,8 +230,14 @@ class Search_APEX(config.Config):
                 data[i].pop('type')
 
         # show overview
+        columns = ['object_name', 'type']
+        if len(self.limit_pages) > 0:
+            columns.append('pages')
+        else:
+            columns.append('comps')
+        #
         util.print_header('{} OBJECTS FROM EMBEDDED CODE:'.format(self.limit_schema).strip(), '({})'.format(len(data)))
-        util.print_table(data)
+        util.print_table(data, columns)
 
         # without patch code just show overview on screen
         if not self.patch_code:

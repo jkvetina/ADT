@@ -72,7 +72,7 @@ class Search_APEX(config.Config):
         self.refs_name      = 'refs/'
         self.append_name    = 'append/'
         #
-        self.source_dir     = self.repo_root + self.config.path_apex + 'f{}/'.format(self.limit_app_id)
+        self.source_dir     = self.get_root(self.limit_app_id)
         self.target_dir     = self.repo_root + self.config.patch_scripts_dir.replace('{$PATCH_CODE}', self.patch_code) + self.refs_name
         self.append_dir     = self.repo_root + self.config.patch_scripts_dir.replace('{$PATCH_CODE}', self.patch_code) + self.append_name
         self.obj_not_found  = []

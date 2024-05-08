@@ -66,8 +66,8 @@ class Search_APEX(config.Config):
         self.limit_app_id   = self.args.app
         self.limit_schema   = self.args.schema or ''
         self.limit_pages    = self.args.page or []
-        self.limit_type     = self.args.type or []
-        self.limit_name     = self.args.name or []
+        self.limit_type     = list(filter(None, ' '.join(self.args.type or []).upper().split(' ')))
+        self.limit_name     = list(filter(None, ' '.join(self.args.name or []).upper().split(' ')))
         #
         self.refs_name      = 'refs/'
         self.append_name    = 'append/'
@@ -101,7 +101,7 @@ class Search_APEX(config.Config):
                 if not self.limit_schema:
                     objects = []
                     for obj_code in self.repo_objects.keys():
-                        object_type, object_name = obj_code.split('.')
+                        object_type, object_name = obj_code.upper().split('.')
                         object_type = object_type.replace(' BODY', '')
                         #
                         if not util.get_match(object_type, self.limit_type) and len(self.limit_type) > 0:
@@ -125,7 +125,7 @@ class Search_APEX(config.Config):
                         tags    = list(filter(None, [j for i in tags for j in i]))
 
                     # map found tags to pages
-                    for object_name in  list(set(tags)):
+                    for object_name in list(set(tags)):
                         if '.' in object_name:
                             object_name = object_name.split('.')[1]
                         if not util.get_match(object_name, self.limit_name) and len(self.limit_name) > 0:
@@ -151,7 +151,7 @@ class Search_APEX(config.Config):
         for row in self.conn.fetch_assoc(query.referenced_objects, app_id = self.limit_app_id):
             if len(self.limit_pages) > 0 and not (row.page_id in self.limit_pages):
                 continue
-            if not util.get_match(row.object_name, self.limit_name):
+            if not util.get_match(row.object_name.upper(), self.limit_name):
                 continue
             #
             obj = self.get_object(object_name = row.object_name)

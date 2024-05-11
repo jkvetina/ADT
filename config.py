@@ -584,6 +584,18 @@ class Config(util.Attributed):
 
 
 
+    def get_object_file(self, object_type, object_name):
+        file = self.get_object(object_type, object_name).get('file', '')
+        if file:
+            return file
+        #
+        folder      = self.config.object_types[object_type][0]
+        file_base   = object_name.lower() + self.config.object_types[object_type][1]
+        file        = '{}{}{}/{}'.format(self.repo_root, self.config.path_objects, folder, file_base)
+        return file
+
+
+
     def get_object(self, object_name, object_type = ''):
         objects = self.repo_objects.keys()
         for obj_code in objects:

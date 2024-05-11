@@ -141,13 +141,6 @@ class Export_DB(config.Config):
                 else:
                     progress_done = util.print_progress(progress_done, progress_target)
 
-                # prepare object file
-                repo_obj    = self.get_object(object_type, object_name)
-                folder      = self.config.object_types[object_type][0]
-                file_base   = object_name.lower() + self.config.object_types[object_type][1]
-                new_file    = '{}{}{}/{}'.format(self.repo_root, self.config.path_objects, folder, file_base)
-                object_file = repo_obj.get('file') or new_file
-
                 # export object from database through DBMS_METADATA package
                 payload     = self.get_object_payload(object_type, object_name)
                 lines       = []
@@ -191,6 +184,7 @@ class Export_DB(config.Config):
                         lines = getattr(self, cleanup_fn)(lines = lines, object_name = object_name, schema = curr_schema, config = self.config)
 
                 # save in file
+                object_file = self.get_object_file(object_type, object_name)
                 util.write_file(object_file, '\n'.join(lines) + '\n\n')
 
             # show extra line in between different object types

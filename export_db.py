@@ -184,6 +184,11 @@ class Export_DB(config.Config):
                         if not (object_type in ['TABLE', 'INDEX']):
                             lines.append('/')
 
+                    # call specialized function to cleanup the rest
+                    cleanup_fn = 'clean_' + object_type.replace(' ', '_').lower()
+
+                    if hasattr(self.__class__, cleanup_fn) and callable(getattr(self, cleanup_fn)):
+                        lines = getattr(self, cleanup_fn)(lines = lines, object_name = object_name, schema = curr_schema, config = self.config)
 
                 # save in file
                 util.write_file(object_file, '\n'.join(lines) + '\n\n')
@@ -196,6 +201,11 @@ class Export_DB(config.Config):
         if not self.args.verbose:
             util.print_progress_done()
         print()
+
+
+
+    def clean_table(self, lines, object_name = '', schema = None, config = {}):
+        return lines
 
 
 

@@ -213,6 +213,20 @@ class Export_DB(config.Config):
 
 
 
+    def clean_index(self, lines, object_name = '', config = {}):
+        definition, columns = lines[0].replace(' ON ', '\n    ON ').split('(', 1)
+        columns = columns.rstrip(');')
+        #
+        if not '(' in columns:
+            columns = ',\n        '.join(columns.replace(', ', ',').split(','))
+        #
+        return '{} (\n        {}\n    );'.format(definition.strip(), columns).splitlines()
+        #
+        # @TODO: add tablespace ONLY IF it does not match the table tablespace !!!
+        #
+
+
+
     def clean_view(self, lines, object_name = '', config = {}):
         # remove column from view definition
         # you should have correct names in the query

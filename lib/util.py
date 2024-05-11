@@ -752,6 +752,7 @@ def get_string(string, max_length = None, append = '..'):
     return (string[:cutoff] + '..') if len(string) > max_length else string
 
 
+
 def get_start():
     return timeit.default_timer()
 

@@ -121,7 +121,7 @@ class Export_DB(config.Config):
             util.print_header('EXPORTING OBJECTS:', '({})'.format(self.objects_total))
             print()
         else:
-            print('EXPORTING OBJECTS')
+            print('\nEXPORTING OBJECTS', '({})'.format(self.objects_total))
 
         # minimize the clutter in exports
         self.conn.execute(query.setup_dbms_metadata)
@@ -130,18 +130,16 @@ class Export_DB(config.Config):
         progress_target = self.objects_total
         progress_done   = 0
         recent_type     = ''
+        curr_schema     = self.conn.tns.schema
         #
         for object_type in sorted(self.objects.keys()):
             for object_name in self.objects[object_type]:
-                show_type   = object_type if object_type != recent_type else ''
-                status      = ''
-                #
                 if self.args.verbose:
-                    print('{:>20} | {:<48} {}'.format(show_type, object_name, status))
+                    show_type   = object_type if object_type != recent_type else ''
+                    recent_type = object_type
+                    print('{:>20} | {:<54}'.format(show_type, util.get_string(object_name, 54)))
                 else:
                     progress_done = util.print_progress(progress_done, progress_target)
-                #
-                recent_type = object_type
 
                 # prepare object file
                 repo_obj    = self.get_object(object_type, object_name)
@@ -151,7 +149,8 @@ class Export_DB(config.Config):
                 object_file = repo_obj.get('file') or new_file
 
                 # export object from database through DBMS_METADATA package
-                payload = self.get_object_payload(object_type, object_name)
+                payload     = self.get_object_payload(object_type, object_name)
+                lines       = []
 
                 # cleanup all objects
                 if len(payload) > 0:
@@ -172,7 +171,7 @@ class Export_DB(config.Config):
                         lines[0] = lines[0].replace(' NONEDITIONABLE', '')
 
                         # simplify object name
-                        lines[0] = self.unquote_object_name(lines[0], remove_schema = self.conn.tns.schema)
+                        lines[0] = self.unquote_object_name(lines[0], remove_schema = curr_schema)
 
                         # simplify end of objects
                         last_line = len(lines) - 1
@@ -185,10 +184,9 @@ class Export_DB(config.Config):
                         if not (object_type in ['TABLE', 'INDEX']):
                             lines.append('/')
 
-                    payload = '\n'.join(lines) + '\n\n'
 
                 # save in file
-                util.write_file(object_file, payload)
+                util.write_file(object_file, '\n'.join(lines) + '\n\n')
 
             # show extra line in between different object types
             if self.args.verbose:

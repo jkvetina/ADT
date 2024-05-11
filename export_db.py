@@ -1,5 +1,5 @@
 # coding: utf-8
-import sys, os, re, argparse
+import sys, os, re, argparse, datetime
 #
 import config
 from lib import util
@@ -73,13 +73,14 @@ class Export_DB(config.Config):
         util.write_file(self.dependencies_file, payload = payload, yaml = True, fix = False)
 
         # detect deleted objects
-        if self.args.verbose:
+        if self.args.verbose and self.args.debug:
             util.print_header('NEW DEPENDENCIES:')
             for file, obj in self.repo_files.items():
                 if obj.is_object and obj.object_type and not (obj.object_type in ('GRANT',)):
                     obj_code = obj['object_code']
                     if not (obj_code in self.dependencies):
                         print('  - {}'.format(obj_code))
+            print()
 
         self.show_overview()
         self.export()
@@ -113,19 +114,124 @@ class Export_DB(config.Config):
 
 
     def export(self):
-        print('EXPORTING')
+        if self.args.verbose:
+            util.print_header('EXPORTING OBJECTS:', '({})'.format(self.objects_total))
+            print()
+        else:
+            print('EXPORTING OBJECTS')
+
+        # minimize the clutter in exports
+        self.conn.execute(query.setup_dbms_metadata)
+
+        # export objects one by one
         progress_target = self.objects_total
         progress_done   = 0
+        recent_type     = ''
         #
         for object_type in sorted(self.objects.keys()):
             for object_name in self.objects[object_type]:
+                show_type   = object_type if object_type != recent_type else ''
+                status      = ''
                 #
+                if self.args.verbose:
+                    print('{:>20} | {:<48} {}'.format(show_type, object_name, status))
+                else:
+                    progress_done = util.print_progress(progress_done, progress_target)
                 #
-                #
-                progress_done = util.print_progress(progress_done, progress_target)
+                recent_type = object_type
+
+                # prepare object file
+                repo_obj    = self.get_object(object_type, object_name)
+                folder      = self.config.object_types[object_type][0]
+                file_base   = object_name.lower() + self.config.object_types[object_type][1]
+                new_file    = '{}{}{}/{}'.format(self.repo_root, self.config.path_objects, folder, file_base)
+                object_file = repo_obj.get('file') or new_file
+
+                # export object from database through DBMS_METADATA package
+                payload = self.get_object_payload(object_type, object_name)
+
+                # cleanup all objects
+                if len(payload) > 0:
+                    payload = re.sub('\t', '    ', payload.strip())  # replace tabs with 4 spaces
+                    lines   = payload.splitlines()
+                    #
+                    if len(lines) > 0:
+                        for (i, line) in enumerate(lines):
+                            lines[i] = line.rstrip()    # remove trailing spaces
+
+                            # remove package body from specification
+                            if i > 0 and line.startswith('CREATE OR REPLACE') and 'PACKAGE BODY' in line and i > 0:
+                                lines = '\n'.join(lines[0:i]).rstrip().splitlines()
+                                break
+
+                        # remove editions
+                        lines[0] = lines[0].replace(' EDITIONABLE', '')
+                        lines[0] = lines[0].replace(' NONEDITIONABLE', '')
+
+                        # simplify object name
+                        lines[0] = self.unquote_object_name(lines[0], remove_schema = self.conn.tns.schema)
+
+                        # simplify end of objects
+                        last_line = len(lines) - 1
+                        if lines[last_line].upper().startswith('END ' + object_name.upper() + ';'):
+                            lines[last_line] = lines[last_line][0:3] + ';'
+
+                        # fix terminator
+                        if lines[last_line][-1:] != ';':
+                            lines[last_line] += ';'
+                        if not (object_type in ['TABLE', 'INDEX']):
+                            lines.append('/')
+
+                    payload = '\n'.join(lines) + '\n\n'
+
+                # save in file
+                util.write_file(object_file, payload)
+
+            # show extra line in between different object types
+            if self.args.verbose:
+                if len(self.objects[object_type]) > 0:
+                    print('{:>20} |'.format(''))
         #
-        util.print_progress_done()
+        if not self.args.verbose:
+            util.print_progress_done()
         print()
+
+
+
+    def get_object_payload(self, object_type, object_name):
+        if object_type == 'MVIEW LOG':
+            object_name = 'MLOG$_' + object_name
+        #
+        args = {
+            'object_type'   : object_type,
+            'object_name'   : object_name,
+        }
+        q = query.describe_object
+
+        # adjust object name
+        if object_type == 'JOB':
+            q = query.describe_job
+        elif object_type == 'MVIEW LOG':
+            q = query.describe_mview_log
+
+        # get object from database
+        try:
+            result = self.conn.fetch(q, **args)
+            return result[0][0]
+        except:
+            util.raise_error('EXPORT_FAILED', object_type, object_name)
+        #
+        return ''
+
+
+
+    def unquote_object_name(self, line, remove_schema = ''):
+        if remove_schema:
+            line = line.replace('"{}".'.format(remove_schema), '')
+        #
+        line = re.sub(r'"([A-Z0-9_$#]+)"', lambda x : x.group(1).lower(), line)
+        #
+        return line
 
 
 

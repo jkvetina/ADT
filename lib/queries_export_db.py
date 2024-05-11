@@ -4,7 +4,7 @@ SELECT DISTINCT
     o.object_name
 FROM user_objects o
 WHERE 1 = 1
-    AND o.object_type       NOT IN ('LOB', 'TABLE PARTITION', 'INDEX')
+    AND o.object_type       NOT IN ('LOB', 'TABLE PARTITION', 'INDEX', 'INDEX PARTITION')
     AND o.object_type       LIKE :object_type || '%'
     AND o.object_name       LIKE :object_name || '%' ESCAPE '\\'
     AND o.object_name       NOT LIKE 'SYS\\_%' ESCAPE '\\'

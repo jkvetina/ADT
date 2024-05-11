@@ -93,7 +93,11 @@ class Export_DB(config.Config):
             'object_type'   : self.args.type    or '',
             'recent'        : self.args.recent  or '',
         }
-        util.print_header('OBJECTS OVERVIEW:', '{} {} [{}]'.format(args['object_type'], args['object_name'], args['recent']).replace(' % ', ' ').replace(' []', ''))
+        show_recent     = str(datetime.datetime.today() - datetime.timedelta(days = int(self.args.recent) - 1))[0:10] if self.args.recent else ''
+        show_header     = 'CHANGED SINCE ' + show_recent if show_recent else 'OVERVIEW'
+        show_filter     = (' ' + args['object_name'] + ' ').replace(' % ', ' ').strip()
+        #
+        util.print_header('OBJECTS {}: {}'.format(show_header, show_filter).rstrip())
 
         # get objects to recompile
         for row in self.conn.fetch_assoc(query.matching_objects, **args):
@@ -107,9 +111,8 @@ class Export_DB(config.Config):
         for object_type in sorted(self.objects.keys()):
             objects_overview.append({'object_type' : object_type, 'count' : self.overview[object_type]})
             self.objects_total += self.overview[object_type]
-        objects_overview.append({'object_type' : '', 'count' : self.objects_total})  # add total
+        #objects_overview.append({'object_type' : '', 'count' : self.objects_total})  # add total
         util.print_table(objects_overview)
-        print()
 
 
 

@@ -188,6 +188,11 @@ class Export_DB(config.Config):
                 if lines[last_line].upper().startswith('END ' + object_name.upper() + ';'):
                     lines[last_line] = lines[last_line][0:3] + ';'
 
+                # if object ends with comment, push ";" to the next line
+                if '--' in lines[last_line]:
+                    lines.append(';')
+                    last_line += 1
+
                 # fix terminator
                 if lines[last_line][-1:] != ';':
                     lines[last_line] += ';'

@@ -213,6 +213,39 @@ class Export_DB(config.Config):
 
 
 
+    def clean_view(self, lines, object_name = '', config = {}):
+        # remove column from view definition
+        # you should have correct names in the query
+        lines[0] = util.replace(lines[0], r'\s*\([^)]+\)\s*AS', ' AS')                 # remove columns
+        lines[0] = util.replace(lines[0], r'\s*\([^)]+\)\s*BEQUEATH', ' BEQUEATH')     # remove columns
+        lines[0] = lines[0].replace(' ()  AS', ' AS')
+        lines[0] = lines[0].replace('  ', ' ')
+
+        # fix wrong indentation on first line
+        lines[1] = lines[1].lstrip()
+
+        for (i, line) in enumerate(lines):
+            indent      = util.extract(r'^(\s*)', line) or '    '
+            start       = util.extract(r'^([^"]+)', line).strip()
+            expanded    = []
+
+            # fix SELECT * FROM ..., expand column names
+            if util.extract(r'"([A-Z0-9_$#]+)",.*"', line):         # with table alias
+                for col in re.findall(r'([^\.,"]\.)"([A-Z0-9_$#]+)"', line):
+                    expanded.append('{}{}{}'.format(indent, col[0], col[1].lower()))
+                    start = start.replace(col[0], '')
+            #
+            if util.extract(r'"([A-Z0-9_$#]+)","', line):           # no alias
+                for col in re.findall(r'"([A-Z0-9_$#]+)"', line):
+                    expanded.append('{}{}'.format(indent, col.lower()))
+            #
+            if len(expanded) > 0:
+                lines[i] = (start + '\n' if start else '') + ',\n'.join(expanded)
+        #
+        return lines
+
+
+
     def get_object_payload(self, object_type, object_name):
         if object_type == 'MVIEW LOG':
             object_name = 'MLOG$_' + object_name

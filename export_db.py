@@ -61,7 +61,8 @@ class Export_DB(config.Config):
         self.overview       = {}
         #
         self.init_config()
-        self.conn = self.db_connect(ping_sqlcl = False)
+        self.conn           = self.db_connect(ping_sqlcl = False)
+        self.remove_schema  = self.conn.tns.schema
 
         # store object dependencies for several purposes
         self.get_dependencies(prefix = self.connection.get('prefix', ''))
@@ -130,7 +131,6 @@ class Export_DB(config.Config):
         progress_target = self.objects_total
         progress_done   = 0
         recent_type     = ''
-        curr_schema     = self.conn.tns.schema
         #
         for object_type in sorted(self.objects.keys()):
             for object_name in self.objects[object_type]:
@@ -141,51 +141,10 @@ class Export_DB(config.Config):
                 else:
                     progress_done = util.print_progress(progress_done, progress_target)
 
-                # export object from database through DBMS_METADATA package
-                payload     = self.get_object_payload(object_type, object_name)
-                lines       = []
-
-                # cleanup all objects
-                if len(payload) > 0:
-                    payload = re.sub('\t', '    ', payload.strip())  # replace tabs with 4 spaces
-                    lines   = payload.splitlines()
-                    #
-                    if len(lines) > 0:
-                        for (i, line) in enumerate(lines):
-                            lines[i] = line.rstrip()    # remove trailing spaces
-
-                            # remove package body from specification
-                            if i > 0 and line.startswith('CREATE OR REPLACE') and 'PACKAGE BODY' in line and i > 0:
-                                lines = '\n'.join(lines[0:i]).rstrip().splitlines()
-                                break
-
-                        # remove editions
-                        lines[0] = lines[0].replace(' EDITIONABLE', '')
-                        lines[0] = lines[0].replace(' NONEDITIONABLE', '')
-
-                        # simplify object name
-                        lines[0] = self.unquote_object_name(lines[0], remove_schema = curr_schema)
-
-                        # simplify end of objects
-                        last_line = len(lines) - 1
-                        if lines[last_line].upper().startswith('END ' + object_name.upper() + ';'):
-                            lines[last_line] = lines[last_line][0:3] + ';'
-
-                        # fix terminator
-                        if lines[last_line][-1:] != ';':
-                            lines[last_line] += ';'
-                        if not (object_type in ['TABLE', 'INDEX']):
-                            lines.append('/')
-
-                    # call specialized function to cleanup the rest
-                    cleanup_fn = 'clean_' + object_type.replace(' ', '_').lower()
-
-                    if hasattr(self.__class__, cleanup_fn) and callable(getattr(self, cleanup_fn)):
-                        lines = getattr(self, cleanup_fn)(lines = lines, object_name = object_name, schema = curr_schema, config = self.config)
-
-                # save in file
+                # export object from database and save in file
+                payload     = self.export_object(object_type, object_name)
                 object_file = self.get_object_file(object_type, object_name)
-                util.write_file(object_file, '\n'.join(lines) + '\n\n')
+                util.write_file(object_file, payload)
 
             # show extra line in between different object types
             if self.args.verbose:
@@ -198,7 +157,53 @@ class Export_DB(config.Config):
 
 
 
-    def clean_table(self, lines, object_name = '', schema = None, config = {}):
+    def export_object(self, object_type, object_name, object_file = ''):
+        # export object from database through DBMS_METADATA package
+        payload     = self.get_object_payload(object_type, object_name)
+        lines       = []
+
+        # cleanup all objects
+        if len(payload) > 0:
+            payload = re.sub('\t', '    ', payload.strip())  # replace tabs with 4 spaces
+            lines   = payload.splitlines()
+            #
+            if len(lines) > 0:
+                for (i, line) in enumerate(lines):
+                    lines[i] = line.rstrip()    # remove trailing spaces
+
+                    # remove package body from specification
+                    if i > 0 and line.startswith('CREATE OR REPLACE') and 'PACKAGE BODY' in line and i > 0:
+                        lines = '\n'.join(lines[0:i]).rstrip().splitlines()
+                        break
+
+                # remove editions
+                lines[0] = lines[0].replace(' EDITIONABLE', '')
+                lines[0] = lines[0].replace(' NONEDITIONABLE', '')
+
+                # simplify object name
+                lines[0] = self.unquote_object_name(lines[0], remove_schema = self.remove_schema)
+
+                # simplify end of objects
+                last_line = len(lines) - 1
+                if lines[last_line].upper().startswith('END ' + object_name.upper() + ';'):
+                    lines[last_line] = lines[last_line][0:3] + ';'
+
+                # fix terminator
+                if lines[last_line][-1:] != ';':
+                    lines[last_line] += ';'
+                if not (object_type in ['TABLE', 'INDEX']):
+                    lines.append('/')
+
+            # call specialized function to cleanup the rest
+            cleanup_fn = 'clean_' + object_type.replace(' ', '_').lower()
+            if hasattr(self.__class__, cleanup_fn) and callable(getattr(self, cleanup_fn)):
+                lines = getattr(self, cleanup_fn)(lines = lines, object_name = object_name, config = self.config)
+        #
+        return '\n'.join(lines) + '\n\n'
+
+
+
+    def clean_table(self, lines, object_name = '', config = {}):
         return lines
 
 

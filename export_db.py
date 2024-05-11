@@ -133,7 +133,7 @@ class Export_DB(config.Config):
         recent_type     = ''
         #
         for object_type in sorted(self.objects.keys()):
-            for object_name in self.objects[object_type]:
+            for object_name in sorted(self.objects[object_type]):
                 if self.args.verbose:
                     show_type   = object_type if object_type != recent_type else ''
                     recent_type = object_type

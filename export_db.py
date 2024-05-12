@@ -305,13 +305,9 @@ class Export_DB(config.Config):
 
 
     def clean_index(self, lines, object_name = '', config = {}):
-        definition, columns = lines[0].replace(' ON ', '\n    ON ').split('(', 1)
-        columns = columns.rstrip(');')
+        lines[0] = self.split_columns(lines[0].replace(' ON ', '\n    ON '))
         #
-        if not '(' in columns:
-            columns = ',\n        '.join(columns.replace(', ', ',').split(','))
-        #
-        return '{} (\n        {}\n    );'.format(definition.strip(), columns).splitlines()
+        return lines
         #
         # @TODO: add tablespace ONLY IF it does not match the table tablespace !!!
         #

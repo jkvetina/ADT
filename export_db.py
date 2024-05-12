@@ -210,7 +210,7 @@ class Export_DB(config.Config):
             last_line += 1
 
         # fix terminator
-        if lines[last_line][-1:] != ';':
+        if not lines[last_line].rstrip().endswith(';'):
             lines[last_line] += ';'
         if not (object_type in ['TABLE', 'INDEX']):
             lines.append('/')
@@ -304,8 +304,20 @@ class Export_DB(config.Config):
 
             # fix multiple statements
             if i > 0 and line.split(' ', 1)[0] in ('CREATE', 'ALTER'):
-                lines[i] = line         # strip start
-                lines[i - 1] += ';'     # add missing comma
+                lines[i] = '--\n' + line    # strip start
+                if not lines[i - 1].rstrip().endswith(';'):
+                    lines[i - 1] += ';'
+
+                # reuse dedicated index cleanup
+                if ('CREATE INDEX' in line or 'CREATE UNIQUE INDEX' in line):
+                    index_name      = self.unquote_object_name(util.extract(r'INDEX\s+([^\s]+)', line), remove_schema = self.remove_schema)
+                    index_payload   = [lines[i].replace('"("', '" ("')]
+                    index_payload   = self.cleanup_general(index_payload, index_name, 'INDEX')
+                    index_payload   = self.clean_index(index_payload, object_name = index_name, config = config)
+                    #
+                    lines[i] = '\n'.join(index_payload)
+
+                # add missing comma
 
         # consolidate lines
         lines = self.rebuild_lines(lines)
@@ -331,7 +343,8 @@ class Export_DB(config.Config):
     def clean_index(self, lines, object_name = '', config = {}):
         lines[0] = self.split_columns(lines[0].replace(' ON ', '\n    ON '))
         #
-        return lines
+        return self.rebuild_lines(lines)
+
         #
         # @TODO: add tablespace ONLY IF it does not match the table tablespace !!!
         #

@@ -178,7 +178,8 @@ class Export_DB(config.Config):
             if hasattr(self.__class__, cleanup_fn) and callable(getattr(self, cleanup_fn)):
                 lines = getattr(self, cleanup_fn)(lines = lines, object_name = object_name, config = self.config)
         #
-        return '\n'.join(lines) + '\n\n'
+        payload = util.replace('\n'.join(lines), r';\n;', ';') + '\n\n'
+        return payload
 
 
 
@@ -204,7 +205,7 @@ class Export_DB(config.Config):
             lines[last_line] = lines[last_line][0:3] + ';'
 
         # if object ends with comment, push ";" to the next line
-        if '--' in lines[last_line]:
+        if '--' in lines[last_line] and last_line > 0:
             lines.append(';')
             last_line += 1
 

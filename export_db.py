@@ -286,7 +286,7 @@ class Export_DB(config.Config):
                     line = '    --\n    ' + line.strip()
                 #
                 if line.lstrip().startswith('REFERENCES'):
-                    line = line.strip().replace(' ENABLE', '')
+                    line = line.strip().replace(' ENABLE', '').replace('"("', '" ("')
                     line = '        ' + self.unquote_object_name(line, remove_schema = self.remove_schema)
                     line = self.split_columns(line)
                 #

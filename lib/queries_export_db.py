@@ -1,10 +1,16 @@
 matching_objects = """
 SELECT DISTINCT
     o.object_type,
-    o.object_name
+    o.object_name,
+    t.tablespace_name,
+    t.partitioned,
+    t.global_stats
 FROM user_objects o
+LEFT JOIN user_tables t
+    ON t.table_name         = o.object_name
+    AND o.object_type       = 'TABLE'
 WHERE 1 = 1
-    AND o.object_type       NOT IN ('LOB', 'TABLE PARTITION', 'INDEX', 'INDEX PARTITION')
+    AND o.object_type       NOT IN ('LOB', 'TABLE PARTITION', 'INDEX', 'INDEX PARTITION', 'JOB')
     AND o.object_type       LIKE :object_type || '%'
     AND o.object_name       LIKE :object_name || '%' ESCAPE '\\'
     AND o.object_name       NOT LIKE 'SYS\\_%' ESCAPE '\\'
@@ -16,11 +22,13 @@ WHERE 1 = 1
             m.mview_name    AS object_name
         FROM user_mviews m
     )
-    AND o.object_type NOT IN ('JOB')
 UNION ALL
 SELECT
     'JOB'           AS object_type,
-    j.job_name      AS object_name
+    j.job_name      AS object_name,
+    NULL            AS tablespace_name,
+    NULL            AS partitioned,
+    NULL            AS global_stats
 FROM user_scheduler_jobs j
 WHERE :recent IS NULL
     AND (:object_type   = 'JOB' OR NULLIF(:object_type, '%') IS NULL)
@@ -29,7 +37,10 @@ WHERE :recent IS NULL
 UNION ALL
 SELECT
     'MVIEW LOG'                     AS object_type,
-    REPLACE(l.log_table, 'MLOG$_')  AS object_name
+    REPLACE(l.log_table, 'MLOG$_')  AS object_name,
+    NULL                            AS tablespace_name,
+    NULL                            AS partitioned,
+    NULL                            AS global_stats
 FROM user_mview_logs l
 WHERE :recent IS NULL
     AND (:object_type LIKE 'MAT%' OR NULLIF(:object_type, '%') IS NULL)
@@ -37,7 +48,10 @@ WHERE :recent IS NULL
 UNION ALL
 SELECT
     'INDEX'             AS object_type,
-    t.index_name        AS object_name
+    t.index_name        AS object_name,
+    t.tablespace_name,
+    t.partitioned,
+    t.global_stats
 FROM user_indexes t
 LEFT JOIN user_constraints c
     ON c.table_name         = t.table_name

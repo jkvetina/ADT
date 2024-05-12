@@ -103,9 +103,9 @@ class Export_DB(config.Config):
         # get objects to recompile
         for row in self.conn.fetch_assoc(query.matching_objects, **args):
             if not (row.object_type in self.objects):
-                self.objects[row.object_type] = []
+                self.objects[row.object_type] = {}
                 self.overview[row.object_type] = 0
-            self.objects[row.object_type].append(row.object_name)
+            self.objects[row.object_type][row.object_name] = row
             self.overview[row.object_type] += 1
         #
         objects_overview = []
@@ -133,7 +133,7 @@ class Export_DB(config.Config):
         recent_type     = ''
         #
         for object_type in sorted(self.objects.keys()):
-            for object_name in sorted(self.objects[object_type]):
+            for object_name in sorted(self.objects[object_type].keys()):
                 if self.args.verbose:
                     show_type   = object_type if object_type != recent_type else ''
                     recent_type = object_type
@@ -148,7 +148,7 @@ class Export_DB(config.Config):
 
             # show extra line in between different object types
             if self.args.verbose:
-                if len(self.objects[object_type]) > 0:
+                if len(self.objects[object_type].keys()) > 0:
                     print('{:>20} |'.format(''))
         #
         if not self.args.verbose:

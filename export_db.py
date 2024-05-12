@@ -384,6 +384,33 @@ class Export_DB(config.Config):
 
 
 
+    def clean_sequence(self, lines, object_name = '', config = {}):
+        lines[0] = lines[0].replace(' CACHE 20 ', ' ')
+        lines[0] = lines[0].replace(' MAXVALUE 9999999999999999999999999999', '')
+        lines[0] = lines[0].replace(' MAXVALUE 999999999999999999999999999', '')
+        lines[0] = lines[0].replace(' INCREMENT BY 1', '')
+        lines[0] = lines[0].replace(' NOORDER', '')
+        lines[0] = lines[0].replace(' NOCYCLE', '')
+        lines[0] = lines[0].replace(' NOKEEP', '')
+        lines[0] = lines[0].replace(' NOSCALE', '')
+        lines[0] = lines[0].replace(' NOPARTITION', '')
+        lines[0] = lines[0].replace(' GLOBAL', '')
+        #
+        lines[0] = util.replace(lines[0], ' START WITH \d+ ', ' ')
+        lines[0] = util.replace(lines[0], '\s+', ' ').strip()
+        #
+        lines[0] = lines[0].replace(' MINVALUE',  '\n    MINVALUE')
+        lines[0] = lines[0].replace(' START',     '\n    START')
+        lines[0] = lines[0].replace(' CACHE',     '\n    CACHE')
+        #
+        lines[0] = util.replace(lines[0], '\s+;', ';')
+        #
+        drop_obj = '-- DROP SEQUENCE {};'.format(object_name.lower())
+        #
+        return self.rebuild_lines([drop_obj] + lines)
+
+
+
     def get_object_payload(self, object_type, object_name):
         if object_type == 'MVIEW LOG':
             object_name = 'MLOG$_' + object_name

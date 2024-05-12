@@ -100,3 +100,38 @@ BEGIN
     DBMS_METADATA.SET_TRANSFORM_PARAM(DBMS_METADATA.SESSION_TRANSFORM, 'PRETTY',                TRUE);
 END;"""
 
+# get table comments
+pull_comments = """
+SELECT
+    m.table_name,
+    NULL                    AS column_name,
+    NULL                    AS column_full,
+    m.comments,
+    NULL                    AS column_id
+FROM user_tab_comments m
+WHERE m.table_name          LIKE :object_name || '%' ESCAPE '\\'
+--
+UNION ALL
+SELECT
+    m.table_name,
+    m.column_name,
+    RPAD(LOWER(m.table_name || '.' || m.column_name), MAX(FLOOR(LENGTH(m.table_name || '.' || m.column_name) / 4) * 4 + 5) OVER (PARTITION BY m.table_name)) AS column_full,
+    m.comments,
+    c.column_id
+FROM user_col_comments m
+JOIN user_tab_cols c
+    ON c.table_name         = m.table_name
+    AND c.column_name       = m.column_name
+LEFT JOIN user_views v
+    ON v.view_name          = m.table_name
+WHERE m.table_name          LIKE :object_name || '%' ESCAPE '\\'
+    AND m.table_name        NOT LIKE '%\\_E$' ESCAPE '\\'
+    AND (
+        m.column_name       NOT IN (
+            'UPDATED_BY', 'UPDATED_AT', 'CREATED_BY', 'CREATED_AT'
+        )
+        OR m.comments       IS NOT NULL
+    )
+ORDER BY 1, column_id NULLS FIRST
+"""
+

@@ -59,6 +59,8 @@ class Export_DB(config.Config):
         self.objects        = {}
         self.objects_total  = 0
         self.overview       = {}
+        self.comments       = {}
+        self.comments_col   = {}
         #
         self.init_config()
         self.conn           = self.db_connect(ping_sqlcl = False)
@@ -114,6 +116,15 @@ class Export_DB(config.Config):
             self.objects_total += self.overview[object_type]
         #objects_overview.append({'object_type' : '', 'count' : self.objects_total})  # add total
         util.print_table(objects_overview)
+
+        # get comments
+        for row in self.conn.fetch_assoc(query.pull_comments, **args):
+            if not (row.table_name in self.comments):
+                self.comments[row.table_name]       = {}
+                self.comments_col[row.table_name]   = []
+            if row.column_name != None:
+                self.comments_col[row.table_name].append(row.column_name)
+            self.comments[row.table_name][row.column_name or ''] = row
 
 
 
@@ -334,6 +345,9 @@ class Export_DB(config.Config):
             if line == ');':
                 lines[i] = line         # strip start
 
+        # add comments
+        lines = self.get_object_comments(lines, object_name)
+
 
         #
         return lines
@@ -475,6 +489,24 @@ class Export_DB(config.Config):
             line    = line.replace(content, indent + indent.join(columns) + '\n' + start)
         #
         return line
+
+
+
+    def get_object_comments(self, lines, object_name):
+        if object_name in self.comments:
+            comment = (self.comments[object_name]['']['comments'] or '').replace('\'', '')
+            lines.append('--')
+            lines.append('COMMENT ON TABLE {} IS \'{}\';'.format(object_name.lower(), comment))
+        #
+        if object_name in self.comments_col:
+            lines.append('--')
+            for column_name in self.comments[object_name].keys():
+                if column_name:
+                    column_full = self.comments[object_name][column_name]['column_full']
+                    comment     = (self.comments[object_name][column_name]['comments'] or '').replace('\'', '')
+                    lines.append('COMMENT ON COLUMN {} IS \'{}\';'.format(column_full, comment))
+        #
+        return lines
 
 
 

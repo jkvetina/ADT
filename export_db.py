@@ -409,6 +409,21 @@ class Export_DB(config.Config):
 
 
 
+    def clean_trigger(self, lines, object_name = '', config = {}):
+        remove_lines = []
+        for (i, line) in enumerate(lines):
+            # fix trigger status
+            if line.startswith('ALTER TRIGGER ') and line.endswith(' ENABLE;'):
+                lines[i] = ''
+                remove_lines.append(i)
+        #
+        for i in sorted(remove_lines, reverse = True):
+            lines.pop(i)
+        #
+        return lines
+
+
+
     def clean_sequence(self, lines, object_name = '', config = {}):
         lines[0] = lines[0].replace(' CACHE 20 ', ' ')
         lines[0] = lines[0].replace(' MAXVALUE 9999999999999999999999999999', '')

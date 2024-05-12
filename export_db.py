@@ -411,6 +411,13 @@ class Export_DB(config.Config):
 
 
 
+    def clean_synonym(self, lines, object_name = '', config = {}):
+        lines[0] = self.split_columns(lines[0].replace(' FOR ', '\n    FOR '))
+        #
+        return self.rebuild_lines(lines)
+
+
+
     def get_object_payload(self, object_type, object_name):
         if object_type == 'MVIEW LOG':
             object_name = 'MLOG$_' + object_name

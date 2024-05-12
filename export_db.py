@@ -304,6 +304,16 @@ class Export_DB(config.Config):
 
                 lines[i] = line.rstrip()
 
+        # remove partitions from table
+        for (i, line) in enumerate(lines):
+            line = line.strip()
+            if line.startswith('PARTITION BY '):    # keep
+                lines[i] = line
+                continue
+            #
+            if (line.startswith('PARTITION') or line.startswith('(PARTITION')):
+                lines[i] = ''
+
         # cleanup round
         for (i, line) in enumerate(lines):
             line = line.strip()

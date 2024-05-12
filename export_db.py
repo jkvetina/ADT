@@ -212,6 +212,94 @@ class Export_DB(config.Config):
 
 
     def clean_table(self, lines, object_name = '', config = {}):
+        # fix first bracket
+        lines[0] += ' ('
+        lines[1] = lines[1].lstrip().lstrip('(').lstrip()
+
+        # extract columns
+        columns         = []
+        column_types    = {}
+        column_extras   = {}
+        #
+        for (i, line) in enumerate(lines):
+            if i > 0:
+                line = line.replace(' (', '(')
+                line = line.replace(' CHAR)', '|CHAR)').replace(' BYTE)', '|BYTE)')
+                #
+                column_name, data_type, extras = (line.strip().strip(',').strip() + '  ').split(' ', 2)
+                #
+                if column_name.startswith('"'):
+                    column_name = column_name.replace('"', '').lower()
+                    data_type   = data_type.replace('|', ' ')       # recover space
+                    extras      = ' ' + extras.replace(' ENABLE', '')     # remove obvious things
+
+                    # remove sequences clutter
+                    extras      = extras.replace(' MINVALUE 1', '')
+                    extras      = extras.replace(' MAXVALUE 9999999999999999999999999999', '')
+                    extras      = extras.replace(' INCREMENT BY 1', '')
+                    extras      = extras.replace(' START WITH 1', '')
+                    extras      = extras.replace(' NOORDER', '')
+                    extras      = extras.replace(' NOCYCLE', '')
+                    extras      = extras.replace(' NOKEEP',  '')
+                    extras      = extras.replace(' NOSCALE', '')
+                    extras      = extras.replace(' CACHE 20', '')
+                    extras      = util.replace(extras, r'([\s]{2,})', ' ')
+                    #
+                    columns.append(column_name)
+                    column_types[column_name]   = data_type
+                    column_extras[column_name]  = extras
+                    #
+                    line = '    {:<30}  {:<20} {}'.format(column_name, data_type, extras).rstrip() + ','
+                    lines[i] = line
+                    continue
+
+                # fix constraints
+                if line.lstrip().startswith('CONSTRAINT'):
+                    line = self.unquote_object_name(line)
+                    line = line.replace(' ENABLE', '')
+                    line = line.replace(' CHECK(',          '\n        CHECK (')
+                    line = line.replace(' PRIMARY KEY(',    '\n        PRIMARY KEY (')
+                    line = line.replace(' FOREIGN KEY(',    '\n        FOREIGN KEY (')
+                    line = line.replace(' UNIQUE(',         '\n        UNIQUE (')
+                    #
+                    line = self.split_columns(line)
+                    line = '    --\n    ' + line.strip()
+                #
+                if line.lstrip().startswith('REFERENCES'):
+                    line = line.strip().replace(' ENABLE', '')
+                    line = '        ' + self.unquote_object_name(line, remove_schema = self.remove_schema)
+                    line = self.split_columns(line)
+                #
+                line = line.replace(' DEFERRABLE', '\n        DEFERRABLE')
+
+                # fix different indexes
+                if 'USING INDEX' in line:
+                    line = line.strip().replace('USING INDEX  ENABLE', '')
+                    if 'USING INDEX' in line:
+                        line = '        ' + line
+
+                # fix temp tables
+                if line.startswith(') ON COMMIT'):
+                    line = line.replace(') ON COMMIT', ')\nON COMMIT')
+
+                lines[i] = line.rstrip()
+
+        # move standalone commas to previous line
+        for (i, line) in enumerate(lines):
+            if line.strip() == ',':
+                lines[i - 1] += ','
+                lines[i] = ''
+
+        # cleanup
+        lines = self.rebuild_lines(lines)
+
+        # fix end of the table definition
+        last_line = len(lines) - 1
+        lines[last_line] = lines[last_line].strip()
+
+        # remove last comma
+        lines[last_line - 1].rstrip(',')
+        #
         return lines
 
 
@@ -295,6 +383,29 @@ class Export_DB(config.Config):
             line = line.replace('"{}".'.format(remove_schema), '')
         #
         line = re.sub(r'"([A-Z0-9_$#]+)"', lambda x : x.group(1).lower(), line)
+        #
+        return line
+
+
+
+    def rebuild_lines(self, lines):
+        # remove empty lines
+        lines = '\n'.join(lines).rstrip().splitlines()
+        lines = list(filter(None, lines))
+        #
+        return lines
+
+
+
+    def split_columns(self, line, indent = 4):
+        # split columns in between brackets to multiple lines
+        content = util.extract('[(]([^\)]+)[)]', line)
+        columns = content.replace(', ', ',').split(',')
+        #
+        if len(columns) > 1:
+            start   = util.extract(r'^(\s*)', line.split('\n')[-1])
+            indent  = '\n' + start + (' ' * indent)
+            line    = line.replace(content, indent + indent.join(columns) + '\n' + start)
         #
         return line
 

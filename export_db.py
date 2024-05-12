@@ -171,36 +171,7 @@ class Export_DB(config.Config):
             lines   = payload.splitlines()
             #
             if len(lines) > 0:
-                for (i, line) in enumerate(lines):
-                    lines[i] = line.rstrip()    # remove trailing spaces
-
-                    # remove package body from specification
-                    if i > 0 and line.startswith('CREATE OR REPLACE') and 'PACKAGE BODY' in line and i > 0:
-                        lines = '\n'.join(lines[0:i]).rstrip().splitlines()
-                        break
-
-                # remove editions
-                lines[0] = lines[0].replace(' EDITIONABLE', '')
-                lines[0] = lines[0].replace(' NONEDITIONABLE', '')
-
-                # simplify object name
-                lines[0] = self.unquote_object_name(lines[0], remove_schema = self.remove_schema)
-
-                # simplify end of objects
-                last_line = len(lines) - 1
-                if lines[last_line].upper().startswith('END ' + object_name.upper() + ';'):
-                    lines[last_line] = lines[last_line][0:3] + ';'
-
-                # if object ends with comment, push ";" to the next line
-                if '--' in lines[last_line]:
-                    lines.append(';')
-                    last_line += 1
-
-                # fix terminator
-                if lines[last_line][-1:] != ';':
-                    lines[last_line] += ';'
-                if not (object_type in ['TABLE', 'INDEX']):
-                    lines.append('/')
+                lines = self.cleanup_general(lines, object_name, object_type)
 
             # call specialized function to cleanup the rest
             cleanup_fn = 'clean_' + object_type.replace(' ', '_').lower()
@@ -208,6 +179,42 @@ class Export_DB(config.Config):
                 lines = getattr(self, cleanup_fn)(lines = lines, object_name = object_name, config = self.config)
         #
         return '\n'.join(lines) + '\n\n'
+
+
+
+    def cleanup_general(self, lines, object_name, object_type):
+        for (i, line) in enumerate(lines):
+            lines[i] = line.rstrip()    # remove trailing spaces
+
+            # remove package body from specification
+            if i > 0 and line.startswith('CREATE OR REPLACE') and 'PACKAGE BODY' in line and i > 0:
+                lines = '\n'.join(lines[0:i]).rstrip().splitlines()
+                break
+
+        # remove editions
+        lines[0] = lines[0].replace(' EDITIONABLE', '')
+        lines[0] = lines[0].replace(' NONEDITIONABLE', '')
+
+        # simplify object name
+        lines[0] = self.unquote_object_name(lines[0], remove_schema = self.remove_schema)
+
+        # simplify end of objects
+        last_line = len(lines) - 1
+        if lines[last_line].upper().startswith('END ' + object_name.upper() + ';'):
+            lines[last_line] = lines[last_line][0:3] + ';'
+
+        # if object ends with comment, push ";" to the next line
+        if '--' in lines[last_line]:
+            lines.append(';')
+            last_line += 1
+
+        # fix terminator
+        if lines[last_line][-1:] != ';':
+            lines[last_line] += ';'
+        if not (object_type in ['TABLE', 'INDEX']):
+            lines.append('/')
+        #
+        return lines
 
 
 

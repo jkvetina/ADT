@@ -531,9 +531,9 @@ class Export_DB(config.Config):
         columns = content.replace(', ', ',').split(',')
         #
         if len(columns) > 1:
-            start   = util.extract(r'^(\s*)', line.split('\n')[-1])
-            indent  = '\n' + start + (' ' * indent)
-            line    = line.replace(content, indent + indent.join(columns) + '\n' + start)
+            start   = '\n' + util.extract(r'^(\s*)', line.split('\n')[-1])
+            splttr  = ',' + start + (' ' * indent)
+            line    = line.replace(content, splttr.lstrip(',') + splttr.join(columns) + start)
         #
         return line
 

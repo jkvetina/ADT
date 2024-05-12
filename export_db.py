@@ -285,21 +285,36 @@ class Export_DB(config.Config):
 
                 lines[i] = line.rstrip()
 
-        # move standalone commas to previous line
+        # cleanup round
         for (i, line) in enumerate(lines):
-            if line.strip() == ',':
+            line = line.strip()
+
+            # move standalone commas to previous line
+            if line == ',':
                 lines[i - 1] += ','
                 lines[i] = ''
 
-        # cleanup
+            # fix multiple statements
+            if i > 0 and line.split(' ', 1)[0] in ('CREATE', 'ALTER'):
+                lines[i] = line         # strip start
+                lines[i - 1] += ';'     # add missing comma
+
+        # consolidate lines
         lines = self.rebuild_lines(lines)
 
-        # fix end of the table definition
-        last_line = len(lines) - 1
-        lines[last_line] = lines[last_line].strip()
+        # cleanup round
+        for (i, line) in enumerate(lines):
+            line = line.strip()
 
-        # remove last comma
-        lines[last_line - 1].rstrip(',')
+            # remove trailing commas
+            if line.startswith(')') and lines[i - 1].endswith(','):
+                lines[i - 1] = lines[i - 1].rstrip(',')
+
+            # fix end of the table definition
+            if line == ');':
+                lines[i] = line         # strip start
+
+
         #
         return lines
 

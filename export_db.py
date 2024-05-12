@@ -356,12 +356,33 @@ class Export_DB(config.Config):
 
     def clean_index(self, lines, object_name = '', config = {}):
         lines[0] = self.split_columns(lines[0].replace(' ON ', '\n    ON '))
-        #
-        return self.rebuild_lines(lines)
 
+        # remove partitions from index
+        for (i, line) in enumerate(lines):
+            line = line.strip()
+            if (line.startswith('PARTITION') or line.startswith('(PARTITION')):
+                lines[i] = ''
         #
-        # @TODO: add tablespace ONLY IF it does not match the table tablespace !!!
+        lines = self.rebuild_lines(lines)
+
+        # extract table name
+        table_name  = util.extract(r' ON ([^\s]+)', lines[1]).upper()
+        table_tblsp = (self.objects.get('TABLE', {}).get(table_name, {}).get('tablespace_name') or '').replace('"', '').lower()
+
+        # partitioning
+        last_line = len(lines) - 1
+        if 'LOCAL' in lines[last_line]:
+            lines[last_line] = '    LOCAL'
+
+        # add tablespace
+        index_tblsp = (self.objects.get('INDEX', {}).get(object_name, {}).get('tablespace_name') or '').replace('"', '').lower()
+        if index_tblsp and index_tblsp != table_tblsp:
+            lines[last_line] = '{}\n    TABLESPACE {}'.format(lines[last_line].rstrip(';'), index_tblsp)
         #
+        if not (lines[last_line].endswith(';')):
+            lines[last_line] += ';'
+        #
+        return lines
 
 
 

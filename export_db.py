@@ -230,8 +230,9 @@ class Export_DB(config.Config):
                 #
                 if column_name.startswith('"'):
                     column_name = column_name.replace('"', '').lower()
-                    data_type   = data_type.replace('|', ' ')       # recover space
-                    extras      = ' ' + extras.replace(' ENABLE', '')     # remove obvious things
+                    data_type   = data_type.replace('|', ' ')                   # recover space
+                    data_type   = data_type.replace('NUMBER(*,0)', 'INTEGER')   # simplify
+                    extras      = ' ' + extras.replace(' ENABLE', '')           # remove obvious things
 
                     # remove sequences clutter
                     extras      = extras.replace(' MINVALUE 1', '')

@@ -376,6 +376,17 @@ class Export_DB(config.Config):
         # fix wrong indentation on first line
         lines[1] = lines[1].lstrip()
 
+        # fix one liners, split by FROM to two lines, convert columns to lower if possible
+        if len(lines) == 3 and ' FROM ' in lines[1].upper():
+            for col in re.findall(r'(\"[A-Z0-9_$#]+\")', lines[1]):
+                lines[1] = lines[1].replace(col, col.replace('"', '').lower())
+            #
+            split_from = util.extract(r'(\s+FROM\s+)', lines[1], flags = re.I)
+            split_line = lines[1].split(split_from)
+            lines[1] = '{}\n{} {}'.format(split_line[0].rstrip(), split_from.strip(), split_line[1])
+            lines = self.rebuild_lines(lines)
+
+        # fix column names
         for (i, line) in enumerate(lines):
             indent      = util.extract(r'^(\s*)', line) or '    '
             start       = util.extract(r'^([^"]+)', line).strip()

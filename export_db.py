@@ -302,6 +302,9 @@ class Export_DB(config.Config):
                 if line.startswith(') ON COMMIT'):
                     line = line.replace(') ON COMMIT', ')\nON COMMIT')
 
+                # partition/index related
+                line = line.replace('USING INDEX  ', '')
+
                 lines[i] = line.rstrip()
 
         # remove partitions from table
@@ -338,8 +341,6 @@ class Export_DB(config.Config):
                     #
                     lines[i] = '\n'.join(index_payload)
 
-                # add missing comma
-
         # consolidate lines
         lines = self.rebuild_lines(lines)
 
@@ -354,6 +355,29 @@ class Export_DB(config.Config):
             # fix end of the table definition
             if line == ');':
                 lines[i] = line         # strip start
+
+        # reformat alter statements
+        lines = '\n'.join(lines)
+        for i in range(1, 10):
+            alter = util.extract(r'\n(ALTER TABLE ["][^;]+)[;]', lines, flags = re.M)
+            if not alter:
+                break
+            #
+            formatted = alter
+            formatted = formatted.replace('("', ' ("')
+            formatted = formatted.replace(' ENABLE', '')
+            formatted = self.unquote_object_name(formatted, remove_schema = self.remove_schema)
+            formatted = util.replace(formatted, r'\s+', ' ').strip()
+            #
+            formatted = formatted.replace(' ADD',       '\n    ADD')  # for create script this is enough
+            formatted = formatted.replace(' PRIMARY',   '\n        PRIMARY')
+            formatted = formatted.replace(' FOREIGN',   '\n        FOREIGN')
+            formatted = formatted.replace(' UNIQUE',    '\n        UNIQUE')
+            formatted = formatted.replace(' CHECK',     '\n        CHECK')
+            formatted = formatted.replace(' USING',     '\n        USING')
+            #
+            lines = lines.replace(alter, formatted)
+        lines = lines.splitlines()
 
         # add comments
         lines = self.get_object_comments(lines, object_name)

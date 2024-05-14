@@ -433,8 +433,7 @@ class Export_DB(config.Config):
 
         # fix one liners, split by FROM to two lines, convert columns to lower if possible
         if len(lines) == 3 and ' FROM ' in lines[1].upper():
-            for col in re.findall(r'(\"[A-Z0-9_$#]+\")', lines[1]):
-                lines[1] = lines[1].replace(col, col.replace('"', '').lower())
+            lines[1] = self.cleanup_names(lines[1])
             #
             split_from = util.extract(r'(\s+FROM\s+)', lines[1], flags = re.I)
             split_line = lines[1].split(split_from)
@@ -450,12 +449,12 @@ class Export_DB(config.Config):
             # fix SELECT * FROM ..., expand column names
             if util.extract(r'"([A-Z0-9_$#]+)",.*"', line):         # with table alias
                 for col in re.findall(r'([^\.,"]\.)"([A-Z0-9_$#]+)"', line):
-                    expanded.append('{}{}{}'.format(indent, col[0], col[1].lower()))
+                    expanded.append('{}{}{}'.format(indent, col[0], self.cleanup_names(col[1])))
                     start = start.replace(col[0], '')
             #
             if util.extract(r'"([A-Z0-9_$#]+)","', line):           # no alias
                 for col in re.findall(r'"([A-Z0-9_$#]+)"', line):
-                    expanded.append('{}{}'.format(indent, col.lower()))
+                    expanded.append('{}{}'.format(indent, self.cleanup_names(col)))
             #
             if len(expanded) > 0:
                 lines[i] = (start + '\n' if start else '') + ',\n'.join(expanded)
@@ -580,6 +579,14 @@ class Export_DB(config.Config):
             start   = '\n' + util.extract(r'^(\s*)', line.split('\n')[-1])
             splttr  = ',' + start + (' ' * indent)
             line    = line.replace(content, splttr.lstrip(',') + splttr.join(columns) + start)
+        #
+        return self.cleanup_names(line)
+
+
+
+    def cleanup_names(self, line):
+        for col in re.findall(r'(\"[A-Z0-9_$#]+\")', line):
+            line = line.replace(col, col.replace('"', '').lower())
         #
         return line
 

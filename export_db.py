@@ -465,16 +465,28 @@ class Export_DB(config.Config):
 
 
     def clean_trigger(self, lines, object_name = '', config = {}):
-        remove_lines = []
+        remove_lines    = []
+        disabled        = ''
+        #
         for (i, line) in enumerate(lines):
             # fix trigger status
-            if line.startswith('ALTER TRIGGER ') and line.endswith(' ENABLE;'):
+            if line.startswith('ALTER TRIGGER '):
                 lines[i] = ''
                 remove_lines.append(i)
+                #
+                if line.endswith(' DISABLE;'):
+                    disabled = 'ALTER TRIGGER {} DISABLE;'.format(object_name.lower())
         #
         for i in sorted(remove_lines, reverse = True):
             lines.pop(i)
+
+        # fix trailing spaces
+        lines = '\n'.join(lines).rstrip('/').rstrip().split('\n')
         #
+        if disabled:
+            lines.append('/\n--\n' + disabled)
+        #
+        lines.append('/')
         return lines
 
 

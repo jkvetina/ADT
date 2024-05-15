@@ -283,15 +283,29 @@ class Export_DB(config.Config):
                 # fix constraints
                 if line.lstrip().startswith('CONSTRAINT'):
                     line = self.unquote_object_name(line)
-                    line = line.replace(' ENABLE', '')
-                    line = line.replace(' CHECK(',          '\n        CHECK (')
+                    line = line.replace('     CONSTRAINT', '    CONSTRAINT')
+                    line = line.replace(' CHECK(',          '\n        CHECK (\n            ')
                     line = line.replace(' PRIMARY KEY(',    '\n        PRIMARY KEY (')
                     line = line.replace(' FOREIGN KEY(',    '\n        FOREIGN KEY (')
                     line = line.replace(' UNIQUE(',         '\n        UNIQUE (')
-                    #
-                    line = self.split_columns(line)
+
+                    # fix checks
+                    if not (' CHECK (' in line):
+                        line = self.split_columns(line)
+                    else:
+                        line = line.replace(') ENABLE',     '\n        )')
+                        line = line.replace(') DISABLE',    '\n        ) DISABLE')
                     line = '    --\n    ' + line.strip()
                 #
+
+                    # just align check start, we dont want to touch the content
+                    if line.lstrip().startswith('CHECK'):
+                        line = line.replace(') ENABLE',     '\n    )')
+                        line = line.replace(') DISABLE',    '\n    ) DISABLE')
+                        #
+                        line = line.replace(' CHECK(', '--\n    CHECK (\n        ')
+
+                # finish up the foreign keys
                 if line.lstrip().startswith('REFERENCES'):
                     line = line.strip().replace(' ENABLE', '').replace('"("', '" ("')
                     line = '        ' + self.unquote_object_name(line, remove_schema = self.remove_schema)

@@ -11,23 +11,20 @@ Checkout the [INSTALL guide](./doc/install.md).
 
 &nbsp;
 
-## Actions/Roadmap (progress 37/59, 62%)
+## Actions/Roadmap (progress 41/61, 67%)
 
 | Filename                                 | Description                                    | Status          | Complexity | Done |
 | :-------                                 | :----------                                    | :-----          | ---------: | ---: |
-| [`config.py`](./doc/config.md)           | to manage database connections and settings    | Done *          |          5 | 5    |
-| `export_db.py`                           | to export database objects                     | __In Progress__ |          8 |      |
+| [`config.py`](./doc/config.md)           | to manage database connections and settings    | Done            |          5 | 5    |
+| `export_db.py`                           | to export database objects                     | __In Progress__ |         10 | 4    |
 | `export_apex.py`                         | to export APEX & REST services                 | Done            |          7 | 7    |
-| `export_data.py`                         | to export data into CSV files                  | OPY **          |          4 |      |
+| `export_data.py`                         | to export data into CSV files                  | Planned         |          4 |      |
 | [`live_upload.py`](./doc/live_upload.md) | to upload files to APEX                        | Done            |          1 | 1    |
 | [`patch.py`](./doc/patch.md)             | to prepare patch files and deploy them         | Done            |         20 | 20   |
 | `compare.py`                             | to compare two databases                       | Planned         |         10 |      |
 | [`recompile.py`](./doc/recompile.md)     | to recompile invalid objects                   | Done            |          1 | 1    |
 | [`search_apex.py`](./doc/search_apex.md) | to search for objects in APEX                  | Done            |          2 | 2    |
 | [`search_repo.py`](./doc/search_repo.md) | to search repo history                         | Done            |          1 | 1    |
-
-\* Almost done, need some final adjustments.\
-\** OPY is covered by [OPY](https://github.com/jkvetina/OPY/tree/master) tool, but I will refactor all of that into ADT after I am done with other things.
 
 &nbsp;
 
@@ -58,11 +55,12 @@ Checkout the [INSTALL guide](./doc/install.md).
     - ✅ show patch result (build log) on Teams channel
     - ✅ generate ALTER statements on same table and different commits
     - ⭕️ remote REST app deployment
-- ⭕️ it can __export database objects__
+- ✅ it can __export database objects__
     - ✅ generate list of dependencies
-    - ⭕️ you can filter objects by type, name and time (export for example everything starting with XX% and changed in past 3 days)
-        - ⭕️ tables, view, materialized views + logs, indexes, sequences
-        - ⭕️ packages, procedures, functions, triggers, TYPEs**
+    - ✅ you can filter objects by type, name and time (export for example everything starting with XX% and changed in past 3 days)
+        - ✅ tables, views, indexes, sequences, synonyms
+        - ✅ packages, procedures, functions, triggers, types
+        - ⭕️ materialized views + logs
         - ⭕️ jobs (resp. schedulers)
         - ⭕️ grants (made and received)
     - ⭕️ there are also multiple whitelist and blacklist filters so you can specify which prefixes you want to include or you want to skip
@@ -70,7 +68,6 @@ Checkout the [INSTALL guide](./doc/install.md).
         - ⭕️ locked mode vs filter based mode
     - ⭕️ multiple schemas are supported via subfolders
     - ⭕️ you can also manually create subfolders for objects (so you can put for example views into groups/folders)
-    - ⭕️ see supported object types
     - ⭕️ option to deploy exported files to specified environment
 - ⭕️ it can __export data__ into CSV files
     - ⭕️ althought it will skip LOB columns (for now)

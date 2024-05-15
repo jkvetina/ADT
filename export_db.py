@@ -296,7 +296,22 @@ class Export_DB(config.Config):
                         line = line.replace(') ENABLE',     '\n        )')
                         line = line.replace(') DISABLE',    '\n        ) DISABLE')
                     line = '    --\n    ' + line.strip()
-                #
+
+                # remove inlined indexes
+                if 'USING INDEX'in line and '(CREATE UNIQUE INDEX' in line:
+                    line = ''
+
+                # fix unnamed constraints
+                if not line.lstrip().startswith('ALTER'):
+                    if (' PRIMARY KEY("' in line or ' FOREIGN KEY("' in line or ' UNIQUE("' in line):
+                        line = line.strip()
+                        line = line.replace(' ENABLE', '')
+                        line = line.replace('PRIMARY KEY(', '\n    PRIMARY KEY (')
+                        line = line.replace('FOREIGN KEY(', '\n    FOREIGN KEY (')
+                        line = line.replace('UNIQUE(',      '\n    UNIQUE (')
+                        #
+                        line = self.split_columns(line)
+                        line = '    --\n    ' + line.strip()
 
                     # just align check start, we dont want to touch the content
                     if line.lstrip().startswith('CHECK'):

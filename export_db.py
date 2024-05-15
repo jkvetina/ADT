@@ -335,8 +335,12 @@ class Export_DB(config.Config):
                         line = '        ' + line
 
                 # fix temp tables
-                if line.startswith(') ON COMMIT'):
-                    line = line.replace(') ON COMMIT', ')\nON COMMIT')
+                if line.lstrip().startswith(') ON COMMIT'):
+                    line = line.replace(') ON COMMIT', ')\nON COMMIT').lstrip()
+
+                # remove other junk
+                if ' NO INMEMORY' in line:
+                    line = util.replace(line.replace(' NO INMEMORY', ''), r'(\s+;)', ';').strip()
 
                 # partition/index related
                 line = line.replace('USING INDEX  ', '')
@@ -347,7 +351,8 @@ class Export_DB(config.Config):
         for (i, line) in enumerate(lines):
             line = line.strip()
             if line.startswith('PARTITION BY '):    # keep
-                lines[i] = line
+                lines[i] = self.unquote_object_name(line.replace('("', ' ("')) + ' (\n!P!\n)'
+                lines[i - 1] = lines[i - 1].strip()
                 continue
             #
             if (line.startswith('PARTITION') or line.startswith('(PARTITION')):
@@ -355,9 +360,11 @@ class Export_DB(config.Config):
 
         # cleanup round
         for (i, line) in enumerate(lines):
-            line = line.strip()
+            index_name      = ''
+            index_payload   = ''
 
             # move standalone commas to previous line
+            line = line.strip()
             if line == ',':
                 lines[i - 1] += ','
                 lines[i] = ''

@@ -5,7 +5,7 @@ import git          # pip3 install GitPython    --upgrade
 from lib import wrapper
 from lib import util
 from lib import messages
-from lib import queries_recompile as query
+from lib import queries as query
 from lib.file import File
 
 #
@@ -503,7 +503,10 @@ class Config(util.Attributed):
             ping_sqlcl  = ping_sqlcl,
             silent      = silent
         )
-        self.object_prefix = (conn.tns.get('prefix') or '') + '%'
+        self.objects_prefix = conn.tns.get('prefix')    or ''
+        self.objects_ignore = conn.tns.get('ignore')    or ''
+        self.objects_folder = conn.tns.get('subfolder') or ''
+        #
         return conn
 
 
@@ -549,9 +552,12 @@ class Config(util.Attributed):
 
 
 
-    def get_dependencies(self, prefix = ''):
+    def get_dependencies(self, prefix = '', ignore = ''):
+        objects_prefix = prefix or self.objects_prefix
+        objects_ignore = ignore or self.objects_ignore
+        #
         self.dependencies = {}
-        for row in self.conn.fetch_assoc(query.object_dependencies, objects_prefix = prefix or self.object_prefix):
+        for row in self.conn.fetch_assoc(query.object_dependencies, objects_prefix = prefix, objects_ignore = ignore):
             obj_code = '{}.{}'.format(row.object_type, row.object_name)
             ref_code = '{}.{}'.format(row.referenced_type, row.referenced_name)
             #

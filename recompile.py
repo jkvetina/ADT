@@ -3,7 +3,7 @@ import sys, argparse
 #
 import config
 from lib import util
-from lib import queries_recompile as query
+from lib import queries as query
 
 #
 #                                                      (R)
@@ -75,8 +75,10 @@ class Recompile(config.Config):
         #
         objects = {}
         args = {
-            'object_name'   : self.args.name or self.connection.get('prefix', '') + '%',
-            'object_type'   : self.args.type,
+            'object_name'       : self.args.name        or '%',
+            'object_type'       : self.args.type        or '%',
+            'objects_prefix'    : self.objects_prefix   or '',
+            'objects_ignore'    : self.objects_ignore   or '',
         }
         data = self.conn.fetch_assoc(query.overview, **args)
         for row in data:

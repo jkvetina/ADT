@@ -3,7 +3,7 @@ import sys, os, re, argparse
 #
 import config
 from lib import util
-from lib import queries_recompile as query
+from lib import queries as query
 from lib.file import File
 
 #

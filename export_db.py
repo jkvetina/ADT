@@ -3,7 +3,7 @@ import sys, os, re, argparse, datetime
 #
 import config
 from lib import util
-from lib import queries_export_db as query
+from lib import queries as query
 from lib.file import File
 
 #
@@ -65,9 +65,13 @@ class Export_DB(config.Config):
         self.init_config()
         self.conn           = self.db_connect(ping_sqlcl = False)
         self.remove_schema  = self.conn.tns.schema
+        #
+        self.objects_prefix = self.connection.get('prefix',     '')
+        self.objects_ignore = self.connection.get('ignore',     '')
+        self.objects_folder = self.connection.get('subfolder',  '')
 
         # store object dependencies for several purposes
-        self.get_dependencies(prefix = self.connection.get('prefix', ''))
+        self.get_dependencies(prefix = self.objects_prefix, ignore = self.objects_ignore)
         self.all_objects_sorted = self.sort_objects(self.dependencies.keys())
         payload = {
             'dependencies'  : self.dependencies,
@@ -92,10 +96,13 @@ class Export_DB(config.Config):
 
     def show_overview(self):
         args = {
-            'object_name'   : self.args.name    or self.connection.get('prefix', '') + '%',
-            'object_type'   : self.args.type    or '',
-            'recent'        : self.args.recent  or '',
+            'object_name'       : self.args.name        or '%',
+            'object_type'       : self.args.type        or '%',
+            'recent'            : self.args.recent      or '',
+            'objects_prefix'    : self.objects_prefix   or '',
+            'objects_ignore'    : self.objects_ignore   or '',
         }
+        #
         show_recent     = str(datetime.datetime.today() - datetime.timedelta(days = int(self.args.recent) - 1))[0:10] if self.args.recent else ''
         show_header     = 'CHANGED SINCE ' + show_recent if show_recent else 'OVERVIEW'
         show_filter     = (' ' + args['object_name'] + ' ').replace(' % ', ' ').strip()

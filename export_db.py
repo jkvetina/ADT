@@ -255,7 +255,7 @@ class Export_DB(config.Config):
                 column_name, data_type, extras = (line.strip().strip(',').strip() + '  ').split(' ', 2)
                 #
                 if column_name.startswith('"'):
-                    column_name = column_name.replace('"', '').lower()
+                    column_name = self.cleanup_names(column_name)
                     data_type   = data_type.replace('|', ' ')                   # recover space
                     data_type   = data_type.replace('NUMBER(*,0)', 'INTEGER')   # simplify
                     extras      = ' ' + extras.replace(' ENABLE', '')           # remove obvious things

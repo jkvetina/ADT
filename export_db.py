@@ -567,6 +567,53 @@ class Export_DB(config.Config):
 
 
 
+    def clean_job(self, lines, object_name = '', config = {}):
+        for (i, line) in enumerate(lines):
+            if line.startswith('start_date=>'):
+                lines[i] = util.replace(lines[i], r'start_date=>TO_TIMESTAMP_TZ[^)]*[)]', 'start_date=>SYSDATE')
+            if line.lstrip().startswith('sys.dbms_scheduler.set_attribute(') and 'NLS_ENV' in line:
+                lines[i] = ''
+            if line.startswith(');'):
+                lines = util.replace(' '.join(lines[2:i]), r'\s+', ' ')  # everything to 1 line
+                lines = lines.replace('end_date=>NULL,', '')
+                lines = lines.replace('job_class=>\'"DEFAULT_JOB_CLASS"\',', '')
+                break
+        #
+        lines = ['job_name=>in_job_name,'] + util.replace(lines, r'\s*,\s*([a-z_]+)\s*=>\s*', r',\n\1=>').split('\n')
+        for (i, line) in enumerate(lines):
+            line = line.split('=>')
+            line = '        {:<20}=> {}'.format(line[0], '=>'.join(line[1:]))
+            lines[i] = line
+
+        # fix priority and status
+        data            = self.conn.fetch_assoc(query.describe_job_details, job_name = object_name)
+        job_priority    = data[0].job_priority
+        job_enabled     = '--' if data[0].enabled == 'FALSE' else ''
+
+        # fix arguments
+        args            = ''
+        data            = self.conn.fetch_assoc(query.describe_job_args, job_name = object_name)
+        for row in data:
+            kind        = 'position'
+            name        = row.argument_position
+            value       = row.value
+            #
+            if row.argument_name:
+                kind    = 'name'
+                name    = '\'{}\''.format(row.argument_name)
+            #
+            args += '\n    DBMS_SCHEDULER.SET_JOB_ARGUMENT_VALUE(in_job_name, argument_{} => {}, argument_value => \'{}\');'.format(kind, name, value)
+        #
+        if len(args) > 0:
+            args += '\n    --'
+        #
+        payload = '\n'.join(lines)
+        payload = query.job_template.format(object_name, payload, args, job_priority, job_enabled)
+        #
+        return payload.splitlines()
+
+
+
     def get_object_payload(self, object_type, object_name):
         if object_type == 'MVIEW LOG':
             object_name = 'MLOG$_' + object_name

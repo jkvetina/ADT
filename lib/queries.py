@@ -576,6 +576,55 @@ FROM user_scheduler_jobs
 WHERE job_name = :object_name
 """
 
+describe_job_details = """
+SELECT job_name, enabled, job_priority
+FROM user_scheduler_jobs j
+WHERE j.job_name = :job_name"""
+
+describe_job_args = """
+SELECT
+    j.argument_name,
+    j.argument_position,
+    j.argument_type,
+    j.value
+FROM user_scheduler_job_args j
+WHERE j.job_name = :job_name
+ORDER BY j.argument_position"""
+
+# template used to extract jobs
+job_template = """DECLARE
+    in_job_name             CONSTANT VARCHAR2(128)  := '{}';
+    in_run_immediatelly     CONSTANT BOOLEAN        := FALSE;
+BEGIN
+    DBMS_OUTPUT.PUT_LINE('--');
+    DBMS_OUTPUT.PUT_LINE('-- JOB ' || UPPER(in_job_name));
+    DBMS_OUTPUT.PUT_LINE('--');
+    --
+    BEGIN
+        DBMS_SCHEDULER.DROP_JOB(in_job_name, TRUE);
+    EXCEPTION
+    WHEN OTHERS THEN
+        NULL;
+    END;
+    --
+    DBMS_SCHEDULER.CREATE_JOB (
+{}
+    );
+    --{}
+    DBMS_SCHEDULER.SET_ATTRIBUTE(in_job_name, 'JOB_PRIORITY', {});
+    {}DBMS_SCHEDULER.ENABLE(in_job_name);
+    COMMIT;
+    --
+    IF in_run_immediatelly THEN
+        DBMS_SCHEDULER.RUN_JOB(in_job_name);
+        COMMIT;
+    END IF;
+END;
+/
+"""
+
+
+
 setup_dbms_metadata = """
 BEGIN
     DBMS_METADATA.SET_TRANSFORM_PARAM(DBMS_METADATA.SESSION_TRANSFORM, 'PARTITIONING',          TRUE);

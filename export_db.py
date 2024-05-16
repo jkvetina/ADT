@@ -89,6 +89,15 @@ class Export_DB(config.Config):
                         print('  - {}'.format(obj_code))
             print()
 
+        # export grants
+        self.grants_made_file   = '{}{}{}{}'.format(self.config.path_objects, self.config.object_types['GRANT'][0], self.conn.tns.schema, self.config.object_types['GRANT'][1])
+        self.grants_recd_file   = (os.path.dirname(self.grants_made_file) + self.config.grants_recd)
+        self.grants_privs_file  = (os.path.dirname(self.grants_made_file) + self.config.grants_privs).replace('#SCHEMA_NAME#', self.conn.tns.schema)
+        self.grants_dirs_file   = (os.path.dirname(self.grants_made_file) + self.config.grants_directories).replace('#SCHEMA_NAME#', self.conn.tns.schema)
+        #
+        self.export_grants()
+
+        # export requested objects
         self.show_overview()
         self.export()
 
@@ -175,6 +184,69 @@ class Export_DB(config.Config):
             util.beep(sound = 1)
         #
         print()
+
+
+
+    def export_grants(self):
+        args = {
+            'objects_prefix'    : self.objects_prefix   or '',
+            'objects_ignore'    : self.objects_ignore   or '',
+        }
+
+        # extract made grants
+        last_type   = ''
+        content     = []
+        #
+        for row in self.conn.fetch_assoc(query.grants_made, **args):
+            # show object type header
+            if last_type != row.type:
+                content.append('\n--\n-- {}\n--'.format(row.type))
+            content.append(row.sql)
+            last_type = row.type
+        #
+        content = '{}\n\n'.format('\n'.join(content)).lstrip()
+        util.write_file(self.grants_made_file, content)
+
+        # extract received grants
+        received_grants = {}
+        for row in self.conn.fetch_assoc(query.grants_recd):
+            if not (row.owner in received_grants):
+                received_grants[row.owner] = {}
+            if not (row.type in received_grants[row.owner]):
+                received_grants[row.owner][row.type] = {}
+            if not (row.table_name in received_grants[row.owner][row.type]):
+                received_grants[row.owner][row.type][row.table_name] = []
+            received_grants[row.owner][row.type][row.table_name].append(row.sql)
+        #
+        for owner, types in received_grants.items():
+            content = [query.switch_schema.format(owner.lower())]
+            for type_ in types:
+                content.append('--\n-- {}\n--'.format(type_))
+                for table_name in sorted(received_grants[owner][type_]):
+                    for sql in sorted(received_grants[owner][type_][table_name]):
+                        content.append(sql)
+                content.append('')
+            content.append(query.switch_schema.format(self.conn.tns.schema.lower()))
+            #
+            file = self.grants_recd_file.replace('#SCHEMA_NAME#', owner)
+            util.write_file(file, ('\n'.join(content) + '\n').lstrip())
+
+        # extract privileges granted to user
+        content = ''
+        for row in self.conn.fetch_assoc(query.user_roles):
+            content += row.line + '\n'
+        content += '--\n'
+        for row in self.conn.fetch_assoc(query.user_privs):
+            content += row.line + '\n'
+        #
+        util.write_file(self.grants_privs_file, content.lstrip('--\n') + '\n')
+
+        # export directories
+        content = ''
+        for row in self.conn.fetch_assoc(query.directories):
+            content += row.line + '\n'
+        #
+        util.write_file(self.grants_dirs_file, (content + '\n').lstrip())
 
 
 

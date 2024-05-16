@@ -512,6 +512,99 @@ ORDER BY
     object_name
 """
 
+
+
+# grants made by current schema
+grants_made = """
+WITH objects_add AS (
+    SELECT /*+ MATERIALIZE CARDINALITY(t 1) */
+        t.column_value AS object_like
+    FROM TABLE(APEX_STRING.SPLIT(TRIM(BOTH ',' FROM NVL(:objects_prefix, '%')), ',')) t
+),
+objects_ignore AS (
+    SELECT /*+ MATERIALIZE CARDINALITY(t 10) */
+        t.column_value AS object_like
+    FROM TABLE(APEX_STRING.SPLIT(TRIM(BOTH ',' FROM :objects_ignore), ',')) t
+)
+SELECT
+    t.type,
+    t.table_name,
+    APEX_STRING.FORMAT (
+        'GRANT %0 ON %1 TO %2%3;',
+        t.privs,
+        LOWER(t.table_name),
+        LOWER(t.grantee),
+        CASE WHEN t.grantable = 'YES' THEN ' WITH GRANT OPTION' END
+    ) AS sql
+FROM (
+    SELECT
+        t.type,
+        t.table_name,
+        LISTAGG(DISTINCT t.privilege, ', ') WITHIN GROUP (ORDER BY t.privilege) AS privs,
+        LISTAGG(DISTINCT t.grantee, ', ')   WITHIN GROUP (ORDER BY t.grantee)   AS grantee,
+        t.grantable
+    FROM user_tab_privs_made t
+    JOIN objects_add a
+        ON t.table_name     LIKE a.object_like ESCAPE '\\'
+    LEFT JOIN objects_ignore g
+        ON t.table_name     LIKE g.object_like ESCAPE '\\'
+    WHERE 1 = 1
+        AND g.object_like   IS NULL
+        AND t.grantor       = USER
+        AND t.type          NOT IN ('USER')
+    GROUP BY
+        t.type,
+        t.table_name,
+        t.grantable
+) t
+ORDER BY 1, 2, 3
+"""
+
+# grants received by current schema
+grants_recd = """
+SELECT
+    t.owner,
+    t.type,
+    t.table_name,
+    APEX_STRING.FORMAT (
+        'GRANT %0 ON %1 TO %2%3;',
+        t.privilege,
+        LOWER(t.table_name),
+        LOWER(USER),
+        CASE WHEN t.grantable = 'YES' THEN ' WITH GRANT OPTION' END
+    ) AS sql
+FROM user_tab_privs_recd t
+WHERE t.type NOT IN ('USER')
+ORDER BY 1, 2, 3
+"""
+
+switch_schema = 'ALTER SESSION SET CURRENT_SCHEMA = {};\n'
+
+# grants used to create user
+user_roles = """
+SELECT
+    'GRANT ' || RPAD(p.granted_role, 21) || ' TO ' || LOWER(p.username) || ';' AS line
+FROM user_role_privs p
+ORDER BY 1
+"""
+#
+user_privs = """
+SELECT
+    'GRANT ' || RPAD(p.privilege, 33) || ' TO ' || LOWER(p.username) || ';' AS line
+FROM user_sys_privs p
+ORDER BY 1
+"""
+
+# export directories
+directories = """
+SELECT
+    'CREATE OR REPLACE DIRECTORY ' || LOWER(d.owner) || '.' || RPAD(LOWER(d.directory_name), 31) || ' AS ''' || d.directory_path || ''';' AS line
+FROM all_directories d
+ORDER BY 1
+"""
+
+
+
 # get applications from the same schema
 apex_applications = """
 SELECT

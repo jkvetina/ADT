@@ -36,6 +36,11 @@ object_types:
     TYPE BODY           : ['types/',        .body.sql]
     VIEW                : ['views/',        .sql]
 
+# grants, resp. privileges
+grants_recd             : '/received/#SCHEMA_NAME#.sql'     # received grants, under GRANT folder
+grants_privs            : '/#SCHEMA_NAME#_schema.sql'       # grants used to create schema
+grants_directories      : '/#SCHEMA_NAME#_directories.sql'
+
 
 
 #

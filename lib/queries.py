@@ -228,6 +228,16 @@ ORDER BY CASE o.object_type
 
 # get summary of errors
 objects_errors_summary = """
+WITH objects_add AS (
+    SELECT /*+ MATERIALIZE CARDINALITY(t 1) */
+        t.column_value AS object_like
+    FROM TABLE(APEX_STRING.SPLIT(TRIM(BOTH ',' FROM NVL(:objects_prefix, '%')), ',')) t
+),
+objects_ignore AS (
+    SELECT /*+ MATERIALIZE CARDINALITY(t 10) */
+        t.column_value AS object_like
+    FROM TABLE(APEX_STRING.SPLIT(TRIM(BOTH ',' FROM :objects_ignore), ',')) t
+)
 SELECT
     e.type          AS object_type,
     e.name          AS object_name,
@@ -237,10 +247,15 @@ SELECT
         MIN(REGEXP_SUBSTR(e.text, 'PLS-\\d+'))
     ) AS error
 FROM user_errors e
+JOIN objects_add a
+    ON e.name       LIKE a.object_like ESCAPE '\\'
+LEFT JOIN objects_ignore g
+    ON e.name       LIKE g.object_like ESCAPE '\\'
 WHERE 1 = 1
-    AND (e.type     LIKE :object_type ESCAPE '\\' OR :object_type IS NULL)
-    AND (e.name     LIKE :object_name ESCAPE '\\' OR :object_name IS NULL)
-    AND e.text      NOT LIKE 'PLW%'     -- skip warnings
+    AND g.object_like   IS NULL
+    AND (e.type         LIKE :object_type ESCAPE '\\' OR :object_type IS NULL)
+    AND (e.name         LIKE :object_name ESCAPE '\\' OR :object_name IS NULL)
+    AND e.text          NOT LIKE 'PLW%'     -- skip warnings
 GROUP BY
     e.type,
     e.name
@@ -574,6 +589,16 @@ END;"""
 
 # get table comments
 pull_comments = """
+WITH objects_add AS (
+    SELECT /*+ MATERIALIZE CARDINALITY(t 1) */
+        t.column_value AS object_like
+    FROM TABLE(APEX_STRING.SPLIT(TRIM(BOTH ',' FROM NVL(:objects_prefix, '%')), ',')) t
+),
+objects_ignore AS (
+    SELECT /*+ MATERIALIZE CARDINALITY(t 10) */
+        t.column_value AS object_like
+    FROM TABLE(APEX_STRING.SPLIT(TRIM(BOTH ',' FROM :objects_ignore), ',')) t
+)
 SELECT
     m.table_name,
     NULL                    AS column_name,
@@ -581,7 +606,13 @@ SELECT
     m.comments,
     NULL                    AS column_id
 FROM user_tab_comments m
-WHERE m.table_name          LIKE :object_name || '%' ESCAPE '\\'
+JOIN objects_add a
+    ON m.table_name         LIKE a.object_like ESCAPE '\\'
+LEFT JOIN objects_ignore g
+    ON m.table_name         LIKE g.object_like ESCAPE '\\'
+WHERE 1 = 1
+    AND g.object_like       IS NULL
+    AND m.table_name        LIKE :object_name || '%' ESCAPE '\\'
 --
 UNION ALL
 SELECT
@@ -596,7 +627,13 @@ JOIN user_tab_cols c
     AND c.column_name       = m.column_name
 LEFT JOIN user_views v
     ON v.view_name          = m.table_name
-WHERE m.table_name          LIKE :object_name || '%' ESCAPE '\\'
+JOIN objects_add a
+    ON m.table_name         LIKE a.object_like ESCAPE '\\'
+LEFT JOIN objects_ignore g
+    ON m.table_name         LIKE g.object_like ESCAPE '\\'
+WHERE 1 = 1
+    AND g.object_like       IS NULL
+    AND m.table_name        LIKE :object_name || '%' ESCAPE '\\'
     AND m.table_name        NOT LIKE '%\\_E$' ESCAPE '\\'
     AND (
         m.column_name       NOT IN (

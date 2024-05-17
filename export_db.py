@@ -90,10 +90,10 @@ class Export_DB(config.Config):
             print()
 
         # export grants
-        self.grants_made_file   = '{}{}{}{}'.format(self.config.path_objects, self.config.object_types['GRANT'][0], self.conn.tns.schema, self.config.object_types['GRANT'][1])
+        self.grants_made_file   = '{}{}{}{}'.format(self.config.path_objects, self.config.object_types['GRANT'][0], self.remove_schema, self.config.object_types['GRANT'][1])
         self.grants_recd_file   = (os.path.dirname(self.grants_made_file) + self.config.grants_recd)
-        self.grants_privs_file  = (os.path.dirname(self.grants_made_file) + self.config.grants_privs).replace('#SCHEMA_NAME#', self.conn.tns.schema)
-        self.grants_dirs_file   = (os.path.dirname(self.grants_made_file) + self.config.grants_directories).replace('#SCHEMA_NAME#', self.conn.tns.schema)
+        self.grants_privs_file  = (os.path.dirname(self.grants_made_file) + self.config.grants_privs).replace('#SCHEMA_NAME#', self.remove_schema)
+        self.grants_dirs_file   = (os.path.dirname(self.grants_made_file) + self.config.grants_directories).replace('#SCHEMA_NAME#', self.remove_schema)
         #
         self.export_grants()
 
@@ -226,7 +226,7 @@ class Export_DB(config.Config):
                     for sql in sorted(received_grants[owner][type_][table_name]):
                         content.append(sql)
                 content.append('')
-            content.append(query.switch_schema.format(self.conn.tns.schema.lower()))
+            content.append(query.switch_schema.format(self.remove_schema))
             #
             file = self.grants_recd_file.replace('#SCHEMA_NAME#', owner)
             util.write_file(file, ('\n'.join(content) + '\n').lstrip())
@@ -496,8 +496,6 @@ class Export_DB(config.Config):
 
         # add comments
         lines = self.get_object_comments(lines, object_name)
-
-
         #
         return lines
 

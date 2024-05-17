@@ -550,6 +550,7 @@ FROM (
         ON t.table_name     LIKE g.object_like ESCAPE '\\'
     WHERE 1 = 1
         AND g.object_like   IS NULL
+        AND t.table_name    NOT LIKE 'ST%/%='
         AND t.grantor       = USER
         AND t.type          NOT IN ('USER')
     GROUP BY

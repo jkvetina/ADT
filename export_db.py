@@ -420,15 +420,28 @@ class Export_DB(config.Config):
                 lines[i] = line.rstrip()
 
         # remove partitions from table
+        partition_idx = None
         for (i, line) in enumerate(lines):
             line = line.strip()
             if line.startswith('PARTITION BY '):    # keep
+                partition_idx = i
                 lines[i] = self.unquote_object_name(line.replace('("', ' ("')) + ' (\n!P!\n)'
                 lines[i - 1] = lines[i - 1].strip()
                 continue
-            #
-            if (line.startswith('PARTITION') or line.startswith('(PARTITION')):
+
+            # ignore specific partitions
+            if partition_idx and (line.startswith('PARTITION') or line.startswith('(PARTITION')):
                 lines[i] = ''
+                # except the one with maxvalue
+                if '(MAXVALUE)' in line:
+                    line = self.unquote_object_name(line)
+
+                # keep just one partition
+                if 'VALUES LESS THAN(TO_DATE(\'' in line and '-01-01 00:00:00\',' in line:
+                    line = 'PARTITION {}'.format(self.unquote_object_name(line.split('PARTITION')[1]))
+                #
+                line                    = '    ' + line.replace(' );', '').replace('  ', ' ').strip()
+                lines[partition_idx]    = lines[partition_idx].replace('!P!', line)
 
         # cleanup round
         for (i, line) in enumerate(lines):
@@ -463,6 +476,11 @@ class Export_DB(config.Config):
         for (i, line) in enumerate(lines):
             line = line.strip()
 
+            # cleanup for partitions
+            if line == '!P!':
+                line = ''
+                lines[i] = ''
+
             # remove trailing commas
             if line.startswith(')') and lines[i - 1].endswith(','):
                 lines[i - 1] = lines[i - 1].rstrip(',')
@@ -493,6 +511,12 @@ class Export_DB(config.Config):
             #
             lines = lines.replace(alter, formatted)
         lines = lines.splitlines()
+
+        # fix missing semicolon
+        last_line = len(lines) - 1
+        lines[last_line] = lines[last_line].rstrip(';').rstrip() + ';'
+        if lines[last_line - 1] == ')':
+            lines[last_line] = lines[last_line].lstrip()
 
         # add comments
         lines = self.get_object_comments(lines, object_name)

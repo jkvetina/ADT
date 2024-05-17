@@ -11,12 +11,12 @@ Checkout the [INSTALL guide](./doc/install.md).
 
 &nbsp;
 
-## Actions/Roadmap (progress 41/61, 67%)
+## Actions/Roadmap (progress 42/61, 69%)
 
 | Filename                                 | Description                                    | Status          | Complexity | Done |
 | :-------                                 | :----------                                    | :-----          | ---------: | ---: |
 | [`config.py`](./doc/config.md)           | to manage database connections and settings    | Done            |          5 | 5    |
-| `export_db.py`                           | to export database objects                     | __In Progress__ |         10 | 4    |
+| `export_db.py`                           | to export database objects                     | __In Progress__ |         10 | 5    |
 | `export_apex.py`                         | to export APEX & REST services                 | Done            |          7 | 7    |
 | `export_data.py`                         | to export data into CSV files                  | Planned         |          4 |      |
 | [`live_upload.py`](./doc/live_upload.md) | to upload files to APEX                        | Done            |          1 | 1    |
@@ -61,8 +61,8 @@ Checkout the [INSTALL guide](./doc/install.md).
         - ✅ tables, views, indexes, sequences, synonyms
         - ✅ packages, procedures, functions, triggers, types
         - ⭕️ materialized views + logs
-        - ⭕️ jobs (resp. schedulers)
-        - ⭕️ grants (made and received)
+        - ✅ jobs (resp. schedulers)
+        - ✅ grants (made and received), user grants and roles, directories
     - ⭕️ there are also multiple whitelist and blacklist filters so you can specify which prefixes you want to include or you want to skip
     - ⭕️ you can create your own list of objects which will be exported (see locked.log), which is handy when you have multiple projects in the same schema; it now even support autolock feature
         - ⭕️ locked mode vs filter based mode

@@ -26,8 +26,8 @@ LEFT JOIN objects_ignore g
 WHERE 1 = 1
     AND g.object_like       IS NULL
     AND o.object_type       NOT IN ('LOB', 'TABLE PARTITION', 'INDEX', 'INDEX PARTITION', 'JOB', 'CREDENTIAL')
-    AND o.object_type       LIKE :object_type || '%'
-    AND o.object_name       LIKE :object_name || '%' ESCAPE '\\'
+    AND o.object_type       LIKE :object_type
+    AND o.object_name       LIKE :object_name ESCAPE '\\'
     AND o.object_name       NOT LIKE 'SYS\\_%' ESCAPE '\\'
     AND o.object_name       NOT LIKE 'ISEQ$$_%'
     AND o.object_name       NOT LIKE 'ST%/%='
@@ -61,7 +61,7 @@ WHERE 1 = 1
     AND g.object_like       IS NULL
     AND :recent             IS NULL
     AND (:object_type       = 'JOB' OR NULLIF(:object_type, '%') IS NULL)
-    AND j.job_name          LIKE :object_name || '%' ESCAPE '\\'
+    AND j.job_name          LIKE :object_name ESCAPE '\\'
     AND j.schedule_type     != 'IMMEDIATE'
 --
 UNION ALL
@@ -80,7 +80,7 @@ WHERE 1 = 1
     AND g.object_like       IS NULL
     AND :recent             IS NULL
     AND (:object_type LIKE 'MAT%' OR NULLIF(:object_type, '%') IS NULL)
-    AND REPLACE(l.log_table, 'MLOG$_') LIKE :object_name || '%' ESCAPE '\\'
+    AND REPLACE(l.log_table, 'MLOG$_') LIKE :object_name ESCAPE '\\'
 --
 UNION ALL
 SELECT
@@ -109,8 +109,8 @@ LEFT JOIN objects_ignore g2
 WHERE 1 = 1
     AND g.object_like       IS NULL
     AND (:object_type       LIKE 'TABLE%' OR :object_type LIKE 'INDEX%' OR NULLIF(:object_type, '%') IS NULL)
-    AND (t.table_name       LIKE :object_name || '%' ESCAPE '\\'
-        OR t.index_name     LIKE :object_name || '%' ESCAPE '\\'
+    AND (t.table_name       LIKE :object_name ESCAPE '\\'
+        OR t.index_name     LIKE :object_name ESCAPE '\\'
     )
     AND t.index_name        NOT LIKE 'SYS%$$'
     AND t.generated         = 'N'
@@ -161,7 +161,7 @@ LEFT JOIN objects_ignore g
     ON REPLACE(l.log_table, 'MLOG$_') LIKE g.object_like ESCAPE '\\'
 WHERE 1 = 1
     AND g.object_like       IS NULL
-    AND REPLACE(l.log_table, 'MLOG$_') LIKE :object_name || '%' ESCAPE '\\'
+    AND REPLACE(l.log_table, 'MLOG$_') LIKE :object_name ESCAPE '\\'
     AND (:object_type LIKE 'M%' OR :object_type IS NULL)
 HAVING COUNT(*) > 0
 ORDER BY 1
@@ -755,7 +755,7 @@ LEFT JOIN objects_ignore g
     ON m.table_name         LIKE g.object_like ESCAPE '\\'
 WHERE 1 = 1
     AND g.object_like       IS NULL
-    AND m.table_name        LIKE :object_name || '%' ESCAPE '\\'
+    AND m.table_name        LIKE :object_name ESCAPE '\\'
 --
 UNION ALL
 SELECT
@@ -776,7 +776,7 @@ LEFT JOIN objects_ignore g
     ON m.table_name         LIKE g.object_like ESCAPE '\\'
 WHERE 1 = 1
     AND g.object_like       IS NULL
-    AND m.table_name        LIKE :object_name || '%' ESCAPE '\\'
+    AND m.table_name        LIKE :object_name ESCAPE '\\'
     AND m.table_name        NOT LIKE '%\\_E$' ESCAPE '\\'
     AND (
         m.column_name       NOT IN (

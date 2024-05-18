@@ -94,18 +94,16 @@ LEFT JOIN user_constraints c
     ON c.table_name         = t.table_name
     AND c.constraint_name   = t.index_name
     AND c.constraint_type   IN ('P', 'U')
-
 JOIN objects_add a
-    ON t.index_name         LIKE a.object_like ESCAPE '\\'
+    ON (
+        t.index_name        LIKE a.object_like ESCAPE '\\'
+        OR t.table_name     LIKE a.object_like ESCAPE '\\'
+    )
 LEFT JOIN objects_ignore g
-    ON t.index_name         LIKE g.object_like ESCAPE '\\'
-
--- ................................................................. table name or index name
-LEFT JOIN objects_add a2
-    ON t.index_name         LIKE a.object_like ESCAPE '\\'
-LEFT JOIN objects_ignore g2
-    ON t.index_name         LIKE g.object_like ESCAPE '\\'
-
+    ON (
+        t.index_name        LIKE g.object_like ESCAPE '\\'
+        OR t.table_name     LIKE g.object_like ESCAPE '\\'
+    )
 WHERE 1 = 1
     AND g.object_like       IS NULL
     AND (:object_type       LIKE 'TABLE%' OR :object_type LIKE 'INDEX%' OR NULLIF(:object_type, '%') IS NULL)

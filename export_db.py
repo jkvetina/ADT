@@ -358,7 +358,12 @@ class Export_DB(config.Config):
                     extras      = extras.replace(' NOSCALE', '')
                     extras      = extras.replace(' CACHE 20', '')
                     extras      = util.replace(extras, r'([\s]{2,})', ' ')
-                    #
+
+                    # cleanup constraint names
+                    if ' CONSTRAINT "' in extras:
+                        extras = self.unquote_object_name(extras)
+
+                    # stitch this together
                     columns.append(column_name)
                     column_types[column_name]   = data_type
                     column_extras[column_name]  = extras

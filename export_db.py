@@ -609,6 +609,39 @@ class Export_DB(config.Config):
 
 
 
+    def clean_materialized_view(self, lines, object_name = '', config = {}):
+        lines[0] = util.replace(lines[0], r'\s*\([^)]+\)', '')          # remove columns
+        lines[0] = lines[0].replace(' ()  AS', ' AS')
+        lines[0] = self.cleanup_names(lines[0])
+
+        # search for line where real query starts
+        start = 0
+        for (i, line) in enumerate(lines):
+            if line.startswith('  AS '):
+                lines[i] = line.replace('  AS ', 'AS\n')
+                start = i
+                break
+
+            # throw away some distrators
+            line    = line.strip()
+            first   = line.split(' ')[0]
+            #
+            if first in ('NOCOMPRESS', 'DEFAULT', 'ORGANIZATION', 'STORAGE', 'PCTINCREASE', 'BUFFER_POOL', 'LOB', 'STORAGE', 'NOCACHE', 'LOGGING', 'USING', 'TABLESPACE'):
+                line = ''
+            lines[i] = line
+
+        # final cleanup
+        lines = self.rebuild_lines(lines[0:start]) + lines[start:]
+
+        # add tablespace
+        tablespace = self.unquote_object_name(self.objects.get('MATERIALIZED VIEW', {}).get(object_name, {}).get('tablespace_name') or '')
+        if tablespace:
+            lines.insert(1, 'TABLESPACE ' + tablespace)
+        #
+        return lines
+
+
+
     def clean_trigger(self, lines, object_name = '', config = {}):
         remove_lines    = []
         disabled        = ''
@@ -742,7 +775,7 @@ class Export_DB(config.Config):
         # get object from database
         try:
             result = self.conn.fetch(q, **args)
-            return result[0][0]
+            return str(result[0][0])
         except:
             util.raise_error('EXPORT_FAILED', object_type, object_name)
         #

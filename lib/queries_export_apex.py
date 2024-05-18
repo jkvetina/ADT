@@ -41,6 +41,100 @@ BEGIN
 END;
 """
 
+apex_export_start = """
+BEGIN
+    FOR c IN (
+        SELECT a.workspace
+        FROM apex_applications a
+        WHERE a.application_id = :app_id
+    ) LOOP
+        APEX_UTIL.SET_WORKSPACE (
+            p_workspace => c.workspace
+        );
+        APEX_UTIL.SET_SECURITY_GROUP_ID (
+            p_security_group_id => APEX_UTIL.FIND_SECURITY_GROUP_ID(p_workspace => c.workspace)
+        );
+        --
+        APEX_SESSION.CREATE_SESSION (
+            p_app_id                    => :app_id,
+            p_page_id                   => 0,
+            p_username                  => c.workspace,
+            p_call_post_authentication  => FALSE
+        );
+        --
+        APEX_COLLECTION.CREATE_COLLECTION (
+            p_collection_name       => 'ADT_APEX_EXPORT',
+            p_truncate_if_exists    => 'YES'
+        );
+        COMMIT;
+    END LOOP;
+END;
+"""
+
+apex_export_full = """
+DECLARE
+    l_files         apex_t_export_files;
+BEGIN
+    l_files := APEX_EXPORT.GET_APPLICATION (
+        p_application_id        => :app_id,
+        p_split                 => FALSE,
+        p_with_date             => FALSE,
+        p_with_original_ids     => TRUE,
+        p_with_comments         => FALSE
+    );
+    --
+    FOR i IN l_files.FIRST .. l_files.LAST LOOP
+        APEX_COLLECTION.ADD_MEMBER (
+            p_collection_name   => 'ADT_APEX_EXPORT',
+            p_c001              => l_files(i).name,
+            p_clob001           => l_files(i).contents
+        );
+    END LOOP;
+    COMMIT;
+END;
+"""
+
+apex_export_split = """
+DECLARE
+    l_files         apex_t_export_files;
+BEGIN
+    l_files := APEX_EXPORT.GET_APPLICATION (
+        p_application_id        => :app_id,
+        p_split                 => TRUE,
+        p_type                  => 'APPLICATION_SOURCE,READABLE_YAML,EMBEDDED_CODE',
+        p_with_date             => FALSE,
+        p_with_translations     => TRUE,
+        p_with_original_ids     => TRUE,
+        p_with_comments         => FALSE
+        --p_components            => ''
+    );
+    --
+    FOR i IN l_files.FIRST .. l_files.LAST LOOP
+        IF (l_files(i).name LIKE '%/files/%' OR l_files(i).name LIKE '%/app_static_files/%') THEN     -- ignore files
+            CONTINUE;
+        END IF;
+        --
+        APEX_COLLECTION.ADD_MEMBER (
+            p_collection_name   => 'ADT_APEX_EXPORT',
+            p_c001              => l_files(i).name,
+            p_clob001           => l_files(i).contents
+        );
+    END LOOP;
+    COMMIT;
+END;
+"""
+
+apex_export_fetch_files = """
+SELECT
+    c.seq_id,
+    c.c001      AS file_name,
+    c.clob001   AS clob_content
+FROM apex_collections c
+WHERE c.collection_name = 'ADT_APEX_EXPORT'
+"""
+
+
+
 # get authentication schemes
 apex_authentication_schemes = """
 SELECT

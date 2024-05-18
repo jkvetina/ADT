@@ -140,7 +140,7 @@ class Export_APEX(config.Config):
                 self.show_recent_changes(app_id)
 
             util.print_header('APP {}/{}, EXPORTING:'.format(app_id, self.apex_apps[app_id]['app_alias']))
-            self.conn.execute(query.apex_security_context, app_id = app_id)
+            self.conn.execute(query.apex_export_start, app_id = app_id)
 
             # get default authentication scheme
             self.auth_scheme_id     = 0
@@ -190,6 +190,16 @@ class Export_APEX(config.Config):
                             except KeyboardInterrupt:
                                 print('\n')
                                 return
+
+                        # cleanup files
+                        cleanup_fn = 'cleanup_' + action
+                        if hasattr(self.__class__, cleanup_fn) and callable(getattr(self, cleanup_fn)):
+                            getattr(self, 'cleanup_' + action)(app_id)
+
+                        # move files from temp folders right away after each block
+                        self.move_files(app_id)
+
+                        # finish the progress
                         if progress_done != -1:
                             util.print_progress_done(extra = row['header'], start = start)
 
@@ -198,9 +208,6 @@ class Export_APEX(config.Config):
                     if self.timers[app_id][action] > 0:
                         timer = (timer + self.timers[app_id][action]) / 2
                     self.timers[app_id][action] = round(timer, 2)
-
-                # move files from temp folders right away after each block
-                self.move_files(app_id)
 
             # move files from temp folders to target folders
             self.move_files(app_id)
@@ -347,6 +354,14 @@ class Export_APEX(config.Config):
 
 
 
+    def fetch_exported_files(self):
+        # get files from collection
+        data = self.conn.fetch_assoc(query.apex_export_fetch_files)
+        for file in data:
+            util.write_file(self.config.sqlcl_root + file.file_name, payload = file.clob_content)
+
+
+
     def show_recent_changes(self, app_id):
         alias       = self.apex_apps[app_id]['app_alias']
         workspace   = self.apex_apps[app_id]['workspace']
@@ -396,33 +411,22 @@ class Export_APEX(config.Config):
 
 
     def export_full(self, app_id):
-        return self.execute_request('apex export -applicationid {$APP_ID} -nochecksum -expcomments -exptranslations -expaclassignments', app_id)
+        self.conn.execute(query.apex_export_full, app_id = app_id)
+        self.fetch_exported_files()
 
 
 
     def export_split(self, app_id):
-        output = self.execute_request('apex export -applicationid {$APP_ID} -nochecksum -expcomments -exptranslations -expaclassignments -exptype APPLICATION_SOURCE{$FORMAT_JSON}{$FORMAT_YAML} -split', app_id)
+        self.conn.execute(query.apex_export_split, app_id = app_id)
+        self.fetch_exported_files()
 
+
+
+    def cleanup_split(self, app_id):
         # cleanup target directory before moving new files there
         target_dir = self.get_root(app_id, 'application/')
         if os.path.exists(target_dir):
             util.delete_folder(target_dir)
-
-        # delete original (encoded) files, we can export/keep binaries instead
-        if self.config.apex_delete_orig_files:
-            duplicates = [
-                '{}f{}/application/shared_components/files/'.format(self.config.sqlcl_root, app_id),
-                '{}f{}/application/shared_components/app_static_files/'.format(self.config.sqlcl_root, app_id),
-            ]
-            for source_dir in duplicates:
-                util.delete_folder(source_dir)
-        #
-        return output
-
-
-
-    def export_embedded(self, app_id):
-        output = self.execute_request('apex export -applicationid {$APP_ID} -nochecksum -exptype EMBEDDED_CODE', app_id)
 
         # move to proper folder
         source_dir = '{}f{}/embedded_code/'.format(self.config.sqlcl_root, app_id)
@@ -430,7 +434,8 @@ class Export_APEX(config.Config):
         #
         if os.path.exists(target_dir):
             util.delete_folder(target_dir)
-        #
+
+        # rename files
         if os.path.exists(source_dir):
             for source_file in util.get_files(source_dir + '**/*.*'):
                 # remove first 10 lines
@@ -448,8 +453,6 @@ class Export_APEX(config.Config):
             #
             util.copy_folder(source_dir, target_dir)
             util.delete_folder(source_dir)
-        #
-        return output
 
 
 

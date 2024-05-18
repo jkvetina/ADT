@@ -1,0 +1,29 @@
+DEV:
+    db:
+        hostname    : ''
+        lang        : ''
+        port        : 1521
+        service     : ''
+        sid         : ''
+        thick       : ''
+    defaults:
+        schema_apex : APEX_SCHEMA
+        schema_db   : DB_SCHEMA
+    schemas:
+        DB_SCHEMA:
+            db:
+                pwd     : ''
+                pwd!    : ''
+                user    : DB_SCHEMA
+            export:
+                ignore      : ''
+                prefix      : ''
+                subfolder   : ''
+        APEX_SCHEMA:
+            apex:
+                app         : '100'
+                workspace   : APEX_WORKSPACE
+            db:
+                pwd     : ''
+                pwd!    : ''
+                user    : APEX_SCHEMA

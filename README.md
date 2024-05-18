@@ -11,12 +11,12 @@ Checkout the [INSTALL guide](./doc/install.md).
 
 &nbsp;
 
-## Actions/Roadmap (progress 43/61, 70%)
+## Actions/Roadmap (progress 44/61, 72%)
 
 | Filename                                 | Description                                    | Status          | Complexity | Done |
 | :-------                                 | :----------                                    | :-----          | ---------: | ---: |
 | [`config.py`](./doc/config.md)           | to manage database connections and settings    | Done            |          5 | 5    |
-| `export_db.py`                           | to export database objects                     | __In Progress__ |         10 | 6    |
+| `export_db.py`                           | to export database objects                     | __In Progress__ |         10 | 7    |
 | `export_apex.py`                         | to export APEX & REST services                 | Done            |          7 | 7    |
 | `export_data.py`                         | to export data into CSV files                  | Planned         |          4 |      |
 | [`live_upload.py`](./doc/live_upload.md) | to upload files to APEX                        | Done            |          1 | 1    |
@@ -61,12 +61,10 @@ Checkout the [INSTALL guide](./doc/install.md).
     - ✅ you can filter objects by type, name and time (export for example everything starting with XX% and changed in past 3 days)
         - ✅ tables, views, indexes, sequences, synonyms
         - ✅ packages, procedures, functions, triggers, types
-        - ⭕️ materialized views + logs
+        - ✅ materialized views + logs
         - ✅ jobs (resp. schedulers)
         - ✅ grants (made and received), user grants and roles, directories
     - ✅ there are also multiple whitelist and blacklist filters so you can specify which prefixes you want to include or you want to skip
-    - ⭕️ you can create your own list of objects which will be exported (see locked.log), which is handy when you have multiple projects in the same schema; it now even support autolock feature
-        - ⭕️ locked mode vs filter based mode
     - ⭕️ multiple schemas are supported via subfolders
     - ⭕️ you can also manually create subfolders for objects (so you can put for example views into groups/folders)
     - ⭕️ option to deploy exported files to specified environment
@@ -81,7 +79,7 @@ Checkout the [INSTALL guide](./doc/install.md).
     - ⭕️ generate ALTER statements for table changes, align columns order, sync sequences...
 - ✅ it can recompile invalid objects + limit the scope based on type and name
     - ✅ it can also force recompile objects and set specific PL/SQL attributes on them
-- ✅ see config.yaml file for __200+ parameters__ you can customize
+- ✅ see config.yaml file for many parameters you can customize
     - ✅ to use your config.yaml file, just place it in the config folder in root of your project repo
 
 &nbsp;

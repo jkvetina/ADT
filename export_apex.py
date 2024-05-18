@@ -391,22 +391,18 @@ class Export_APEX(config.Config):
 
 
     def export_recent(self, app_id, schema = None, components = None):
-        if len(self.comp_changed) == 0 and not components:
+        components = ','.join(components or self.comp_changed) or ''
+        if not components:
             return
         #
-        if components:
-            # we need to pull info about the app
-            self.get_application(app_id, schema = schema)
-        #
-        output = self.execute_request('apex export -applicationid {$APP_ID} -expcomments -expcomponents "{$COMPONENTS}" -split', app_id, components = components)
+        self.conn.execute(query.apex_export_recent, app_id = app_id, components = components)
+        self.fetch_exported_files()
 
         # remove some extra files
         source_dir = '{}f{}'.format(self.config.sqlcl_root, app_id)
         for pattern in self.config.apex_files_ignore:
             for file in util.get_files(source_dir + pattern):
                 os.remove(file)
-        #
-        return output
 
 
 

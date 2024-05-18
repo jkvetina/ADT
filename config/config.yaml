@@ -106,7 +106,6 @@ patch_map:
 drop_objects:
     - MATERIALIZED VIEW
     - MVIEW LOG
-    - JOB
 
 add_indexes:
     - TABLES

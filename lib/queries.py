@@ -686,12 +686,13 @@ WHERE j.job_name = :job_name
 ORDER BY j.argument_position"""
 
 # template used to extract jobs
-job_template = """DECLARE
-    in_job_name             CONSTANT VARCHAR2(128)  := '{}';
+template_job = """
+DECLARE
+    in_job_name             CONSTANT VARCHAR2(128)  := '{job_name}';
     in_run_immediatelly     CONSTANT BOOLEAN        := FALSE;
 BEGIN
     DBMS_OUTPUT.PUT_LINE('--');
-    DBMS_OUTPUT.PUT_LINE('-- JOB ' || UPPER(in_job_name));
+    DBMS_OUTPUT.PUT_LINE('-- REPLACE JOB ' || UPPER(in_job_name));
     DBMS_OUTPUT.PUT_LINE('--');
     --
     BEGIN
@@ -702,11 +703,11 @@ BEGIN
     END;
     --
     DBMS_SCHEDULER.CREATE_JOB (
-{}
+{job_payload}
     );
-    --{}
-    DBMS_SCHEDULER.SET_ATTRIBUTE(in_job_name, 'JOB_PRIORITY', {});
-    {}DBMS_SCHEDULER.ENABLE(in_job_name);
+    --{job_args}
+    DBMS_SCHEDULER.SET_ATTRIBUTE(in_job_name, 'JOB_PRIORITY', {job_priority});
+    {job_enabled}DBMS_SCHEDULER.ENABLE(in_job_name);
     COMMIT;
     --
     IF in_run_immediatelly THEN
@@ -716,6 +717,20 @@ BEGIN
 END;
 /
 """
+
+# drop object query
+template_object_drop = """
+BEGIN
+    DBMS_UTILITY.EXEC_DDL_STATEMENT('DROP {object_type} {object_name}');
+    DBMS_OUTPUT.PUT_LINE('--');
+    DBMS_OUTPUT.PUT_LINE('-- DROP {object_type} {object_name}, DONE');
+    DBMS_OUTPUT.PUT_LINE('--');
+EXCEPTION
+WHEN OTHERS THEN
+    NULL;
+END;
+/
+--\n"""
 
 
 

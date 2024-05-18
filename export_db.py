@@ -267,8 +267,17 @@ class Export_DB(config.Config):
             cleanup_fn = 'clean_' + object_type.replace(' ', '_').lower()
             if hasattr(self.__class__, cleanup_fn) and callable(getattr(self, cleanup_fn)):
                 lines = getattr(self, cleanup_fn)(lines = lines, object_name = object_name, config = self.config)
-        #
-        payload = util.replace('\n'.join(lines), r';\n;', ';') + '\n\n'
+
+        # drop object if requested
+        payload = ''
+        if object_type in self.config.drop_objects:
+            payload = query.template_object_drop.lstrip().format(
+                object_type = object_type.replace('MVIEW LOG', 'MATERIALIZED VIEW LOG'),
+                object_name = object_name,
+            )
+
+        # final cleanup
+        payload = payload + util.replace('\n'.join(lines), r';\n;', ';') + '\n\n'
         return payload
 
 
@@ -702,7 +711,13 @@ class Export_DB(config.Config):
             args += '\n    --'
         #
         payload = '\n'.join(lines)
-        payload = query.job_template.format(object_name, payload, args, job_priority, job_enabled)
+        payload = query.template_job.lstrip().format(
+            job_name        = object_name,
+            job_payload     = payload,
+            job_args        = args,
+            job_priority    = job_priority,
+            job_enabled     = job_enabled
+        )
         #
         return payload.splitlines()
 

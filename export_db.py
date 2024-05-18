@@ -272,7 +272,7 @@ class Export_DB(config.Config):
         payload = ''
         if object_type in self.config.drop_objects:
             payload = query.template_object_drop.lstrip().format(
-                object_type = object_type.replace('MVIEW LOG', 'MATERIALIZED VIEW LOG'),
+                object_type = object_type.replace('MVIEW LOG', 'MATERIALIZED VIEW LOG ON'),
                 object_name = object_name,
             )
 

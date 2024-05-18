@@ -332,7 +332,13 @@ class Export_DB(config.Config):
             if i > 0:
                 line = line.replace(' (', '(')
                 line = line.replace(' CHAR)', '|CHAR)').replace(' BYTE)', '|BYTE)')
-                #
+
+                # remove collation junk
+                line = line.replace(')  DEFAULT COLLATION "USING_NLS_COMP"', ')')  # table level
+                if ' COLLATE "USING_NLS_COMP"' in line:
+                    line = line.replace(' COLLATE "USING_NLS_COMP"', '').rstrip()
+
+                # split column info
                 column_name, data_type, extras = (line.strip().strip(',').strip() + '  ').split(' ', 2)
                 #
                 if column_name.startswith('"'):
@@ -569,8 +575,9 @@ class Export_DB(config.Config):
     def clean_view(self, lines, object_name = '', config = {}):
         # remove column from view definition
         # you should have correct names in the query
-        lines[0] = util.replace(lines[0], r'\s*\([^)]+\)\s*AS', ' AS')                 # remove columns
-        lines[0] = util.replace(lines[0], r'\s*\([^)]+\)\s*BEQUEATH', ' BEQUEATH')     # remove columns
+        lines[0] = util.replace(lines[0], r'(\s*DEFAULT COLLATION [^\s]+\s)', ' ')      # remove collation
+        lines[0] = util.replace(lines[0], r'\s*\([^)]+\)\s*AS', ' AS')                  # remove columns
+        lines[0] = util.replace(lines[0], r'\s*\([^)]+\)\s*BEQUEATH', ' BEQUEATH')      # remove columns
         lines[0] = lines[0].replace(' ()  AS', ' AS')
         lines[0] = lines[0].replace('  ', ' ')
 

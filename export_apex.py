@@ -176,10 +176,14 @@ class Export_APEX(config.Config):
                     progress_target = self.timers[app_id][action] or 999
                     progress_done   = 0
                     start           = util.get_start()
+                    #
+                    export_fn       = 'export_' + action
+                    if not (hasattr(self.__class__, export_fn) and callable(getattr(self, export_fn))):
+                        continue
 
                     # execute in a thread so we can show progress in main process
                     with ThreadPool(processes = 1) as pool:
-                        result = pool.apply_async(getattr(self, 'export_' + action), [app_id])
+                        result = pool.apply_async(getattr(self, export_fn), [app_id])
                         while True:
                             try:
                                 if result.ready():

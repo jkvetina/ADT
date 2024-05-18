@@ -362,7 +362,7 @@ class Export_APEX(config.Config):
         # get files from collection
         data = self.conn.fetch_assoc(query.apex_export_fetch_files)
         for file in data:
-            util.write_file(self.config.sqlcl_root + file.file_name, payload = file.clob_content)
+            util.write_file(self.config.sqlcl_root + file.file_name, payload = str(file.clob_content))
 
 
 
@@ -664,7 +664,7 @@ class Export_APEX(config.Config):
 
         # dont track offset on individual pages
         if self.workspace_offset == None:
-            self.workspace_offset = util.extract_int(r",p_default_id_offset=>([\d]+)", new_content)
+            self.workspace_offset = util.extract_int(r",p_default_id_offset=>([\d]+)", new_content) or 0
             if self.workspace_offset > 0 and self.debug:
                 print('    WORKSPACE OFFSET:', self.workspace_offset)
         #

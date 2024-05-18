@@ -52,7 +52,9 @@ WHERE a.application_id = :app_id
 
 # export APEX files in as a binary
 apex_files = """
-SELECT f.filename, f.blob_content f
+SELECT
+    f.filename,
+    f.blob_content
 FROM wwv_flow_files f
 WHERE f.flow_id                 = :app_id
     AND NVL(f.created_by, '-')  NOT IN ('SYS')

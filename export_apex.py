@@ -534,7 +534,7 @@ class Export_APEX(config.Config):
             os.makedirs(os.path.dirname(file), exist_ok = True)
             #
             with open(file, 'wb') as w:
-                w.write(row.f.read())   # blob_content
+                w.write(row.blob_content.read())
 
 
 

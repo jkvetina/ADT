@@ -654,6 +654,20 @@ class Export_DB(config.Config):
 
 
 
+    def clean_mview_log(self, lines, object_name = '', config = {}):
+        lines[2] = self.cleanup_names(lines[2])
+        lines[2] = lines[2].lstrip().replace(')', ')\n')
+        lines[2] = lines[2].replace(' )', ')').replace('( ', '(')
+
+        # final cleanup
+        lines = self.rebuild_lines(lines)
+        for (i, line) in enumerate(lines):
+            lines[i] = line.strip()
+        #
+        return lines
+
+
+
     def clean_trigger(self, lines, object_name = '', config = {}):
         remove_lines    = []
         disabled        = ''

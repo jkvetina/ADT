@@ -66,21 +66,21 @@ WHERE 1 = 1
 --
 UNION ALL
 SELECT
-    'MVIEW LOG'                     AS object_type,
-    REPLACE(l.log_table, 'MLOG$_')  AS object_name,
-    NULL                            AS tablespace_name,
-    NULL                            AS partitioned,
-    NULL                            AS global_stats
+    'MVIEW LOG'             AS object_type,
+    l.master                AS object_name,
+    NULL                    AS tablespace_name,
+    NULL                    AS partitioned,
+    NULL                    AS global_stats
 FROM user_mview_logs l
 JOIN objects_add a
-    ON REPLACE(l.log_table, 'MLOG$_') LIKE a.object_like ESCAPE '\\'
+    ON l.master             LIKE a.object_like ESCAPE '\\'
 LEFT JOIN objects_ignore g
-    ON REPLACE(l.log_table, 'MLOG$_') LIKE g.object_like ESCAPE '\\'
+    ON l.master             LIKE g.object_like ESCAPE '\\'
 WHERE 1 = 1
     AND g.object_like       IS NULL
     AND :recent             IS NULL
-    AND (:object_type LIKE 'MAT%' OR NULLIF(:object_type, '%') IS NULL)
-    AND REPLACE(l.log_table, 'MLOG$_') LIKE :object_name ESCAPE '\\'
+    AND (:object_type       LIKE 'M%' OR NULLIF(:object_type, '%') IS NULL)
+    AND l.master            LIKE :object_name ESCAPE '\\'
 --
 UNION ALL
 SELECT

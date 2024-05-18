@@ -151,6 +151,7 @@ apex_path_rest          : 'workspace/rest/'
 apex_workspace_dir      : 'workspace/'
 apex_snapshots          : 'snapshots/'
 #
+apex_keep_original_id   : False                 # keep original ids
 apex_show_recent        : 1                     # show changes made in past # days
 apex_export_full        : False                 # full export
 apex_export_split       : False                 # export individual components

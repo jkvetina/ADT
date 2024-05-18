@@ -79,7 +79,7 @@ BEGIN
         p_application_id        => :app_id,
         p_split                 => FALSE,
         p_with_date             => FALSE,
-        p_with_original_ids     => TRUE,
+        p_with_original_ids     => (:originals = 'Y'),
         p_with_comments         => FALSE
     );
     --
@@ -104,7 +104,7 @@ BEGIN
         p_type                  => 'APPLICATION_SOURCE,READABLE_YAML,EMBEDDED_CODE',
         p_with_date             => FALSE,
         p_with_translations     => TRUE,
-        p_with_original_ids     => TRUE,
+        p_with_original_ids     => (:originals = 'Y'),
         p_with_comments         => FALSE
     );
     --
@@ -133,7 +133,7 @@ BEGIN
         p_type                  => 'APPLICATION_SOURCE,READABLE_YAML',
         p_with_date             => FALSE,
         p_with_translations     => TRUE,
-        p_with_original_ids     => TRUE,
+        p_with_original_ids     => (:originals = 'Y'),
         p_with_comments         => FALSE,
         p_components            => APEX_STRING.SPLIT(:components, ',')
     );

@@ -395,7 +395,7 @@ class Export_APEX(config.Config):
         if not components:
             return
         #
-        self.conn.execute(query.apex_export_recent, app_id = app_id, components = components)
+        self.conn.execute(query.apex_export_recent, app_id = app_id, components = components, originals = 'Y' if self.config.apex_keep_original_id else 'N')
         self.fetch_exported_files()
 
         # remove some extra files
@@ -407,13 +407,13 @@ class Export_APEX(config.Config):
 
 
     def export_full(self, app_id):
-        self.conn.execute(query.apex_export_full, app_id = app_id)
+        self.conn.execute(query.apex_export_full, app_id = app_id, originals = 'Y' if self.config.apex_keep_original_id else 'N')
         self.fetch_exported_files()
 
 
 
     def export_split(self, app_id):
-        self.conn.execute(query.apex_export_split, app_id = app_id)
+        self.conn.execute(query.apex_export_split, app_id = app_id, originals = 'Y' if self.config.apex_keep_original_id else 'N')
         self.fetch_exported_files()
 
 

@@ -347,7 +347,15 @@ class Export_DB(config.Config):
                     data_type   = data_type.replace('NUMBER(*,0)', 'INTEGER')   # simplify
                     extras      = ' ' + extras.replace(' ENABLE', '')           # remove obvious things
 
-                    # remove sequences clutter
+                    # fix XMLTYPEs
+                    if data_type in ('"XMLTYPE"', '"SYS"."XMLTYPE"'):
+                        data_type = 'XMLTYPE'
+
+                    # fix old/named sequences
+                    if '."NEXTVAL"' in extras:
+                        extras = self.unquote_object_name(extras, remove_schema = self.remove_schema)
+
+                    # remove identity/sequences clutter
                     extras      = extras.replace(' MINVALUE 1', '')
                     extras      = extras.replace(' MAXVALUE 9999999999999999999999999999', '')
                     extras      = extras.replace(' INCREMENT BY 1', '')

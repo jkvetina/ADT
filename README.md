@@ -11,12 +11,18 @@ Checkout the [INSTALL guide](./doc/install.md).
 
 &nbsp;
 
-## Actions/Roadmap (progress 44/61, 72%)
+## Feature requests
+
+Any feature requests, bugs are accepted on my [LinkedIn](https://www.linkedin.com/in/jankvetina/) (checked daily), [Slack](orclapex.slack.com) (checked weekly) or via the contact form on my web [http://www.jankvetina.cz](www.jankvetina.cz). Thank you.
+
+&nbsp;
+
+## Actions/Roadmap (progress 45/60, 75%)
 
 | Filename                                 | Description                                    | Status          | Complexity | Done |
 | :-------                                 | :----------                                    | :-----          | ---------: | ---: |
 | [`config.py`](./doc/config.md)           | to manage database connections and settings    | Done            |          5 | 5    |
-| `export_db.py`                           | to export database objects                     | __In Progress__ |         10 | 7    |
+| `export_db.py`                           | to export database objects                     | __In Progress__ |         9  | 8    |
 | `export_apex.py`                         | to export APEX & REST services                 | Done            |          7 | 7    |
 | `export_data.py`                         | to export data into CSV files                  | Planned         |          4 |      |
 | [`live_upload.py`](./doc/live_upload.md) | to upload files to APEX                        | Done            |          1 | 1    |
@@ -65,7 +71,7 @@ Checkout the [INSTALL guide](./doc/install.md).
         - ✅ jobs (resp. schedulers)
         - ✅ grants (made and received), user grants and roles, directories
     - ✅ there are also multiple whitelist and blacklist filters so you can specify which prefixes you want to include or you want to skip
-    - ⭕️ multiple schemas are supported via subfolders
+    - ✅ multiple schemas are supported via subfolders (schema/db/object_type..., db/schema/object_type...)
     - ⭕️ you can also manually create subfolders for objects (so you can put for example views into groups/folders)
     - ⭕️ option to deploy exported files to specified environment
 - ⭕️ it can __export data__ into CSV files

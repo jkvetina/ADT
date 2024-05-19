@@ -7,7 +7,12 @@ It does not store anything in your database.
 
 I have been building these CI/CD tools since 2008 and ADT is the newest version, heavily based on the previous [OPY](https://github.com/jkvetina/OPY/tree/master) tool, which unfortunately outgrown to a hefty spaghetti code and became more and more difficult to extend. So, I have decided to start from scratch for like 15th time...
 
-Checkout the [INSTALL guide](./doc/install.md).
+&nbsp;
+
+## Install
+
+Checkout the [INSTALL guide](./doc/install.md). You might find more technical things here in documentation, but more human friendly version with some explanations is on [my blog](http://www.oneoracledeveloper.com/)
+under the [Project ADT](http://www.oneoracledeveloper.com/search/label/project_adt) tag.
 
 &nbsp;
 

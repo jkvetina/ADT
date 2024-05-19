@@ -533,6 +533,13 @@ class Config(util.Attributed):
 
 
 
+    def get_path(self, path):
+        for item, value in self.info.items():
+            path = path.replace('{$INFO_' + item.upper() + '}', value or item)
+        return path
+
+
+
     def get_root(self, app_id, folders = ''):
         transl = {
             '{$APP_ID}'     : app_id,

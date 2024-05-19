@@ -55,16 +55,16 @@ class Export_DB(config.Config):
         super().__init__(self.parser, args)
 
         # setup env and paths
-        self.target_root    = self.repo_root + self.config.path_objects
+        self.init_config()
+        self.conn           = self.db_connect(ping_sqlcl = False)
+        self.remove_schema  = self.conn.tns.schema
+        #
+        self.target_root    = self.repo_root + self.get_path(self.config.path_objects)
         self.objects        = {}
         self.objects_total  = 0
         self.overview       = {}
         self.comments       = {}
         self.comments_col   = {}
-        #
-        self.init_config()
-        self.conn           = self.db_connect(ping_sqlcl = False)
-        self.remove_schema  = self.conn.tns.schema
         #
         self.objects_prefix = self.connection.get('prefix',     '')
         self.objects_ignore = self.connection.get('ignore',     '')

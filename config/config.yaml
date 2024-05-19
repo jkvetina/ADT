@@ -13,6 +13,8 @@ today_deploy            : '%Y-%m-%d %H-%M'  # used in deployment logs
 #
 # BASIC PATHS
 #
+#path_objects           : '{$INFO_SCHEMA}/database/'
+#path_objects           : 'database/{$INFO_SCHEMA}/'
 path_objects            : 'database/'       # folder with database objects
 path_apex               : 'apex/'           # folder with APEX related files
 

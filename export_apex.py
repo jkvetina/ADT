@@ -73,8 +73,8 @@ class Export_APEX(config.Config):
         super().__init__(self.parser, args)
 
         # setup env and paths
-        self.target_root        = self.repo_root + self.config.path_apex
-        self.target_rest        = self.target_root + self.config.apex_path_rest
+        self.target_root        = self.repo_root    + self.get_path(self.config.path_apex)
+        self.target_rest        = self.target_root  + self.config.apex_path_rest
         self.target_files       = self.config.apex_path_files
         #
         self.init_config()

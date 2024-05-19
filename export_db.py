@@ -450,18 +450,21 @@ class Export_DB(config.Config):
                 continue
 
             # ignore specific partitions
-            if partition_idx and (line.startswith('PARTITION') or line.startswith('(PARTITION')):
+            if (line.startswith('PARTITION') or line.startswith('(PARTITION')):
                 lines[i] = ''
-                # except the one with maxvalue
-                if '(MAXVALUE)' in line:
+                # except the one with maxvalue or if we have just one partition
+                if ('(MAXVALUE)' in line or (line.startswith('(') and line.endswith(');'))):
                     line = self.unquote_object_name(line)
+                else:
+                    continue
 
                 # keep just one partition
-                if 'VALUES LESS THAN(TO_DATE(\'' in line and '-01-01 00:00:00\',' in line:
-                    line = 'PARTITION {}'.format(self.unquote_object_name(line.split('PARTITION')[1]))
-                #
-                line                    = '    ' + line.replace(' );', '').replace('  ', ' ').strip()
-                lines[partition_idx]    = lines[partition_idx].replace('!P!', line)
+                if partition_idx:
+                    if 'VALUES LESS THAN(TO_DATE(\'' in line and '-01-01 00:00:00\',' in line:
+                        line = 'PARTITION {}'.format(self.unquote_object_name(line.split('PARTITION')[1]))
+                    #
+                    line                    = '    ' + line.replace(' );', '').replace('  ', ' ').strip()
+                    lines[partition_idx]    = lines[partition_idx].replace('!P!', line)
 
         # cleanup round
         for (i, line) in enumerate(lines):

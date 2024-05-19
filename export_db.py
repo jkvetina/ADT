@@ -398,7 +398,13 @@ class Export_DB(config.Config):
                     line = '    --\n    ' + line.strip()
 
                 # remove inlined indexes
-                if 'USING INDEX'in line and '(CREATE UNIQUE INDEX' in line:
+                if 'USING INDEX' in line and '(CREATE UNIQUE INDEX' in line:
+                    if '(' in line:
+                        lines[i + 1] = ''.join(lines[i + 1].split(')', 1))      # get rid of first bracket
+                        lines[i + 1] = lines[i + 1].replace(' ENABLE', '')      # get rid of the clutter
+                        if lines[i + 1].strip() == ',':                         # move comma to previous line
+                            lines[i - 1] += ','
+                            lines[i + 1] = ''
                     line = ''
 
                 # fix unnamed constraints

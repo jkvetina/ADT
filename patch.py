@@ -1236,9 +1236,12 @@ class Patch(config.Config):
             words = util.replace(short.lower(), '[^a-z]+', ' ').split()
             #
             if group in words and (timing in words or ignore_timing) and (before or not (timing_before) in words):
+                env_name = util.extract(r'\.\[([^\]]+)\]\.', file) or ''
+                if env_name and env_name != self.target_env:
+                    continue
                 found.append(file)
         #
-        return list(set(found))
+        return list(set(found))  # unique files
 
 
 
@@ -1252,7 +1255,14 @@ class Patch(config.Config):
 
 
     def get_template_files(self, folder):
-        return util.get_files('{}{}/*.sql'.format(self.config.patch_template_dir, folder))
+        found = []
+        for file in util.get_files('{}{}/*.sql'.format(self.config.patch_template_dir, folder)):
+            env_name = util.extract(r'\.\[([^\]]+)\]\.', file) or ''
+            if env_name and env_name != self.target_env:
+                continue
+            found.append(file)
+        #
+        return found
 
 
 

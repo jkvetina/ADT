@@ -36,6 +36,11 @@ object_types:
     TYPE BODY           : ['types/',        .body.sql]
     VIEW                : ['views/',        .sql]
 
+# objects which cant be recreated
+drop_objects:
+    - MATERIALIZED VIEW
+    - MVIEW LOG
+
 # grants, resp. privileges
 grants_recd             : '/received/#SCHEMA_NAME#.sql'     # received grants, under GRANT folder
 grants_privs            : '/#SCHEMA_NAME#_schema.sql'       # grants used to create schema
@@ -101,19 +106,6 @@ patch_map:
 
 
 #
-# EXPORT
-#
-drop_objects:
-    - MATERIALIZED VIEW
-    - MVIEW LOG
-
-add_indexes:
-    - TABLES
-    - MATERIALIZED VIEW
-
-
-
-#
 # GIT REPOSITORY
 #
 repo_commit_days    : 60                        # maximum age (in days) for commits history
@@ -123,7 +115,7 @@ repo_commits_file   : './config/commits/#BRANCH#.yaml'
 
 
 #
-# GIT REPOSITORY
+# SQLCL SETUP
 #
 sqlcl_root          : './.temp.nosync/'         # add to .gitignore, keep flag to avoid cloud sync
 sqlcl_temp_file     : 'sqlcl.tmp'
@@ -133,8 +125,8 @@ sqlcl_temp_file     : 'sqlcl.tmp'
 #
 # TEAMS INCOMING WEBHOOK
 #
-teams_webhoook          : ''
-mentions : {}
+teams_webhoook      : ''
+mentions            : {}
 
 
 

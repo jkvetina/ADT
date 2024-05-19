@@ -5,25 +5,28 @@ DEV:
         port        : 1521
         service     : ''
         sid         : ''
-        thick       : ''
+        thick       : ''                # Y or NULL, depending if you want to use thick client or not
+    #
     defaults:
-        schema_apex : APEX_SCHEMA
-        schema_db   : DB_SCHEMA
+        schema_apex : APEX_SCHEMA       # default APEX schema
+        schema_db   : DB_SCHEMA         # default DB schema
+    #
     schemas:
         DB_SCHEMA:
             db:
-                pwd     : ''
-                pwd!    : ''
-                user    : DB_SCHEMA
+                pwd     : ''            # password as plain text or encrypted binary
+                pwd!    : ''            # Y or NULL or file
+                user    : DB_SCHEMA     # same as parent
             export:
-                ignore      : ''
-                prefix      : ''
+                ignore      : ''        # pattern for ignored objects
+                prefix      : ''        # pattern for exported objects
                 subfolder   : ''
+        #
         APEX_SCHEMA:
             apex:
-                app         : '100'
+                app         : '100'     # default APEX application
                 workspace   : APEX_WORKSPACE
             db:
-                pwd     : ''
-                pwd!    : ''
-                user    : APEX_SCHEMA
+                pwd     : ''            # password as plain text or encrypted binary
+                pwd!    : ''            # Y or NULL or file
+                user    : APEX_SCHEMA   # same as parent

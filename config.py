@@ -604,7 +604,13 @@ class Config(util.Attributed):
         #
         folder      = self.config.object_types[object_type][0]
         file_base   = object_name.lower() + self.config.object_types[object_type][1]
-        file        = '{}{}{}/{}'.format(self.repo_root, self.config.path_objects, folder, file_base)
+        dir_base    = '{}{}{}'.format(self.repo_root, self.config.path_objects, folder)
+        file        = '{}/{}'.format(dir_base, file_base)
+        #
+        if not os.path.exists(file):
+            for subfile in util.get_files('{}**/{}'.format(dir_base, file_base)):
+                return subfile
+        #
         return file
 
 

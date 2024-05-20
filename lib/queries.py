@@ -549,6 +549,7 @@ FROM (
     WHERE 1 = 1
         AND g.object_like   IS NULL
         AND t.table_name    NOT LIKE 'ST%/%='
+        AND t.table_name    NOT LIKE 'BIN$%'
         AND t.grantor       = USER
         AND t.type          NOT IN ('USER')
     GROUP BY
@@ -573,7 +574,8 @@ SELECT
         CASE WHEN t.grantable = 'YES' THEN ' WITH GRANT OPTION' END
     ) AS sql
 FROM user_tab_privs_recd t
-WHERE t.type NOT IN ('USER')
+WHERE t.type            NOT IN ('USER')
+    AND t.table_name    NOT LIKE 'BIN$%'
 ORDER BY 1, 2, 3
 """
 

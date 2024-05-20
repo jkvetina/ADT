@@ -166,7 +166,7 @@ class Search_Repo(config.Config):
 
         # process requested objects
         for object_name in objects:
-            obj     = self.get_object(object_name)
+            obj     = self.get_object(object_name.upper())
             file    = obj.get('file', '').replace(self.repo_root, '')
             #
             if not file:

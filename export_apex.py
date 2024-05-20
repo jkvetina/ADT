@@ -92,11 +92,12 @@ class Export_APEX(config.Config):
         # scope
         self.arg_workspace  = self.args.ws      or self.conn.tns.get('workspace', '')
         self.arg_group      = self.args.group
-        self.arg_apps       = self.args.app     or self.conn.tns.get('app', '').split(',')
+        self.arg_apps       = self.args.app     or self.conn.tns.get('app', '')
         #
+        if type(self.arg_apps) != list:
+            self.arg_apps = str(self.arg_apps).replace(' ', ',').split(',')
         for (i, app_id) in enumerate(self.arg_apps):
             self.arg_apps[i] = int(app_id)
-
         #
         self.arg_recent     = 1     # default walue = changes done today
         if isinstance(self.args.recent, bool):
@@ -124,7 +125,6 @@ class Export_APEX(config.Config):
 
         # show matching apps every time
         self.get_applications()
-        self.get_enrichments()
         self.get_workspace_developers()
         self.load_timers()
         #
@@ -135,6 +135,8 @@ class Export_APEX(config.Config):
         for app_id in sorted(self.apex_apps.keys()):
             if not (app_id in self.arg_apps):
                 continue
+            #
+            self.get_enrichments(app_id)
             #
             util.delete_folder('{}f{}/'.format(self.config.sqlcl_root, app_id))
             self.get_comments(app_id)
@@ -287,13 +289,13 @@ class Export_APEX(config.Config):
 
 
 
-    def get_enrichments(self):
+    def get_enrichments(self, app_id):
         # enrich meaningless ids with component names
         args = {
             'owner'     : self.info.schema,
             'workspace' : self.arg_workspace,
             'group_id'  : self.arg_group,
-            'app_id'    : '|'.join(str(x) for x in self.arg_apps),
+            'app_id'    : app_id,
         }
         self.enrich_ids = {}
         for row in self.conn.fetch_assoc(query.apex_id_names, **args):

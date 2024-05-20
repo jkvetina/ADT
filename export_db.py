@@ -724,14 +724,14 @@ class Export_DB(config.Config):
         lines[0] = lines[0].replace(' NOPARTITION', '')
         lines[0] = lines[0].replace(' GLOBAL', '')
         #
-        lines[0] = util.replace(lines[0], ' START WITH \d+ ', ' ')
-        lines[0] = util.replace(lines[0], '\s+', ' ').strip()
+        lines[0] = util.replace(lines[0], r' START WITH \d+ ', ' ')
+        lines[0] = util.replace(lines[0], r'\s+', ' ').strip()
         #
         lines[0] = lines[0].replace(' MINVALUE',  '\n    MINVALUE')
         lines[0] = lines[0].replace(' START',     '\n    START')
         lines[0] = lines[0].replace(' CACHE',     '\n    CACHE')
         #
-        lines[0] = util.replace(lines[0], '\s+;', ';')
+        lines[0] = util.replace(lines[0], r'\s+;', ';')
         #
         drop_obj = '-- DROP SEQUENCE {};'.format(object_name.lower())
         #
@@ -847,7 +847,7 @@ class Export_DB(config.Config):
 
     def split_columns(self, line, indent = 4):
         # split columns in between brackets to multiple lines
-        content = util.extract('[(]([^\)]+)[)]', line)
+        content = util.extract(r'[(]([^\)]+)[)]', line)
         columns = content.replace(', ', ',').split(',')
         #
         if len(columns) > 1:

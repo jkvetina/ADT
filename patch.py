@@ -893,7 +893,12 @@ class Patch(config.Config):
                     object_type     = self.get_object_type(file)
                     #
                     if object_name and object_type:
-                        script_drop = 'DROP {} {};\n'.format(object_type, object_name)
+                        script_drop = util.replace(query.templates['DROP'], {
+                            '{$HEADER}'         : 'DROP {} {}'.format(object_type, object_name),
+                            '{$OBJECT_TYPE}'    : object_type,
+                            '{$OBJECT_NAME}'    : object_name,
+                            '{$STATEMENT}'      : 'DROP {} {}'.format(object_type, object_name),
+                        })
                         script_file = '{}objects_after/drop.{}.{}.sql'.format(self.config.patch_scripts_dir, object_type.replace(' ', '_').lower(), object_name.lower())
                         #
                         util.write_file(script_file, script_drop)

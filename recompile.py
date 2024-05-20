@@ -57,6 +57,11 @@ class Recompile(config.Config):
         group.add_argument('-warnings',     help = 'Allow PL/SQL warnings',                                             nargs = '*',                default = None)
 
         super().__init__(self.parser, args)
+        #
+        if conn:
+            self.objects_prefix = conn.tns.get('prefix')    or ''
+            self.objects_ignore = conn.tns.get('ignore')    or ''
+            self.objects_folder = conn.tns.get('subfolder') or ''
 
         # connect to the database
         self.args.target = self.args.target or self.args.env

@@ -1,4 +1,3 @@
-beepy >= 1
 cryptography >= 39
 GitPython >= 3.1
 oracledb >= 2.1
@@ -6,3 +5,6 @@ PyYAML >= 6
 requests >= 2
 rcssmin
 rjsmin
+
+# optional
+beepy >= 1

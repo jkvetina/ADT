@@ -64,7 +64,7 @@ Any feature requests, bugs are accepted on my [LinkedIn](https://www.linkedin.co
     - ✅ include various checks and logs to limit deployment issues (like using old files)
     - ✅ option to quickly deploy or redeploy created patch
     - ✅ show patch result (build log) on Teams channel
-    - ✅ generate ALTER statements on same table and different commits
+    - ✅ generate ALTER statements automatically from your commits and in a safe/repeatable way
     - ⭕️ remote REST app deployment
 - ✅ it can __export database objects__
     - ✅ if does not use SQLcl anymore, because direct exports are 3x faster
@@ -77,7 +77,7 @@ Any feature requests, bugs are accepted on my [LinkedIn](https://www.linkedin.co
         - ✅ grants (made and received), user grants and roles, directories
     - ✅ there are also multiple whitelist and blacklist filters so you can specify which prefixes you want to include or you want to skip
     - ✅ multiple schemas are supported via subfolders (schema/db/object_type..., db/schema/object_type...)
-    - ⭕️ you can also manually create subfolders for objects (so you can put for example views into groups/folders)
+    - ✅ you can also manually create subfolders for objects (so you can put for example views into groups/folders)
     - ⭕️ option to deploy exported files to specified environment
 - ⭕️ it can __export data__ into CSV files
     - ⭕️ althought it will skip LOB columns (for now)

@@ -1,5 +1,3 @@
-SET SERVEROUTPUT ON
---
 BEGIN
     -- set workspace so we can actually import APEX
     APEX_UTIL.SET_WORKSPACE (
@@ -13,6 +11,7 @@ BEGIN
             p_version           => '{$APEX_VERSION}'
         );
     END IF;
+    --
     COMMIT;
 END;
 /

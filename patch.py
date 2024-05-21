@@ -903,6 +903,38 @@ class Patch(config.Config):
                         #
                         util.write_file(script_file, script_drop)
 
+            # detect changed tables
+            self.alter_files = {}
+            for file in self.relevant_files[schema_with_app]:
+                if file in self.diffs:
+                    object_name     = self.get_object_name(file)
+                    object_type     = self.get_object_type(file)
+                    #
+                    if object_name and object_type == 'TABLE':
+                        last_commit     = max(self.relevant_commits)
+                        first_commit    = min(self.relevant_commits)
+                        #
+                        for commit_num in self.relevant_commits:
+                            if commit_num >= first_commit and commit_num <= last_commit and commit_num in self.all_files[file]:
+                                if not self.conn:
+                                    self.conn = self.db_connect(ping_sqlcl = False, silent = True)
+                                #
+                                alter_payload = ''
+                                for alter in self.get_table_diff(file, object_name, commit_num - 1, commit_num):
+                                    if alter:
+                                        alter_payload += '{};\n'.format(alter)
+                                #
+                                if alter_payload:
+                                    alter_file = self.config.patch_scripts_dir + 'tables_after.' + os.path.basename(file).replace('.sql', '.{}.sql'.format(commit_num))
+                                    util.write_file(alter_file, alter_payload)
+                                    self.alter_files[alter_file] = alter_payload
+            #
+            if len(self.alter_files) > 0:
+                util.print_header('TABLE CHANGES DETECTED:')
+                for file in sorted(self.alter_files):
+                    print('  - {}'.format(file))
+                print()
+
             # processed groups one by one in order defined by patch_map
             files_processed     = []
             scripts_processed   = []
@@ -1253,8 +1285,12 @@ class Patch(config.Config):
     def get_script_unknow_files(self, scripts_processed):
         unknown = []
         for file in util.get_files(self.config.patch_scripts_dir + '**/*.sql'):
-            if not (file in scripts_processed):
-                unknown.append(file)
+            if file in self.alter_files:
+                continue
+            if file in scripts_processed:
+                continue
+            #
+            unknown.append(file)
         return unknown
 
 
@@ -1281,6 +1317,7 @@ class Patch(config.Config):
             attach_type = 'SCRIPT'
         #
         file, commit = self.create_file_snapshot(file, app_id = app_id, replace_tags = (attach_type in ('TEMPLATE', 'SCRIPT',)))
+        #
         file = file.replace(self.patch_folder, '')       # replace first, full path
         file = file.replace(self.repo_root, '')
         file = file.replace(self.config.patch_template_dir, '')
@@ -1660,7 +1697,18 @@ class Patch(config.Config):
                         # get also column or constraint name
                         if what[0] == 'ADD' and not (what[1] in ('CONSTRAINT', 'PARTITION',)):
                             what.insert(1, 'COLUMN')
-                        cc_name = '?' if ('(' in what[2] or ')' in what[2]) else what[2]
+                            if what[2][0] == '(':
+                                what[2] = what[2][1:]           # strip first bracket
+                                if what[3][-1:] == ')':
+                                    what[3] = what[3][0:-1]     # strip last bracket
+                        #
+                        if what[0] == 'DROP' and not (what[1] in ('CONSTRAINT', 'PARTITION',)):
+                            what.insert(1, 'COLUMN')
+                            if what[2][0] == '(' and what[2][-1:] == ')':
+                                what[2] = what[2][1:-1]
+                        #
+                        if len(what) > 2:
+                            cc_name = '?' if ('(' in what[2] or ')' in what[2]) else what[2]
                     #
                     return (statement_type, object_type, object_name, operation, cc_name)
         #
@@ -1783,6 +1831,47 @@ class Patch(config.Config):
             payload[i] = line
         #
         return '\n'.join(payload)
+
+
+
+    def get_table_diff(self, file,object_name, version_src, version_trg):
+        source_obj = self.get_table_for_diff(self.get_file_from_commit(file, commit = version_src))
+        target_obj = self.get_table_for_diff(self.get_file_from_commit(file, commit = version_trg))
+        #
+        if source_obj == target_obj:
+            return ''
+
+        # create source table
+        source_obj      = source_obj.replace('$#', '$1')
+        source_table    = object_name.upper() + '$1'
+        #
+        self.conn.drop_object('TABLE', source_table)
+        self.conn.execute(source_obj)
+
+        # create target table
+        target_obj      = target_obj.replace('$#', '$2')
+        target_table    = object_name.upper() + '$2'
+        #
+        self.conn.drop_object('TABLE', target_table)
+        self.conn.execute(target_obj)
+
+        # compare tables
+        result  = str(self.conn.fetch_clob_result(query.generate_table_diff, source_table = source_table, target_table = target_table))
+        lines   = []
+        for line in result.splitlines():
+            line = line.strip()
+            line = util.replace(line, r'("[^"]+"\.)', '')  # remove schema
+            #
+            for object_name in re.findall(r'"[^"]+"', line):
+                line = line.replace(object_name, object_name.replace('"', '').lower())
+            #
+            lines.append(line)
+
+        # remove tables
+        self.conn.drop_object('TABLE', source_table)
+        self.conn.drop_object('TABLE', target_table)
+        #
+        return lines
 
 
 

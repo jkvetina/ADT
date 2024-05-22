@@ -292,6 +292,14 @@ class Config(util.Attributed):
             if (self.args.init or not os.path.exists(config_file)):
                 self.init_files()
 
+            # show connection details
+            if self.args.show:
+                tns = {}
+                for key in sorted(self.conn.tns.keys()):
+                    if not (key in ('pwd', 'pwd!', 'wallet_pwd', 'wallet_pwd!', 'key', 'dsn', 'host',)):
+                        tns[key] = self.conn.tns[key]
+                util.print_args(tns, length = 16)
+
 
 
     def __del__(self):

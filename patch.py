@@ -73,6 +73,7 @@ class Patch(config.Config):
         group = self.parser.add_argument_group('ADDITIONAL ACTIONS')
         group.add_argument('-fetch',        help = 'Fetch Git changes before patching',                                 nargs = '?', const = True,  default = False)
         group.add_argument('-rebuild',      help = 'Rebuild temp files',                                                nargs = '?', const = True,  default = False)
+        group.add_argument('-implode',      help = 'Merge files in a folder',                                           nargs = '?')
 
         super().__init__(self.parser, args)
 
@@ -153,6 +154,11 @@ class Patch(config.Config):
         # create install script
         if self.args.install:
             self.create_install()
+            util.quit()
+
+        # merge folder if requested
+        if self.args.implode:
+            self.implode_folder(self.args.implode)
             util.quit()
 
         # show recent commits and patches
@@ -1872,6 +1878,21 @@ class Patch(config.Config):
         self.conn.drop_object('TABLE', target_table)
         #
         return lines
+
+
+
+    def implode_folder(self, folder):
+        if os.path.exists(folder):
+            util.print_header('IMPLODE FOLDER')
+            #
+            payload = ''
+            for file in util.get_files(folder + '/*.*'):
+                print('  - {}'.format(file))
+                payload += open(file, 'rt', encoding = 'utf-8').read() + '\n'
+            print()
+            #
+            merged_file = folder.replace('\\', '/').rstrip('/') + '.sql'
+            util.write_file(merged_file, payload)
 
 
 

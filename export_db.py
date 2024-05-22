@@ -106,7 +106,7 @@ class Export_DB(config.Config):
     def show_overview(self):
         args = {
             'object_name'       : self.args.name        or '%',
-            'object_type'       : self.args.type        or '%',
+            'object_type'       : (self.args.type       or '%').upper(),
             'recent'            : self.args.recent      or '',
             'objects_prefix'    : self.objects_prefix   or '',
             'objects_ignore'    : self.objects_ignore   or '',

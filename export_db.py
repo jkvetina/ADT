@@ -621,8 +621,12 @@ class Export_DB(config.Config):
 
         # fix one liners, split by FROM to two lines, convert columns to lower if possible
         if len(lines) == 3 and ' FROM ' in lines[1].upper():
+            # split columns from select * from
+            lines[1] = util.replace(lines[1], r'^SELECT(\s+)', lines[1][0:6] + '\n    ', flags = re.I)
+            lines[1] = '",\n    "'.join(lines[1].split('","'))
             lines[1] = self.cleanup_names(lines[1])
-            #
+
+            # move FROM to next line
             split_from = util.extract(r'(\s+FROM\s+)', lines[1], flags = re.I)
             split_line = lines[1].split(split_from)
             lines[1] = '{}\n{} {}'.format(split_line[0].rstrip(), split_from.strip(), split_line[1])

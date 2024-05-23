@@ -672,7 +672,7 @@ class Export_DB(config.Config):
             line    = line.strip()
             first   = line.split(' ')[0]
             #
-            if first in ('NOCOMPRESS', 'DEFAULT', 'ORGANIZATION', 'STORAGE', 'PCTINCREASE', 'BUFFER_POOL', 'LOB', 'STORAGE', 'NOCACHE', 'LOGGING', 'USING', 'TABLESPACE'):
+            if not (first in ('CREATE', 'BUILD', 'REFRESH',)):
                 line = ''
             lines[i] = line
 

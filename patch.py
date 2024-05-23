@@ -78,7 +78,7 @@ class Patch(config.Config):
         super().__init__(self.parser, args)
 
         # process arguments and reinitiate config
-        if not self.args.rebuild:
+        if not (self.args.install or self.args.rebuild or self.args.implode):
             util.assert_(self.args.target, 'MISSING ARGUMENT: TARGET ENV')
         #
         self.patch_code         = self.args.patch

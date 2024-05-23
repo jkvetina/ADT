@@ -632,7 +632,12 @@ class Patch(config.Config):
                 prev_commit_id  = self.all_commits[commit_id - 1]['id']
                 curr_commit_id  = obj['id']
                 #
-                for diff in self.repo.commit(prev_commit_id).diff(curr_commit_id):
+                try:
+                    diffs = self.repo.commit(prev_commit_id).diff(curr_commit_id)
+                except:
+                    util.raise_error('REBUILD NEEDED')
+                #
+                for diff in diffs:
                     rows = str(diff).splitlines()
                     if 'file deleted in rhs' in rows[-1]:
                         obj['deleted'].append(rows[0])

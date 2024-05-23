@@ -513,19 +513,23 @@ def print_args(payload, length = 18, skip_keys = []):
             continue
         #
         if isinstance(value, dict):
-            print('   {}:'.format(key))
+            print('  {}:'.format(key))
             for sub_key, sub_value in value.items():
                 if isinstance(sub_value, list):
                     sub_value = ' | '.join(sub_value)
                 if (sub_key in skip_keys or sub_value == None or sub_value == ''):
                     continue
-                print('      {} {} {}'.format(sub_key, '.' * (length - 3 - len(sub_key)), sub_value or ''))
+                print('    {} {} {}'.format(sub_key, '.' * (length - 3 - len(sub_key)), sub_value or ''))
         #
         elif isinstance(value, list):
-            print('   {} {} {}'.format(key, '.' * (length - len(key)), ' | '.join(value)))
+            for (i, item) in enumerate(value):
+                if i == 0:
+                    print('  {} {} {}'.format(key, '.' * (length - len(key)), item))
+                else:
+                    print('  {} {} {}'.format(' ' * len(key), ' ' * (length - len(key)), item))
         #
         else:
-            print('   {} {} {}'.format(key, '.' * (length - len(key)), value or ''))
+            print('  {} {} {}'.format(key, '.' * (length - len(key)), value or ''))
     print()
 
 

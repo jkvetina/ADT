@@ -214,6 +214,14 @@ def move_file(source_file, target_file, check_hash = False):
 
 
 
+def delete_file(source_file):
+    try:
+        os.remove(source_file)
+    except:
+        pass
+
+
+
 def remove_cloud_junk(root = ''):
     root = root or os.path.abspath(os.path.curdir)
 

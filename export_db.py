@@ -51,6 +51,9 @@ class Export_DB(config.Config):
         group.add_argument('-schema',       help = '',                                                                  nargs = '?')
         group.add_argument('-env',          help = 'Source environment (for overrides)',                                nargs = '?')
         group.add_argument('-key',          help = 'Key or key location for passwords',                                 nargs = '?')
+        #
+        group = self.parser.add_argument_group('ADDITIONAL ACTIONS')
+        group.add_argument('-delete',       help = 'Delete existing folders before export',                             nargs = '?', const = True,  default = False)
 
         super().__init__(self.parser, args)
 
@@ -96,6 +99,16 @@ class Export_DB(config.Config):
         self.grants_dirs_file   = (os.path.dirname(self.grants_made_file) + self.config.grants_directories).replace('#SCHEMA_NAME#', self.remove_schema)
         #
         self.export_grants()
+
+        # cleanup target folders (to cleanup Git from removed objects)
+        if self.args.delete:
+            for object_type, structure in self.config.object_types.items():
+                if object_type in ('DATA',):
+                    continue
+                #
+                folder, file_ext = structure
+                for file in util.get_files(self.target_root + folder + '*' + file_ext):
+                    util.delete_file(file)
 
         # export requested objects
         self.show_overview()

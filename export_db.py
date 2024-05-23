@@ -82,15 +82,8 @@ class Export_DB(config.Config):
         }
         util.write_file(self.dependencies_file, payload = payload, yaml = True, fix = False)
 
-        # detect deleted objects
-        if self.args.verbose and self.args.debug:
-            util.print_header('NEW DEPENDENCIES:')
-            for file, obj in self.repo_files.items():
-                if obj.is_object and obj.object_type and not (obj.object_type in ('GRANT',)):
-                    obj_code = obj['object_code']
-                    if not (obj_code in self.dependencies):
-                        print('  - {}'.format(obj_code))
-            print()
+        # show affected objects
+        self.show_overview()
 
         # export grants
         self.grants_made_file   = '{}{}{}{}'.format(self.config.path_objects, self.config.object_types['GRANT'][0], self.remove_schema, self.config.object_types['GRANT'][1])
@@ -99,6 +92,20 @@ class Export_DB(config.Config):
         self.grants_dirs_file   = (os.path.dirname(self.grants_made_file) + self.config.grants_directories).replace('#SCHEMA_NAME#', self.remove_schema)
         #
         self.export_grants()
+
+        # detect deleted objects
+        deleted_obj = {}
+        for file, obj in self.repo_files.items():
+            if obj.is_object and obj.object_type and not (obj.object_type in ('GRANT',)):
+                obj_code = obj['object_code']
+                if not (obj_code in self.dependencies):
+                    if not (obj['object_type'] in deleted_obj):
+                        deleted_obj[obj['object_type']] = []
+                    deleted_obj[obj['object_type']].append(obj['object_name'])
+        #
+        if len(deleted_obj) > 0:
+            util.print_header('DELETED OBJECTS:')
+            util.print_args(deleted_obj, length = 20)
 
         # cleanup target folders (to cleanup Git from removed objects)
         if self.args.delete:
@@ -111,7 +118,6 @@ class Export_DB(config.Config):
                     util.delete_file(file)
 
         # export requested objects
-        self.show_overview()
         self.export()
 
 

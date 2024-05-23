@@ -105,7 +105,7 @@ class Export_DB(config.Config):
         #
         if len(deleted_obj) > 0:
             util.print_header('DELETED OBJECTS:')
-            util.print_args(deleted_obj, length = 20)
+            util.print_pipes(deleted_obj)
 
         # cleanup target folders (to cleanup Git from removed objects)
         if self.args.delete:

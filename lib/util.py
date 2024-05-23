@@ -534,7 +534,7 @@ def print_args(payload, length = 18, skip_keys = []):
 
 
 
-def print_pipes(payload, pattern = '  {:>16} | {}', right = [1], upper = True, sort = True, skip_none = True, skip = []):
+def print_pipes(payload, pattern = '  {:>18} | {}', right = [1], upper = True, sort = True, skip_none = True, skip = []):
     if isinstance(payload, dict):
         keys = payload.keys()
         if sort:
@@ -549,13 +549,20 @@ def print_pipes(payload, pattern = '  {:>16} | {}', right = [1], upper = True, s
         #
         for col1 in keys:
             col2 = payload[col1]
-            if col1 in skip or (skip_none and col2 == None):
-                continue
-            #
-            print(pattern.format(
-                col1.upper() if upper else col1,
-                col2
-            ))
+            if isinstance(col2, list):
+                for (i, value) in enumerate(col2):
+                    print(pattern.format(
+                        (col1.upper() if upper else col1) if i == 0 else '',
+                        value
+                    ))
+            else:
+                if col1 in skip or (skip_none and col2 == None):
+                    continue
+                #
+                print(pattern.format(
+                    col1.upper() if upper else col1,
+                    col2
+                ))
     #
     print()
 

@@ -496,7 +496,7 @@ class Export_DB(config.Config):
                     if 'VALUES LESS THAN(TO_DATE(\'' in line and '-01-01 00:00:00\',' in line:
                         line = 'PARTITION {}'.format(self.unquote_object_name(line.split('PARTITION')[1]))
                     #
-                    line                    = '    ' + line.replace(' );', '').replace('  ', ' ').strip()
+                    line                    = '    ' + line.lstrip('(').replace(' );', '').replace('  ', ' ').strip()
                     lines[partition_idx]    = lines[partition_idx].replace('!P!', line)
 
         # cleanup round

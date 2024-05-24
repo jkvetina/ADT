@@ -1525,7 +1525,7 @@ class Patch(config.Config):
             commit = self.all_commits[commit]['id']
 
         # run command line and capture the output, text file is expected
-        return util.run_command('git show {}:{}'.format(commit, file))
+        return util.run_command('git show {}:{}'.format(commit, file), silent = True)
 
 
 
@@ -1845,10 +1845,13 @@ class Patch(config.Config):
 
 
 
-    def get_table_diff(self, file,object_name, version_src, version_trg):
-        source_obj = self.get_table_for_diff(self.get_file_from_commit(file, commit = version_src))
-        target_obj = self.get_table_for_diff(self.get_file_from_commit(file, commit = version_trg))
+    def get_table_diff(self, file, object_name, version_src, version_trg):
+        source_file = self.get_file_from_commit(file, commit = version_src)
+        if not source_file:
+            return ''
         #
+        source_obj = self.get_table_for_diff(source_file)
+        target_obj = self.get_table_for_diff(self.get_file_from_commit(file, commit = version_trg))
         if source_obj == target_obj:
             return ''
 

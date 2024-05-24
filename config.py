@@ -235,6 +235,7 @@ class Config(util.Attributed):
         if self.config.chime_theme:
             import chime
             chime.theme(self.config.chime_theme)
+            chime.notify_exceptions()
 
         # create temp folder
         self.config.sqlcl_root = os.path.abspath(self.config.sqlcl_root)

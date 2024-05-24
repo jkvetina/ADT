@@ -85,14 +85,6 @@ class Export_DB(config.Config):
         # show affected objects
         self.show_overview()
 
-        # export grants
-        self.grants_made_file   = '{}{}{}{}'.format(self.config.path_objects, self.config.object_types['GRANT'][0], self.remove_schema, self.config.object_types['GRANT'][1])
-        self.grants_recd_file   = (os.path.dirname(self.grants_made_file) + self.config.grants_recd)
-        self.grants_privs_file  = (os.path.dirname(self.grants_made_file) + self.config.grants_privs).replace('#SCHEMA_NAME#', self.remove_schema)
-        self.grants_dirs_file   = (os.path.dirname(self.grants_made_file) + self.config.grants_directories).replace('#SCHEMA_NAME#', self.remove_schema)
-        #
-        self.export_grants()
-
         # detect deleted objects
         deleted_obj = {}
         for file, obj in self.repo_files.items():
@@ -116,6 +108,14 @@ class Export_DB(config.Config):
                 folder, file_ext = structure
                 for file in util.get_files(self.target_root + folder + '*' + file_ext):
                     util.delete_file(file)
+
+        # export grants
+        self.grants_made_file   = '{}{}{}{}'.format(self.config.path_objects, self.config.object_types['GRANT'][0], self.remove_schema, self.config.object_types['GRANT'][1])
+        self.grants_recd_file   = (os.path.dirname(self.grants_made_file) + self.config.grants_recd)
+        self.grants_privs_file  = (os.path.dirname(self.grants_made_file) + self.config.grants_privs).replace('#SCHEMA_NAME#', self.remove_schema)
+        self.grants_dirs_file   = (os.path.dirname(self.grants_made_file) + self.config.grants_directories).replace('#SCHEMA_NAME#', self.remove_schema)
+        #
+        self.export_grants()
 
         # export requested objects
         self.export()

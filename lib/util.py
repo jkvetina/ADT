@@ -1,6 +1,7 @@
 import sys, os, re, glob, traceback, inspect, io, subprocess, datetime, time, timeit, shutil, hashlib
 import secrets, base64
 import yaml         # pip3 install pyyaml       --upgrade
+import chime        # pip3 install chime        --upgrade
 
 # for encryptions
 from cryptography.fernet import Fernet
@@ -599,7 +600,7 @@ def print_progress(done, target = 100, start = None, extra = '', width = 78, sle
 
 
 
-def print_progress_done(start = None, extra = '', width = 78, sound = 1):
+def print_progress_done(start = None, extra = '', width = 78, sound = True):
     dots, extra = get_progress_dots(start, extra, width)
     timer = int(get_start() - start + 0.5) if start else ''
 
@@ -607,8 +608,8 @@ def print_progress_done(start = None, extra = '', width = 78, sound = 1):
     line = '{} {}%'.format('.' * dots, 100)
     text = ('{:<' + str(width - 9) + '} {} ').format(extra + line, get_progress_time(timer))
     print_now(text, close = True)
-    if sound > 0:
-        beep(sound = sound)
+    if sound:
+        beep_success()
 
 
 
@@ -674,12 +675,13 @@ def is_boolstr(v):
 
 
 
-def beep(sound = 1):
-    try:
-        import beepy         # pip3 install beepy --upgrade
-        beepy.beep(sound)
-    except:
-        pass
+def beep_success():
+    chime.success()
+
+
+
+def beep_error():
+    chime.error()
 
 
 
@@ -709,7 +711,7 @@ def raise_error(message = '', *extras):
             if line != None:
                 print_help(str(line).rstrip())
     print()
-    beep(sound = 3)
+    beep_error()
     sys.exit()
 
 

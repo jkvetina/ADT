@@ -133,6 +133,13 @@ mentions            : {}
 
 
 #
+# BEEPS
+#
+chime_theme             : 'mario'               # theme name
+
+
+
+#
 # APEX RELATED
 #
 apex_schema             : '{$INFO_SCHEMA}'

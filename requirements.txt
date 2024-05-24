@@ -7,4 +7,4 @@ rcssmin
 rjsmin
 
 # optional
-beepy >= 1
+chime

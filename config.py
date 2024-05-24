@@ -231,6 +231,11 @@ class Config(util.Attributed):
         self.info['schema'] = self.args.get('schema', '')   or self.info.get('schema', '')  or self.config.get('default_schema')
         self.info['env']    = self.args.get('env', '')      or self.info.get('env', '')     or self.config.get('default_env')
 
+        # setup beeps
+        if self.config.chime_theme:
+            import chime
+            chime.theme(self.config.chime_theme)
+
         # create temp folder
         self.config.sqlcl_root = os.path.abspath(self.config.sqlcl_root)
         if not os.path.exists(self.config.sqlcl_root):

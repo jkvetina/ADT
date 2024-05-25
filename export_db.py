@@ -68,6 +68,7 @@ class Export_DB(config.Config):
         self.overview       = {}
         self.comments       = {}
         self.comments_col   = {}
+        self.comments_type  = {}
         #
         self.objects_prefix = self.connection.get('prefix',     '')
         self.objects_ignore = self.connection.get('ignore',     '')
@@ -119,6 +120,7 @@ class Export_DB(config.Config):
 
         # export requested objects
         self.export()
+        self.update_comments()
 
 
 
@@ -152,14 +154,36 @@ class Export_DB(config.Config):
         #objects_overview.append({'object_type' : '', 'count' : self.objects_total})  # add total
         util.print_table(objects_overview)
 
-        # get comments
+
+
+    def update_comments(self):
+        args = {
+            'object_name'       : self.args.name        or '%',
+            'object_type'       : (self.args.type       or '%').upper(),
+            'objects_prefix'    : self.objects_prefix   or '',
+            'objects_ignore'    : self.objects_ignore   or '',
+        }
+        #
         for row in self.conn.fetch_assoc(query.pull_comments, **args):
+            if row.object_type:
+                self.comments_type[row.table_name] = row.object_type
+            #
             if not (row.table_name in self.comments):
                 self.comments[row.table_name]       = {}
                 self.comments_col[row.table_name]   = []
             if row.column_name != None:
                 self.comments_col[row.table_name].append(row.column_name)
+            #
             self.comments[row.table_name][row.column_name or ''] = row
+
+        # add comments to tables even if tables didnt changed
+        for table_name in self.comments:
+            object_file = self.get_object_file(self.comments_type[table_name], table_name)
+            with open(object_file, 'rt', encoding = 'utf-8') as f:
+                payload = f.read().strip()
+                payload = '{}\n{}\n\n'.format(payload, '\n'.join(self.get_object_comments(table_name)))
+                #
+                util.write_file(object_file, payload)
 
 
 
@@ -573,9 +597,6 @@ class Export_DB(config.Config):
         lines[last_line] = lines[last_line].rstrip(';').rstrip() + ';'
         if lines[last_line - 1] == ')':
             lines[last_line] = lines[last_line].lstrip()
-
-        # add comments
-        lines = self.get_object_comments(lines, object_name)
         #
         return lines
 
@@ -890,7 +911,8 @@ class Export_DB(config.Config):
 
 
 
-    def get_object_comments(self, lines, object_name):
+    def get_object_comments(self, object_name):
+        lines = []
         if object_name in self.comments:
             comment = (self.comments[object_name]['']['comments'] or '').replace('\'', '')
             lines.append('--')

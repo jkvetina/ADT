@@ -758,12 +758,16 @@ objects_ignore AS (
     FROM TABLE(APEX_STRING.SPLIT(TRIM(BOTH ',' FROM :objects_ignore), ',')) t
 )
 SELECT
+    o.object_type,
     m.table_name,
     NULL                    AS column_name,
     NULL                    AS column_full,
     m.comments,
     NULL                    AS column_id
 FROM user_tab_comments m
+JOIN user_objects o
+    ON o.object_name        = m.table_name
+    AND o.object_type       IN ('TABLE', 'VIEW', 'MATERIALIZED VIEW')
 JOIN objects_add a
     ON m.table_name         LIKE a.object_like ESCAPE '\\'
 LEFT JOIN objects_ignore g
@@ -774,6 +778,7 @@ WHERE 1 = 1
 --
 UNION ALL
 SELECT
+    NULL AS object_type,
     m.table_name,
     m.column_name,
     RPAD(LOWER(m.table_name || '.' || m.column_name), MAX(FLOOR(LENGTH(m.table_name || '.' || m.column_name) / 4) * 4 + 5) OVER (PARTITION BY m.table_name)) AS column_full,

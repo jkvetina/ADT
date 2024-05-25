@@ -800,7 +800,7 @@ WHERE 1 = 1
     AND m.table_name        NOT LIKE '%\\_E$' ESCAPE '\\'
     AND (
         m.column_name       NOT IN (
-            'UPDATED_BY', 'UPDATED_AT', 'CREATED_BY', 'CREATED_AT'
+            'UPDATED_BY', 'UPDATED_AT', 'CHANGED_BY', 'CHANGED_AT', 'CREATED_BY', 'CREATED_AT'
         )
         OR m.comments       IS NOT NULL
     )

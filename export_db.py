@@ -119,6 +119,7 @@ class Export_DB(config.Config):
         self.export_grants()
 
         # export requested objects
+        self.get_comments()
         self.export()
         self.update_comments()
 
@@ -156,7 +157,7 @@ class Export_DB(config.Config):
 
 
 
-    def update_comments(self):
+    def get_comments(self):
         args = {
             'object_name'       : self.args.name        or '%',
             'object_type'       : (self.args.type       or '%').upper(),
@@ -176,8 +177,13 @@ class Export_DB(config.Config):
             #
             self.comments[row.table_name][row.column_name or ''] = row
 
+
+
+    def update_comments(self, object_name = None):
+        comments = {object_name : self.comments[object_name]} if object_name else self.comments
+
         # add comments to tables even if tables didnt changed
-        for table_name in self.comments:
+        for table_name in comments.keys():
             object_type = self.comments_type[table_name]
             object_file = self.get_object_file(object_type, table_name)
             comments    = self.get_object_comments(table_name, object_type)
@@ -218,6 +224,9 @@ class Export_DB(config.Config):
                 payload     = self.export_object(object_type, object_name)
                 object_file = self.get_object_file(object_type, object_name)
                 util.write_file(object_file, payload)
+                #
+                if object_type in ('TABLE', 'VIEW', 'MATERIALIZED VIEW'):
+                    self.update_comments(object_name)
 
             # show extra line in between different object types
             if self.args.verbose:

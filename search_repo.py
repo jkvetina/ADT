@@ -45,6 +45,8 @@ class Search_Repo(config.Config):
         group = self.parser.add_argument_group('LIMIT SCOPE')
         group.add_argument('-recent',       help = 'Limit scope to # of recent days',           type = int,             nargs = '?')
         group.add_argument('-branch',       help = 'Limit scope to specific branch',                                    nargs = '?')
+        group.add_argument('-type',         help = 'Object type (you can use LIKE syntax)',                             nargs = '?')
+        group.add_argument('-name',         help = 'Object name/prefix (you can use LIKE syntax)',                      nargs = '?')
         #
         group = self.parser.add_argument_group('EXTRA ACTIONS')
         group.add_argument('-history',      help = 'Show history of specific file/object',                              nargs = '*',                default = [])
@@ -113,9 +115,21 @@ class Search_Repo(config.Config):
             deleted_files   = []
             #
             for file in commit_obj['files']:
-                if not (file.startswith(self.config.path_objects)):
+                # check object type and object name
+                short   = file.replace(self.repo_root, '')
+                obj     = self.repo_files.get(short) or File(file, config = self.config)
+
+                # process just database objects
+                if (not obj.is_object or not (file.startswith(self.config.path_objects))):
                     continue
-                #
+
+                # limit requested object type and name
+                if self.args.type and not (self.args.type in obj['object_type']):
+                    continue
+                if self.args.name and not (self.args.name in obj['object_name']):
+                    continue
+
+                # filename checks
                 found_all = True
                 if self.args.file:
                     for word in self.args.file:

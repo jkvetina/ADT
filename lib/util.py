@@ -35,7 +35,7 @@ def get_callstack():
     stack = []
     for row in traceback.format_stack():
         file = os.path.basename(extract('["]([^"]+)', row))
-        line = extract(', line (\d+),', row)
+        line = extract(r', line (\d+),', row)
         stack.append((file, line,))
     return stack[:-2]
 
@@ -228,12 +228,12 @@ def remove_cloud_junk(root = ''):
 
     # remove duplicated files
     for file in glob.glob(root + '/**/*.*', recursive = True):
-        number = extract('(\s+[0-9]+\.)[^\.]+$', file)
+        number = extract(r'(\s+[0-9]+\.)[^\.]+$', file)
         if number and os.path.exists(file.replace(number, '.')):
             os.remove(file)
             continue
         #
-        number = extract('(\s+[0-9]+[/])', file)
+        number = extract(r'(\s+[0-9]+[/])', file)
         if number and os.path.exists(file.replace(number, '/')):
             os.remove(file)
             continue
@@ -318,7 +318,7 @@ def fix_yaml(payload):
     #
     for i, line in enumerate(lines):
         # calculate indentation for current and next line
-        found = re.search('^(\s*)', line).group(1)
+        found = re.search(r'^(\s*)', line).group(1)
         if not found:
             continue
         #
@@ -329,10 +329,10 @@ def fix_yaml(payload):
             prev_line_indent = curr_line_indent
             continue
         else:
-            next_line_indent = len(re.search('^(\s*)', lines[i + 1]).group(1))
+            next_line_indent = len(re.search(r'^(\s*)', lines[i + 1]).group(1))
 
         # split current line
-        found = re.search('^(\s*)([^:]+)[:](.*)$', line)
+        found = re.search(r'^(\s*)([^:]+)[:](.*)$', line)
         if found and curr_line_indent > 0:
             recent[i] = [found.group(1), found.group(2), found.group(3)]
 

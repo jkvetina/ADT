@@ -178,12 +178,15 @@ class Export_DB(config.Config):
 
         # add comments to tables even if tables didnt changed
         for table_name in self.comments:
-            object_file = self.get_object_file(self.comments_type[table_name], table_name)
-            with open(object_file, 'rt', encoding = 'utf-8') as f:
-                payload = f.read().strip()
-                payload = '{}\n{}\n\n'.format(payload, '\n'.join(self.get_object_comments(table_name)))
-                #
-                util.write_file(object_file, payload)
+            object_type = self.comments_type[table_name]
+            object_file = self.get_object_file(object_type, table_name)
+            comments    = self.get_object_comments(table_name, object_type)
+            #
+            if len(comments) > 0:
+                with open(object_file, 'rt', encoding = 'utf-8') as f:
+                    payload = f.read().strip()
+                    if not ('\n--\nCOMMENT ON ' in payload):
+                        util.write_file(object_file, '{}\n{}\n\n'.format(payload, '\n'.join(comments)))
 
 
 
@@ -911,20 +914,33 @@ class Export_DB(config.Config):
 
 
 
-    def get_object_comments(self, object_name):
-        lines = []
+    def get_object_comments(self, object_name, object_type):
+        # check if we actually have some comments on the object
+        found = 0
         if object_name in self.comments:
-            comment = (self.comments[object_name]['']['comments'] or '').replace('\'', '')
-            lines.append('--')
-            lines.append('COMMENT ON TABLE {} IS \'{}\';'.format(object_name.lower(), comment))
-        #
+            if len(self.comments[object_name]['']['comments'] or '') > 0:
+                found += 1
         if object_name in self.comments_col:
-            lines.append('--')
             for column_name in self.comments[object_name].keys():
-                if column_name:
-                    column_full = self.comments[object_name][column_name]['column_full']
-                    comment     = (self.comments[object_name][column_name]['comments'] or '').replace('\'', '')
-                    lines.append('COMMENT ON COLUMN {} IS \'{}\';'.format(column_full, comment))
+                if column_name and len(self.comments[object_name][column_name]['comments'] or '') > 0:
+                    found += 1
+                    break
+
+        # construct comments
+        lines = []
+        if (object_type == 'TABLE' or found > 0):
+            if object_name in self.comments:
+                comment = (self.comments[object_name]['']['comments'] or '').replace('\'', '')
+                lines.append('--')
+                lines.append('COMMENT ON TABLE {} IS \'{}\';'.format(object_name.lower(), comment))
+            #
+            if object_name in self.comments_col:
+                lines.append('--')
+                for column_name in self.comments[object_name].keys():
+                    if column_name:
+                        column_full = self.comments[object_name][column_name]['column_full']
+                        comment     = (self.comments[object_name][column_name]['comments'] or '').replace('\'', '')
+                        lines.append('COMMENT ON COLUMN {} IS \'{}\';'.format(column_full, comment))
         #
         return lines
 

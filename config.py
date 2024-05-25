@@ -210,6 +210,7 @@ class Config(util.Attributed):
         # show component versions
         if __name__ == '__main__' and self.args.get('version'):
             self.show_versions()
+            util.beep_success()
             util.quit()
 
         # repo attributes

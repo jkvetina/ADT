@@ -226,8 +226,7 @@ class Export_DB(config.Config):
         #
         if not self.args.verbose:
             util.print_progress_done()
-        else:
-            util.beep_success()
+        util.beep_success()
         #
         print()
 

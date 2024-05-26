@@ -22,20 +22,20 @@ Any feature requests, bugs are accepted on my [LinkedIn](https://www.linkedin.co
 
 &nbsp;
 
-## Actions/Roadmap (progress 45/60, 75%)
+## Actions/Roadmap
 
-| Filename                                 | Description                                    | Status          | Complexity | Done |
-| :-------                                 | :----------                                    | :-----          | ---------: | ---: |
-| [`config.py`](./doc/config.md)           | to manage database connections and settings    | Done            |          5 | 5    |
-| `export_db.py`                           | to export database objects                     | __In Progress__ |         9  | 8    |
-| `export_apex.py`                         | to export APEX & REST services                 | Done            |          7 | 7    |
-| `export_data.py`                         | to export data into CSV files                  | Planned         |          4 |      |
-| [`live_upload.py`](./doc/live_upload.md) | to upload files to APEX                        | Done            |          1 | 1    |
-| [`patch.py`](./doc/patch.md)             | to prepare patch files and deploy them         | Done            |         20 | 20   |
-| `compare.py`                             | to compare two databases                       | Planned         |         10 |      |
-| [`recompile.py`](./doc/recompile.md)     | to recompile invalid objects                   | Done            |          1 | 1    |
-| [`search_apex.py`](./doc/search_apex.md) | to search for objects in APEX                  | Done            |          2 | 2    |
-| [`search_repo.py`](./doc/search_repo.md) | to search repo history                         | Done            |          1 | 1    |
+| Filename                                 | Description                                    | Status          |
+| :-------                                 | :----------                                    | :-----          |
+| [`config.py`](./doc/config.md)           | to manage database connections and settings    | Done            |
+| `export_db.py`                           | to export database objects                     | Done            |
+| `export_apex.py`                         | to export APEX & REST services                 | Done            |
+| `export_data.py`                         | to export data into CSV files                  | Done            |
+| [`live_upload.py`](./doc/live_upload.md) | to upload files to APEX                        | Done            |
+| [`patch.py`](./doc/patch.md)             | to prepare patch files and deploy them         | Done            |
+| `compare.py`                             | to compare two databases                       | Planned         |
+| [`recompile.py`](./doc/recompile.md)     | to recompile invalid objects                   | Done            |
+| [`search_apex.py`](./doc/search_apex.md) | to search for objects in APEX                  | Done            |
+| [`search_repo.py`](./doc/search_repo.md) | to search repo history                         | Done            |
 
 &nbsp;
 
@@ -79,9 +79,10 @@ Any feature requests, bugs are accepted on my [LinkedIn](https://www.linkedin.co
     - ✅ multiple schemas are supported via subfolders (schema/db/object_type..., db/schema/object_type...)
     - ✅ you can also manually create subfolders for objects (so you can put for example views into groups/folders)
     - ⭕️ option to deploy exported files to specified environment
-- ⭕️ it can __export data__ into CSV files
+- ✅ it can __export data__ into CSV files
+    - ✅ dumps specified tables to CSV files, with some filtering
+    - ✅ creates SQL MERGE statements for patching, you can set INS/UPD/DEL parts in config
     - ⭕️ althought it will skip LOB columns (for now)
-    - ⭕️ creates SQL MERGE statements for patching
     - ⭕️ option to deploy exported files to specified environment
 - ✅ generate __install script__ for test/local environments to install everything into a clean schema
 - ⭕️ it can __compare two databases__ and show you the differences and what you need to do to sync them, including the data changes

@@ -124,34 +124,10 @@ class Export_Data(config.Config):
                 columns.remove(column_name)
 
         # filter table rows if requested
-        where_cols = {
-            **self.config.tables_global.get('where', {}),
-            **self.config.tables.get(table_name.upper(), {}).get('where', {})
-        }
-        for column_name in list(where_cols.keys()):
-            if not (column_name.upper() in columns) and column_name in where_cols:
-                where_cols.pop(column_name)
-        #
-        if len(where_cols) > 0:
-            where_filter = '\nWHERE 1 = 1'
-            for column_name, value in where_cols.items():
-                where_filter += '\n    AND {} {}'.format(column_name, value)
+        where_filter = self.get_where_filter(table_name, columns)
 
         # order data by primary key or first unique key
-        pk, uq = {}, {}
-        for column_name, row in self.tables_desc[table_name].items():
-            if column_name in columns:
-                if row['pk']: pk[row['pk']] = column_name
-                if row['uq']: uq[row['uq']] = column_name
-        #
-        if len(order_by) == 0:
-            for idx in sorted(pk.keys()):
-                order_by.append(pk[idx])
-        #
-        if len(order_by) == 0:
-            for idx in sorted(uq.keys()):
-                order_by.append(uq[idx])
-        #
+        order_by = self.get_primary_columns(table_name, columns)
         order_by = ', '.join(order_by) or 'ROWID'
 
         # fetch data from table
@@ -167,8 +143,55 @@ class Export_Data(config.Config):
             row_append = []
             for col in columns:
                 row_append.append(row[col.lower()])
+
+                # adjust data types
+                #if isinstance(col, float):
+                #    row[idx] = str(col).replace('.', ',')
+
             writer.writerow(row_append)
         csv_file.close()
+
+
+
+    def get_where_filter(self, table_name, columns):
+        where_filter = ''
+        where_cols = {
+            **self.config.tables_global.get('where', {}),
+            **self.config.tables.get(table_name.upper(), {}).get('where', {})
+        }
+        for column_name in list(where_cols.keys()):
+            if not (column_name.upper() in columns) and column_name in where_cols:
+                where_cols.pop(column_name)
+        #
+        if len(where_cols) > 0:
+            where_filter = '\nWHERE 1 = 1'
+            for column_name, value in where_cols.items():
+                where_filter += '\n    AND {} {}'.format(column_name, value)
+        #
+        return where_filter
+
+
+
+    def get_primary_columns(self, table_name, columns):
+        pk, uq, out = {}, {}, []
+        #
+        for column_name, row in self.tables_desc[table_name].items():
+            if column_name in columns:
+                if row['pk']: pk[row['pk']] = column_name
+                if row['uq']: uq[row['uq']] = column_name
+        #
+        if len(out) == 0:
+            for idx in sorted(pk.keys()):
+                out.append(pk[idx])
+        #
+        if len(out) == 0:
+            for idx in sorted(uq.keys()):
+                out.append(uq[idx])
+        #
+        return out
+
+
+
 
 
 

@@ -127,8 +127,12 @@ sqlcl_temp_file         : 'sqlcl.tmp'
 #
 # TEAMS INCOMING WEBHOOK
 #
-teams_webhoook          : ''
-mentions                : {}
+teams_webhoook          : ''                    # create Teams channel as setup Incomming Webhook connector
+                        # 'https://___.webhook.office.com/webhookb2/___@___/IncomingWebhook/___/___'
+#
+mentions                : {}                    # if you want to get tagged in the message
+    #'___@___.com'      : 'Your Name(s)'        # your company email : name
+    #'alias@___.com'    : '___@___.com'         # alias if you are using multiple accounts in Git
 
 
 

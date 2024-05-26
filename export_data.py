@@ -112,7 +112,7 @@ class Export_Data(config.Config):
             os.makedirs(os.path.dirname(file))
         #
         csv_file    = open(file, 'wt', encoding = 'utf-8', newline = '\n')
-        writer      = csv.writer(csv_file, delimiter = self.config.csv_delimier or ';', lineterminator = '\n', quoting = csv.QUOTE_NONNUMERIC)
+        writer      = csv.writer(csv_file, delimiter = self.config.csv_delimiter or ';', lineterminator = '\n', quoting = csv.QUOTE_NONNUMERIC)
         #
         columns         = self.tables_cols[table_name]
         where_filter    = ''

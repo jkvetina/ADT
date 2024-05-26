@@ -197,7 +197,7 @@ apex_files_copy:
 #
 # DATA EXPORT
 #
-csv_delimier            : ';'
+csv_delimiter           : ';'
 
 # ignored columns in exports and in table comments, case sensitive
 ignored_columns:

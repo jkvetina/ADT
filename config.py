@@ -575,8 +575,8 @@ class Config(util.Attributed):
 
 
     def get_dependencies(self, prefix = '', ignore = ''):
-        objects_prefix = prefix or self.objects_prefix
-        objects_ignore = ignore or self.objects_ignore
+        prefix = prefix or self.objects_prefix
+        ignore = ignore or self.objects_ignore
         #
         self.dependencies = {}
         for row in self.conn.fetch_assoc(query.object_dependencies, objects_prefix = prefix, objects_ignore = ignore):

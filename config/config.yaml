@@ -192,3 +192,17 @@ apex_files_copy:
     - /application/set_environment.sql
     - /application/end_environment.sql
 
+
+
+#
+# DATA EXPORT
+#
+csv_delimier            : ';'
+
+# ignored columns in exports and in table comments, case sensitive
+ignored_columns:
+    - CREATED_BY
+    - CREATED_AT
+    - UPDATED_BY
+    - UPDATED_AT
+

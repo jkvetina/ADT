@@ -75,7 +75,8 @@ class Export_Data(config.Config):
 
         # show exporting objects
         util.print_header('EXPORT TABLE DATA:', '({})'.format(len(self.tables_curr)))
-        for table_name in self.tables_curr:
+        for table_name in sorted(self.tables_curr):
+            print('  - {}'.format(table_name))
             file = self.get_object_file(object_type = 'DATA', object_name = table_name)
             self.export_table(table_name, file)
         print()

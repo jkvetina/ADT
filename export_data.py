@@ -114,7 +114,7 @@ class Export_Data(config.Config):
         #
         columns         = self.tables_cols[table_name]
         where_filter    = ''
-        order_by        = ''
+        order_by        = []
 
         # remove ignored columns
         for column_name in self.config.ignored_columns:
@@ -135,9 +135,26 @@ class Export_Data(config.Config):
             for column_name, value in where_cols.items():
                 where_filter += '\n    AND {} {}'.format(column_name, value)
 
+        # order data by primary key or first unique key
+        pk, uq = {}, {}
+        for column_name, row in self.tables_desc[table_name].items():
+            if column_name in columns:
+                if row['pk']: pk[row['pk']] = column_name
+                if row['uq']: uq[row['uq']] = column_name
+        #
+        if len(order_by) == 0:
+            for idx in sorted(pk.keys()):
+                order_by.append(pk[idx])
+        #
+        if len(order_by) == 0:
+            for idx in sorted(uq.keys()):
+                order_by.append(uq[idx])
+        #
+        order_by = ', '.join(order_by) or 'ROWID'
+
         # fetch data from table
         try:
-            query   = 'SELECT {}\nFROM {}{}\nORDER BY {}'.format(', '.join(columns), table_name, where_filter, order_by or 'ROWID')
+            query   = 'SELECT {}\nFROM {}{}\nORDER BY {}'.format(', '.join(columns), table_name, where_filter, order_by)
             data    = self.conn.fetch_assoc(query)
         except Exception:
             util.raise_error('EXPORT_FAILED')

@@ -77,7 +77,7 @@ class Export_Data(config.Config):
         util.print_header('EXPORT TABLE DATA:', '({})'.format(len(self.tables_curr)))
         for table_name in sorted(self.tables_curr):
             print('  - {}'.format(table_name))
-            file = self.get_object_file(object_type = 'DATA', object_name = table_name)
+            file = self.get_object_file(object_type = 'DATA', object_name = table_name).replace('.sql', '.csv')
             self.export_table(table_name, file)
         print()
 
@@ -132,8 +132,8 @@ class Export_Data(config.Config):
 
         # fetch data from table
         try:
-            query   = 'SELECT {}\nFROM {}{}\nORDER BY {}'.format(', '.join(columns), table_name, where_filter, order_by)
-            data    = self.conn.fetch_assoc(query)
+            stmt    = 'SELECT {}\nFROM {}{}\nORDER BY {}'.format(', '.join(columns), table_name, where_filter, order_by)
+            data    = self.conn.fetch_assoc(stmt)
         except Exception:
             util.raise_error('EXPORT_FAILED')
 
@@ -150,6 +150,9 @@ class Export_Data(config.Config):
 
             writer.writerow(row_append)
         csv_file.close()
+
+        # create also the .sql file
+        self.get_merge_from_csv(file, where_filter)
 
 
 
@@ -175,7 +178,7 @@ class Export_Data(config.Config):
     def get_primary_columns(self, table_name, columns):
         pk, uq, out = {}, {}, []
         #
-        for column_name, row in self.tables_desc[table_name].items():
+        for column_name, row in self.tables_desc[table_name.upper()].items():
             if column_name in columns:
                 if row['pk']: pk[row['pk']] = column_name
                 if row['uq']: uq[row['uq']] = column_name
@@ -192,6 +195,91 @@ class Export_Data(config.Config):
 
 
 
+    def get_merge_from_csv(self, file, where_filter):
+        table_name      = os.path.basename(file).split('.')[0].lower()
+        columns         = []
+        csv_rows        = 0
+        csv_select      = {}
+        update_cols     = []
+        batch_size      = 10000     # split large files into several statements
+        batch_id        = 0
+
+        # flags to disable parts of the query
+        skip_insert     = ''
+        skip_update     = ''
+        skip_delete     = ''
+
+        # parse CSV file and create WITH table
+        with open(file, mode = 'r', encoding = 'utf-8') as csv_file:
+            csv_reader = csv.DictReader(csv_file, delimiter = self.config.csv_delimiter or ';', lineterminator = '\n', quoting = csv.QUOTE_NONNUMERIC)
+            for idx, row in enumerate(csv_reader):
+                batch_id = idx // batch_size
+                csv_rows += 1
+                cols = []
+                for col_name, col_value in row.items():
+                    if not isinstance(col_value, (int, float)):
+                        col_value = '\'{}\''.format(col_value.replace('\'', '\'\''))
+                    cols.append('{} AS {}'.format(col_value, col_name))
+                #
+                if not(batch_id in csv_select):
+                    csv_select[batch_id] = []
+                csv_select[batch_id].append('SELECT {} FROM DUAL'.format(', '.join(cols)))
+                #
+                if not len(columns):
+                    columns = list(row.keys())
+
+        # ignore empty files
+        if csv_rows == 0:
+            return
+
+        # get primary key cols for merge
+        primary_cols = self.get_primary_columns(table_name, columns)
+        if len(primary_cols) == 0:
+            return
+
+        # lowercase column names
+        primary_cols    = ','.join(primary_cols).lower().split(',')
+        columns         = ','.join(columns).lower().split(',')
+
+        # construct primary key joiner
+        primary_cols_set = []
+        for col in primary_cols:
+            primary_cols_set.append('t.{} = s.{}'.format(col, col))
+        primary_cols_set = '\n    ' + '\n    AND '.join(primary_cols_set) + '\n'
+
+        # get other columns
+        for col in columns:
+            if not (col in primary_cols):
+                update_cols.append('t.{} = s.{}'.format(col, col))
+        update_cols = ',\n{}        '.format(skip_update).join(update_cols)
+        #
+        all_cols    = 't.' + ',\n        t.'.join(columns)
+        all_values  = 's.' + ',\n        s.'.join(columns)
+
+        # proceeed in batches
+        payload = ''
+        for batch_id, data in csv_select.items():
+            stmt = query.template_csv_merge.lstrip().format (
+                table_name              = table_name,
+                primary_cols_set        = primary_cols_set,
+                csv_content_query       = ' UNION ALL\n        '.join(data),
+                non_primary_cols_set    = update_cols,
+                all_cols                = all_cols,
+                all_values              = all_values,
+                skip_insert             = skip_insert,
+                skip_update             = skip_update,
+                skip_delete             = skip_delete if (batch_id == 0) else False,
+                where_filter            = where_filter
+            )
+
+            # some fixes
+            stmt = stmt.replace('\'\' AS ', 'NULL AS ')
+            stmt = stmt.replace('.0 AS ', ' AS ')
+            stmt = stmt.replace('\n    )\n;\n', '\n    );\n')
+            #
+            payload += stmt + '--\nCOMMIT;\n'
+        #
+        util.write_file(file.replace('.csv', '.sql'), payload)
 
 
 

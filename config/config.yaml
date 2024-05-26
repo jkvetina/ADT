@@ -220,7 +220,7 @@ tables_global:
 tables:
     TABLE_NAME:
         where:                  # where conditions for specific tables
-            app_id: '= 100'
+            lov_name: "LIKE '%'"
         merge:
             delete: True
             insert: True

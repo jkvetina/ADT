@@ -768,6 +768,35 @@ ORDER BY
     t.column_id
 """
 
+# template for MERGE statement from CSV file
+template_csv_merge = """
+BEGIN
+    DBMS_OUTPUT.PUT_LINE('--');
+    DBMS_OUTPUT.PUT_LINE('-- MERGE ' || UPPER('{table_name}'));
+    DBMS_OUTPUT.PUT_LINE('--');
+END;
+/
+--
+{skip_delete}DELETE FROM {table_name}{where_filter};
+--
+MERGE INTO {table_name} t
+USING (
+    {csv_content_query}
+) s
+ON ({primary_cols_set})
+{skip_update}WHEN MATCHED THEN
+{skip_update}    UPDATE SET
+{skip_update}        {non_primary_cols_set}
+{skip_insert}WHEN NOT MATCHED THEN
+{skip_insert}    INSERT (
+{skip_insert}        {all_cols}
+{skip_insert}    )
+{skip_insert}    VALUES (
+{skip_insert}        {all_values}
+{skip_insert}    )
+;
+"""
+
 
 
 setup_dbms_metadata = """

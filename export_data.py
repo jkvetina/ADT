@@ -121,15 +121,29 @@ class Export_Data(config.Config):
             if column_name in columns:
                 columns.remove(column_name)
 
+        # filter table rows if requested
+        where_cols = {
+            **self.config.tables_global.get('where', {}),
+            **self.config.tables.get(table_name.upper(), {}).get('where', {})
+        }
+        for column_name in list(where_cols.keys()):
+            if not (column_name.upper() in columns) and column_name in where_cols:
+                where_cols.pop(column_name)
+        #
+        if len(where_cols) > 0:
+            where_filter = '\nWHERE 1 = 1'
+            for column_name, value in where_cols.items():
+                where_filter += '\n    AND {} {}'.format(column_name, value)
+
         # fetch data from table
         try:
             query   = 'SELECT {}\nFROM {}{}\nORDER BY {}'.format(', '.join(columns), table_name, where_filter, order_by or 'ROWID')
             data    = self.conn.fetch_assoc(query)
         except Exception:
-            util.raise_error()
+            util.raise_error('EXPORT_FAILED')
 
         # save as CSV
-        writer.writerow(columns)    # headers
+        writer.writerow(columns)    # attach headers
         for row in data:
             row_append = []
             for col in columns:

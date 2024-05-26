@@ -734,6 +734,42 @@ END;
 
 
 
+# get all compatible columns to export table to CSV
+csv_columns = """
+SELECT
+    t.column_name,
+    t.data_type,
+    t.column_id,
+    MIN(CASE WHEN n.constraint_name IS NOT NULL THEN c.position END) AS pk,
+    MIN(CASE WHEN u.constraint_name IS NOT NULL THEN c.position END) AS uq
+FROM user_tab_cols t
+LEFT JOIN user_cons_columns c
+    ON c.table_name         = t.table_name
+    AND c.column_name       = t.column_name
+LEFT JOIN user_constraints n
+    ON n.table_name         = c.table_name
+    AND n.constraint_name   = c.constraint_name
+    AND n.constraint_type   = 'P'
+LEFT JOIN (
+    SELECT MIN(u.constraint_name) AS constraint_name
+    FROM user_constraints u
+    WHERE u.table_name          = UPPER(:table_name)
+        AND u.constraint_type   = 'U'
+) u
+    ON u.constraint_name    = c.constraint_name
+WHERE t.table_name          = UPPER(:table_name)
+    AND t.column_id         > 0   -- ignore virtual and hidden columns
+    AND t.data_type         NOT IN ('BLOB', 'CLOB', 'XMLTYPE', 'JSON')
+GROUP BY
+    t.column_name,
+    t.data_type,
+    t.column_id
+ORDER BY
+    t.column_id
+"""
+
+
+
 setup_dbms_metadata = """
 BEGIN
     DBMS_METADATA.SET_TRANSFORM_PARAM(DBMS_METADATA.SESSION_TRANSFORM, 'PARTITIONING',          TRUE);

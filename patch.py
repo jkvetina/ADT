@@ -378,6 +378,7 @@ class Patch(config.Config):
             log_file    = full.replace('.sql', '.log')
             log_status  = '{}/{} {} [{}].log'.format(log_folder, plan['file'].replace('.sql', ''), self.config.today_deploy, results['status'])
             payload     = util.cleanup_sqlcl(output, lines = False).replace('---\n', '--\n')
+            payload     = util.replace(payload, r'(\nComment created.\n)', '\n', flags = re.M)
             #
             build_logs[os.path.basename(full)] = payload
             #

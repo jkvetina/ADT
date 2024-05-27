@@ -55,6 +55,7 @@ grants_directories      : '/#SCHEMA_NAME#_directories.sql'
 #
 patch_root              : 'patch/'                          # folder with live patches
 patch_archive           : 'patch_archive/'                  # folder with archived patches
+patch_hashes            : 'patch_hashes/{$TARGET_ENV}/'     # folder for waterfall hashes
 patch_template_dir      : 'config/patch_template/'          # source folder for all patches
 patch_template_snap     : 'patch_template/'                 # folder name inside of your patch folder
 patch_scripts_dir       : 'patch_scripts/{$PATCH_CODE}/'    # source folder for specific patch

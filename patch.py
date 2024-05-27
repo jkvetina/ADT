@@ -71,6 +71,7 @@ class Patch(config.Config):
         group.add_argument('-head',         help = 'Use file version from head commit',                                 nargs = '?', const = True,  default = False)
         #
         group = self.parser.add_argument_group('ADDITIONAL ACTIONS')
+        group.add_argument('-hash',         help = 'Store file hashes on patch -create',                                nargs = '?', const = True,  default = False)
         group.add_argument('-fetch',        help = 'Fetch Git changes before patching',                                 nargs = '?', const = True,  default = False)
         group.add_argument('-rebuild',      help = 'Rebuild temp files',                                                nargs = '?', const = True,  default = False)
         group.add_argument('-implode',      help = 'Merge files in a folder',                                           nargs = '?')
@@ -117,6 +118,7 @@ class Patch(config.Config):
         self.relevant_files     = {}
         self.diffs              = {}
         self.head_commit        = None
+        self.head_commit_id     = None
         self.first_commit_id    = None
         self.first_commit       = None
         self.last_commit_id     = None
@@ -221,6 +223,16 @@ class Patch(config.Config):
                 #
                 self.create_patch()
 
+                # create hash file based on previous commit
+                if self.args.hash:
+                    hashes = [1]
+                    for file in util.get_files(self.config.patch_hashes + 'rollout.*.log'):
+                        commit_num = util.extract_int(r'rollout.(\d+).log', file)
+                        if commit_num < self.head_commit_id:
+                            hashes.append(commit_num)
+                    #
+                    self.create_patch_hashfile(prev_commit = max(hashes))
+
             # also deploy, we can do create, deploy or create+deploy
             if self.args.deploy:
                 self.deploy_patch()
@@ -263,6 +275,35 @@ class Patch(config.Config):
         if ((self.patch_code == None and self.show_patches > 0) or len(found_patches) > 0):
             util.print_header('RECENT PATCHES:', self.target_env)
             util.print_table(found_patches, limit_bottom = self.show_patches)
+
+
+
+    def create_patch_hashfile(self, prev_commit):
+        # get last file modification
+        files = {}
+        for commit_num in sorted(self.all_commits.keys()):
+            if commit_num < prev_commit:
+                continue
+            for file in self.all_commits[commit_num].get('files', []):
+                if (file.startswith(self.config.path_objects) or file.startswith(self.config.path_apex)) and file[-4:] == '.sql':
+                    files[file] = commit_num
+
+        # create rollout log
+        rollout = []
+        for file in sorted(files.keys()):
+            commit_num  = files[file]
+            obj         = File(file, config = self.config)
+            #
+            if obj.is_object:
+                file_hash = util.get_hash(self.get_file_from_commit(file, commit = commit_num))
+                if file_hash == 'da39a3ee5e6b4b0d3255bfef95601890afd80709':     # empty file
+                    continue
+                #
+                rollout.append('{} | {} | {}'.format(file, commit_num, file_hash))
+        #
+        file = '{}rollout.{}.log'.format(self.config.patch_hashes, self.head_commit_id)
+        #
+        util.write_file(file, payload = rollout)
 
 
 
@@ -622,7 +663,7 @@ class Patch(config.Config):
         progress_target = len(new_commits)
         progress_done   = 0
         start           = util.get_start()
-        commit_id       = max(self.all_commits.keys()) if len(self.all_commits) > 0 else 0
+        commit_id       = self.head_commit_id if len(self.all_commits) > 0 else 0
         #
         for obj in reversed(new_commits):
             obj['deleted'] = []
@@ -657,7 +698,8 @@ class Patch(config.Config):
                 self.all_commits.pop(commit_id)
 
         # prepare head commit, self.repo.commit('HEAD')
-        self.head_commit = self.all_commits[commit_id]
+        self.head_commit    = self.all_commits[commit_id]
+        self.head_commit_id = commit_id
 
         # store commits in file for better performance
         if len(new_commits) > 0:
@@ -1406,7 +1448,7 @@ class Patch(config.Config):
                 with open(file, 'rt', encoding = 'utf-8') as f:
                     file_content = f.read()
             else:
-                commit_hash, commit_id = self.head_commit['id'], max(self.all_commits)
+                commit_hash, commit_id = self.head_commit['id'], self.head_commit_id
                 file_content    = self.get_file_from_commit(file, commit = commit_hash)
 
         # shorten target folder for template files

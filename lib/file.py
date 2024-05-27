@@ -24,8 +24,8 @@ class File(util.Attributed):
                     break
 
         # check for APEX stuff
-        find_app    = re.search('/f(\d+)/', self.file)
-        find_page   = re.search('/f\d+/application/pages/page_(\d+)\.sql$', self.file)
+        find_app    = re.search(r'/f(\d+)/', self.file)
+        find_page   = re.search(r'/f\d+/application/pages/page_(\d+)\.sql$', self.file)
         app_id      = int(find_app.group(1))  if find_app  else None
         page_id     = int(find_page.group(1)) if find_page else None
         #

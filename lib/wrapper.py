@@ -187,7 +187,7 @@ class Oracle:
         self.versions['APEX']       = '.'.join(version_apex.split('.')[0:2])
         #
         if self.thick:
-            version = util.extract('(\d+_\d+)$', self.thick).replace('_', '.')
+            version = util.extract(r'(\d+_\d+)$', self.thick).replace('_', '.')
             self.versions['THICK'] = version or self.thick
 
 

@@ -4,7 +4,6 @@ import sys, os, re, argparse, datetime, csv
 import config
 from lib import util
 from lib import queries as query
-from lib.file import File
 
 #
 #                                                      (R)

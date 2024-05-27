@@ -1,5 +1,12 @@
 # coding: utf-8
-import sys, os, re, argparse, datetime, timeit, pickle, io, requests, copy, json
+import sys, os, re, argparse, datetime, timeit, pickle, io, copy, json
+
+# automatically install/update missing modules
+if '-autoupdate' in sys.argv:
+    os.system('pip3 install -r {}/requirements.txt --upgrade'.format(os.path.dirname(__file__)))
+
+# import modules
+import requests     # pip3 install requests     --upgrade
 import git          # pip3 install GitPython    --upgrade
 #
 from lib import wrapper
@@ -166,6 +173,9 @@ class Config(util.Attributed):
             group.add_argument('-wallet_pwd',   help = 'Wallet password',                                                   nargs = '?')
             group.add_argument('-thick',        help = 'Thick client path or \'Y\' for auto resolve',                       nargs = '?')
             group.add_argument('-default',      help = 'Mark current DB/APEX schema as default',    type = util.is_boolean, nargs = '?', const = True, default = False)
+            #
+            group = self.parser.add_argument_group('ADDITIONAL ACTIONS')
+            group.add_argument('-autoupdate',   help = 'Automatically install missing modules',                             nargs = '?', const = True, default = False)
 
         # identify program relations
         self.program        = os.path.basename(sys.argv[0]).split('.')[0]

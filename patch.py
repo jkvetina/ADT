@@ -225,6 +225,9 @@ class Patch(config.Config):
 
                 # create hash file based on previous commit
                 if self.args.hash:
+                    self.rollout_file = '{}rollout.{}.log'.format(self.config.patch_hashes, self.head_commit_id)
+                    #
+                    print('\nGENERATING HASH FILE...')
                     hashes = [1]
                     for file in util.get_files(self.config.patch_hashes + 'rollout.*.log'):
                         commit_num = util.extract_int(r'rollout.(\d+).log', file)
@@ -232,6 +235,8 @@ class Patch(config.Config):
                             hashes.append(commit_num)
                     #
                     self.create_patch_hashfile(prev_commit = max(hashes))
+                    print('  - {}'.format(self.rollout_file))
+                    print()
 
             # also deploy, we can do create, deploy or create+deploy
             if self.args.deploy:
@@ -301,9 +306,7 @@ class Patch(config.Config):
                 #
                 rollout.append('{} | {} | {}'.format(file, commit_num, file_hash))
         #
-        file = '{}rollout.{}.log'.format(self.config.patch_hashes, self.head_commit_id)
-        #
-        util.write_file(file, payload = rollout)
+        util.write_file(self.rollout_file, payload = rollout)
 
 
 

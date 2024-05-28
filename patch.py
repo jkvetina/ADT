@@ -303,8 +303,26 @@ class Patch(config.Config):
         # get last file modification
         files = {}
         for commit_num in sorted(self.all_commits.keys()):
-            if commit_num < prev_commit:
+            if (commit_num <= prev_commit or commit_num > curr_commit):
                 continue
+
+            # skip non requested commits
+            if len(self.add_commits) > 0:
+                commits     = '|{}|'.format('|'.join(self.add_commits))
+                search_for  = '|{}|'.format(commit_num)
+                #
+                if not (search_for in commits):
+                    continue
+
+            # skip ignored commits
+            if len(self.ignore_commits) > 0:
+                commits     = '|{}|'.format('|'.join(self.ignore_commits))
+                search_for  = '|{}|'.format(commit_num)
+                #
+                if search_for in commits:
+                    continue
+
+            # build list of changed files
             for file in self.all_commits[commit_num].get('files', []):
                 if (file.startswith(self.config.path_objects) or file.startswith(self.config.path_apex)) and file[-4:] == '.sql':
                     files[file] = commit_num

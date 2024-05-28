@@ -181,7 +181,7 @@ class Patch(config.Config):
             if self.show_patches > 0:
                 self.show_matching_patches()
 
-        if self.patch_code == None:
+        if self.patch_code == None and not self.args.hash:
             util.assert_(self.patch_code, 'MISSING ARGUMENT: PATCH CODE')
 
         # show help for processing specific commits

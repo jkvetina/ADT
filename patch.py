@@ -301,7 +301,7 @@ class Patch(config.Config):
             #
             if obj.is_object:
                 file_hash = util.get_hash(self.get_file_from_commit(file, commit = commit_num))
-                if file_hash == 'da39a3ee5e6b4b0d3255bfef95601890afd80709':     # empty file
+                if not file_hash:
                     continue
                 #
                 rollout.append('{} | {} | {}'.format(file, commit_num, file_hash))

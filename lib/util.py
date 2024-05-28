@@ -167,7 +167,10 @@ def create_zip(name, root):
 
 
 def get_hash(payload, encoding = 'utf-8'):
-    return hashlib.sha1(payload.encode(encoding or 'utf-8')).hexdigest()
+    hash = hashlib.sha1(payload.encode(encoding or 'utf-8')).hexdigest()
+    if hash == 'da39a3ee5e6b4b0d3255bfef95601890afd80709':
+        return ''
+    return hash
 
 
 

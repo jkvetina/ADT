@@ -781,7 +781,7 @@ class Patch(config.Config):
                     continue
 
             # skip non relevant commits
-            if self.search_message != []:
+            if (self.search_message != [] and self.search_message != ['%']):
                 found_match = False
                 for word in [word for word in self.search_message if word is not None]:
                     if word in commit['summary']:
@@ -831,7 +831,7 @@ class Patch(config.Config):
             return
 
         # get last version (max) and version before first change (min)
-        self.first_commit_id    = min(self.relevant_commits) - 1
+        self.first_commit_id    = max(min(self.relevant_commits) - 1, 1)  # minimum = 1
         self.last_commit_id     = max(self.relevant_commits)
         #
         if not (self.first_commit in self.all_commits):

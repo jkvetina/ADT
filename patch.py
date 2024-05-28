@@ -328,7 +328,7 @@ class Patch(config.Config):
                 'order'     : order + 1,
                 'file'      : schema_with_app + '.sql',
                 'schema'    : schema,
-                'app_id'    : int(app_id) if app_id.isnumeric() else '',
+                'app_id'    : app_id,
                 'files'     : len(self.relevant_files[schema_with_app]),
                 'commits'   : len(self.relevant_count[schema_with_app]),
             })
@@ -513,7 +513,7 @@ class Patch(config.Config):
 
     def get_schema_split(self, schema_with_app):
         schema, app_id, _ = (schema_with_app + '..').split('.', maxsplit = 2)
-        return (schema, app_id)
+        return (schema, int(app_id) if app_id else None)
 
 
 
@@ -927,8 +927,9 @@ class Patch(config.Config):
                     continue
 
                 # skip full exports, need to add support for alias...
-                if file == '{}f{}/f{}.sql'.format(self.config.path_apex, app_id, app_id).replace('//', '/'):
-                    continue
+                if app_id:
+                    if file == self.get_root(app_id, 'f{}.sql'.format(app_id)):
+                        continue
                 #
                 short = file.replace(self.repo_root, '')
                 files_to_process[file] = self.repo_files.get(short) or File(file, config = self.config)
@@ -1082,8 +1083,7 @@ class Patch(config.Config):
             # add properly sorted files (objects by dependencies) to the patch
             if app_id and app_id in self.full_exports:
                 # attach the whole application for full imports
-                path = '{}f{}/'.format(self.config.path_apex, app_id).replace('//', '/')
-                file = '{}f{}.sql'.format(path, app_id)
+                file = '{}f{}.sql'.format(self.get_root(app_id), app_id)
                 file, _ = self.create_file_snapshot(file, app_id = app_id)
                 file = file.replace(self.patch_folder, '')       # replace first, full path
                 file = util.replace(self.config.patch_file_link if not self.patch_file_moveup else self.config.patch_file_link_moveup, {
@@ -1113,7 +1113,7 @@ class Patch(config.Config):
                     ])
 
                     # attach starting file
-                    file = '{}f{}/{}'.format(self.config.path_apex, app_id, 'application/set_environment.sql')
+                    file = self.get_root(app_id, 'application/set_environment.sql')
                     payload.extend(self.attach_file(file, header = 'APEX COMPONENTS START', category = 'STATIC', app_id = app_id))
                     payload.append(
                         # replace existing components
@@ -1147,7 +1147,7 @@ class Patch(config.Config):
             # attach APEX ending file for partial APEX exports
             if app_id and not (app_id in self.full_exports):
                 if not (app_id in self.full_exports):
-                    file = '{}f{}/{}'.format(self.config.path_apex, app_id, 'application/end_environment.sql')
+                    file = self.get_root(app_id, 'application/end_environment.sql')
                     payload.extend(self.attach_file(file, header = 'APEX END', category = 'STATIC', app_id = app_id))
 
             # add grants made on referenced objects
@@ -1184,6 +1184,8 @@ class Patch(config.Config):
                 if file.startswith(self.config.path_objects):
                     file = file.replace(self.config.path_objects, '')
                 elif file.startswith(self.config.path_apex):
+                    if len(file.split('/application/')) == 1:       # full export...
+                        continue
                     file = file.split('/application/')[1]
 
                 # get commit info
@@ -1416,8 +1418,8 @@ class Patch(config.Config):
 
     def create_apex_snapshots(self, app_id):
         # copy some files even if they did not changed
-        if str(app_id) != '':
-            path = '{}f{}/'.format(self.config.path_apex, app_id).replace('//', '/')
+        if app_id:
+            path = self.get_root(app_id)
             for file in self.config.apex_files_copy:
                 file = path + file
                 if os.path.exists(file):
@@ -1441,6 +1443,8 @@ class Patch(config.Config):
 
 
     def create_file_snapshot(self, file, file_content = None, app_id = None, local = False, replace_tags = False):
+        file = file.replace(self.repo_root, '')
+
         # create folders and copy files
         target_file = '{}/{}'.format(self.patch_folder, file).replace('//', '/')
         commit_id   = ''
@@ -1477,8 +1481,9 @@ class Patch(config.Config):
             util.raise_error('UNRESOLVED MERGE ISSUES', file)
 
         # change page audit columns to current date and patch code, but not for full exports
-        if not (app_id in self.full_exports):
-            if app_id and ('/application/pages/page_' in file or '/f{}/f{}.sql'.format(app_id, app_id) in file):
+        if app_id and not (app_id in self.full_exports):
+            full_app = self.get_root(app_id, 'f{}.sql'.format(app_id))
+            if ('/application/pages/page_' in file or file in full_app):
                 file_content = util.replace(file_content,
                     r",p_last_updated_by=>'([^']+)'",
                     ",p_last_updated_by=>'{}'".format(self.patch_code))
@@ -1493,7 +1498,7 @@ class Patch(config.Config):
                 '{$APEX_APP_ID}' : app_id,
             }
             for key, value in transl.items():
-                file_content = file_content.replace(key, value)
+                file_content = file_content.replace(key, str(value))
 
         # make the folder structure more shallow
         if self.config.apex_snapshots:

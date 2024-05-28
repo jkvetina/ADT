@@ -2,11 +2,11 @@
 import sys, os, re, argparse, datetime
 #
 import config
-from lib import queries_patch as query
-from lib import util
-from lib.file import File
-from export_apex import Export_APEX
-from recompile import Recompile
+from lib            import queries_patch as query
+from lib            import util
+from lib.file       import File
+from export_apex    import Export_APEX
+from recompile      import Recompile
 
 #
 #                                                      (R)
@@ -71,7 +71,7 @@ class Patch(config.Config):
         group.add_argument('-head',         help = 'Use file version from head commit',                                 nargs = '?', const = True,  default = False)
         #
         group = self.parser.add_argument_group('ADDITIONAL ACTIONS')
-        group.add_argument('-hash',         help = 'Store file hashes on patch -create',                                nargs = '?', const = True,  default = False)
+        group.add_argument('-hash',         help = 'Store file hashes on patch -create',        type = util.is_boolint, nargs = '?', const = True,  default = False)
         group.add_argument('-fetch',        help = 'Fetch Git changes before patching',                                 nargs = '?', const = True,  default = False)
         group.add_argument('-rebuild',      help = 'Rebuild temp files',                                                nargs = '?', const = True,  default = False)
         group.add_argument('-implode',      help = 'Merge files in a folder',                                           nargs = '?')
@@ -223,22 +223,12 @@ class Patch(config.Config):
                 #
                 self.create_patch()
 
-                # create hash file based on previous commit
-                if self.args.hash:
-                    self.rollout_file = '{}rollout.{}.log'.format(self.config.patch_hashes, self.head_commit_id)
-                    #
-                    print('\nGENERATING HASH FILE...')
-                    hashes = [1]
-                    for file in util.get_files(self.config.patch_hashes + 'rollout.*.log'):
-                        commit_num = util.extract_int(r'rollout.(\d+).log', file)
-                        if commit_num < self.head_commit_id:
-                            hashes.append(commit_num)
-                    #
-                    self.create_patch_hashfile(prev_commit = max(hashes))
-                    print('  - {}'.format(self.rollout_file))
-                    print()
+        # create hash file based on previous commit
+        if self.args.hash:
+            self.generate_hash_file()
 
-            # also deploy, we can do create, deploy or create+deploy
+        # also deploy, we can do create, deploy or create+deploy
+        if self.patch_code:
             if self.args.deploy:
                 self.deploy_patch()
 
@@ -283,7 +273,33 @@ class Patch(config.Config):
 
 
 
-    def create_patch_hashfile(self, prev_commit):
+    def generate_hash_file(self):
+        # get either requested commit or the most recent one
+        if type(self.args.hash) == int:
+            target_commit_num = self.args.hash
+        else:
+            target_commit_num = max(self.relevant_commits or [self.head_commit_id])
+
+        # get last known rollout log before target commit
+        hashes = [1]
+        for file in util.get_files(self.config.patch_hashes + 'rollout.*.log'):
+            commit_num = util.extract_int(r'rollout.(\d+).log', file)
+            if commit_num < target_commit_num:
+                hashes.append(commit_num)
+        #
+        prev_commit = max(hashes)
+
+        # generate hash file for files changed in between these two commits
+        self.rollout_file = self.config.patch_hashes + 'rollout.{}.log'.format(target_commit_num)
+        #
+        print('\nGENERATING HASH FILE: {} -> {}'.format(prev_commit, target_commit_num))
+        self.create_patch_hashfile(prev_commit = prev_commit, curr_commit = target_commit_num)
+        print('  - {}'.format(self.rollout_file))
+        print()
+
+
+
+    def create_patch_hashfile(self, prev_commit, curr_commit):
         # get last file modification
         files = {}
         for commit_num in sorted(self.all_commits.keys()):

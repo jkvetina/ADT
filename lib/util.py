@@ -678,6 +678,14 @@ def is_boolstr(v):
 
 
 
+def is_boolint(v):
+    # to allow argparse evaluate to True, False or passed integer
+    if v == None:
+        return False
+    return int(v)
+
+
+
 def beep_success():
     chime.success()
 

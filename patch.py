@@ -309,7 +309,9 @@ class Patch(config.Config):
         # get last file modification
         files = {}
         for commit_num in sorted(self.all_commits.keys()):
-            if (commit_num <= prev_commit or commit_num > curr_commit):
+            if commit_num <= prev_commit and prev_commit != 1:
+                continue
+            if commit_num > curr_commit and curr_commit != 1:
                 continue
 
             # skip non requested commits

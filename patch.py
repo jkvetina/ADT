@@ -720,7 +720,7 @@ class Patch(config.Config):
         progress_target = len(new_commits)
         progress_done   = 0
         start           = util.get_start()
-        commit_id       = self.head_commit_id if len(self.all_commits) > 0 else 0
+        commit_id       = (self.head_commit_id if len(self.all_commits) > 0 else 0) or 0
         #
         for obj in reversed(new_commits):
             obj['deleted'] = []
@@ -876,10 +876,11 @@ class Patch(config.Config):
                 commits_map[commit] = ref
 
         # show relevant recent commits
-        header  = 'REQUESTED' if (self.add_commits != [] or self.ignore_commits != []) else 'RELEVANT'
+        header  = 'REQUESTED' if (self.args.hash or self.add_commits != [] or self.ignore_commits != []) else 'RELEVANT'
         data    = []
+        picked  = self.hash_commits if self.args.hash else self.relevant_commits
         #
-        for commit_id in sorted(self.relevant_commits, reverse = True):
+        for commit_id in sorted(picked, reverse = True):
             commit = self.all_commits[commit_id]
             data.append({
                 'commit'    : commit_id,

@@ -666,6 +666,11 @@ class Patch(config.Config):
                 self.all_commits = dict(util.get_yaml(f, self.commits_file))
                 for _, commit in self.all_commits.items():
                     all_hashes.append(commit['id'])
+
+        # check for new format, dict with file hashes is expected, not the bare list
+        for commit, data in self.all_commits.items():
+            if type(data.get('files', {})) == list:
+                self.args.rebuild = True
         #
         if len(self.all_commits.keys()) == 0:       # no keys = rebuild
             self.args.rebuild = True
@@ -690,7 +695,7 @@ class Patch(config.Config):
             print('    BRANCH |', self.info.branch)
             print('   COMMITS |', commits)
             print()
-            print('REBUILDING:')
+            print('REBUILDING:   // time to get a coffee')
 
         # loop throught all commits from newest to oldest, add missing commits
         progress_target = commits

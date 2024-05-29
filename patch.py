@@ -1974,6 +1974,11 @@ class Patch(config.Config):
 
 
     def get_table_diff(self, file, object_name, version_src, version_trg):
+        # compare only tables
+        table_folder, table_ext = self.config.object_types['TABLE']
+        if not (self.config.path_objects in file and table_folder in file and file.endswith(table_ext)):
+            return ''
+        #
         source_file = self.get_file_from_commit(file, commit = version_src)
         if not source_file:
             return ''

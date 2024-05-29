@@ -1127,10 +1127,7 @@ class Patch(config.Config):
             if not app_id and self.config.patch_add_scripts:
                 unknown = self.get_script_unknow_files(scripts_processed)
                 if len(unknown) > 0:
-                    util.print_header('WARNING - UNKOWN SCRIPTS:')
-                    for file in unknown:
-                        print('  - {}'.format(file))
-                    print()
+                    util.print_warning('UNKOWN SCRIPTS:', unknown)
 
             # attach APEX files
             if app_id:
@@ -1311,10 +1308,7 @@ class Patch(config.Config):
 
             # show warnings for files which are not committed
             if len(uncommitted_files) > 0:
-                util.print_header('WARNING - UNCOMMITTED FILES:')
-                for file in uncommitted_files:
-                    print('  - {}'.format(file))
-                print()
+                util.print_warning('UNCOMMITTED FILES', uncommitted_files)
 
             # refresh objects and APEX components
             if self.args.refresh:

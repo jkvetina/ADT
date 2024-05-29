@@ -117,6 +117,7 @@ class Patch(config.Config):
         self.relevant_count     = {}
         self.relevant_files     = {}
         self.diffs              = {}
+        self.hash_commits       = []
         self.head_commit        = None
         self.head_commit_id     = None
         self.first_commit_id    = None
@@ -164,51 +165,60 @@ class Patch(config.Config):
             util.quit()
 
         # show recent commits and patches
-        if self.patch_code:
-            # show recent commits for selected patch
-            # show more details if we have them
-            self.show_matching_commits()
-            self.show_matching_patches()
-
-            # check number of commits
-            if len(self.relevant_commits) == 0:
-                util.raise_error('NO COMMITS FOUND',
-                    'please adjust your input parameters')
-        #
-        else:
-            if self.show_commits > 0:
-                self.show_recent_commits()
-            if self.show_patches > 0:
+        if not self.args.hash:
+            if self.patch_code:
+                # show recent commits for selected patch
+                # show more details if we have them
+                self.show_matching_commits()
                 self.show_matching_patches()
 
-        if self.patch_code == None and not self.args.hash:
-            util.assert_(self.patch_code, 'MISSING ARGUMENT: PATCH CODE')
+                # check number of commits
+                if len(self.relevant_commits) == 0:
+                    util.raise_error('NO COMMITS FOUND',
+                        'please adjust your input parameters')
+            #
+            else:
+                if self.show_commits > 0:
+                    self.show_recent_commits()
+                if self.show_patches > 0:
+                    self.show_matching_patches()
 
-        # show help for processing specific commits
-        if self.patch_code and not self.args.create:
-            if self.patch_current['day']:
-                if self.patch_current['day'] and self.patch_current['day'] in self.patch_folders:
-                    data = []
-                    for folder, info in self.patch_folders[self.patch_current['day']].items():
-                        if info['seq']:
-                            data.append({
-                                #'folder'    : folder
-                                'day'           : info['day'],
-                                'seq'           : info['seq'],
-                                'patch_code'    : info['patch_code'],
-                            })
-                    #
-                    if len(data):
-                        util.print_header('TODAY\'S FOLDERS:')
-                        util.print_table(data)
+            if self.patch_code == None:
+                util.assert_(self.patch_code, 'MISSING ARGUMENT: PATCH CODE')
 
-            # check clash on patch sequence
-            elif len(self.patch_sequences.get(self.patch_seq, [])) > 0:
-                util.raise_error('CLASH ON PATCH SEQUENCE',
-                    'you should select a different sequence')
+            # show help for processing specific commits
+            if self.patch_code and not self.args.create:
+                if self.patch_current['day']:
+                    if self.patch_current['day'] and self.patch_current['day'] in self.patch_folders:
+                        data = []
+                        for folder, info in self.patch_folders[self.patch_current['day']].items():
+                            if info['seq']:
+                                data.append({
+                                    #'folder'    : folder
+                                    'day'           : info['day'],
+                                    'seq'           : info['seq'],
+                                    'patch_code'    : info['patch_code'],
+                                })
+                        #
+                        if len(data):
+                            util.print_header('TODAY\'S FOLDERS:')
+                            util.print_table(data)
 
-        # create patch for requested name and seq
-        if self.patch_code:
+                # check clash on patch sequence
+                elif len(self.patch_sequences.get(self.patch_seq, [])) > 0:
+                    util.raise_error('CLASH ON PATCH SEQUENCE',
+                        'you should select a different sequence')
+
+        # create hash file based on previous commit
+        if self.args.hash:
+            self.generate_hash_file()
+            self.show_matching_commits()
+            #
+            if self.args.create:
+                self.create_patch()
+            #
+        elif self.patch_code:
+            # create patch for requested name and seq
             if (self.args.create or self.args.deploy):
                 if not self.args.create:
                     self.patch_dry = True
@@ -222,10 +232,6 @@ class Patch(config.Config):
                                 self.patch_seq = info['seq']
                 #
                 self.create_patch()
-
-        # create hash file based on previous commit
-        if self.args.hash:
-            self.generate_hash_file()
 
         # also deploy, we can do create, deploy or create+deploy
         if self.patch_code:
@@ -292,7 +298,7 @@ class Patch(config.Config):
         # generate hash file for files changed in between these two commits
         self.rollout_file = self.config.patch_hashes + 'rollout.{}.log'.format(target_commit_num)
         #
-        print('\nGENERATING HASH FILE: {} -> {}'.format(prev_commit, target_commit_num))
+        util.print_header('GENERATING HASH FILE:', '{} -> {}'.format(prev_commit, target_commit_num))
         self.create_patch_hashfile(prev_commit = prev_commit, curr_commit = target_commit_num)
         print('  - {}'.format(self.rollout_file))
         print()

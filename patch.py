@@ -316,7 +316,7 @@ class Patch(config.Config):
             obj         = File(file, config = self.config)
             #
             if obj.is_object:
-                file_hash = util.get_hash(self.get_file_from_commit(file, commit = commit_num))
+                file_hash = self.all_commits[commit_num].get('files', {}).get(file)
                 if not file_hash:
                     continue
                 #

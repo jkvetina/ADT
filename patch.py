@@ -307,6 +307,27 @@ class Patch(config.Config):
 
     def create_patch_hashfile(self, prev_commit, curr_commit):
         # get last file modification
+        files = self.get_hash_files(prev_commit, curr_commit)
+
+        # create rollout log
+        rollout = []
+        for file in sorted(files.keys()):
+            commit_num  = files[file]
+            obj         = File(file, config = self.config)
+            #
+            if obj.is_object:
+                file_hash = util.get_hash(self.get_file_from_commit(file, commit = commit_num))
+                if not file_hash:
+                    continue
+                #
+                rollout.append('{} | {} | {}'.format(file, commit_num, file_hash))
+        #
+        util.write_file(self.rollout_file, payload = rollout)
+
+
+
+    def get_hash_files(self, prev_commit, curr_commit):
+        self.hash_commits = []
         files = {}
         for commit_num in sorted(self.all_commits.keys()):
             if commit_num <= prev_commit and prev_commit != 1:
@@ -330,25 +351,16 @@ class Patch(config.Config):
                 if search_for in commits:
                     continue
 
+            # store commits for overview
+            if not (commit_num in self.hash_commits):
+                self.hash_commits.append(commit_num)
+
             # build list of changed files
             for file in self.all_commits[commit_num].get('files', {}).keys():
                 if (file.startswith(self.config.path_objects) or file.startswith(self.config.path_apex)) and file[-4:] == '.sql':
                     files[file] = commit_num
-
-        # create rollout log
-        rollout = []
-        for file in sorted(files.keys()):
-            commit_num  = files[file]
-            obj         = File(file, config = self.config)
-            #
-            if obj.is_object:
-                file_hash = util.get_hash(self.get_file_from_commit(file, commit = commit_num))
-                if not file_hash:
-                    continue
-                #
-                rollout.append('{} | {} | {}'.format(file, commit_num, file_hash))
         #
-        util.write_file(self.rollout_file, payload = rollout)
+        return files
 
 
 

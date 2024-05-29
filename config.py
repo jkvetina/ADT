@@ -4,6 +4,7 @@ import sys, os, re, argparse, datetime, timeit, pickle, io, copy, json
 # automatically install/update missing modules
 if '-autoupdate' in sys.argv:
     os.system('pip3 install -r {}/requirements.txt --upgrade'.format(os.path.dirname(__file__)))
+    print()
 
 # import modules
 import requests     # pip3 install requests     --upgrade
@@ -217,8 +218,13 @@ class Config(util.Attributed):
         self.info   = util.Attributed({})           # for info group
         self.debug  = self.args.get('debug')
 
+        # auto update git changes
+        if __name__ == '__main__' and self.args.get('autoupdate'):
+            self.repo  = git.Repo(os.path.dirname(__file__))
+            self.repo.git.pull()
+
         # show component versions
-        if __name__ == '__main__' and self.args.get('version'):
+        if __name__ == '__main__' and (self.args.get('version') or self.args.get('autoupdate')):
             self.show_versions()
             util.beep_success()
             util.quit()

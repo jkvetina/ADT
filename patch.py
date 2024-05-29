@@ -331,7 +331,7 @@ class Patch(config.Config):
                     continue
 
             # build list of changed files
-            for file in self.all_commits[commit_num].get('files', []):
+            for file in self.all_commits[commit_num].get('files', {}).keys():
                 if (file.startswith(self.config.path_objects) or file.startswith(self.config.path_apex)) and file[-4:] == '.sql':
                     files[file] = commit_num
 
@@ -621,7 +621,7 @@ class Patch(config.Config):
                     info['my'] = 'Y' if (self.repo_user_mail == commit['author'] or info['my']) else ''
                     #
                     found_commits.append(commit_id)
-                    found_files.extend(commit['files'])
+                    found_files.extend(commit['files'].keys())
             #
             info['files']   = list(set(found_files))
             info['commits'] = list(set(found_commits))
@@ -655,7 +655,7 @@ class Patch(config.Config):
                 for _, commit in self.all_commits.items():
                     all_hashes.append(commit['id'])
         #
-        if len(self.all_commits.keys()) == 0:
+        if len(self.all_commits.keys()) == 0:       # no keys = rebuild
             self.args.rebuild = True
 
         # detect correct branch
@@ -690,13 +690,20 @@ class Patch(config.Config):
             commit_hash = str(commit)
             if commit_hash in all_hashes:       # last known commit reached
                 break
+
+            # calculate file hash right away
+            committed_files = {}
+            for file in sorted(commit.stats.files.keys()):
+                if (self.config.path_objects in file or self.config.path_apex in file) and file.endswith('.sql'):
+                    file_payload            = self.get_file_from_commit(file, commit = commit_hash)
+                    committed_files[file]   = util.get_hash(file_payload)
             #
-            new_commits.append({                # number
-                'id'        : commit_hash,      # hash
+            new_commits.append({                        # number
+                'id'        : commit_hash,              # hash
                 'summary'   : commit.summary,
                 'author'    : commit.author.email,
                 'date'      : commit.authored_datetime,
-                'files'     : list(sorted(commit.stats.files.keys())),
+                'files'     : committed_files,          # database + APEX files and their hashes
             })
 
             # show progress
@@ -760,7 +767,7 @@ class Patch(config.Config):
         # also store commits with files as keys
         for commit_id in sorted(self.all_commits.keys()):
             obj = self.all_commits[commit_id]
-            for file in obj['files']:
+            for file in obj['files'].keys():
                 if not (file in self.all_files):
                     self.all_files[file] = []
                 self.all_files[file].append(commit_id)
@@ -807,7 +814,7 @@ class Patch(config.Config):
             self.relevant_commits.append(commit_id)
 
             # process files in commit
-            for file in commit['files']:
+            for file, file_hash in commit['files'].items():
                 # process just the listed extensions (in the config)
                 if os.path.splitext(file)[1] != '.sql':
                     continue
@@ -1343,7 +1350,7 @@ class Patch(config.Config):
         for commit_id in sorted(self.relevant_commits, reverse = True):
             commit = self.all_commits[commit_id]
             files_found = False
-            for file in commit['files']:
+            for file in commit['files'].keys():
                 if file in rel_files:
                     files_found = True
                     break
@@ -1610,7 +1617,7 @@ class Patch(config.Config):
                 continue
             #
             commit = self.all_commits[commit_id]
-            if file in commit['files']:
+            if file in commit['files'].keys():
                 last_commit     = commit['id']
                 last_commit_id  = commit_id
                 #

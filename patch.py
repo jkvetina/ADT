@@ -650,13 +650,18 @@ class Patch(config.Config):
         if len(self.all_commits.keys()) == 0:
             self.args.rebuild = True
 
+        # detect correct branch
+        branches = {}
+        for row in self.repo.branches:
+            branches[row.name] = row
+        #
+        if not (self.info.branch in branches):
+            self.info.branch = self.repo.active_branch
+
         # estimate number of commits to show progress
         commits = 0
-        try:
-            for commit in self.repo.iter_commits(self.info.branch, max_count = 1, skip = 0, reverse = False):
-                commits = commit.count()
-        except:
-            util.raise_error('WRONG BRANCH', self.info.branch)
+        for commit in self.repo.iter_commits(self.info.branch, max_count = 1, skip = 0, reverse = False):
+            commits = commit.count()
         #
         if self.args.rebuild:
             self.all_commits, all_hashes = {}, []

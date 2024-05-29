@@ -403,6 +403,14 @@ def print_help(message):
 
 
 
+def print_warning(message, details = []):
+    print_header('WARNING:', message)
+    for row in details:
+        print_help(row)
+    print()
+
+
+
 def print_table(data, columns = [], right_align = [], spacer = 3, start = 2, no_header = False, capture = False, limit_top = None, limit_bottom = None):
     if capture:
         buffer = io.StringIO()

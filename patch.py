@@ -877,6 +877,13 @@ class Patch(config.Config):
                     self.first_commit_id = id
                     break
         #
+        if not (self.first_commit_id in self.all_commits):
+            util.print_warning(
+                'COMMIT {} OUT OF RANGE'.format(self.first_commit_id), [
+                    'INCREASE repo_commit_days IN CONFIG',
+                ])
+            self.first_commit_id = min(self.all_commits.keys())
+        #
         try:
             self.first_commit   = self.repo.commit(self.all_commits[self.first_commit_id]['id'])
             self.last_commit    = self.repo.commit(self.all_commits[self.last_commit_id]['id'])
@@ -1979,6 +1986,9 @@ class Patch(config.Config):
         if not (self.config.path_objects in file and table_folder in file and file.endswith(table_ext)):
             return ''
         #
+        if not (version_src in self.all_commits.keys()):
+            return ''
+        #
         source_file = self.get_file_from_commit(file, commit = version_src)
         if not source_file:
             return ''
@@ -1992,15 +2002,29 @@ class Patch(config.Config):
         source_obj      = source_obj.replace('$#', '$1')
         source_table    = object_name.upper() + '$1'
         #
-        self.conn.drop_object('TABLE', source_table)
-        self.conn.execute(source_obj)
+        try:
+            self.conn.drop_object('TABLE', source_table)
+            self.conn.execute(source_obj)
+        except:
+            util.print_warning(
+                'DIFF SOURCE TABLE FAIL: {}'.format(object_name), [
+                    'YOU HAVE ERRORS IN #{} COMMIT'.format(version_src),
+                ])
+            return ''
 
         # create target table
         target_obj      = target_obj.replace('$#', '$2')
         target_table    = object_name.upper() + '$2'
         #
-        self.conn.drop_object('TABLE', target_table)
-        self.conn.execute(target_obj)
+        try:
+            self.conn.drop_object('TABLE', target_table)
+            self.conn.execute(target_obj)
+        except:
+            util.print_warning(
+                'DIFF TARGET TABLE FAIL: {}'.format(object_name), [
+                    'YOU HAVE ERRORS IN #{} COMMIT'.format(version_trg),
+                ])
+            return ''
 
         # compare tables
         result  = str(self.conn.fetch_clob_result(query.generate_table_diff, source_table = source_table, target_table = target_table))

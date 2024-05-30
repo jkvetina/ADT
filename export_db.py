@@ -87,9 +87,9 @@ class Export_DB(config.Config):
         self.show_overview()
 
         # delete lost diff tables
-        for file in util.get_files(self.path_objects + self.object_types['TABLE'][0] + '*$1.sql'):
+        for file in util.get_files(self.config.path_objects + self.config.object_types['TABLE'][0] + '*$1.sql'):
             util.delete_file(file)
-        for file in util.get_files(self.path_objects + self.object_types['TABLE'][0] + '*$2.sql'):
+        for file in util.get_files(self.config.path_objects + self.config.object_types['TABLE'][0] + '*$2.sql'):
             util.delete_file(file)
 
         # detect deleted objects

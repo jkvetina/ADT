@@ -1442,7 +1442,7 @@ class Patch(config.Config):
                     continue
                 found.append(file)
         #
-        return list(set(found))  # unique files
+        return list(sorted(set(found)))  # unique files
 
 
 

@@ -86,6 +86,12 @@ class Export_DB(config.Config):
         # show affected objects
         self.show_overview()
 
+        # delete lost diff tables
+        for file in util.get_files(self.path_objects + self.object_types['TABLE'][0] + '*$1.sql'):
+            util.delete_file(file)
+        for file in util.get_files(self.path_objects + self.object_types['TABLE'][0] + '*$2.sql'):
+            util.delete_file(file)
+
         # detect deleted objects
         deleted_obj = {}
         for file, obj in self.repo_files.items():
@@ -188,7 +194,7 @@ class Export_DB(config.Config):
             object_file = self.get_object_file(object_type, table_name)
             comments    = self.get_object_comments(table_name, object_type)
             #
-            if len(comments) > 0:
+            if len(comments) > 0 and os.path.exists(object_file):
                 with open(object_file, 'rt', encoding = 'utf-8') as f:
                     payload = f.read().strip()
                     if not ('\n--\nCOMMENT ON ' in payload):

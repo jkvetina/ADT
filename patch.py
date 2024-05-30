@@ -1030,7 +1030,7 @@ class Patch(config.Config):
 
             # create a file in scripts to drop object
             for file in self.relevant_files[schema_with_app]:
-                if not (file in self.diffs):
+                if not (file in self.diffs)                                     and 1 == 2:
                     object_name     = self.get_object_name(file)
                     object_type     = self.get_object_type(file)
                     #

@@ -224,9 +224,9 @@ class Config(util.Attributed):
                 self.repo  = git.Repo(os.path.dirname(__file__))
                 self.repo.git.pull()
             except:
-                util.raise_error('ADT UPDATE FAILED', [
+                util.raise_error('ADT UPDATE FAILED',
                     'UPDATE YOUR ADT REPOSITORY MANUALLY'
-                ])
+                )
 
         # show component versions
         if __name__ == '__main__' and (self.args.get('version') or self.args.get('autoupdate')):

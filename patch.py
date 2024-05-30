@@ -1154,7 +1154,11 @@ class Patch(config.Config):
                     self.create_file_snapshot(file, app_id = app_id)
             #
             elif len(files_to_process.keys()) > 0:
-                util.raise_error('NOT ALL FILES PROCESSED')
+                unprocessed = []
+                for file in files_to_process:
+                    unprocessed.append(file)
+                #
+                util.raise_error('NOT ALL FILES PROCESSED', *unprocessed)
 
             # create APEX specific snapshot files
             if app_id:

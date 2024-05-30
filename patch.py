@@ -357,7 +357,7 @@ class Patch(config.Config):
 
             # build list of changed files
             for file in self.all_commits[commit_num].get('files', {}).keys():
-                if (file.startswith(self.config.path_objects) or file.startswith(self.config.path_apex)) and file[-4:] == '.sql':
+                if self.is_usable_file(file):
                     files[file] = commit_num
         #
         return files
@@ -711,7 +711,7 @@ class Patch(config.Config):
             # calculate file hash right away
             committed_files = {}
             for file in sorted(commit.stats.files.keys()):
-                if (self.config.path_objects in file or self.config.path_apex in file) and file.endswith('.sql'):
+                if self.is_usable_file(file):
                     file_payload            = self.get_file_from_commit(file, commit = commit_hash)
                     committed_files[file]   = util.get_hash(file_payload)
             #
@@ -800,6 +800,20 @@ class Patch(config.Config):
 
 
 
+    def is_usable_file(self, file):
+        if not (file.endswith('.sql')):
+            return False
+        #
+        if file.startswith(self.config.path_objects):
+            return True
+        if file.startswith(self.config.path_apex):
+            return True
+        if file.startswith(self.config.patch_scripts_snap):
+            return True
+        #
+        return False
+
+
     def get_matching_commits(self):
         # add or remove specific commits from the queue
         for commit_id in sorted(self.all_commits.keys(), reverse = True):
@@ -845,7 +859,7 @@ class Patch(config.Config):
                     continue
 
                 # process just database and APEX exports
-                if not (file.startswith(self.config.path_objects)) and not (file.startswith(self.config.path_apex)):
+                if not (self.is_usable_file(file)):
                     continue
 
                 # get APEX app info from filename

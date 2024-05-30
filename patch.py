@@ -1053,11 +1053,11 @@ class Patch(config.Config):
 
             # create a file in scripts to drop object
             for file in self.relevant_files[schema_with_app]:
-                if not (file in self.diffs)                                     and 1 == 2:
+                if not (file in self.diffs):
                     object_name     = self.get_object_name(file)
                     object_type     = self.get_object_type(file)
                     #
-                    if object_name and object_type:
+                    if object_name and object_type and object_type not in ('GRANT',):
                         script_drop = util.replace(query.templates['DROP'], {
                             '{$HEADER}'         : 'DROP {} {}'.format(object_type, object_name),
                             '{$OBJECT_TYPE}'    : object_type,

@@ -926,8 +926,9 @@ class Patch(config.Config):
             commit = self.all_commits[commit_id]
             data.append({
                 'commit'    : commit_id,
-                'ref'       : commits_map.get(commit_id, ''),
+                #'ref'       : commits_map.get(commit_id, ''),
                 'summary'   : util.get_string(commit['summary'], 50),
+                'files'     : len(commit['files']),
             })
         #
         util.print_header('{} COMMITS FOR "{}":'.format(header, ' '.join(self.search_message or [])))

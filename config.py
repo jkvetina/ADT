@@ -220,8 +220,13 @@ class Config(util.Attributed):
 
         # auto update git changes
         if __name__ == '__main__' and self.args.get('autoupdate'):
-            self.repo  = git.Repo(os.path.dirname(__file__))
-            self.repo.git.pull()
+            try:
+                self.repo  = git.Repo(os.path.dirname(__file__))
+                self.repo.git.pull()
+            except:
+                util.raise_error('ADT UPDATE FAILED', [
+                    'UPDATE YOUR ADT REPOSITORY MANUALLY'
+                ])
 
         # show component versions
         if __name__ == '__main__' and (self.args.get('version') or self.args.get('autoupdate')):

@@ -733,11 +733,15 @@ class Patch(config.Config):
         if self.args.rebuild:
             print('DELETED FILES:')
 
+        # load last commit number
+        if len(self.all_commits) > 0:
+            self.head_commit_id = max(self.all_commits.keys())
+
         # attach new commits with proper id
         progress_target = len(new_commits)
         progress_done   = 0
         start           = util.get_start()
-        commit_id       = (self.head_commit_id if len(self.all_commits) > 0 else 0) or 0
+        commit_id       = self.head_commit_id or 0
         #
         for obj in reversed(new_commits):
             obj['deleted'] = []

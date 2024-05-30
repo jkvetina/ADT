@@ -96,7 +96,7 @@ class Export_DB(config.Config):
         deleted_obj = {}
         for file, obj in self.repo_files.items():
             if obj.is_object and obj.object_type and not (obj.object_type in ('GRANT',)):
-                obj_code = obj['object_code']
+                obj_code = obj['object_code'].replace('DATA', 'TABLE')
                 if not (obj_code in self.dependencies):
                     if not (obj['object_type'] in deleted_obj):
                         deleted_obj[obj['object_type']] = []

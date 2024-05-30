@@ -1427,14 +1427,14 @@ class Patch(config.Config):
 
 
     def get_script_files(self, group, before, ignore_timing = False):
-        timing_before   = util.replace(self.postfix_before, '[^a-z]+', '').strip()
-        timing_after    = util.replace(self.postfix_after,  '[^a-z]+', '').strip()
+        timing_before   = util.replace(self.postfix_before, r'[^a-z]+', '').strip()
+        timing_after    = util.replace(self.postfix_after,  r'[^a-z]+', '').strip()
         timing          = timing_before if before else timing_after
         #
         found = []
         for file in util.get_files(self.config.patch_scripts_dir + '**/*.sql'):
             short = file.replace(self.config.patch_scripts_dir, '').replace('.sql', '')
-            words = util.replace(short.lower(), '[^a-z]+', ' ').split()
+            words = util.replace(short.lower(), r'[^a-z]+', ' ').split()
             #
             if group in words and (timing in words or ignore_timing) and (before or not (timing_before) in words):
                 env_name = util.extract(r'\.\[([^\]]+)\]\.', file) or ''

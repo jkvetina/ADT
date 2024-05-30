@@ -694,6 +694,20 @@ def is_boolint(v):
 
 
 
+def ranged_str(values):
+    ranges = []
+    for val in values:      # list expected
+        if '-' in val:
+            start, stop = val.split('-')
+            for val in range(int(start), int(stop) + 1):
+                ranges.append(str(val))
+        else:
+            ranges.append(str(val))
+    #
+    return list(set(ranges))
+
+
+
 def beep_success():
     chime.success()
 

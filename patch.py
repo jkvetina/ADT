@@ -86,8 +86,8 @@ class Patch(config.Config):
         self.patch_seq          = self.args.create
         self.search_message     = self.args.search or [self.patch_code]
         self.info.branch        = self.args.branch or self.config.repo_branch or self.info.branch or str(self.repo.active_branch)
-        self.add_commits        = self.args.commit
-        self.ignore_commits     = self.args.ignore
+        self.add_commits        = util.ranged_str(self.args.commit)
+        self.ignore_commits     = util.ranged_str(self.args.ignore)
         self.full_exports       = self.args.full
         self.target_env         = self.args.deploy if isinstance(self.args.deploy, str) and len(self.args.deploy) > 0 else self.args.target
         self.patch_ref          = self.args.get('ref')

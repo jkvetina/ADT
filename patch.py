@@ -1047,6 +1047,10 @@ class Patch(config.Config):
                                 files_grouped[group].append(file)
                                 files_to_process.pop(file, '')
 
+                        # put scripts on the side
+                        if file.startswith(self.config.patch_scripts_snap):
+                            files_to_process.pop(file, '')
+
             # create a file in scripts to drop object
             for file in self.relevant_files[schema_with_app]:
                 if not (file in self.diffs)                                     and 1 == 2:

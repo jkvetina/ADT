@@ -75,6 +75,7 @@ class Patch(config.Config):
         group.add_argument('-fetch',        help = 'Fetch Git changes before patching',                                 nargs = '?', const = True,  default = False)
         group.add_argument('-rebuild',      help = 'Rebuild temp files',                                                nargs = '?', const = True,  default = False)
         group.add_argument('-implode',      help = 'Merge files in a folder',                                           nargs = '?')
+        group.add_argument('-deldiff',      help = 'Delete diff tables',                                                nargs = '?', const = True,  default = False)
 
         super().__init__(self.parser, args)
 
@@ -162,6 +163,11 @@ class Patch(config.Config):
         # merge folder if requested
         if self.args.implode:
             self.implode_folder(self.args.implode)
+            util.quit()
+
+        # delete lost/forgotten diff tables
+        if self.args.deldiff:
+            self.delete_diff_tables()
             util.quit()
 
         # show recent commits and patches
@@ -1362,6 +1368,26 @@ class Patch(config.Config):
 
 
 
+    def delete_diff_tables(self):
+        # drop them at DEV, not on target env!
+        if not self.conn:
+            self.conn = self.db_connect(ping_sqlcl = False, silent = True)
+
+        util.print_header('DROPPING DIFF TABLES')
+
+        # delete leftovers
+        args = {
+            'objects_prefix'    : self.objects_prefix   or '',
+            'objects_ignore'    : self.objects_ignore   or '',
+        }
+        diff_tables = self.conn.fetch_assoc(query.diff_tables, **args)
+        for row in diff_tables:
+            print('  - {}'.format(row['table_name']))
+            self.conn.drop_object('TABLE', row['table_name'])
+        print()
+
+
+
     def get_differences(self, rel_files):
         self.diffs      = {}    # cleanup
         payload         = []
@@ -2031,6 +2057,7 @@ class Patch(config.Config):
                 'DIFF SOURCE TABLE FAIL: {}'.format(object_name), [
                     'YOU HAVE ERRORS IN #{} COMMIT'.format(version_src),
                 ])
+            self.conn.drop_object('TABLE', source_table)
             return ''
 
         # create target table
@@ -2045,6 +2072,7 @@ class Patch(config.Config):
                 'DIFF TARGET TABLE FAIL: {}'.format(object_name), [
                     'YOU HAVE ERRORS IN #{} COMMIT'.format(version_trg),
                 ])
+            self.conn.drop_object('TABLE', target_table)
             return ''
 
         # compare tables

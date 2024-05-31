@@ -210,3 +210,28 @@ BEGIN
     :result := v_diff;
 END;
 """
+
+# cleanup diff tables
+diff_tables = """
+WITH objects_add AS (
+    SELECT /*+ MATERIALIZE CARDINALITY(t 1) */
+        t.column_value AS object_like
+    FROM TABLE(APEX_STRING.SPLIT(TRIM(BOTH ',' FROM NVL(:objects_prefix, '%')), ',')) t
+),
+objects_ignore AS (
+    SELECT /*+ MATERIALIZE CARDINALITY(t 10) */
+        t.column_value AS object_like
+    FROM TABLE(APEX_STRING.SPLIT(TRIM(BOTH ',' FROM :objects_ignore), ',')) t
+)
+SELECT
+    t.table_name
+FROM user_tables t
+JOIN objects_add a
+    ON t.table_name         LIKE a.object_like ESCAPE '\\'
+LEFT JOIN objects_ignore g
+    ON t.table_name         LIKE g.object_like ESCAPE '\\'
+WHERE 1 = 1
+    AND (t.table_name       LIKE '%$1' OR t.table_name LIKE '%$2')
+ORDER BY 1
+"""
+

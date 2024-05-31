@@ -72,6 +72,8 @@ class Search_APEX(config.Config):
         self.refs_name      = 'refs/'
         self.append_name    = 'append/'
         #
+        util.assert_(self.limit_app_id, 'APP_ID REQUIRED')
+        #
         self.source_dir     = self.get_root(self.limit_app_id)
         self.target_dir     = self.repo_root + self.config.patch_scripts_dir.replace('{$PATCH_CODE}', self.patch_code) + self.refs_name
         self.append_dir     = self.repo_root + self.config.patch_scripts_dir.replace('{$PATCH_CODE}', self.patch_code) + self.append_name
@@ -121,7 +123,7 @@ class Search_APEX(config.Config):
                         tags    = re.findall(self.limit_schema + r'\.([A-Z0-9\$_-]+)', line.upper())
                     else:
                         # less precise, but ok if we have unique object names
-                        tags    = re.findall('(' + objects + ')\W|(' + objects + ')$', line.upper())
+                        tags    = re.findall(r'(' + objects + r')\W|(' + objects + r')$', line.upper())
                         tags    = list(filter(None, [j for i in tags for j in i]))
 
                     # map found tags to pages
@@ -131,7 +133,7 @@ class Search_APEX(config.Config):
                         if not util.get_match(object_name, self.limit_name) and len(self.limit_name) > 0:
                             continue
                         #
-                        page_id = util.extract_int('/page_(\d+)\.sql', file)
+                        page_id = util.extract_int(r'/page_(\d+)\.sql', file)
                         if not (object_name in page_tags):
                             page_tags[object_name] = []
                         if page_id != None:

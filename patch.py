@@ -158,6 +158,7 @@ class Patch(config.Config):
         # create install script
         if self.args.install:
             self.create_install()
+            util.beep_success()
             util.quit()
 
         # merge folder if requested
@@ -256,6 +257,8 @@ class Patch(config.Config):
                 util.print_help('add -create #  to create patch with specified sequence')
                 util.print_help('add -create    to create patch without sequence')
                 print()
+
+        util.beep_success()
 
 
 

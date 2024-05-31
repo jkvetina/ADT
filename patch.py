@@ -117,6 +117,7 @@ class Patch(config.Config):
         self.relevant_commits   = []
         self.relevant_count     = {}
         self.relevant_files     = {}
+        self.relevant_comms     = {}
         self.diffs              = {}
         self.hash_commits       = []
         self.head_commit        = None
@@ -885,10 +886,16 @@ class Patch(config.Config):
                 if not (schema in self.relevant_files):
                     self.relevant_files[schema] = []
                     self.relevant_count[schema] = []
+                    self.relevant_comms[schema] = {}
+                #
                 if not (file in self.relevant_files[schema]):
                     self.relevant_files[schema].append(file)
+                    self.relevant_comms[schema][file] = []
+
                 if not (commit_id in self.relevant_count[schema]):
                     self.relevant_count[schema].append(commit_id)
+                #
+                self.relevant_comms[schema][file].append(commit_id)
 
         # check number of commits
         if len(self.relevant_commits) == 0:
@@ -1067,6 +1074,12 @@ class Patch(config.Config):
                     object_type     = self.get_object_type(file)
                     #
                     if object_name and object_type and object_type not in ('GRANT',):
+                        # skip deleting objects for the first commit
+                        first_commit = min(self.relevant_comms[schema][file])
+                        if first_commit <= self.first_commit_id:
+                            continue
+
+                        # generate script to delete object
                         script_drop = util.replace(query.templates['DROP'], {
                             '{$HEADER}'         : 'DROP {} {}'.format(object_type, object_name),
                             '{$OBJECT_TYPE}'    : object_type,

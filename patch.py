@@ -85,7 +85,7 @@ class Patch(config.Config):
         #
         self.patch_code         = self.args.patch
         self.patch_seq          = self.args.create
-        self.search_message     = self.args.search or [self.patch_code]
+        self.search_message     = self.args.search if self.args.search != None else ([self.patch_code] if self.patch_code != None else [])
         self.info.branch        = self.args.branch or self.config.repo_branch or self.info.branch or str(self.repo.active_branch)
         self.add_commits        = util.ranged_str(self.args.commit)
         self.ignore_commits     = util.ranged_str(self.args.ignore)

@@ -62,10 +62,10 @@ class Search_APEX(config.Config):
         # THIS IS USEFUL FOR MANUAL PATCHING OR IF YOU NEED TO ADD A OBJECT/FILE
         # WHICH IS NOT REFERENCED BY/IN APEX DIRECTLY
         #
-        self.patch_code     = self.args.patch or ''
-        self.limit_app_id   = self.args.app
-        self.limit_schema   = self.args.schema or ''
-        self.limit_pages    = self.args.page or []
+        self.patch_code     = self.args.patch   or ''
+        self.limit_app_id   = self.args.app     #or self.conn.tns.get('app', '')
+        self.limit_schema   = self.args.schema  or ''
+        self.limit_pages    = self.args.page    or []
         self.limit_type     = list(filter(None, ' '.join(self.args.type or []).upper().split(' ')))
         self.limit_name     = list(filter(None, ' '.join(self.args.name or []).upper().split(' ')))
         #

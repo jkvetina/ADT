@@ -18,6 +18,8 @@ today_deploy            : '%Y-%m-%d %H-%M'  # used in deployment logs
 path_objects            : 'database/'       # folder with database objects
 path_apex               : 'apex/'           # folder with APEX related files
 
+auto_verbose            : 2                 # tun on verbose mode for recent <= # days
+
 # target folders by object types
 object_types:
     DATA                : ['data/',         .sql]

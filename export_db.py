@@ -39,7 +39,7 @@ class Export_DB(config.Config):
 
         # actions and flags
         group = self.parser.add_argument_group('MAIN ACTIONS')
-        group.add_argument('-recent',       help = 'Show objects changed in # days',        type = util.is_boolstr,     nargs = '?')
+        group.add_argument('-recent',       help = 'Show objects changed in # days',        type = int,                 nargs = '?')
 
         # limit scope by object type and name (prefix)
         group = self.parser.add_argument_group('LIMIT SCOPE')
@@ -92,19 +92,24 @@ class Export_DB(config.Config):
         for file in util.get_files(self.config.path_objects + self.config.object_types['TABLE'][0] + '*$2.sql'):
             util.delete_file(file)
 
+        # turn on verbose mode for recent <= # days
+        if self.args.recent <= self.config.auto_verbose and self.args.recent:
+            self.args.verbose = True
+
         # detect deleted objects
-        deleted_obj = {}
-        for file, obj in self.repo_files.items():
-            if obj.is_object and obj.object_type and not (obj.object_type in ('GRANT',)):
-                obj_code = obj['object_code'].replace('DATA', 'TABLE')
-                if not (obj_code in self.dependencies):
-                    if not (obj['object_type'] in deleted_obj):
-                        deleted_obj[obj['object_type']] = []
-                    deleted_obj[obj['object_type']].append(obj['object_name'])
-        #
-        if len(deleted_obj) > 0:
-            util.print_header('DELETED OBJECTS:')
-            util.print_pipes(deleted_obj)
+        if self.args.verbose:
+            deleted_obj = {}
+            for file, obj in self.repo_files.items():
+                if obj.is_object and obj.object_type and not (obj.object_type in ('GRANT',)):
+                    obj_code = obj['object_code'].replace('DATA', 'TABLE')
+                    if not (obj_code in self.dependencies):
+                        if not (obj['object_type'] in deleted_obj):
+                            deleted_obj[obj['object_type']] = []
+                        deleted_obj[obj['object_type']].append(obj['object_name'])
+            #
+            if len(deleted_obj) > 0:
+                util.print_header('DELETED OBJECTS:')
+                util.print_pipes(deleted_obj)
 
         # cleanup target folders (to cleanup Git from removed objects)
         if self.args.delete:
@@ -135,12 +140,12 @@ class Export_DB(config.Config):
         args = {
             'object_name'       : self.args.name        or '%',
             'object_type'       : (self.args.type       or '%').upper(),
-            'recent'            : self.args.recent      or '',
+            'recent'            : (self.args.recent     or 0) if self.args.recent != None else '',
             'objects_prefix'    : self.objects_prefix   or '',
             'objects_ignore'    : self.objects_ignore   or '',
         }
         #
-        show_recent     = str(datetime.datetime.today() - datetime.timedelta(days = int(self.args.recent) - 1))[0:10] if self.args.recent else ''
+        show_recent     = str(datetime.datetime.today() - datetime.timedelta(days = self.args.recent - 1))[0:10] if self.args.recent != None else ''
         show_header     = 'CHANGED SINCE ' + show_recent if show_recent else 'OVERVIEW'
         show_filter     = (' ' + args['object_name'] + ' ').replace(' % ', ' ').strip()
         #

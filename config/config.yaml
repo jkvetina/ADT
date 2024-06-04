@@ -40,10 +40,18 @@ object_types:
     TYPE BODY           : ['types/',        .body.sql]
     VIEW                : ['views/',        .sql]
 
-# objects which cant be recreated
+# objects which cant be recreated nor dropped (because you would lose data)
+immutables:
+    - TABLE
+    - SEQUENCE
+
+# objects which cant be recreated, unless you drop them first
 drop_objects:
     - MATERIALIZED VIEW
     - MVIEW LOG
+    - TYPE
+    - TYPE BODY
+
 # object types with comments
 object_comments:
     - TABLE

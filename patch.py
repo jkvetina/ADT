@@ -1092,6 +1092,7 @@ class Patch(config.Config):
 
             # detect changed tables
             self.alter_files = {}
+            self.skip_tables = []
             for file in self.relevant_files[schema_with_app]:
                 if file in self.diffs:
                     object_name     = self.get_object_name(file)
@@ -1115,6 +1116,9 @@ class Patch(config.Config):
                                     alter_file = self.config.patch_scripts_dir + 'tables_after.' + os.path.basename(file).replace('.sql', '.{}.sql'.format(commit_num))
                                     util.write_file(alter_file, alter_payload)
                                     self.alter_files[alter_file] = alter_payload
+                                    #
+                                    if 'TABLE' in self.config.immutables:
+                                        self.skip_tables.append(object_name)
             #
             if len(self.alter_files) > 0:
                 util.print_header('TABLE CHANGES DETECTED:')
@@ -1535,9 +1539,19 @@ class Patch(config.Config):
                 'PROMPT -- {}'.format(header),
                 'PROMPT --;',
             ]
+
+        # if we faced changed immutable object (like a table), keep it commented out in patch
+        file_orig   = '/'.join(file.replace(self.config.apex_snapshots, '').lstrip('/').split('.', maxsplit = 1))
+        object_type = self.get_object_type(file_orig)
+        object_name = self.get_object_name(file_orig)
+        comment_out = ''
+        if category == 'COMMIT' and app_id == None and object_type in self.config.immutables and object_name in self.skip_tables:
+            comment_out = '-- [!] SKIPPING, WE HAVE ALTER STATEMENTS\n-- [!] '
+
+        # add line to the patch file
         payload.extend([
             'PROMPT -- {}{}: {}'.format(attach_type or 'FILE', ' #{}'.format(commit) if commit else '', file),
-            util.replace(self.config.patch_file_link if not self.patch_file_moveup else self.config.patch_file_link_moveup, {
+            comment_out + util.replace(self.config.patch_file_link if not self.patch_file_moveup else self.config.patch_file_link_moveup, {
                 '#FILE#'        : file.lstrip('/'),
                 '#PATCH_CODE#'  : self.patch_code,
             }),

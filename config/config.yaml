@@ -18,7 +18,7 @@ today_deploy            : '%Y-%m-%d %H-%M'  # used in deployment logs
 path_objects            : 'database/'       # folder with database objects
 path_apex               : 'apex/'           # folder with APEX related files
 
-auto_verbose            : 2                 # tun on verbose mode for recent <= # days
+auto_verbose            : 2                 # turn on verbose mode for recent <= # days
 
 # target folders by object types
 object_types:
@@ -44,6 +44,12 @@ object_types:
 drop_objects:
     - MATERIALIZED VIEW
     - MVIEW LOG
+# object types with comments
+object_comments:
+    - TABLE
+    - VIEW
+    - MATERIALIZED VIEW
+
 
 # grants, resp. privileges
 grants_recd             : '/received/#SCHEMA_NAME#.sql'     # received grants, under GRANT folder

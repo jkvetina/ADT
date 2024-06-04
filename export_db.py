@@ -236,7 +236,7 @@ class Export_DB(config.Config):
                 object_file = self.get_object_file(object_type, object_name)
                 util.write_file(object_file, payload)
                 #
-                if object_type in ('TABLE', 'VIEW', 'MATERIALIZED VIEW'):
+                if object_type in self.config.object_comments:
                     self.update_comments(object_name)
 
             # show extra line in between different object types

@@ -104,6 +104,7 @@ class Oracle:
 
         # use wallet to connect
         if 'wallet' in self.tns and len(self.tns.wallet) > 0:
+            self.tns.wallet = self.tns.wallet.replace('~/', os.path.expanduser('~') + '/')
             self.tns.wallet = os.path.abspath(self.tns.wallet).rstrip('.zip')
             if not os.path.exists(self.tns.wallet):
                 util.raise_error('INVALID WALLET', self.tns.wallet)

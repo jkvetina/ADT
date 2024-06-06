@@ -93,7 +93,7 @@ class Export_DB(config.Config):
             util.delete_file(file)
 
         # turn on verbose mode for recent <= # days
-        if self.args.recent <= self.config.auto_verbose and self.args.recent:
+        if self.args.recent != None and self.args.recent <= self.config.auto_verbose and self.args.recent:
             self.args.verbose = True
 
         # detect deleted objects
@@ -195,6 +195,9 @@ class Export_DB(config.Config):
 
         # add comments to tables even if tables didnt changed
         for table_name in comments.keys():
+            if not (table_name in self.comments_type):
+                continue
+            #
             object_type = self.comments_type[table_name]
             object_file = self.get_object_file(object_type, table_name)
             comments    = self.get_object_comments(table_name, object_type)

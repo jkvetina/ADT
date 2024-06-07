@@ -235,3 +235,12 @@ WHERE 1 = 1
 ORDER BY 1
 """
 
+# compare view columns
+view_columns = """
+SELECT
+    c.column_name,
+    c.column_id
+FROM user_tab_cols c
+WHERE c.table_name = :view_name
+"""
+

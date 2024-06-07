@@ -502,6 +502,9 @@ class Patch(config.Config):
             util.beep_success()
         print()
 
+        # verify views for matching columns
+        self.verify_views()
+
         # send notification on success
         if self.patch_status == 'SUCCESS' or 1 == 1:
             title       = '{} - Patch {} deployed'.format(self.target_env, self.patch_code)
@@ -2131,6 +2134,50 @@ class Patch(config.Config):
         self.conn.drop_object('TABLE', target_table)
         #
         return lines
+
+
+
+    def verify_views(self):
+        for _, plan in enumerate(self.deploy_plan):
+            schema      = plan['schema']
+            files       = self.relevant_files.get(schema, [])
+            columns     = {}
+            unmatched   = []
+            #
+            for file in files:
+                object_type = self.get_object_type(file)
+                object_name = self.get_object_name(file)
+                #
+                if object_type == 'VIEW':
+                    columns[object_name] = {}
+
+                    # connect to DEV
+                    if not self.conn:
+                        self.init_connection(env_name = 'DEV', schema_name = schema)
+                        self.conn = self.db_connect(ping_sqlcl = False, silent = True)
+
+                    # get columns from DEV (it might not exists)
+                    view_columns = self.conn.fetch_assoc(query.view_columns, view_name = object_name)
+                    for row in view_columns:
+                        columns[object_name][row.column_id] = row.column_name
+
+                    # compare columns
+                    view_columns = self.deploy_conn[schema].fetch_assoc(query.view_columns, view_name = object_name)
+                    for row in view_columns:
+                        expected_name = columns[object_name].get(row.column_id)
+                        if row.column_name != expected_name:
+                            unmatched.append({
+                                'view_name'     : object_name,
+                                'id'            : row.column_id,
+                                'column_name'   : row.column_name,
+                                'expected'      : expected_name,
+                            })
+
+            # show results
+            if len(unmatched) > 0:
+                util.print_header('WARNING: VIEW COLUMNS MISMATCHED!')
+                util.print_help('use column aliases inside of the query, not on the header')
+                util.print_table(unmatched)
 
 
 

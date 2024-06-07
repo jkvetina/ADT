@@ -547,6 +547,22 @@ class Config(util.Attributed):
 
 
 
+    def check_env(self, env_name):
+        connections = {}
+
+        # load connections file to check if target env exist
+        file = self.replace_tags(self.connection_default)
+        if os.path.exists(file):
+            with open(file, 'rt', encoding = 'utf-8') as f:
+                data = util.get_yaml(f, file)
+                for env, arguments in data:
+                    connections[env] = arguments
+        #
+        if not (env_name in connections):
+            util.raise_error('UNKNOWN ENVIRONMENT', env_name)
+
+
+
     def get_application(self, app_id, schema = None):
         if app_id in self.apex_apps:
             return self.apex_apps[row.app_id]

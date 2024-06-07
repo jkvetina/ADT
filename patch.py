@@ -97,6 +97,7 @@ class Patch(config.Config):
         self.patch_file_moveup  = self.args.moveup
         #
         self.init_config()
+        self.check_env(self.target_env)
 
         # adjust sequence
         if isinstance(self.args.create, bool) and self.args.create:

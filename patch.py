@@ -1661,6 +1661,14 @@ class Patch(config.Config):
         if self.config.apex_snapshots:
             target_file = self.get_target_file(target_file)
 
+        # modify the file
+        if not app_id:
+            if self.get_object_type(file) == 'VIEW' and self.config.patch_force_views:
+                lines = file_content.splitlines()
+                if not (' FORCE ' in lines[0]):
+                    lines[0] = lines[0].replace(' VIEW ', ' FORCE VIEW ')
+                    file_content = '\n'.join(lines)
+
         # save file
         if not self.patch_dry:
             util.write_file(target_file, file_content)

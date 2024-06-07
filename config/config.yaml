@@ -58,6 +58,9 @@ object_comments:
     - VIEW
     - MATERIALIZED VIEW
 
+# cleanup modificators
+cleanup_view:
+    keep_force          : True
 
 # grants, resp. privileges
 grants_recd             : '/received/#SCHEMA_NAME#.sql'     # received grants, under GRANT folder
@@ -88,6 +91,7 @@ patch_postfix_before    : '_before'                         # for templates and 
 patch_postfix_after     : '_after'                          # for templates and scripts
 patch_deploy_logs       : 'logs_{$TARGET_ENV}'              # prefix for log folder for deployments
 patch_skip_merge        : True                              # skip commits starting with "Merge"
+patch_force_views       : True                              # force create views, even if they are invalid
 
 # patch map to create patch files in this very order
 # and to add files from templates at before/after points

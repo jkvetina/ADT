@@ -660,6 +660,10 @@ class Export_DB(config.Config):
 
 
     def clean_view(self, lines, object_name = '', config = {}):
+        lines[0] = util.replace(lines[0], r' FORCE VIEW ', ' VIEW ')
+        if config.cleanup_view.get('keep_force'):
+            lines[0] = util.replace(lines[0], r' VIEW ', ' FORCE VIEW ')
+
         # remove column from view definition
         # you should have correct names in the query
         lines[0] = util.replace(lines[0], r'(\s*DEFAULT COLLATION [^\s]+\s)', ' ')      # remove collation

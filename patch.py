@@ -131,7 +131,7 @@ class Patch(config.Config):
         self.postfix_after      = self.config.patch_postfix_after
         self.commits_file       = self.config.repo_commits_file.replace('#BRANCH#', self.info.branch)
         self.show_commits       = (self.args.commits or 10) if self.patch_code == None else self.args.commits
-        self.show_patches       = (self.args.patches or 10)
+        self.show_patches       = (self.args.patches or 0)
         self.patches            = {}
         self.patch_found        = []
         self.deploy_plan        = []

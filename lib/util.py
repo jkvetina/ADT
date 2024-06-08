@@ -181,8 +181,11 @@ def get_file_hash(file):
 
 
 def write_file(file, payload, mode = 'wt', yaml = False, fix = False, check_hash = False):
-    if not os.path.exists(os.path.dirname(file)):
-        os.makedirs(os.path.dirname(file))
+    folder = os.path.dirname(file) + '/'
+    if not os.path.exists(folder):
+        if folder.endswith('/../'):
+            folder = folder.replace('/../', '/')    # fix relative folders
+        os.makedirs(folder)
     #
     if check_hash and not yaml and os.path.exists(file):
         old_hash = get_file_hash(file)

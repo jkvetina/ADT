@@ -132,7 +132,7 @@ patch_map:
 # GIT REPOSITORY
 #
 repo_commit_days        : 60                    # maximum age (in days) for commits history
-repo_branch             : dev
+repo_branch             : ''                    # empty = current branch
 repo_commits_file       : './config/commits/#BRANCH#.yaml'
 
 

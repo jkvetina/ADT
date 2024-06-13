@@ -191,7 +191,7 @@ class Export_DB(config.Config):
 
 
     def update_comments(self, object_name = None):
-        comments = {object_name : self.comments[object_name]} if object_name else self.comments
+        comments = {object_name : self.comments[object_name]} if (object_name and object_name in self.comments) else self.comments
 
         # add comments to tables even if tables didnt changed
         for table_name in comments.keys():

@@ -1,5 +1,5 @@
 # coding: utf-8
-import sys, os, re, argparse, datetime, csv
+import sys, os, re, argparse, csv
 #
 import config
 from lib import util
@@ -92,7 +92,7 @@ class Export_Data(config.Config):
         }
         #
         for row in self.conn.fetch_assoc(query.matching_objects, **args):
-            if not (row.object_name in self.tables_curr):
+            if not (row.object_name in self.tables_curr) and row.object_type == 'TABLE':
                 self.tables_curr.append(row.object_name)
 
         # get table columns and data types

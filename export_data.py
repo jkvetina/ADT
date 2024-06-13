@@ -261,7 +261,7 @@ class Export_Data(config.Config):
             stmt = query.template_csv_merge.lstrip().format (
                 table_name              = table_name,
                 primary_cols_set        = primary_cols_set,
-                csv_content_query       = ' UNION ALL\n        '.join(data),
+                csv_content_query       = ' UNION ALL\n    '.join(data),
                 non_primary_cols_set    = update_cols,
                 all_cols                = all_cols,
                 all_values              = all_values,

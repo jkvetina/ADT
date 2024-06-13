@@ -38,7 +38,7 @@ class Export_Data(config.Config):
 
         # actions and flags
         group = self.parser.add_argument_group('MAIN ACTIONS')
-        group.add_argument('-name',         help = 'Object name/prefix (you can use LIKE syntax)',                      nargs = '?')
+        group.add_argument('-name',         help = 'Object name/prefix (you can use LIKE syntax)',                      nargs = '*')
 
         # env details
         group = self.parser.add_argument_group('SPECIFY ENVIRONMENT DETAILS')
@@ -84,10 +84,10 @@ class Export_Data(config.Config):
 
     def get_requested_tables(self):
         args = {
-            'object_name'       : self.args.name        or '',
+            'object_name'       : ','.join(self.args.name or ['%']).upper(),
             'object_type'       : 'TABLE',
             'recent'            : None,
-            'objects_prefix'    : self.objects_prefix   or '',
+            'objects_prefix'    : self.objects_prefix   or '%',
             'objects_ignore'    : self.objects_ignore   or '',
         }
         #

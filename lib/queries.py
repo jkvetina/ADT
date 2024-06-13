@@ -1,8 +1,18 @@
 matching_objects = """
-WITH objects_add AS (
+WITH objects_prefix AS (
     SELECT /*+ MATERIALIZE CARDINALITY(t 1) */
         t.column_value AS object_like
-    FROM TABLE(APEX_STRING.SPLIT(TRIM(BOTH ',' FROM NVL(:objects_prefix, '%')), ',')) t
+    FROM TABLE(APEX_STRING.SPLIT(TRIM(BOTH ',' FROM :objects_prefix), ',')) t
+),
+objects_types AS (
+    SELECT /*+ MATERIALIZE CARDINALITY(t 10) */
+        t.column_value AS object_like
+    FROM TABLE(APEX_STRING.SPLIT(TRIM(BOTH ',' FROM :object_type), ',')) t
+),
+objects_names AS (
+    SELECT /*+ MATERIALIZE CARDINALITY(t 10) */
+        t.column_value AS object_like
+    FROM TABLE(APEX_STRING.SPLIT(TRIM(BOTH ',' FROM :object_name), ',')) t
 ),
 objects_ignore AS (
     SELECT /*+ MATERIALIZE CARDINALITY(t 10) */
@@ -19,30 +29,26 @@ FROM user_objects o
 LEFT JOIN user_tables t
     ON t.table_name         = o.object_name
     AND o.object_type       = 'TABLE'
-JOIN objects_add a
+JOIN objects_prefix a
     ON o.object_name        LIKE a.object_like ESCAPE '\\'
+JOIN objects_types p
+    ON o.object_type        LIKE p.object_like ESCAPE '\\'
+    AND o.object_type       NOT IN ('LOB', 'TABLE PARTITION', 'INDEX', 'INDEX PARTITION', 'JOB', 'CREDENTIAL')
+JOIN objects_names n
+    ON o.object_name        LIKE n.object_like ESCAPE '\\'
 LEFT JOIN objects_ignore g
     ON o.object_name        LIKE g.object_like ESCAPE '\\'
 WHERE 1 = 1
     AND g.object_like       IS NULL
-    AND o.object_type       NOT IN ('LOB', 'TABLE PARTITION', 'INDEX', 'INDEX PARTITION', 'JOB', 'CREDENTIAL')
-    AND o.object_type       LIKE :object_type
-    AND o.object_name       LIKE :object_name ESCAPE '\\'
     AND o.object_name       NOT LIKE 'SYS\\_%' ESCAPE '\\'
     AND o.object_name       NOT LIKE 'ISEQ$$_%'
-    AND o.object_name       NOT LIKE 'ST%/%='
+    AND o.object_name       NOT LIKE 'ST%='
     AND (o.last_ddl_time    >= TRUNC(SYSDATE) + 1 - :recent OR :recent IS NULL)
     AND (o.object_type, o.object_name) NOT IN (
         SELECT
             'TABLE'         AS object_type,
             m.mview_name    AS object_name
         FROM user_mviews m
-        JOIN objects_add a
-            ON m.mview_name         LIKE a.object_like ESCAPE '\\'
-        LEFT JOIN objects_ignore g
-            ON m.mview_name         LIKE g.object_like ESCAPE '\\'
-        WHERE 1 = 1
-            AND g.object_like       IS NULL
     )
 --
 UNION ALL
@@ -53,15 +59,16 @@ SELECT
     NULL            AS partitioned,
     NULL            AS global_stats
 FROM user_scheduler_jobs j
-JOIN objects_add a
+JOIN objects_prefix a
     ON j.job_name           LIKE a.object_like ESCAPE '\\'
+JOIN objects_names n
+    ON j.job_name           LIKE n.object_like ESCAPE '\\'
 LEFT JOIN objects_ignore g
     ON j.job_name           LIKE g.object_like ESCAPE '\\'
 WHERE 1 = 1
     AND g.object_like       IS NULL
     AND :recent             IS NULL
-    AND (:object_type       = 'JOB' OR NULLIF(:object_type, '%') IS NULL)
-    AND j.job_name          LIKE :object_name ESCAPE '\\'
+    AND (:object_type       LIKE 'J%' OR :object_type LIKE '%,J%' OR NULLIF(:object_type, '%') IS NULL)
     AND j.schedule_type     != 'IMMEDIATE'
 --
 UNION ALL
@@ -72,15 +79,16 @@ SELECT
     NULL                    AS partitioned,
     NULL                    AS global_stats
 FROM user_mview_logs l
-JOIN objects_add a
+JOIN objects_prefix a
     ON l.master             LIKE a.object_like ESCAPE '\\'
+JOIN objects_names n
+    ON l.master             LIKE n.object_like ESCAPE '\\'
 LEFT JOIN objects_ignore g
     ON l.master             LIKE g.object_like ESCAPE '\\'
 WHERE 1 = 1
     AND g.object_like       IS NULL
     AND :recent             IS NULL
-    AND (:object_type       LIKE 'M%' OR NULLIF(:object_type, '%') IS NULL)
-    AND l.master            LIKE :object_name ESCAPE '\\'
+    AND (:object_type       LIKE 'M%' OR :object_type LIKE '%,M%' OR NULLIF(:object_type, '%') IS NULL)
 --
 UNION ALL
 SELECT
@@ -94,10 +102,15 @@ LEFT JOIN user_constraints c
     ON c.table_name         = t.table_name
     AND c.constraint_name   = t.index_name
     AND c.constraint_type   IN ('P', 'U')
-JOIN objects_add a
+JOIN objects_prefix a
     ON (
         t.index_name        LIKE a.object_like ESCAPE '\\'
         OR t.table_name     LIKE a.object_like ESCAPE '\\'
+    )
+JOIN objects_names n
+    ON (
+        t.index_name        LIKE n.object_like ESCAPE '\\'
+        OR t.table_name     LIKE n.object_like ESCAPE '\\'
     )
 LEFT JOIN objects_ignore g
     ON (
@@ -106,10 +119,7 @@ LEFT JOIN objects_ignore g
     )
 WHERE 1 = 1
     AND g.object_like       IS NULL
-    AND (:object_type       LIKE 'TABLE%' OR :object_type LIKE 'INDEX%' OR NULLIF(:object_type, '%') IS NULL)
-    AND (t.table_name       LIKE :object_name ESCAPE '\\'
-        OR t.index_name     LIKE :object_name ESCAPE '\\'
-    )
+    AND (:object_type       LIKE 'I%' OR :object_type LIKE '%,I%' OR NULLIF(:object_type, '%') IS NULL)
     AND t.index_name        NOT LIKE 'SYS%$$'
     AND t.generated         = 'N'
     AND t.constraint_index  = 'NO'
@@ -548,7 +558,7 @@ FROM (
         ON t.table_name     LIKE g.object_like ESCAPE '\\'
     WHERE 1 = 1
         AND g.object_like   IS NULL
-        AND t.table_name    NOT LIKE 'ST%/%='
+        AND t.table_name    NOT LIKE 'ST%='
         AND t.table_name    NOT LIKE 'BIN$%'
         AND t.grantor       = USER
         AND t.type          NOT IN ('USER')

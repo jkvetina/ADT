@@ -43,8 +43,8 @@ class Export_DB(config.Config):
 
         # limit scope by object type and name (prefix)
         group = self.parser.add_argument_group('LIMIT SCOPE')
-        group.add_argument('-type',         help = 'Object type (you can use LIKE syntax)',                             nargs = '?')
-        group.add_argument('-name',         help = 'Object name/prefix (you can use LIKE syntax)',                      nargs = '?')
+        group.add_argument('-type',         help = 'Object type (you can use LIKE syntax)',                             nargs = '*')
+        group.add_argument('-name',         help = 'Object name/prefix (you can use LIKE syntax)',                      nargs = '*')
 
         # env details
         group = self.parser.add_argument_group('SPECIFY ENVIRONMENT DETAILS')
@@ -138,10 +138,10 @@ class Export_DB(config.Config):
 
     def show_overview(self):
         args = {
-            'object_name'       : self.args.name        or '%',
-            'object_type'       : (self.args.type       or '%').upper(),
+            'object_name'       : ','.join(self.args.name or ['%']).upper(),
+            'object_type'       : ','.join(self.args.type or ['%']).upper(),
             'recent'            : (self.args.recent     or 0) if self.args.recent != None else '',
-            'objects_prefix'    : self.objects_prefix   or '',
+            'objects_prefix'    : self.objects_prefix   or '%',
             'objects_ignore'    : self.objects_ignore   or '',
         }
         #
@@ -170,9 +170,9 @@ class Export_DB(config.Config):
 
     def get_comments(self):
         args = {
-            'object_name'       : self.args.name        or '%',
-            'object_type'       : (self.args.type       or '%').upper(),
-            'objects_prefix'    : self.objects_prefix   or '',
+            'object_name'       : ','.join(self.args.name or ['%']).upper(),
+            'object_type'       : ','.join(self.args.type or ['%']).upper(),
+            'objects_prefix'    : self.objects_prefix   or '%',
             'objects_ignore'    : self.objects_ignore   or '',
         }
         #
@@ -257,7 +257,7 @@ class Export_DB(config.Config):
 
     def export_grants(self):
         args = {
-            'objects_prefix'    : self.objects_prefix   or '',
+            'objects_prefix'    : self.objects_prefix   or '%',
             'objects_ignore'    : self.objects_ignore   or '',
         }
 

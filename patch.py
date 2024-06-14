@@ -1351,6 +1351,13 @@ class Patch(config.Config):
                 if not self.args.head:
                     for commit_id in sorted(self.all_files[orig_file]):
                         if commit_id > curr_commit_id:
+                            # skip ignored commits
+                            commits     = '|{}|'.format('|'.join(self.ignore_commits))
+                            search_for  = '|{}|'.format(commit_id)
+                            #
+                            if search_for in commits:
+                                continue
+                            #
                             commit = self.all_commits[commit_id]
                             found_newer.append('{}) {}'.format(commit_id, commit['summary'][0:50]))
                 #

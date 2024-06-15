@@ -517,7 +517,12 @@ class Export_DB(config.Config):
                     line = util.replace(line.replace(' NO INMEMORY', ''), r'(\s+;)', ';').strip()
 
                 # partition/index related
-                line = line.replace('USING INDEX  ', '')
+                #line = line.replace('USING INDEX  ', '')
+
+                # add index tablespace
+                if 'USING INDEX' in line and self.config['tablespace']['INDEX']:
+                    append_semi = ';' if line[-1:] == ';' else ''
+                    line = line.rstrip(';') + ' TABLESPACE ' + self.config['tablespace']['INDEX'] + append_semi
 
                 lines[i] = line.rstrip()
 
@@ -544,6 +549,9 @@ class Export_DB(config.Config):
                 if partition_idx:
                     if 'VALUES LESS THAN(TO_DATE(\'' in line and '-01-01 00:00:00\',' in line:
                         line = 'PARTITION {}'.format(self.unquote_object_name(line.split('PARTITION')[1]))
+                    #
+                    if self.config['tablespace']['PARTITION']:
+                        line += ' TABLESPACE ' + self.config['tablespace']['PARTITION']
                     #
                     line                    = '    ' + line.lstrip('(').replace(' );', '').replace('  ', ' ').strip()
                     lines[partition_idx]    = lines[partition_idx].replace('!P!', line)
@@ -645,12 +653,18 @@ class Export_DB(config.Config):
         # partitioning
         last_line = len(lines) - 1
         if 'LOCAL' in lines[last_line]:
-            lines[last_line] = '    LOCAL'
+            lines[last_line] = '    LOCAL '
 
-        # add tablespace
-        index_tblsp = (self.objects.get('INDEX', {}).get(object_name, {}).get('tablespace_name') or '').replace('"', '').lower()
-        if index_tblsp and index_tblsp != table_tblsp:
-            lines[last_line] = '{}\n    TABLESPACE {}'.format(lines[last_line].rstrip(';'), index_tblsp)
+        # tablespaces
+        if self.config['tablespace']['INDEX']:
+            lines[last_line] = lines[last_line].rstrip(';')
+            lines[last_line] += '\n    TABLESPACE ' + self.config['tablespace']['INDEX']
+        else:
+            # add tablespace just when it is different
+            index_tblsp = (self.objects.get('INDEX', {}).get(object_name, {}).get('tablespace_name') or '').replace('"', '').lower()
+            if index_tblsp and index_tblsp != table_tblsp:
+                lines[last_line] = lines[last_line].rstrip(';')
+                lines[last_line] += '\n    TABLESPACE ' + index_tblsp
         #
         if not (lines[last_line].endswith(';')):
             lines[last_line] += ';'

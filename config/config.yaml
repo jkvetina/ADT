@@ -58,6 +58,12 @@ object_comments:
     - VIEW
     - MATERIALIZED VIEW
 
+# override tablespaces
+tablespace:
+    TABLE       : ''
+    PARTITION   : ''
+    INDEX       : ''
+
 # cleanup modificators
 cleanup_view:
     keep_force          : True

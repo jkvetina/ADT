@@ -65,9 +65,12 @@ class Export_Data(config.Config):
 
         # find existing table names
         if not self.args.name:
+            # if name is not provided, export existing tables
+            self.args.name = []
             for file in util.get_files(self.tables_dir + '*' + file_ext):
                 table_name = os.path.basename(file).split('.')[0].upper()
                 self.tables_curr.append(table_name)
+                self.args.name.append(table_name)
 
         # find requested table(s)
         self.get_requested_tables()

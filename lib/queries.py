@@ -822,10 +822,20 @@ END;"""
 
 # get table comments
 pull_comments = """
-WITH objects_add AS (
+WITH objects_prefix AS (
     SELECT /*+ MATERIALIZE CARDINALITY(t 1) */
         t.column_value AS object_like
-    FROM TABLE(APEX_STRING.SPLIT(TRIM(BOTH ',' FROM NVL(:objects_prefix, '%')), ',')) t
+    FROM TABLE(APEX_STRING.SPLIT(TRIM(BOTH ',' FROM :objects_prefix), ',')) t
+),
+objects_types AS (
+    SELECT /*+ MATERIALIZE CARDINALITY(t 10) */
+        t.column_value AS object_like
+    FROM TABLE(APEX_STRING.SPLIT(TRIM(BOTH ',' FROM :object_type), ',')) t
+),
+objects_names AS (
+    SELECT /*+ MATERIALIZE CARDINALITY(t 10) */
+        t.column_value AS object_like
+    FROM TABLE(APEX_STRING.SPLIT(TRIM(BOTH ',' FROM :object_name), ',')) t
 ),
 objects_ignore AS (
     SELECT /*+ MATERIALIZE CARDINALITY(t 10) */
@@ -843,13 +853,16 @@ FROM user_tab_comments m
 JOIN user_objects o
     ON o.object_name        = m.table_name
     AND o.object_type       IN ('TABLE', 'VIEW', 'MATERIALIZED VIEW')
-JOIN objects_add a
-    ON m.table_name         LIKE a.object_like ESCAPE '\\'
+JOIN objects_prefix a
+    ON o.object_name        LIKE a.object_like ESCAPE '\\'
+JOIN objects_types p
+    ON o.object_type        LIKE p.object_like ESCAPE '\\'
+JOIN objects_names n
+    ON o.object_name        LIKE n.object_like ESCAPE '\\'
 LEFT JOIN objects_ignore g
-    ON m.table_name         LIKE g.object_like ESCAPE '\\'
+    ON o.object_name        LIKE g.object_like ESCAPE '\\'
 WHERE 1 = 1
     AND g.object_like       IS NULL
-    AND m.table_name        LIKE :object_name ESCAPE '\\'
 --
 UNION ALL
 SELECT
@@ -863,16 +876,19 @@ FROM user_col_comments m
 JOIN user_tab_cols c
     ON c.table_name         = m.table_name
     AND c.column_name       = m.column_name
-LEFT JOIN user_views v
-    ON v.view_name          = m.table_name
-JOIN objects_add a
-    ON m.table_name         LIKE a.object_like ESCAPE '\\'
+JOIN user_objects o
+    ON o.object_name        = m.table_name
+    AND o.object_type       IN ('TABLE', 'VIEW', 'MATERIALIZED VIEW')
+JOIN objects_prefix a
+    ON o.object_name        LIKE a.object_like ESCAPE '\\'
+JOIN objects_types p
+    ON o.object_type        LIKE p.object_like ESCAPE '\\'
+JOIN objects_names n
+    ON o.object_name        LIKE n.object_like ESCAPE '\\'
 LEFT JOIN objects_ignore g
-    ON m.table_name         LIKE g.object_like ESCAPE '\\'
+    ON o.object_name        LIKE g.object_like ESCAPE '\\'
 WHERE 1 = 1
     AND g.object_like       IS NULL
-    AND m.table_name        LIKE :object_name ESCAPE '\\'
-    AND m.table_name        NOT LIKE '%\\_E$' ESCAPE '\\'
     AND (
         m.column_name       NOT IN (
             'UPDATED_BY', 'UPDATED_AT', 'CHANGED_BY', 'CHANGED_AT', 'CREATED_BY', 'CREATED_AT'

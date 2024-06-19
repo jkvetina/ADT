@@ -132,6 +132,7 @@ class Patch(config.Config):
         self.commits_file       = self.config.repo_commits_file.replace('#BRANCH#', self.info.branch)
         self.show_commits       = (self.args.commits or 10) if self.patch_code == None else self.args.commits
         self.show_patches       = (self.args.patches or 0)
+        self.ignored_scripts    = []
         self.patches            = {}
         self.patch_found        = []
         self.deploy_plan        = []
@@ -1497,7 +1498,20 @@ class Patch(config.Config):
                 env_name = util.extract(r'\.\[([^\]]+)\]\.', file) or ''
                 if env_name and env_name != self.target_env:
                     continue
-                found.append(file)
+
+                # check if file is in previous patches (and not changed since)
+                found_flag = False
+                for commit_id in sorted(self.relevant_commits, reverse = True):
+                    commit = self.all_commits[commit_id]
+                    #
+                    if file in commit.get('files', []):
+                        found_flag = True
+                        break
+                #
+                if found_flag:
+                    found.append(file)
+                else:
+                    self.ignored_scripts.append(file)
         #
         return list(sorted(set(found)))  # unique files
 
@@ -1509,6 +1523,8 @@ class Patch(config.Config):
             if file in self.alter_files:
                 continue
             if file in scripts_processed:
+                continue
+            if file in self.ignored_scripts:
                 continue
             #
             unknown.append(file)

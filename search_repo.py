@@ -50,7 +50,7 @@ class Search_Repo(config.Config):
         group.add_argument('-my',           help = 'Show only my commits',                                              nargs = '?', const = True,  default = False)
         #
         group = self.parser.add_argument_group('EXTRA ACTIONS')
-        group.add_argument('-restore',      help = 'Restore specific version of file',                                  nargs = '?', const = True,  default = False)
+        group.add_argument('-restore',      help = 'Restore specific version(s) of file',       type = int,             nargs = '*')
 
         super().__init__(self.parser, args)
 
@@ -62,6 +62,7 @@ class Search_Repo(config.Config):
         self.all_commits        = {}
         self.all_files          = {}
         self.old_date           = None
+        self.relevant_files     = {}
 
         # to limit dates
         if self.args.recent != None:
@@ -139,6 +140,10 @@ class Search_Repo(config.Config):
                     found_files.append(file)
                     if file in commit_obj['deleted']:
                         deleted_files.append(file)
+                    #
+                    if not (file in self.relevant_files):
+                        self.relevant_files[file] = []
+                    self.relevant_files[file].append(commit_num)
 
             # show findings to user
             if found_files:
@@ -164,11 +169,25 @@ class Search_Repo(config.Config):
                             print('  {:>16} | {}{}'.format(obj_type if i == 0 else '', obj_name, flag))
                 print()
 
+        # restore matching files to requested (or all) past versions
+        if self.args.restore != None:
+            util.print_header('RESTORED FILES:')
             #
+            for file in sorted(self.relevant_files.keys()):
+                versions = list(sorted(self.args.restore or self.all_files[file], reverse = True))
+                #
+                print('  - {}'.format(file.replace(self.repo_root, '')))
 
+                # restore file close to the original file, restore just relevant commits
+                for ver in versions:
+                    if ver in self.relevant_files[file]:
+                        base, ext   = os.path.splitext(file)
+                        ver_file    = '{}.{}{}'.format(base, ver, ext)
                         payload     = self.get_file_from_commit(file, commit = ver)
                         #
                         util.write_file(ver_file, payload)
+            #
+            print()
 
 
 

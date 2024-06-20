@@ -1280,6 +1280,11 @@ class Patch(config.Config):
                 if len(apex_pages) > 0:
                     payload.extend(self.fix_apex_pages(apex_pages))
             #
+                if app_id:
+                    # attach changed APEX files
+                    payload.extend(self.fix_apex_files(app_id, files_to_process))
+
+            # end of schema file
             payload.append('')
 
             # attach APEX ending file for partial APEX exports
@@ -1322,9 +1327,15 @@ class Patch(config.Config):
                 if file.startswith(self.config.path_objects):
                     file = file.replace(self.config.path_objects, '')
                 elif file.startswith(self.config.path_apex):
-                    if len(file.split('/application/')) == 1:       # full export...
+                    # keep app/ws files
+                    if '/' + self.config.apex_path_files in file:
+                        file = file.replace(self.get_root(app_id).replace(self.repo_root, ''), '')
+
+                    # ignore full app export
+                    elif len(file.split('/application/')) > 1:
+                        file = file.split('/application/')[1]
+                    else:
                         continue
-                    file = file.split('/application/')[1]
 
                 # get commit info
                 curr_commit_id  = self.get_file_commit(orig_file)[1]
@@ -1746,6 +1757,32 @@ class Patch(config.Config):
                 '#FILE#'        : target_file,
                 '#PATCH_CODE#'  : self.patch_code,
             }))
+        #
+        return payload
+
+
+
+    def fix_apex_files(self, app_id, files_to_process):
+        payload = [
+            '',
+            'PROMPT --;',
+            'PROMPT -- FILES',
+            'PROMPT --;',
+        ]
+        #
+        found_app_files     = []
+        folder_app_files    = self.get_root(app_id = app_id).replace(self.repo_root, '') + self.config.apex_path_files
+        folder_ws_files     = (self.config.apex_workspace_dir + self.config.apex_path_files).replace('//', '/')
+        #
+        for file in files_to_process:
+            if (file.startswith(folder_app_files) or file.startswith(folder_ws_files)):
+                found_app_files.append(file)
+        #
+        if len(found_app_files) > 0:
+            for file in sorted(found_app_files):
+                payload.append('-- FILE: {}'.format(file))
+        else:
+            return []
         #
         return payload
 

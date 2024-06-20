@@ -1,4 +1,4 @@
-import sys, os, re, glob, traceback, inspect, io, subprocess, datetime, time, timeit, shutil, hashlib
+import sys, os, re, glob, traceback, inspect, io, subprocess, datetime, time, timeit, shutil, hashlib, mimetypes
 import secrets, base64
 import yaml         # pip3 install pyyaml       --upgrade
 import chime        # pip3 install chime        --upgrade
@@ -767,8 +767,8 @@ def assert_(condition, message, *extras):
 
 
 
-def run_command(command, stop = True, silent = False):
-    result = subprocess.run(command, shell = True, capture_output = True, text = True)
+def run_command(command, stop = True, silent = False, capture_output = True, text = True):
+    result = subprocess.run(command, shell = True, capture_output = capture_output, text = text)
     if result.returncode != 0 and not silent:
         # get all lines below error line
         lines = []
@@ -815,4 +815,19 @@ def get_string(string, max_length = None, append = '..'):
 
 def get_start():
     return timeit.default_timer()
+
+
+
+def is_text_file(file):
+    mime_type = mimetypes.guess_type(file)[0]
+    #
+    if mime_type in (
+            'application/x-sql',        # text exceptions
+        ):
+        return True
+    #
+    if mime_type.startswith('text'):
+        return True
+    #
+    return False
 

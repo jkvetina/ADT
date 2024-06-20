@@ -1772,7 +1772,7 @@ class Patch(config.Config):
             commit = self.all_commits[commit]['id']
 
         # run command line and capture the output, text file is expected
-        return util.run_command('git show {}:{}'.format(commit, file), silent = True)
+        return util.run_command('git show {}:{}'.format(commit, file), silent = True, text = util.is_text_file(file))
 
 
 

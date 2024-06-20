@@ -817,13 +817,23 @@ class Patch(config.Config):
 
 
     def is_usable_file(self, file):
+        # skip embedded code report files
+        if '/embedded_code/' in file:
+            return False
+
+        # keep APEX files
+        if file.startswith(self.config.path_apex) and ('/' + self.config.apex_path_files in file or file.endswith('.sql')):
+            return True
+
+        # keep just .sql files
         if not (file.endswith('.sql')):
             return False
-        #
+
+        # keep just database objects folder
         if file.startswith(self.config.path_objects):
             return True
-        if file.startswith(self.config.path_apex):
-            return True
+
+        # keep just patch scripts snapshots
         if file.startswith(self.config.patch_scripts_snap):
             return True
         #
@@ -867,14 +877,6 @@ class Patch(config.Config):
 
             # process files in commit
             for file, file_hash in commit['files'].items():
-                # process just the listed extensions (in the config)
-                if os.path.splitext(file)[1] != '.sql':
-                    continue
-
-                # skip embedded code report files
-                if '/embedded_code/' in file:
-                    continue
-
                 # process just database and APEX exports
                 if not (self.is_usable_file(file)):
                     continue
@@ -1431,6 +1433,11 @@ class Patch(config.Config):
         #
         for diff in self.first_commit.diff(self.last_commit):
             file = diff.b_path.replace('\\', '/').replace('//', '/')
+
+            # skip unusable files
+            if not self.is_usable_file(file):
+                continue
+
             # 'a_blob', 'a_mode', 'a_path', 'a_rawpath', 'b_blob', 'b_mode', 'b_path', 'b_rawpath', 'change_type',
             # 'copied_file', 'deleted_file', 'diff', 'new_file', 'raw_rename_from', 'raw_rename_to', 're_header',
             # 'rename_from', 'rename_to', 'renamed', 'renamed_file', 'score'

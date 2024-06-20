@@ -47,6 +47,7 @@ class Search_Repo(config.Config):
         group.add_argument('-branch',       help = 'Limit scope to specific branch',                                    nargs = '?')
         group.add_argument('-type',         help = 'Object type (you can use LIKE syntax)',                             nargs = '?')
         group.add_argument('-name',         help = 'Object name/prefix (you can use LIKE syntax)',                      nargs = '?')
+        group.add_argument('-my',           help = 'Show only my commits',                                              nargs = '?', const = True,  default = False)
         #
         group = self.parser.add_argument_group('EXTRA ACTIONS')
         group.add_argument('-history',      help = 'Show history of specific file/object',                              nargs = '*',                default = [])
@@ -98,6 +99,10 @@ class Search_Repo(config.Config):
 
             # search for specific commits
             if self.args.commit and not (commit_num in self.args.commit):
+                continue
+
+            # limit just to my commits
+            if self.args.my and self.repo_user_mail != commit_obj['author']:
                 continue
 
             # search for all words
@@ -195,6 +200,11 @@ class Search_Repo(config.Config):
             for commit_id in sorted(self.all_files[file], reverse = True):
                 flag    = '>' if version and version == commit_id else ' '
                 commit  = self.all_commits[commit_id]
+
+                # limit just to my commits
+                if self.args.my and self.repo_user_mail != commit['author']:
+                    continue
+
                 print('  {} {}) {}'.format(flag, commit_id, commit['summary']))
             print()
 

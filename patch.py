@@ -142,6 +142,7 @@ class Patch(config.Config):
         self.logs_prefix        = self.config.patch_deploy_logs.replace('{$TARGET_ENV}', self.target_env or '')
         self.script_stats       = {}
         self.obj_not_found      = []
+        self.deleted_flag       = '[DELETED]'
         self.altered_flag       = '[ALT:#]'
         self.new_object_flag    = '[NEW]'
 
@@ -1029,7 +1030,7 @@ class Patch(config.Config):
             # get differences in between first and last commits
             # also fill the self.diffs() with files changed in commits
             # in self.relevant_files we can have files which were deleted
-            payload.extend(self.get_differences(self.relevant_files[schema_with_app]))
+            payload.extend(self.get_differences(self.relevant_files[schema_with_app], app_id))
 
             # need to map files to object types & sort them by dependencies
             # (1) self.diffs.keys() with committed files
@@ -1278,11 +1279,23 @@ class Patch(config.Config):
                     # attach file reference
                     payload.extend(self.attach_file(file, category = 'COMMIT', app_id = app_id))
 
-                # attach APEX pages to the end
-                if len(apex_pages) > 0:
-                    payload.extend(self.fix_apex_pages(apex_pages))
-            #
                 if app_id:
+                    # detect deleted files
+                    deleted_pages = []
+                    for file in self.relevant_files[schema_with_app]:
+                        if not (file in self.diffs):
+                            page_id = util.extract_int(r'/pages/page_(\d+)\.sql$', file)
+                            if page_id:
+                                deleted_pages.append(page_id)
+                                files_processed.append(file + self.deleted_flag)
+                    #
+                    if len(deleted_pages) > 0:
+                        payload.extend(self.fix_apex_deleted_pages(deleted_pages))
+
+                    # attach APEX pages to the end
+                    if len(apex_pages) > 0:
+                        payload.extend(self.fix_apex_pages(apex_pages))
+
                     # attach changed APEX files
                     payload.extend(self.fix_apex_files(app_id, files_to_process))
 
@@ -1324,6 +1337,9 @@ class Patch(config.Config):
             self.create_patch_file(payload, app_id = app_id)
             util.print_header('PROCESSED FILES:', schema_with_app)
             for file in files_processed:
+                file_deleted    = self.deleted_flag in file
+                file            = file.replace(self.deleted_flag, '')
+
                 # shorten file name
                 orig_file = file
                 if file.startswith(self.config.path_objects):
@@ -1354,6 +1370,8 @@ class Patch(config.Config):
                         if row['template']:
                             statements += 1
                     extra = self.altered_flag.replace('#', str(statements)) if statements > 0 else ''
+                elif file_deleted:
+                    extra = self.deleted_flag.strip()
                 else:
                     extra = self.new_object_flag if obj_code in self.obj_not_found else ''
                 #
@@ -1437,7 +1455,7 @@ class Patch(config.Config):
 
 
 
-    def get_differences(self, rel_files):
+    def get_differences(self, rel_files, app_id = None):
         self.diffs      = {}    # cleanup
         payload         = []
         new_files       = []
@@ -1458,7 +1476,23 @@ class Patch(config.Config):
 
             # skip deleted files
             if 'file deleted in rhs' in str(diff):
-                continue
+                ignored = False
+                for ignore_file in self.config.apex_files_ignore:
+                    if file.endswith(ignore_file):
+                        ignored = True
+                        break
+                #
+                if not ignored:
+                    # get application id based on file
+                    if app_id and file.startswith(self.config.path_apex):
+                        app_path = self.get_root(app_id, remove_root = True)
+                        if file.startswith(app_path):
+                            deleted_files.append(file)
+                            continue
+                        #
+                    elif not app_id and not file.startswith(self.config.path_apex):
+                        deleted_files.append(file)
+                        continue
 
             # process file and sort to show the file status
             if file in rel_files and not (file in self.diffs):
@@ -1733,18 +1767,7 @@ class Patch(config.Config):
             'PROMPT --;',
             'PROMPT -- APEX PAGES',
             'PROMPT --;',
-            ##'BEGIN',
         ]
-        #
-        for file in apex_pages:
-            page_id = util.extract_int(r'/pages/page_(\d+)\.sql', file)
-            ##payload.append('    wwv_flow_imp_page.remove_page(p_flow_id => wwv_flow.g_flow_id, p_page_id => {});'.format(page_id))
-        #
-        payload.extend([
-            ##'END;',
-            ##'/',
-            ##'--',
-        ])
 
         # recreate requested pages
         for target_file in apex_pages:
@@ -1759,6 +1782,27 @@ class Patch(config.Config):
                 '#FILE#'        : target_file,
                 '#PATCH_CODE#'  : self.patch_code,
             }))
+        #
+        return payload
+
+
+
+    def fix_apex_deleted_pages(self, apex_pages):
+        payload = [
+            'PROMPT --;',
+            'PROMPT -- APEX REMOVE PAGES',
+            'PROMPT --;',
+            'BEGIN',
+        ]
+        #
+        for page_id in apex_pages:
+            payload.append('    wwv_flow_imp_page.remove_page(p_flow_id => wwv_flow.g_flow_id, p_page_id => {});'.format(page_id))
+        #
+        payload.extend([
+            'END;',
+            '/',
+            '--',
+        ])
         #
         return payload
 

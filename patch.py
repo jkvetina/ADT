@@ -1585,9 +1585,12 @@ class Patch(config.Config):
             comment_out = '-- [!] SKIPPING, WE HAVE ALTER STATEMENTS\n-- [!] '
 
         # add line to the patch file
-        payload.extend([
+        file_path = self.config.patch_file_link if not self.patch_file_moveup else self.config.patch_file_link_moveup
+        file_path = file_path.replace('{$FILE}', '#FILE#')  # backwards compatibility
+        #
+        payload.extend([    # source of the {$FILE}
             'PROMPT -- {}{}: {}'.format(attach_type or 'FILE', ' #{}'.format(commit) if commit else '', file),
-            comment_out + util.replace(self.config.patch_file_link if not self.patch_file_moveup else self.config.patch_file_link_moveup, {
+            comment_out + util.replace(file_path, {
                 '#FILE#'        : file.lstrip('/'),
                 '#PATCH_CODE#'  : self.patch_code,
             }),
@@ -1736,7 +1739,10 @@ class Patch(config.Config):
             if self.config.apex_snapshots:
                 target_file = self.get_target_file(target_file).replace(self.patch_folder + '/', '')
             #
-            payload.append(util.replace(self.config.patch_file_link if not self.patch_file_moveup else self.config.patch_file_link_moveup, {
+            file_path = self.config.patch_file_link if not self.patch_file_moveup else self.config.patch_file_link_moveup
+            file_path = file_path.replace('{$FILE}', '#FILE#')  # backwards compatibility
+            #
+            payload.append(util.replace(file_path, {
                 '#FILE#'        : target_file,
                 '#PATCH_CODE#'  : self.patch_code,
             }))

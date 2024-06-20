@@ -142,6 +142,8 @@ class Patch(config.Config):
         self.logs_prefix        = self.config.patch_deploy_logs.replace('{$TARGET_ENV}', self.target_env or '')
         self.script_stats       = {}
         self.obj_not_found      = []
+        self.altered_flag       = '[ALT:#]'
+        self.new_object_flag    = '[NEW]'
 
         # fetch changes in Git
         if self.args.fetch:
@@ -1351,9 +1353,9 @@ class Patch(config.Config):
                     for row in self.script_stats.get(file, {}):
                         if row['template']:
                             statements += 1
-                    extra = '[ALT:{}]'.format(statements).replace('[ALT:0]', '')
+                    extra = self.altered_flag.replace('#', str(statements)) if statements > 0 else ''
                 else:
-                    extra = '[NEW]' if obj_code in self.obj_not_found else ''
+                    extra = self.new_object_flag if obj_code in self.obj_not_found else ''
                 #
                 pad = (72 - len(file) - len(extra)) * '.' if extra else ''
                 print('  {} {} {} {}'.format(flag, file, pad, extra))

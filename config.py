@@ -592,7 +592,7 @@ class Config(util.Attributed):
 
 
 
-    def get_root(self, app_id, folders = ''):
+    def get_root(self, app_id, folders = '', remove_root = False):
         transl = {
             '{$APP_ID}'     : app_id,
             '{$APP_ALIAS}'  : self.apex_apps[app_id]['app_alias'],
@@ -601,8 +601,12 @@ class Config(util.Attributed):
         }
         app_folder  = '/{}/'.format(util.replace(self.config.apex_path_app, transl))
         path        = self.repo_root + self.config.path_apex + app_folder + folders
+        path        = path.replace('//', '/')
         #
-        return path.replace('//', '/')
+        if remove_root:
+            path = path.replace(self.repo_root, '')
+        #
+        return path
 
 
 

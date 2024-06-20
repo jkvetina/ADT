@@ -886,7 +886,7 @@ class Patch(config.Config):
                 if self.config.path_apex in file:
                     app_id = util.extract_int(self.config.apex_path_app_id, file.replace(self.config.path_apex, ''))
                     if app_id:
-                        if not file.startswith(self.get_root(app_id).replace(self.repo_root, '')):
+                        if not file.startswith(self.get_root(app_id, remove_root = True)):
                             continue
 
                         # append app_id to separate APEX files
@@ -1329,7 +1329,7 @@ class Patch(config.Config):
                 elif file.startswith(self.config.path_apex):
                     # keep app/ws files
                     if '/' + self.config.apex_path_files in file:
-                        file = file.replace(self.get_root(app_id).replace(self.repo_root, ''), '')
+                        file = file.replace(self.get_root(app_id, remove_root = True), '')
 
                     # ignore full app export
                     elif len(file.split('/application/')) > 1:
@@ -1771,7 +1771,7 @@ class Patch(config.Config):
         ]
         #
         found_app_files     = []
-        folder_app_files    = self.get_root(app_id = app_id).replace(self.repo_root, '') + self.config.apex_path_files
+        folder_app_files    = self.get_root(app_id = app_id, remove_root = True) + self.config.apex_path_files
         folder_ws_files     = (self.config.apex_workspace_dir + self.config.apex_path_files).replace('//', '/')
         #
         for file in files_to_process:

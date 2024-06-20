@@ -96,8 +96,9 @@ class Patch(config.Config):
         self.patch_dry          = False
         self.patch_file_moveup  = self.args.moveup
         #
-        self.init_config()
-        self.check_env(self.target_env)
+        if self.args.target:
+            self.init_config()
+            self.check_env(self.target_env)
 
         # adjust sequence
         if isinstance(self.args.create, bool) and self.args.create:
@@ -827,6 +828,7 @@ class Patch(config.Config):
             return True
         #
         return False
+
 
 
     def get_matching_commits(self):

@@ -530,7 +530,7 @@ class Export_APEX(config.Config):
     def export_files(self, app_id):
         # get target folder
         if app_id == 0:  # workspace files
-            target_dir = self.get_root_ws(self.config.apex_path_files)
+            target_dir = self.get_root_ws(self.target_files)
         else:
             target_dir = self.get_root(app_id, self.target_files)
 

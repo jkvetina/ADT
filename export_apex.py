@@ -187,6 +187,10 @@ class Export_APEX(config.Config):
                     if not (hasattr(self.__class__, export_fn) and callable(getattr(self, export_fn))):
                         continue
 
+                    # check if we actually have some recent changes to export
+                    if action == 'recent' and self.recent_count == 0:
+                        continue
+
                     # execute in a thread so we can show progress in main process
                     with ThreadPool(processes = 1) as pool:
                         result = pool.apply_async(getattr(self, export_fn), [app_id])
@@ -381,7 +385,7 @@ class Export_APEX(config.Config):
         #
         args = {
             'app_id'    : app_id,
-            'recent'    : (self.args.recent     or 0) if self.args.recent != None else '',
+            'recent'    : self.arg_recent or '',
             'author'    : self.args.get('by')
         }
         #

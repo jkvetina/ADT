@@ -399,6 +399,9 @@ class Export_APEX(config.Config):
                 'name'  : row.name,
                 'pages' : row.used_on_pages.aslist(),
             }
+            self.comp_changed.append('{}:{}'.format(row.type_name, row.id))
+        #
+        self.recent_count = len(data_grouped.keys())
         #
         for group in sorted(data_grouped.keys()):
             print('  {}:'.format(group))

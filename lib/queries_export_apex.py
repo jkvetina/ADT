@@ -157,8 +157,8 @@ apex_export_recent_list = """
 SELECT
     a.type_name,
     a.id,
-    a.name
-    --a.used_on_pages
+    a.name,
+    a.used_on_pages
 FROM apex_appl_export_comps a
 WHERE a.application_id      = :app_id
     AND (a.last_updated_on  >= TRUNC(SYSDATE) + 1 - :recent OR :recent IS NULL)

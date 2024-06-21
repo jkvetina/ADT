@@ -391,7 +391,10 @@ class Export_APEX(config.Config):
         for row in data:
             if not (row.type_name in data_grouped):
                 data_grouped[row.type_name] = {}
-            data_grouped[row.type_name][row.id] = row.name
+            data_grouped[row.type_name][row.id] = {
+                'name'  : row.name,
+                'pages' : row.used_on_pages.aslist(),
+            }
         #
         for group in sorted(data_grouped.keys()):
             print('  {}:'.format(group))
@@ -401,10 +404,13 @@ class Export_APEX(config.Config):
                 for id, name in data_grouped[group].items():
                     page_width = max(page_width, len(str(id)))
             #
-            for id, name in data_grouped[group].items():
+            for id, info in data_grouped[group].items():
+                name = info['name']
                 if group == 'PAGE':
                     page_id, name = name.split('.')
                     name = str('{:>' + str(page_width) + '}) {}').format(page_id, name.strip())
+                elif len(info['pages']) > 0:
+                    name += ' {}'.format(str(info['pages']))
                 #
                 print('    {}{}'.format('- ' if group != 'PAGE' else '', name))
             print()

@@ -1598,6 +1598,7 @@ class Patch(config.Config):
 
 
     def attach_file(self, file, header = '', category = '', app_id = None):
+        file_source = file.replace(self.repo_root, '')
         attach_type = ''
         if category != '':
             attach_type = category
@@ -1635,7 +1636,7 @@ class Patch(config.Config):
         file_path = file_path.replace('{$FILE}', '#FILE#')  # backwards compatibility
         #
         payload.extend([    # source of the {$FILE}
-            'PROMPT -- {}{}: {}'.format(attach_type or 'FILE', ' #{}'.format(commit) if commit else '', file),
+            'PROMPT -- {}{}: {}'.format(attach_type or 'FILE', ' #{}'.format(commit) if commit else '', file_source),
             comment_out + util.replace(file_path, {
                 '#FILE#'        : file.lstrip('/'),
                 '#PATCH_CODE#'  : self.patch_code,

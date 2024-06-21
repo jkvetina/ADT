@@ -1601,6 +1601,7 @@ class Patch(config.Config):
 
 
     def attach_file(self, file, header = '', category = '', app_id = None):
+        file_passed = file
         attach_type = ''
         if category != '':
             attach_type = category
@@ -1628,8 +1629,14 @@ class Patch(config.Config):
         object_type = self.get_object_type(file_orig)
         object_name = self.get_object_name(file_orig)
         comment_out = ''
+
+        # comment out tables with ALTER statements
         if category == 'COMMIT' and app_id == None and object_type in self.config.immutables and object_name in self.skip_tables:
             comment_out = '-- [!] SKIPPING, WE HAVE ALTER STATEMENTS\n-- [!] '
+
+        # comment out APEX files
+        if category == 'COMMIT' and app_id != None and '/' + self.config.apex_path_files in file_passed:
+            comment_out = '-- [!] SKIPPING, APEX FILES NOT DEPLOYED THIS WAY\n-- [!] '
 
         # add line to the patch file
         file_path = self.config.patch_file_link if not self.patch_file_moveup else self.config.patch_file_link_moveup

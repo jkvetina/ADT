@@ -142,7 +142,7 @@ class Export_APEX(config.Config):
             self.get_comments(app_id)
 
             # show recent changes
-            if self.arg_recent > 0 and self.actions['recent']:
+            if self.arg_recent > 0:
                 self.show_recent_changes(app_id)
 
             util.print_header('APP {}/{}, EXPORTING:'.format(app_id, self.apex_apps[app_id]['app_alias']))

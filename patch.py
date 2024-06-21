@@ -1479,7 +1479,7 @@ class Patch(config.Config):
                         ignored = True
                         break
                 #
-                if not ignored:
+                if not ignored and file in rel_files:
                     # get application id based on file
                     if app_id and file.startswith(self.config.path_apex):
                         app_path = self.get_root(app_id, remove_root = True)

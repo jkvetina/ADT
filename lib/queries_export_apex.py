@@ -153,6 +153,24 @@ BEGIN
 END;
 """
 
+apex_export_recent_list = """
+SELECT
+    a.type_name,
+    a.id,
+    a.name
+    --a.used_on_pages
+FROM apex_appl_export_comps a
+WHERE a.application_id      = :app_id
+    AND (a.last_updated_on  >= TRUNC(SYSDATE) + 1 - :recent OR :recent IS NULL)
+    AND (a.last_updated_by  = :author OR :author IS NULL)
+ORDER BY
+    a.type_name,
+    CASE WHEN a.type_name = 'PAGE'
+        THEN LPAD(a.id, 8, '0')
+        ELSE a.name
+        END
+"""
+
 apex_export_fetch_files = """
 SELECT
     c.seq_id,

@@ -379,24 +379,35 @@ class Export_APEX(config.Config):
         #
         util.print_header('APP {}/{}, CHANGES SINCE {}{}:'.format(app_id, alias, self.today, ' BY ' + author if author else ''))
         #
-        changesby   = ' -changesby {}'.format(author) if author else ''
-        output      = self.execute_request('apex export -applicationid {$APP_ID} -list -changessince {$TODAY}' + changesby, app_id, lines = True)
-        data        = util.parse_table(output)
-        if data == [{}]:
-            data = []
+        args = {
+            'app_id'    : app_id,
+            'recent'    : (self.args.recent     or 0) if self.args.recent != None else '',
+            'author'    : self.args.get('by')
+        }
         #
-        for i, row in enumerate(data):
-            self.comp_changed.append(row['id'])
-            if row['id'].startswith('PAGE:'):
-                page_id = row['id'].replace('PAGE:', '')
-                data[i]['name'] = data[i]['name'].replace('{}. '.format(page_id), '')
-            else:
-                data[i]['id']   = data[i]['id'].split(':')[0]
+        data_grouped = {}
+        #
+        data = self.conn.fetch_assoc(query.apex_export_recent_list, **args)
+        for row in data:
+            if not (row.type_name in data_grouped):
+                data_grouped[row.type_name] = {}
+            data_grouped[row.type_name][row.id] = row.name
+        #
+        for group in sorted(data_grouped.keys()):
+            print('  {}:'.format(group))
             #
-            data[i]['id']   = util.get_string(data[i]['id'],    16)
-            data[i]['name'] = util.get_string(data[i]['name'],  36)
-        #
-        util.print_table(data)
+            page_width = 0
+            if group == 'PAGE':
+                for id, name in data_grouped[group].items():
+                    page_width = max(page_width, len(str(id)))
+            #
+            for id, name in data_grouped[group].items():
+                if group == 'PAGE':
+                    page_id, name = name.split('.')
+                    name = str('{:>' + str(page_width) + '}) {}').format(page_id, name.strip())
+                #
+                print('    {}{}'.format('- ' if group != 'PAGE' else '', name))
+            print()
 
 
 

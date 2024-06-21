@@ -1,5 +1,5 @@
 # coding: utf-8
-import sys, os, re, argparse, datetime
+import sys, os, re, argparse, datetime, base64, mimetypes
 #
 import config
 from lib            import queries_patch as query
@@ -1296,9 +1296,6 @@ class Patch(config.Config):
                     if len(apex_pages) > 0:
                         payload.extend(self.fix_apex_pages(apex_pages))
 
-                    # attach changed APEX files
-                    payload.extend(self.fix_apex_files(app_id, files_to_process))
-
             # end of schema file
             payload.append('')
 
@@ -1601,7 +1598,6 @@ class Patch(config.Config):
 
 
     def attach_file(self, file, header = '', category = '', app_id = None):
-        file_passed = file
         attach_type = ''
         if category != '':
             attach_type = category
@@ -1631,12 +1627,8 @@ class Patch(config.Config):
         comment_out = ''
 
         # comment out tables with ALTER statements
-        if category == 'COMMIT' and app_id == None and object_type in self.config.immutables and object_name in self.skip_tables:
+        if app_id == None and category == 'COMMIT' and object_type in self.config.immutables and object_name in self.skip_tables:
             comment_out = '-- [!] SKIPPING, WE HAVE ALTER STATEMENTS\n-- [!] '
-
-        # comment out APEX files
-        if category == 'COMMIT' and app_id != None and '/' + self.config.apex_path_files in file_passed:
-            comment_out = '-- [!] SKIPPING, APEX FILES NOT DEPLOYED THIS WAY\n-- [!] '
 
         # add line to the patch file
         file_path = self.config.patch_file_link if not self.patch_file_moveup else self.config.patch_file_link_moveup
@@ -1761,6 +1753,11 @@ class Patch(config.Config):
                     lines[0] = lines[0].replace(' VIEW ', ' FORCE VIEW ')
                     file_content = '\n'.join(lines)
 
+        # convert binary file to APEX installable file
+        if '/' + self.config.apex_path_files in file and app_id:
+            target_file     = target_file + '.sql'
+            file_content    = self.get_apex_ready_file(file, file_content, app_id)
+
         # save file
         if not self.patch_dry:
             util.write_file(target_file, file_content)
@@ -1815,32 +1812,6 @@ class Patch(config.Config):
 
 
 
-    def fix_apex_files(self, app_id, files_to_process):
-        payload = [
-            '',
-            'PROMPT --;',
-            'PROMPT -- FILES',
-            'PROMPT --;',
-        ]
-        #
-        found_app_files     = []
-        folder_app_files    = self.get_root(app_id = app_id, remove_root = True) + self.config.apex_path_files
-        folder_ws_files     = (self.config.apex_workspace_dir + self.config.apex_path_files).replace('//', '/')
-        #
-        for file in files_to_process:
-            if (file.startswith(folder_app_files) or file.startswith(folder_ws_files)):
-                found_app_files.append(file)
-        #
-        if len(found_app_files) > 0:
-            for file in sorted(found_app_files):
-                payload.append('-- FILE: {}'.format(file))
-        else:
-            return []
-        #
-        return payload
-
-
-
     def get_target_file(self, file):
         file    = file.replace(self.patch_folder, '').strip('/').split('/')
         first   = file.pop(0)
@@ -1878,6 +1849,43 @@ class Patch(config.Config):
 
         # run command line and capture the output, text file is expected
         return util.run_command('git show {}:{}'.format(commit, file), silent = True, text = util.is_text_file(file))
+
+
+
+    def get_apex_ready_file(self, file, file_content, app_id):
+        file_name   = file.split('/' + self.config.apex_path_files)[1]
+        mime_type   = mimetypes.guess_type(file)[0]
+        file_id     = query.template_apex_file_id
+        width       = 200
+        data        = []
+
+        # get data from set_env.sql file
+        file_header = self.get_root(app_id, 'application/set_environment.sql')  # steal the header
+        with open(file_header, 'rt') as f:
+            lines = f.readlines()
+            for i, line in enumerate(lines):
+                if line.strip() == 'begin':
+                    start = i
+                if line.strip() == 'end;':
+                    end = i
+            data = ''.join(lines[start:end]).replace('.import_begin', '.component_begin').splitlines()
+
+        # encode file
+        data.append(query.template_apex_file_init)
+        #
+        if file_content == None:
+            with open(file, 'rb') as f:
+                file_content = f.read()
+        elif isinstance(file_content, str):
+            file_content = file_content.encode('utf-8')
+        #
+        encoded = base64.b64decode(base64.b64encode(file_content)).hex().upper()
+        for i, row in enumerate([encoded[i:i+width] for i in range(0, len(encoded), width)], start = 1):
+            data.append(query.template_apex_file_line.format(i, row))
+
+        # append request to actually create the component
+        data.append(query.template_apex_file.lstrip().format(file_id, file_name, mime_type))
+        return '\n'.join(data)
 
 
 

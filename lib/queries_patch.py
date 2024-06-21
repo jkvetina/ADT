@@ -244,3 +244,21 @@ FROM user_tab_cols c
 WHERE c.table_name = :view_name
 """
 
+# to convert file for APEX
+template_apex_file = """
+wwv_flow_imp_shared.create_app_static_file(
+ p_id=>wwv_flow_imp.id({})
+,p_file_name=>'{}'
+,p_mime_type=>'{}'
+,p_file_charset=>'utf-8'
+,p_file_content => wwv_flow_imp.varchar2_to_blob(wwv_flow_imp.g_varchar2_table)
+);
+wwv_flow_imp.component_end;
+end;
+/
+"""
+#
+template_apex_file_id   = "wwv_flow_id.next_val"
+template_apex_file_init = "wwv_flow_imp.g_varchar2_table := wwv_flow_imp.empty_varchar2_table;"
+template_apex_file_line = "wwv_flow_imp.g_varchar2_table({}) := '{}';"
+

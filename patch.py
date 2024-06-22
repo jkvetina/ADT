@@ -59,10 +59,11 @@ class Patch(config.Config):
         group.add_argument('-continue',     help = 'Rollback or continue on DB error',                                  nargs = '?', const = True,  default = False)
         #
         group = self.parser.add_argument_group('SUPPORTING ACTIONS')
-        group.add_argument('-archive',      help = 'To archive patches with specific ref #',    type = int,             nargs = '*',                default = [])
+        group.add_argument('-archive',      help = 'To archive patches with specific ref #',    type = int,             nargs = '*')
         group.add_argument('-install',      help = 'Create install file',                                               nargs = '?', const = True,  default = False)
         group.add_argument('-moveup',       help = 'Move driving patch files higher',                                   nargs = '?', const = True,  default = False)
         group.add_argument('-refresh',      help = 'Refresh used objects and APEX components',                          nargs = '?', const = True,  default = False)
+        group.add_argument('-rebuild',      help = 'Rebuild temp files',                                                nargs = '?', const = True,  default = False)
         #
         group = self.parser.add_argument_group('SPECIFY ENVIRONMENT DETAILS')
         group.add_argument('-target',       help = 'Target environment',                                                nargs = '?')
@@ -82,7 +83,6 @@ class Patch(config.Config):
         group = self.parser.add_argument_group('ADDITIONAL ACTIONS')
         group.add_argument('-hash',         help = 'Store file hashes on patch -create',        type = util.is_boolint, nargs = '?', const = True,  default = False)
         group.add_argument('-fetch',        help = 'Fetch Git changes before patching',                                 nargs = '?', const = True,  default = False)
-        group.add_argument('-rebuild',      help = 'Rebuild temp files',                                                nargs = '?', const = True,  default = False)
         group.add_argument('-implode',      help = 'Merge files in a folder',                                           nargs = '?')
         group.add_argument('-deldiff',      help = 'Delete diff tables',                                                nargs = '?', const = True,  default = False)
 
@@ -162,7 +162,8 @@ class Patch(config.Config):
         self.get_patch_folders()
 
         # archive old patches and quit
-        if self.args.archive != []:
+        if self.args.archive != None:
+            self.show_matching_patches()
             self.archive_patches(self.args.archive)
             util.quit()
 
@@ -1957,9 +1958,6 @@ class Patch(config.Config):
 
 
     def archive_patches(self, requested = []):
-        if requested == []:
-            return
-
         # prepare archive folder if needed
         archive_folder = self.repo_root + self.config.patch_archive
         if not (os.path.exists(archive_folder)):
@@ -1967,8 +1965,8 @@ class Patch(config.Config):
 
         # find requested folders to archive
         data = []
-        for ref in sorted(self.patches.keys(), reverse = True):
-            if ref in requested:
+        for ref in sorted(self.patches.keys()):
+            if (ref in requested or requested == []):
                 data.append({
                     'ref'           : ref,
                     'patch_code'    : self.patches[ref]['patch_code'],
@@ -1979,7 +1977,7 @@ class Patch(config.Config):
         util.print_table(data)
         #
         for row in data:
-            # zip custom source files first
+            # zip patch_script files first
             source_folder   = self.repo_root + self.config.patch_scripts_dir.replace('/None/', '/{}/'.format(row['patch_code']))
             patch_folder    = self.repo_root + self.config.patch_root + row['folder'] + '/'
             #
@@ -1988,7 +1986,7 @@ class Patch(config.Config):
                 util.delete_folder(source_folder)
 
             # zip whole patch folder
-            util.create_zip(archive_folder + row['patch_code'], patch_folder)
+            util.create_zip(archive_folder + row['folder'], patch_folder)
             util.delete_folder(patch_folder)
 
 

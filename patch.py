@@ -894,15 +894,15 @@ class Patch(config.Config):
 
 
     def get_search_match(self, what_words, where):
-        if (what_words != [] and what_words != ['%']):
-            found_match = 0
-            for word in [word for word in what_words if word is not None]:
-                if word in where:
-                    found_match += 1
-            #
-            return (found_match == len(what_words))
+        if (what_words == [] or what_words == ['%']):
+            return True
         #
-        return False
+        found_match = 0
+        for word in [word for word in what_words if word is not None]:
+            if word in where:
+                found_match += 1
+        #
+        return (found_match == len(what_words))
 
 
 

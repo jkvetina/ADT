@@ -257,7 +257,7 @@ class Patch(config.Config):
 
             # check if everything was deployed
             all_deployed    = False
-            last_commit     = max(self.last_patch['commits'])
+            last_commit     = max(self.last_patch['commits']) if self.last_patch.get('commits') else None
             #
             if last_commit in self.relevant_commits and self.last_patch['result'] == self.status_success and self.last_patch['deployed']:
                 all_deployed = True
@@ -1972,6 +1972,9 @@ class Patch(config.Config):
                     'patch_code'    : self.patches[ref]['patch_code'],
                     'folder'        : self.patches[ref]['folder'],
                 })
+        #
+        if not len(data):
+            util.raise_error('NOTHING TO ARCHIVE')
         #
         util.print_header('ARCHIVING PATCHES:')
         util.print_table(data)

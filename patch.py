@@ -362,18 +362,12 @@ class Patch(config.Config):
 
             # skip non requested commits
             if len(self.add_commits) > 0:
-                commits     = '|{}|'.format('|'.join(self.add_commits))
-                search_for  = '|{}|'.format(commit_num)
-                #
-                if not (search_for in commits):
+                if not self.get_search_full(commit_num, self.add_commits):
                     continue
 
             # skip ignored commits
             if len(self.ignore_commits) > 0:
-                commits     = '|{}|'.format('|'.join(self.ignore_commits))
-                search_for  = '|{}|'.format(commit_num)
-                #
-                if search_for in commits:
+                if self.get_search_full(commit_num, self.ignore_commits):
                     continue
 
             # store commits for overview
@@ -912,6 +906,14 @@ class Patch(config.Config):
 
 
 
+    def get_search_full(self, value, where):
+        all_values  = '|{}|'.format('|'.join(where))
+        search_for  = '|{}|'.format(value)
+        #
+        return (search_for in all_values)
+
+
+
     def get_matching_commits(self):
         # add or remove specific commits from the queue
         for commit_id in sorted(self.all_commits.keys(), reverse = True):
@@ -919,18 +921,12 @@ class Patch(config.Config):
 
             # skip non requested commits
             if len(self.add_commits) > 0:
-                commits     = '|{}|'.format('|'.join(self.add_commits))
-                search_for  = '|{}|'.format(commit_id)
-                #
-                if not (search_for in commits):
+                if not self.get_search_full(commit_id, self.add_commits):
                     continue
 
             # skip ignored commits
             if len(self.ignore_commits) > 0:
-                commits     = '|{}|'.format('|'.join(self.ignore_commits))
-                search_for  = '|{}|'.format(commit_id)
-                #
-                if search_for in commits:
+                if self.get_search_full(commit_id, self.ignore_commits):
                     continue
 
             # skip non relevant commits
@@ -1472,10 +1468,7 @@ class Patch(config.Config):
                     for commit_id in sorted(self.all_files[orig_file]):
                         if commit_id > curr_commit_id:
                             # skip ignored commits
-                            commits     = '|{}|'.format('|'.join(self.ignore_commits))
-                            search_for  = '|{}|'.format(commit_id)
-                            #
-                            if search_for in commits:
+                            if self.get_search_full(commit_id, self.ignore_commits):
                                 continue
                             #
                             commit = self.all_commits[commit_id]

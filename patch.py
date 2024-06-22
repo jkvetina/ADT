@@ -896,6 +896,19 @@ class Patch(config.Config):
 
 
 
+    def get_search_match(self, what_words, where):
+        if (what_words != [] and what_words != ['%']):
+            found_match = 0
+            for word in [word for word in what_words if word is not None]:
+                if word in where:
+                    found_match += 1
+            #
+            return (found_match == len(what_words))
+        #
+        return False
+
+
+
     def get_matching_commits(self):
         # add or remove specific commits from the queue
         for commit_id in sorted(self.all_commits.keys(), reverse = True):
@@ -918,14 +931,8 @@ class Patch(config.Config):
                     continue
 
             # skip non relevant commits
-            if (self.search_message != [] and self.search_message != ['%']):
-                found_match = False
-                for word in [word for word in self.search_message if word is not None]:
-                    if word in commit['summary']:
-                        found_match = True
-                        break
-                if not found_match:
-                    continue
+            if not self.get_search_match(self.search_message, commit['summary']):
+                continue
 
             # skip empty commits (typically patch commits)
             if self.args.files and len(commit['files']) == 0:
@@ -1035,15 +1042,22 @@ class Patch(config.Config):
         for commit_id in sorted(self.all_commits.keys(), reverse = True):
             if len(data) == self.show_commits:
                 break
-            #
+
+            # filter for specific reps. current user
             commit = self.all_commits[commit_id]
             if self.args.my and self.repo_user_mail != commit['author']:
                 continue
-            #
+
+            # filter for commits with some files (ignore patch commits)
             count_files = len(self.all_commits[commit_id].get('files', []))
             if self.args.files and count_files == 0:
                 continue
-            #
+
+            # filter commits based on search words
+            if not self.get_search_match(self.search_message, commit['summary']):
+                continue
+
+            # show row to user
             data.append({
                 'commit'        : commit_id,
                 'summary'       : util.get_string(commit['summary'], self.summary_len),

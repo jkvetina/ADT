@@ -71,8 +71,9 @@ class Patch(config.Config):
         group.add_argument('-key',          help = 'Key or key location for passwords',                                 nargs = '?')
         #
         group = self.parser.add_argument_group('LIMIT SCOPE')
-        group.add_argument('-my',           help = 'Show only my commits',                                              nargs = '?', const = True,  default = False)
         group.add_argument('-commits',      help = 'To show number of recent commits',          type = int,             nargs = '?',                default = 0)
+        group.add_argument('-my',           help = 'Show only my commits',                                              nargs = '?', const = True,  default = False)
+        group.add_argument('-files',        help = 'Show only commits with some files',                                 nargs = '?', const = True,  default = False)
         group.add_argument('-search',       help = 'Search commits summary for provided words',                         nargs = '*',                default = None)
         group.add_argument('-commit',       help = 'Process just specific commits',                                     nargs = '*',                default = [])
         group.add_argument('-ignore',       help = 'Ignore specific commits',                                           nargs = '*',                default = [])
@@ -926,6 +927,10 @@ class Patch(config.Config):
                 if not found_match:
                     continue
 
+            # skip empty commits (typically patch commits)
+            if self.args.files and len(commit['files']) == 0:
+                continue
+
             # store relevant commit
             self.relevant_commits.append(commit_id)
 
@@ -1035,10 +1040,14 @@ class Patch(config.Config):
             if self.args.my and self.repo_user_mail != commit['author']:
                 continue
             #
+            count_files = len(self.all_commits[commit_id].get('files', []))
+            if self.args.files and count_files == 0:
+                continue
+            #
             data.append({
                 'commit'        : commit_id,
                 'summary'       : util.get_string(commit['summary'], self.summary_len),
-                'files'         : len(self.all_commits[commit_id].get('files', [])),
+                'files'         : count_files,
                 #'my'            : 'Y' if self.repo_user_mail == commit['author'] else '',
             })
         #

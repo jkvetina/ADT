@@ -809,7 +809,7 @@ def get_string(string, max_length = None, append = '..'):
     if max_length == None:
         return string
     cutoff = max_length - len(append)
-    return (string[:cutoff] + '..') if len(string) > max_length else string
+    return (string[:cutoff] + '..') if len(string) > max_length else string.ljust(max_length)
 
 
 

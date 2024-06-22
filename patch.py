@@ -688,8 +688,8 @@ class Patch(config.Config):
             self.patches[ref] = info
 
         # save last patch and status
-        self.last_patch     = self.patches[min(self.patches.keys())]
-        self.patch_status   = self.last_patch['result']
+        self.last_patch     = self.patches[min(self.patches.keys())] if self.patches else {}
+        self.patch_status   = self.last_patch.get('result')
 
 
 

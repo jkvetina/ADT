@@ -36,6 +36,16 @@ from recompile      import Recompile
 
 class Patch(config.Config):
 
+    summary_len             = 36
+    default_commits         = 20
+    deleted_flag            = '[DELETED]'
+    altered_flag            = '[ALT:#]'
+    new_object_flag         = '[NEW]'
+    status_success          = 'SUCCESS'
+    status_error            = 'ERROR'
+
+
+
     def __init__(self, args = None):
         self.parser = argparse.ArgumentParser(add_help = False)
 
@@ -130,7 +140,7 @@ class Patch(config.Config):
         self.postfix_before     = self.config.patch_postfix_before
         self.postfix_after      = self.config.patch_postfix_after
         self.commits_file       = self.config.repo_commits_file.replace('#BRANCH#', self.info.branch)
-        self.show_commits       = (self.args.commits or 10) if self.patch_code == None else self.args.commits
+        self.show_commits       = (self.args.commits or self.default_commits) if self.patch_code == None else self.args.commits
         self.ignored_scripts    = []
         self.patches            = {}
         self.deploy_plan        = []
@@ -139,9 +149,6 @@ class Patch(config.Config):
         self.logs_prefix        = self.config.patch_deploy_logs.replace('{$TARGET_ENV}', self.target_env or '')
         self.script_stats       = {}
         self.obj_not_found      = []
-        self.deleted_flag       = '[DELETED]'
-        self.altered_flag       = '[ALT:#]'
-        self.new_object_flag    = '[NEW]'
 
         # fetch changes in Git
         if self.args.fetch:
@@ -248,7 +255,7 @@ class Patch(config.Config):
                 self.deploy_patch()
 
             # offer/hint next available sequence
-            if not self.args.deploy and not self.args.create and self.patch_status != 'SUCCESS':
+            if not self.args.deploy and not self.args.create and self.patch_status != self.status_success:
                 try:
                     next = max(self.patch_sequences)
                     next = str(int(next) + 1) if next.isnumeric() else '#'
@@ -476,11 +483,11 @@ class Patch(config.Config):
                 'order'     : order + 1,
                 'file'      : plan['file'],
                 'output'    : len(lines),
-                'status'    : 'SUCCESS' if success else 'ERROR',
+                'status'    : self.status_success if success else self.status_error,
                 'timer'     : int(round(util.get_start() - start + 0.5, 0)),  # ceil
             }
             self.patch_results.append({**self.deploy_plan[order], **results})
-            self.patch_status = 'SUCCESS' if (success and (self.patch_status == 'SUCCESS' or self.patch_status == '')) else 'ERROR'
+            self.patch_status = self.status_success if (success and (self.patch_status == self.status_success or self.patch_status == '')) else self.status_error
 
             # rename log to reflect the result in the file name
             log_file    = full.replace('.sql', '.log')
@@ -505,7 +512,7 @@ class Patch(config.Config):
         self.verify_views()
 
         # send notification on success
-        if self.patch_status == 'SUCCESS' or 1 == 1:
+        if self.patch_status == self.status_success or 1 == 1:
             title       = '{} - Patch {} deployed'.format(self.target_env, self.patch_code)
             author      = '<at>{}</at>'.format(self.repo_user_mail)
             stamp       = datetime.datetime.today().strftime('%Y-%m-%d %H:%M')
@@ -526,7 +533,7 @@ class Patch(config.Config):
                 commit = self.all_commits[commit_id]
                 data.append({
                     'commit'    : commit_id,
-                    'summary'   : util.get_string(commit['summary'], 50),
+                    'summary'   : util.get_string(commit['summary'], self.summary_len),
                 })
             blocks.append('')
             blocks.extend(self.build_table(
@@ -657,7 +664,7 @@ class Patch(config.Config):
                 if not (deployed in buckets):
                     buckets[deployed] = result
                 else:
-                    buckets[deployed] = result if result == 'ERROR' else min(buckets[deployed], result)
+                    buckets[deployed] = result if result == self.status_error else min(buckets[deployed], result)
             #
             info['deployed']    = max(buckets.keys())       if buckets != {} else ''
             info['result']      = buckets[info['deployed']] if buckets != {} else ''
@@ -1426,14 +1433,14 @@ class Patch(config.Config):
                                 continue
                             #
                             commit = self.all_commits[commit_id]
-                            found_newer.append('{}) {}'.format(commit_id, commit['summary'][0:50]))
+                            found_newer.append('{}) {}'.format(commit_id, commit['summary'][0:self.summary_len]))
                 #
                 if len(found_newer) > 0:
                     curr_commit = self.all_commits[curr_commit_id]
                     print('    ^')
                     for row in reversed(found_newer):
                         print('      NEW .......', row)
-                    print('      CURRENT ... {}) {}'.format(curr_commit_id, curr_commit['summary'][0:50]))
+                    print('      CURRENT ... {}) {}'.format(curr_commit_id, curr_commit['summary'][0:self.summary_len]))
                     print('      --')
             print()
 

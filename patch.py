@@ -957,10 +957,11 @@ class Patch(config.Config):
                     break
         #
         if not (self.first_commit_id in self.all_commits):
-            util.print_warning(
-                'COMMIT {} OUT OF RANGE'.format(self.first_commit_id), [
-                    'INCREASE repo_commit_days IN CONFIG',
-                ])
+            if self.patch_code:
+                util.print_warning(
+                    'COMMIT {} OUT OF RANGE'.format(self.first_commit_id), [
+                        'INCREASE repo_commit_days IN CONFIG',
+                    ])
             self.first_commit_id = min(self.all_commits.keys())
         #
         try:

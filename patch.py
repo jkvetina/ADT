@@ -274,7 +274,7 @@ class Patch(config.Config):
                 #
                 found_patches.append({
                     'ref'           : ref,
-                    'day'           : info['day'],
+                    'created'       : info['created'],
                     'files'         : len(info['files']),
                     'commits'       : len(info['commits']),
                     'deployed'      : info['deployed'],
@@ -620,6 +620,12 @@ class Patch(config.Config):
 
 
 
+    def get_patch_date(self, patch_day):
+        created_at = util.extract(r'(\d+)', patch_day)
+        return '20' + created_at[0:2] + '-' + created_at[2:4] + '-' + created_at[4:6]
+
+
+
     def get_patch_folders(self):
         # extract values from folder name to find/compare today's patch
         self.patch_folder   = self.get_patch_folder()
@@ -632,6 +638,7 @@ class Patch(config.Config):
             #
             info['commits'] = []
             info['files']   = []
+            info['created'] = self.get_patch_date(info['day'])
 
             # process just relevant patch folders
             if info['patch_code'] != self.patch_code:

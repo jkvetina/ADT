@@ -979,6 +979,14 @@ class Patch(config.Config):
 
 
 
+    def get_commit_deploy_status(self, commit_id):
+        for ref in sorted(self.patches, reverse = True):
+            info = self.patches[ref]
+            if commit_id in info['commits']:
+                return info['deployed']
+
+
+
     def show_matching_commits(self):
         # pivot commits
         commits_map = {}
@@ -992,12 +1000,12 @@ class Patch(config.Config):
         picked  = self.hash_commits if self.args.hash else self.relevant_commits
         #
         for commit_id in sorted(picked, reverse = True):
-            commit = self.all_commits[commit_id]
+            info = self.all_commits[commit_id]
             data.append({
-                'commit'    : commit_id,
-                #'ref'       : commits_map.get(commit_id, ''),
-                'summary'   : util.get_string(commit['summary'], 50),
-                'files'     : len(commit['files']),
+                'commit'        : commit_id,
+                'summary'       : util.get_string(info['summary'], self.summary_len),
+                'files'         : len(info['files']),
+                'deployed'      : self.get_commit_deploy_status(commit_id),
             })
         #
         util.print_header('{} COMMITS FOR "{}":'.format(header, ' '.join(self.search_message or [])))
@@ -1018,8 +1026,9 @@ class Patch(config.Config):
             #
             data.append({
                 'commit'        : commit_id,
-                'my'            : 'Y' if self.repo_user_mail == commit['author'] else '',
-                'summary'       : util.get_string(commit['summary'], 50),
+                'summary'       : util.get_string(commit['summary'], self.summary_len),
+                'files'         : len(self.all_commits[commit_id].get('files', [])),
+                #'my'            : 'Y' if self.repo_user_mail == commit['author'] else '',
             })
         #
         util.print_header('RECENT COMMITS:')

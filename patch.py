@@ -62,7 +62,6 @@ class Patch(config.Config):
         group = self.parser.add_argument_group('LIMIT SCOPE')
         group.add_argument('-my',           help = 'Show only my commits',                                              nargs = '?', const = True,  default = False)
         group.add_argument('-commits',      help = 'To show number of recent commits',          type = int,             nargs = '?',                default = 0)
-        group.add_argument('-patches',      help = 'To show number of recent patches',          type = int,             nargs = '?',                default = 0)
         group.add_argument('-search',       help = 'Search commits summary for provided words',                         nargs = '*',                default = None)
         group.add_argument('-commit',       help = 'Process just specific commits',                                     nargs = '*',                default = [])
         group.add_argument('-ignore',       help = 'Ignore specific commits',                                           nargs = '*',                default = [])
@@ -132,10 +131,8 @@ class Patch(config.Config):
         self.postfix_after      = self.config.patch_postfix_after
         self.commits_file       = self.config.repo_commits_file.replace('#BRANCH#', self.info.branch)
         self.show_commits       = (self.args.commits or 10) if self.patch_code == None else self.args.commits
-        self.show_patches       = (self.args.patches or 0)
         self.ignored_scripts    = []
         self.patches            = {}
-        self.patch_found        = []
         self.deploy_plan        = []
         self.deploy_schemas     = {}
         self.deploy_conn        = {}
@@ -194,8 +191,6 @@ class Patch(config.Config):
             else:
                 if self.show_commits > 0:
                     self.show_recent_commits()
-                if self.show_patches > 0:
-                    self.show_matching_patches()
 
             if self.patch_code == None:
                 util.assert_(self.patch_code, 'MISSING ARGUMENT: PATCH CODE')
@@ -271,27 +266,26 @@ class Patch(config.Config):
 
     def show_matching_patches(self):
         found_patches = []
-        for ref in sorted(self.patches.keys(), reverse = True):
+        for ref in sorted(self.patches.keys()):
             info = self.patches[ref]
             if (self.patch_code == None or self.patch_code in info['patch_code']):
                 if self.args.my and info['my'] != 'Y':
                     continue
                 #
                 found_patches.append({
-                    'ref'           : info['ref'],
-                    'my'            : info['my'],
-                    'patch_code'    : info['patch_code'] or info['folder'],
+                    'ref'           : ref,
+                    'day'           : info['day'],
                     'files'         : len(info['files']),
                     'commits'       : len(info['commits']),
-                    'deployed_at'   : info['deployed_at'],
+                    'deployed'      : info['deployed'],
                     'result'        : info['result'],
                 })
                 self.patch_status = info['result']
 
         # show recent patches
-        if ((self.patch_code == None and self.show_patches > 0) or len(found_patches) > 0):
+        if len(found_patches) > 0:
             util.print_header('RECENT PATCHES:', self.target_env)
-            util.print_table(found_patches, limit_bottom = self.show_patches)
+            util.print_table(found_patches)
 
 
 
@@ -632,34 +626,22 @@ class Patch(config.Config):
         self.patch_current  = self.get_folder_split(self.patch_folder)
 
         # identify patch folder
-        for ref, folder in enumerate(util.get_files(self.repo_root + self.config.patch_root + '*', reverse = True, recursive = False), start = 1):
-            # get more info from folder name
-            root    = folder
-            info    = self.get_folder_split(folder)
-
-            # for current day sequence clash check
-            if info['day'] == self.patch_current['day']:
-                if not (info['seq'] in self.patch_sequences):
-                    self.patch_sequences[info['seq']] = []
-                if info['patch_code'] != self.patch_code:   # collect just other patches
-                    self.patch_sequences[info['seq']].append(info['patch_code'])
-
-            # get some numbers & deduplicate
-            info['my'] = ''
-            found_commits, found_files = [], []
-            for commit_id, commit in self.all_commits.items():
-                if info['patch_code'] in commit['summary']:
-                    info['my'] = 'Y' if (self.repo_user_mail == commit['author'] or info['my']) else ''
-                    #
-                    found_commits.append(commit_id)
-                    found_files.extend(commit['files'].keys())
+        folder_patches = self.repo_root + self.config.patch_root + '*'
+        for folder in util.get_files(folder_patches, reverse = True, recursive = False):
+            info = self.get_folder_split(folder)
             #
-            info['files']   = list(set(found_files))
-            info['commits'] = list(set(found_commits))
+            info['commits'] = []
+            info['files']   = []
 
-            # extract deployment result and date from log names
-            buckets = {}    # use buckets to get overall status over multiple files
-            for file in util.get_files(root + '/' + self.logs_prefix + '/*.log'):
+            # process just relevant patch folders
+            if info['patch_code'] != self.patch_code:
+                continue
+
+            # find deployment date and result from logs
+            log_folder  = '{}/{}/'.format(folder, self.logs_prefix)
+            buckets     = {}    # use buckets to identify the most recent results
+            #
+            for file in util.get_files(log_folder + '*.log'):
                 base        = os.path.splitext(os.path.basename(file))[0].split(' ')
                 schema      = base.pop(0)
                 result      = base.pop(-1).replace('[', '').replace(']', '')
@@ -670,10 +652,20 @@ class Patch(config.Config):
                 else:
                     buckets[deployed] = result if result == 'ERROR' else min(buckets[deployed], result)
             #
-            info['ref']         = ref
-            info['deployed_at'] = max(buckets.keys())                   if buckets != {} else ''
-            info['result']      = buckets.get(info['deployed_at'], '')  if buckets != {} else ''
-            self.patches[ref]   = info
+            info['deployed']    = max(buckets.keys())       if buckets != {} else ''
+            info['result']      = buckets[info['deployed']] if buckets != {} else ''
+
+            # get referenced commits and files from main/driving patch files
+            for file in util.get_files(folder + '/*.sql'):
+                info['commits'].extend(self.get_file_commits(file))
+                info['files'].extend(self.get_file_references(file))
+
+            # deduplicate
+            info['commits'] = list(sorted(set(info['commits'])))
+            info['files']   = list(sorted(set(info['files'])))
+            #
+            ref = len(self.patches.keys()) + 1
+            self.patches[ref] = info
 
 
 
@@ -816,6 +808,40 @@ class Patch(config.Config):
         if self.args.rebuild:
             print()
             sys.exit()
+
+
+
+    def get_file_references(self, file):
+        files = []
+        with open(file, 'rt', encoding = 'utf-8') as f:
+            for line in f.readlines():
+                if line.startswith('@'):
+                    if '"' in line:
+                        file = line.split('"', maxsplit = 2)[1]
+                    else:
+                        file = line.replace('@', '').split(' ')[0]
+                    files.append(file)
+        return files
+
+
+
+    def get_file_commits(self, file):
+        commits = []
+        with open(file, 'rt', encoding = 'utf-8') as f:
+            extracting = False
+            for line in f.readlines():
+                if line.startswith('-- COMMITS:'):      # find start of commits
+                    extracting = True
+                #
+                if extracting:
+                    if line.strip() == '--':            # find end of commits
+                        break
+
+                    # find commit number
+                    search = re.search(r'^[-][-]\s+(\d+)[)]?\s', line)
+                    if search:
+                        commits.append(int(search.group(1)))
+        return commits
 
 
 
@@ -1862,7 +1888,7 @@ class Patch(config.Config):
 
         # get data from set_env.sql file
         file_header = self.get_root(app_id, 'application/set_environment.sql')  # steal the header
-        with open(file_header, 'rt') as f:
+        with open(file_header, 'rt', encoding = 'utf-8') as f:
             lines = f.readlines()
             for i, line in enumerate(lines):
                 if line.strip() == 'begin':

@@ -657,7 +657,10 @@ class Patch(config.Config):
 
             # process just relevant patch folders
             if info['patch_code'] != self.patch_code:
-                continue
+                if self.search_message == []:
+                    continue
+                if not self.get_search_match(self.search_message, info['folder']):
+                    continue
 
             # find deployment date and result from logs
             log_folder  = '{}/{}/'.format(folder, self.logs_prefix)

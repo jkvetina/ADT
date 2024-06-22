@@ -254,8 +254,15 @@ class Patch(config.Config):
             if self.args.deploy:
                 self.deploy_patch()
 
+            # check if everything was deployed
+            all_deployed    = False
+            last_commit     = max(self.last_patch['commits'])
+            #
+            if last_commit in self.relevant_commits and self.last_patch['result'] == self.status_success and self.last_patch['deployed']:
+                all_deployed = True
+
             # offer/hint next available sequence
-            if not self.args.deploy and not self.args.create and self.patch_status != self.status_success:
+            if not self.args.deploy and not self.args.create and self.patch_status != self.status_success and not all_deployed:
                 try:
                     next = max(self.patch_sequences)
                     next = str(int(next) + 1) if next.isnumeric() else '#'
@@ -287,7 +294,6 @@ class Patch(config.Config):
                     'deployed'      : info['deployed'],
                     'result'        : info['result'],
                 })
-                self.patch_status = info['result']
 
         # show recent patches
         if len(found_patches) > 0:
@@ -680,6 +686,10 @@ class Patch(config.Config):
             #
             ref = len(self.patches.keys()) + 1
             self.patches[ref] = info
+
+        # save last patch and status
+        self.last_patch     = self.patches[min(self.patches.keys())]
+        self.patch_status   = self.last_patch['result']
 
 
 

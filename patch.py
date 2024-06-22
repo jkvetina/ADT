@@ -1057,7 +1057,7 @@ class Patch(config.Config):
                 continue
 
             # filter commits based on search words
-            if not self.get_search_match(self.search_message, commit['summary']):
+            if self.search_message != [] and not self.get_search_match(self.search_message, commit['summary']):
                 continue
 
             # show row to user

@@ -707,10 +707,12 @@ def ranged_str(values):
             start, stop = val.split('-')
             for val in range(int(start), int(stop) + 1):
                 ranges.append(str(val))
+        elif val.endswith('+'):
+            ranges.append(val)
         else:
             ranges.append(str(val))
     #
-    return list(set(ranges))
+    return ranges
 
 
 

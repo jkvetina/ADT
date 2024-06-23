@@ -907,6 +907,11 @@ class Patch(config.Config):
 
 
     def get_search_full(self, value, where):
+        for where_value in where:
+            if str(where_value).endswith('+'):
+                if int(where_value.replace('+', '')) <= int(value):
+                    return True
+        #
         all_values  = '|{}|'.format('|'.join(where))
         search_for  = '|{}|'.format(value)
         #

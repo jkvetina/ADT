@@ -2008,7 +2008,7 @@ class Patch(config.Config):
             source_folder   = self.repo_root + self.config.patch_scripts_dir.replace('/None/', '/{}/'.format(row['patch_code']))
             patch_folder    = self.repo_root + self.config.patch_root + row['folder'] + '/'
             #
-            if os.path.exists(source_folder):
+            if row['patch_code'] and os.path.exists(source_folder):
                 util.create_zip(patch_folder + row['patch_code'], source_folder)
                 util.delete_folder(source_folder)
 

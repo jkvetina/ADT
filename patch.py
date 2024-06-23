@@ -932,13 +932,13 @@ class Patch(config.Config):
             author_commits  = {}
 
             # get commits/tickets for each day
-            for day in days:
+            for i, day in enumerate(days, start = 1):
                 if not (day in author_commits):
                     author_commits[day] = []
                 author_commits[day].extend(commits_daily.get(day, {}).get(author, {}).keys())
 
                 # calculate weekend work as Friday
-                if i == 4:
+                if i == 5:
                     author_commits[day].extend(commits_daily.get(saturday, {}).get(author, {}).keys())
                     author_commits[day].extend(commits_daily.get(sunday,   {}).get(author, {}).keys())
 

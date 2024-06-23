@@ -63,18 +63,18 @@ class Patch(config.Config):
         group.add_argument('-install',      help = 'Create install file',                                               nargs = '?', const = True,  default = False)
         group.add_argument('-moveup',       help = 'Move driving patch files higher',                                   nargs = '?', const = True,  default = False)
         group.add_argument('-refresh',      help = 'Refresh used objects and APEX components',                          nargs = '?', const = True,  default = False)
-        group.add_argument('-rebuild',      help = 'Rebuild temp files',                                                nargs = '?', const = True,  default = False)
+        group.add_argument('-rebuild',      help = 'Rebuild temp files',                        type = util.is_boolint, nargs = '?', const = True,  default = False)
         #
         group = self.parser.add_argument_group('SPECIFY ENVIRONMENT DETAILS')
         group.add_argument('-target',       help = 'Target environment',                                                nargs = '?')
-        group.add_argument('-branch',       help = 'To override active branch',                                         nargs = '?',                default = None)
+        group.add_argument('-branch',       help = 'To override active branch',                                         nargs = '?')
         group.add_argument('-key',          help = 'Key or key location for passwords',                                 nargs = '?')
         #
         group = self.parser.add_argument_group('LIMIT SCOPE')
         group.add_argument('-commits',      help = 'To show number of recent commits',          type = int,             nargs = '?',                default = 0)
         group.add_argument('-my',           help = 'Show only my commits',                                              nargs = '?', const = True,  default = False)
         group.add_argument('-files',        help = 'Show only commits with some files',                                 nargs = '?', const = True,  default = False)
-        group.add_argument('-search',       help = 'Search commits summary for provided words',                         nargs = '*',                default = None)
+        group.add_argument('-search',       help = 'Search commits summary for provided words',                         nargs = '*')
         group.add_argument('-commit',       help = 'Process just specific commits',                                     nargs = '*',                default = [])
         group.add_argument('-ignore',       help = 'Ignore specific commits',                                           nargs = '*',                default = [])
         group.add_argument('-full',         help = 'Specify APEX app(s) where to use full export',                      nargs = '*',                default = [])
@@ -696,6 +696,14 @@ class Patch(config.Config):
         if os.path.exists(self.commits_file):
             with open(self.commits_file, 'rt', encoding = 'utf-8') as f:
                 self.all_commits = dict(util.get_yaml(f, self.commits_file))
+
+                # initate partial refresh, remove just last # of commits
+                if isinstance(self.args.rebuild, int) and self.args.rebuild > 0:
+                    for commit_num in sorted(self.all_commits.keys(), reverse = True)[0:self.args.rebuild]:
+                        self.all_commits.pop(commit_num)
+                    #
+                    self.args.rebuild = False
+                #
                 for _, commit in self.all_commits.items():
                     all_hashes.append(commit['id'])
 
@@ -721,7 +729,8 @@ class Patch(config.Config):
             commits = commit.count()
         #
         if self.args.rebuild:
-            self.all_commits, all_hashes = {}, []
+            all_hashes          = []
+            self.all_commits    = {}
             #
             print()
             print('    BRANCH |', self.info.branch)

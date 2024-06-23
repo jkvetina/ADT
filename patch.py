@@ -928,10 +928,8 @@ class Patch(config.Config):
 
         # prepare data
         for author in sorted(commits_tickets.keys()):
-            data            = []
-            author_commits  = {}
-
             # get commits/tickets for each day
+            author_commits = {}
             for i, day in enumerate(days, start = 1):
                 if not (day in author_commits):
                     author_commits[day] = []
@@ -949,6 +947,7 @@ class Patch(config.Config):
                 author_commits[day] = sorted(set(author_commits[day]))
 
             # pivot data
+            data = []
             for line in range(max_commits):
                 row = {}
                 for day in days:

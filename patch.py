@@ -126,6 +126,7 @@ class Patch(config.Config):
         self.patch_status       = ''
         self.all_commits        = {}
         self.all_files          = {}
+        self.filtered_commits   = {}
         self.relevant_commits   = []
         self.relevant_count     = {}
         self.relevant_files     = {}
@@ -285,7 +286,7 @@ class Patch(config.Config):
         for ref in sorted(self.patches.keys()):
             info = self.patches[ref]
             if (self.patch_code == None or self.patch_code in info['patch_code']):
-                if self.args.my and info['my'] != 'Y':
+                if self.args.my and info.get('my') != 'Y':
                     continue
                 #
                 found_patches.append({
@@ -354,21 +355,11 @@ class Patch(config.Config):
     def get_hash_files(self, prev_commit, curr_commit):
         self.hash_commits = []
         files = {}
-        for commit_num in sorted(self.all_commits.keys()):
+        for commit_num in sorted(self.filtered_commits):
             if commit_num <= prev_commit and prev_commit != 1:
                 continue
             if commit_num > curr_commit and curr_commit != 1:
                 continue
-
-            # skip non requested commits
-            if len(self.add_commits) > 0:
-                if not self.get_search_full(commit_num, self.add_commits):
-                    continue
-
-            # skip ignored commits
-            if len(self.ignore_commits) > 0:
-                if self.get_search_full(commit_num, self.ignore_commits):
-                    continue
 
             # store commits for overview
             if not (commit_num in self.hash_commits):
@@ -827,10 +818,49 @@ class Patch(config.Config):
                     self.all_files[file] = []
                 self.all_files[file].append(commit_id)
 
+        # filter commits here, so we do it just once
+        self.get_filtered_commits()
+
         # clean screen on rebuild
         if self.args.rebuild:
             print()
             sys.exit()
+
+
+
+    def get_filtered_commits(self):
+        for commit_id in sorted(self.all_commits.keys(), reverse = True):
+            commit = self.all_commits[commit_id]
+
+            # skip non requested commits
+            if len(self.add_commits) > 0:
+                if not self.get_search_full(commit_id, self.add_commits):
+                    continue
+
+            # skip ignored commits
+            if len(self.ignore_commits) > 0:
+                if self.get_search_full(commit_id, self.ignore_commits):
+                    continue
+
+            # filter for specific reps. current user
+            commit = self.all_commits[commit_id]
+            if self.args.my and self.repo_user_mail != commit['author']:
+                continue
+
+            # filter for commits with some files (ignore patch commits)
+            count_files = len(self.all_commits[commit_id].get('files', []))
+            if self.args.files and count_files == 0:
+                continue
+
+            # filter commits based on search words
+            if not self.get_search_match(self.search_message, commit['summary']):
+                continue
+
+            # skip empty commits (typically patch commits)
+            if self.args.files and len(commit['files']) == 0:
+                continue
+
+            self.filtered_commits[commit_id] = commit
 
 
 
@@ -921,26 +951,8 @@ class Patch(config.Config):
 
     def get_matching_commits(self):
         # add or remove specific commits from the queue
-        for commit_id in sorted(self.all_commits.keys(), reverse = True):
+        for commit_id in sorted(self.filtered_commits, reverse = True):
             commit = self.all_commits[commit_id]
-
-            # skip non requested commits
-            if len(self.add_commits) > 0:
-                if not self.get_search_full(commit_id, self.add_commits):
-                    continue
-
-            # skip ignored commits
-            if len(self.ignore_commits) > 0:
-                if self.get_search_full(commit_id, self.ignore_commits):
-                    continue
-
-            # skip non relevant commits
-            if not self.get_search_match(self.search_message, commit['summary']):
-                continue
-
-            # skip empty commits (typically patch commits)
-            if self.args.files and len(commit['files']) == 0:
-                continue
 
             # store relevant commit
             self.relevant_commits.append(commit_id)
@@ -1043,29 +1055,17 @@ class Patch(config.Config):
     def show_recent_commits(self):
         # loop through all recent commits
         data = []
-        for commit_id in sorted(self.all_commits.keys(), reverse = True):
+        for commit_id in sorted(self.filtered_commits, reverse = True):
             if len(data) == self.show_commits:
                 break
-
-            # filter for specific reps. current user
+            #
             commit = self.all_commits[commit_id]
-            if self.args.my and self.repo_user_mail != commit['author']:
-                continue
-
-            # filter for commits with some files (ignore patch commits)
-            count_files = len(self.all_commits[commit_id].get('files', []))
-            if self.args.files and count_files == 0:
-                continue
-
-            # filter commits based on search words
-            if self.search_message != [] and not self.get_search_match(self.search_message, commit['summary']):
-                continue
 
             # show row to user
             data.append({
                 'commit'        : commit_id,
                 'summary'       : util.get_string(commit['summary'], self.summary_len),
-                'files'         : count_files,
+                'files'         : len(self.all_commits[commit_id].get('files', [])),
                 #'my'            : 'Y' if self.repo_user_mail == commit['author'] else '',
             })
         #

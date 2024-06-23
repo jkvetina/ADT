@@ -860,6 +860,11 @@ class Patch(config.Config):
             if self.args.files and len(commit['files']) == 0:
                 continue
 
+            # skip commits not matching the pattern
+            if self.config.patch_commit_pattern:
+                if not util.extract(self.config.patch_commit_pattern, commit['summary']):
+                    continue
+
             self.filtered_commits[commit_id] = commit
 
 

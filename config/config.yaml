@@ -78,6 +78,9 @@ grants_directories      : '/#SCHEMA_NAME#_directories.sql'
 #
 # PATCH
 #
+patch_commit_pattern    : ''                                # pattern to match commits
+#patch_commit_pattern    : '([A-Z0-9]+\-[0-9]+\-?[0-9]*)'    # XXX-#, XXX-#-#
+#
 patch_root              : 'patch/'                          # folder with live patches
 patch_archive           : 'patch_archive/'                  # folder with archived patches
 patch_hashes            : 'patch_hashes/{$TARGET_ENV}/'     # folder for waterfall hashes

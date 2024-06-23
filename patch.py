@@ -82,6 +82,7 @@ class Patch(config.Config):
         group.add_argument('-head',         help = 'Use file version from head commit',                                 nargs = '?', const = True,  default = False)
         #
         group = self.parser.add_argument_group('ADDITIONAL ACTIONS')
+        group.add_argument('-calendar',     help = 'Show commits/tickets in a calendar',        type = util.is_boolint, nargs = '?', const = True,  default = False)
         group.add_argument('-hash',         help = 'Store file hashes on patch -create',        type = util.is_boolint, nargs = '?', const = True,  default = False)
         group.add_argument('-fetch',        help = 'Fetch Git changes before patching',                                 nargs = '?', const = True,  default = False)
         group.add_argument('-implode',      help = 'Merge files in a folder',                                           nargs = '?')
@@ -126,7 +127,7 @@ class Patch(config.Config):
         self.patch_status       = ''
         self.all_commits        = {}
         self.all_files          = {}
-        self.filtered_commits   = {}
+        self.filtered_commits   = []
         self.relevant_commits   = []
         self.relevant_count     = {}
         self.relevant_files     = {}
@@ -162,6 +163,12 @@ class Patch(config.Config):
 
         # go through patch folders
         self.get_patch_folders()
+
+        # show commits/tickets for each team mamber and current/offset week
+        if (not isinstance(self.args.calendar, bool) or self.args.calendar):
+            self.show_calendar(weeks_offset = self.args.calendar)
+            util.beep_success()
+            util.quit()
 
         # archive old patches and quit
         if self.args.archive != None:
@@ -862,10 +869,99 @@ class Patch(config.Config):
 
             # skip commits not matching the pattern
             if self.config.patch_commit_pattern:
-                if not util.extract(self.config.patch_commit_pattern, commit['summary']):
+                ticket = util.extract(self.config.patch_commit_pattern, commit['summary'])
+                self.all_commits[commit_id]['ticket'] = ticket
+                if not ticket:
                     continue
 
-            self.filtered_commits[commit_id] = commit
+            self.filtered_commits.append(commit_id)
+
+
+
+    def show_calendar(self, weeks_offset = 0):
+        if weeks_offset and isinstance(weeks_offset, bool):
+            weeks_offset = 0
+
+        # find nearest Monday
+        now             = datetime.datetime.today()
+        now             = datetime.datetime(now.year, now.month, now.day)       # truncate time
+        now             = now - datetime.timedelta(days = 7 * weeks_offset)     # offset
+        monday          = now - datetime.timedelta(days = now.weekday())
+        curr_week       = monday.isocalendar()[0:2]
+        saturday        = (now - datetime.timedelta(days = now.weekday() - 5)).strftime('%Y-%m-%d')
+        sunday          = (now - datetime.timedelta(days = now.weekday() - 6)).strftime('%Y-%m-%d')
+
+        # filter commits for requested week
+        commits_daily   = {}
+        commits_tickets = {}
+        #
+        for commit_num in self.filtered_commits:
+            commit  = self.all_commits[commit_num]
+            ticket  = commit['ticket']
+            author  = commit['author']
+            date    = commit['date'].strftime('%Y-%m-%d')
+
+            # process requested week only
+            if commit['date'].isocalendar()[0:2] != curr_week:
+                continue
+
+            # gather some stats
+            if not (author in commits_tickets):
+                commits_tickets[author] = []
+            commits_tickets[author].append(ticket)
+
+            # sort commits
+            if not (date in commits_daily):
+                commits_daily[date] = {}
+            if not (author in commits_daily[date]):
+                commits_daily[date][author] = {}
+            if not (ticket in commits_daily[date][author]):
+                commits_daily[date][author][ticket] = []
+            #
+            commits_daily[date][author][ticket].append(commit_num)
+
+        # prepare week days
+        days = []
+        for i in range(5):
+            day = (monday + datetime.timedelta(days = i)).strftime('%Y-%m-%d')
+            days.append(day)
+
+        # prepare data
+        for author in sorted(commits_tickets.keys()):
+            data            = []
+            author_commits  = {}
+
+            # get commits/tickets for each day
+            for day in days:
+                if not (day in author_commits):
+                    author_commits[day] = []
+                author_commits[day].extend(commits_daily.get(day, {}).get(author, {}).keys())
+
+                # calculate weekend work as Friday
+                if i == 4:
+                    author_commits[day].extend(commits_daily.get(saturday, {}).get(author, {}).keys())
+                    author_commits[day].extend(commits_daily.get(sunday,   {}).get(author, {}).keys())
+
+            # calculate number of rows, fix dupes
+            max_commits = 0
+            for day in days:
+                max_commits = max(max_commits, len(author_commits[day]))
+                author_commits[day] = sorted(set(author_commits[day]))
+
+            # pivot data
+            for line in range(max_commits):
+                row = {}
+                for day in days:
+                    row[day] = author_commits[day][line] if len(author_commits[day]) - 1 >= line else ''
+                data.append(row)
+
+            # show to user
+            columns = dict(zip(days, [12] * 5))
+            tickets = len(set(commits_tickets[author]))
+            #
+            if tickets > 0:
+                util.print_header('COMMITS BY {} ({})'.format(author, tickets))
+                util.print_table(data, columns = columns)
 
 
 

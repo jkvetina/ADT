@@ -964,11 +964,12 @@ class Patch(config.Config):
                 data.append(row)
 
             # show to user
-            columns = dict(zip(days, [12] * 5))
-            tickets = len(set(commits_tickets[author]))
+            columns         = dict(zip(days, [12] * 5))
+            count_commits   = len(commits_tickets[author])
+            count_tickets   = len(set(commits_tickets[author]))
             #
-            if tickets > 0:
-                util.print_header('COMMITS BY {} ({})'.format(author, tickets))
+            if count_tickets > 0:
+                util.print_header('{} COMMITS BY {} ({})'.format(count_commits, author, count_tickets))
                 util.print_table(data, columns = columns)
 
 

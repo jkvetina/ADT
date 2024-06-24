@@ -73,6 +73,7 @@ class Patch(config.Config):
         group = self.parser.add_argument_group('LIMIT SCOPE')
         group.add_argument('-commits',      help = 'To show number of recent commits',          type = int,             nargs = '?',                default = 0)
         group.add_argument('-my',           help = 'Show only my commits',                                              nargs = '?', const = True,  default = False)
+        group.add_argument('-by',           help = 'Show commits by specific author',           nargs = '?')
         group.add_argument('-files',        help = 'Show only commits with some files',                                 nargs = '?', const = True,  default = False)
         group.add_argument('-search',       help = 'Search commits summary for provided words',                         nargs = '*')
         group.add_argument('-commit',       help = 'Process just specific commits',                                     nargs = '*',                default = [])
@@ -858,9 +859,13 @@ class Patch(config.Config):
                 if self.get_search_full(commit_id, self.ignore_commits):
                     continue
 
-            # filter for specific reps. current user
+            # filter for current user
             commit = self.all_commits[commit_id]
             if self.args.my and self.repo_user_mail != commit['author']:
+                continue
+
+            # filter for specific user
+            if self.args.by and not (self.args.by.lower() in commit['author'].lower()):
                 continue
 
             # filter for commits with some files (ignore patch commits)

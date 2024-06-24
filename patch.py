@@ -956,19 +956,19 @@ class Patch(config.Config):
 
             # calculate number of rows, fix dupes
             max_commits = 0
-            for day in days:
-                max_commits = max(max_commits, len(author_commits[day]))
-                author_commits[day] = sorted(set(author_commits[day]))
+            for date in days:
+                max_commits = max(max_commits, len(author_commits[date]))
+                author_commits[date] = sorted(set(author_commits[date]))
 
             # pivot data
             data = []
             for line in range(max_commits):
                 row = {}
-                for day in days:
-                    row[day] = author_commits[day][line] if len(author_commits[day]) - 1 >= line else ''
+                for date in days:
+                    row[date] = author_commits[date][line] if len(author_commits[date]) - 1 >= line else ''
                 data.append(row)
 
-            # show to user
+            # show weekly overview to user
             columns         = dict(zip(days, [12] * 5))
             count_commits   = len(commits_tickets[author])
             count_tickets   = len(set(commits_tickets[author]))
@@ -976,6 +976,24 @@ class Patch(config.Config):
             if count_tickets > 0:
                 util.print_header('{} COMMITS BY {} ({})'.format(count_commits, author, count_tickets))
                 util.print_table(data, columns = columns)
+
+            # show daily overview to user
+            if (self.args.my or self.args.by):
+                for date in days:
+                    if not (date in commits_daily):
+                        continue
+                    #
+                    tickets = commits_daily[date].get(author, {}).keys()
+                    if not len(tickets):
+                        continue
+                    #
+                    print('\n  {}\n  {}'.format(date, len(date) * '-'))
+                    for ticket in sorted(tickets):
+                        print('\n    {} '.format(ticket))
+                        for commit_num in sorted(commits_daily[date][author][ticket]):
+                            summary = self.all_commits[commit_num]['summary'].replace(ticket, '').strip()
+                            print('      - {}) {} '.format(commit_num, summary))
+                    print()
 
 
 

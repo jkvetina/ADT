@@ -698,7 +698,7 @@ class Patch(config.Config):
                 self.all_commits = dict(util.get_yaml(f, self.commits_file))
 
                 # initate partial refresh, remove just last # of commits
-                if isinstance(self.args.rebuild, int) and self.args.rebuild > 0:
+                if str(self.args.rebuild) != 'True' and self.args.rebuild > 0:
                     for commit_num in sorted(self.all_commits.keys(), reverse = True)[0:self.args.rebuild]:
                         self.all_commits.pop(commit_num)
                     #

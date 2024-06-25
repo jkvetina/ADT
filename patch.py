@@ -1644,7 +1644,7 @@ class Patch(config.Config):
                     apex = Export_APEX(args = args, silent = True)
                     apex.args.app, apex.arg_apps = [app_id], [app_id]
                     #
-                    apex.get_enrichments()
+                    apex.get_enrichments(app_id)
                     apex.export_recent(app_id = app_id, schema = schema, components = components)
                     apex.move_files(app_id)
 

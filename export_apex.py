@@ -391,6 +391,7 @@ class Export_APEX(config.Config):
         #
         data_grouped = {}
         #
+        self.conn.execute(query.apex_export_start, app_id = app_id)
         data = self.conn.fetch_assoc(query.apex_export_recent_list, **args)
         for row in data:
             if not (row.type_name in data_grouped):
@@ -429,6 +430,7 @@ class Export_APEX(config.Config):
         if not components:
             return
         #
+        self.conn.execute(query.apex_export_start, app_id = app_id)
         self.conn.execute(query.apex_export_recent, app_id = app_id, components = components, originals = 'Y' if self.config.apex_keep_original_id else 'N')
         self.fetch_exported_files()
 

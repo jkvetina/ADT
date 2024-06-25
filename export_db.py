@@ -97,8 +97,9 @@ class Export_DB(config.Config):
             self.args.verbose = True
 
         # detect deleted objects
+        deleted_obj     = {}
+        deleted_files   = []
         if self.args.verbose:
-            deleted_obj = {}
             for file, obj in self.repo_files.items():
                 if obj.is_object and obj.object_type and not (obj.object_type in ('GRANT',)):
                     obj_code = obj['object_code'].replace('DATA.', 'TABLE.')
@@ -106,10 +107,16 @@ class Export_DB(config.Config):
                         if not (obj['object_type'] in deleted_obj):
                             deleted_obj[obj['object_type']] = []
                         deleted_obj[obj['object_type']].append(obj['object_name'])
+                        deleted_files.append(file)
             #
             if len(deleted_obj) > 0:
                 util.print_header('DELETED OBJECTS:')
                 util.print_pipes(deleted_obj)
+
+            # soft delete just for missing objects
+            if self.config.auto_delete:
+                for file in deleted_files:
+                    util.delete_file(file)
 
         # cleanup target folders (to cleanup Git from removed objects)
         if self.args.delete:

@@ -19,6 +19,7 @@ path_objects            : 'database/'       # folder with database objects
 path_apex               : 'apex/'           # folder with APEX related files
 
 auto_verbose            : 2                 # turn on verbose mode for recent <= # days
+auto_delete             : True              # automatically delete repo files for nonexisting objects
 
 # target folders by object types
 object_types:

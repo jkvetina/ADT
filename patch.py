@@ -349,7 +349,7 @@ class Patch(config.Config):
             commit_num  = files[file]
             obj         = File(file, config = self.config)
             #
-            if obj.is_object:
+            if (obj.is_object or obj.is_apex):
                 file_hash = self.all_commits[commit_num].get('files', {}).get(file)
                 #
                 if self.args.local:

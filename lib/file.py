@@ -24,30 +24,20 @@ class File(util.Attributed):
                     break
 
         # check for APEX stuff
-        find_app    = re.search(r'/f(\d+)/', self.file)
-        find_page   = re.search(r'/f\d+/application/pages/page_(\d+)\.sql$', self.file)
-        app_id      = int(find_app.group(1))  if find_app  else None
-        page_id     = int(find_page.group(1)) if find_page else None
+        app_id      = util.extract_int(config.apex_path_app_id, file.replace(config.path_apex, ''))
+        #apex_root   = self.get_root(app_id, remove_root = True)
+        find_page   = re.search(r'/pages/page_(\d+)\.sql$', self.file)
+        page_id     = int(find_page.group(1)) if app_id and find_page else None
         #
         if app_id:
             # APEX stuff
             self.is_apex        = True
             self.apex_app_id    = app_id
             self.apex_page_id   = page_id
+        #
         else:
-            # database object
-            self.is_object      = True
-            self.object_name    = os.path.basename(file).split('.')[0].upper()
-
-            # assume that database objects are just on one folder
-            # so the second folder represents object type, the third represents optional group
-            folders = os.path.dirname(file.replace(config.path_objects, '')).split('/')
-            #
-            self.folder         = folders[0]
-            self.group          = folders[1] if len(folders) > 1 else ''
-            self.object_type    = ''
-
-            # fix type check for SPEC/BODY
+            # detect object type and fix type check for SPEC/BODY
+            self.object_type = None
             folders = {}
             for object_type, info in object_types:
                 folder, ext = info
@@ -57,6 +47,17 @@ class File(util.Attributed):
             for ext in sorted(folders.keys(), key = len):
                 if ext in file:
                     self.object_type = folders[ext]
-            #
-            self.object_code    = '{}.{}'.format(self.object_type, self.object_name)
+
+            # database object
+            if self.object_type:
+                self.is_object      = True
+                self.object_name    = os.path.basename(file).split('.')[0].upper()
+
+                # assume that database objects are just on one folder
+                # so the second folder represents object type, the third represents optional group
+                folders = os.path.dirname(file.replace(config.path_objects, '')).split('/')
+                #
+                self.folder         = folders[0]
+                self.group          = folders[1] if len(folders) > 1 else ''
+                self.object_code    = '{}.{}'.format(self.object_type, self.object_name)
 

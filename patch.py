@@ -363,8 +363,24 @@ class Patch(config.Config):
 
 
     def get_hash_files(self, prev_commit, curr_commit):
-        self.hash_commits = []
         files = {}
+
+        # build list of all files
+        if self.args.local:
+            # process object files
+            for file in self.repo_files:
+                if self.is_usable_file(file):
+                    commit_num = self.get_file_commit(file)[1]
+                    if commit_num:
+                        files[file] = commit_num
+
+            # process APEX files
+            for file in self.apex_files:
+                commit_num  = self.get_file_commit(file)[1]
+                files[file] = commit_num
+            #
+            return files
+
         for commit_num in sorted(self.filtered_commits):
             if commit_num <= prev_commit and prev_commit != 1:
                 continue
@@ -1027,31 +1043,6 @@ class Patch(config.Config):
                 if search:
                     commits.append(int(search.group(1)))
         return commits
-
-
-
-    def is_usable_file(self, file):
-        # skip embedded code report files
-        if '/embedded_code/' in file:
-            return False
-
-        # keep APEX files
-        if file.startswith(self.config.path_apex) and ('/' + self.config.apex_path_files in file or file.endswith('.sql')):
-            return True
-
-        # keep just .sql files
-        if not (file.endswith('.sql')):
-            return False
-
-        # keep just database objects folder
-        if file.startswith(self.config.path_objects):
-            return True
-
-        # keep just patch scripts snapshots
-        if file.startswith(self.config.patch_scripts_snap):
-            return True
-        #
-        return False
 
 
 

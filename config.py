@@ -268,6 +268,7 @@ class Config(util.Attributed):
         self.patch_grants       = self.repo_root + self.config.path_objects + self.config.patch_grants
         self.repo_objects       = {}
         self.repo_files         = {}
+        self.apex_files         = []
         self.dependencies       = {}
         self.objects_todo       = []
         self.objects_processed  = []
@@ -296,6 +297,7 @@ class Config(util.Attributed):
         if __name__ != '__main__':
             self.init_connection()
             self.get_objects()
+            self.get_apex_files()
 
         # different flow for direct call
         if __name__ == '__main__':
@@ -684,13 +686,48 @@ class Config(util.Attributed):
             if util.extract(r'\.(\d+)\.sql$', file):
                 continue
             #
-            basename    = file.replace(self.repo_root, '')
-            obj         = File(file, config = self.config)
-            obj_code    = obj.get('object_code')
-            #
-            if obj_code and obj['object_type'] != '':
-                self.repo_objects[obj_code] = obj
-                self.repo_files[basename]   = self.repo_objects[obj_code]
+            if self.is_usable_file(file):
+                basename    = file.replace(self.repo_root, '')
+                obj         = File(file, config = self.config)
+                obj_code    = obj.get('object_code')
+                #
+                if obj_code and obj['object_type'] != '':
+                    self.repo_objects[obj_code] = obj
+                    self.repo_files[basename]   = self.repo_objects[obj_code]
+
+
+
+    def get_apex_files(self):
+        for file in util.get_files('{}{}**/*.sql'.format(self.repo_root, self.config.path_apex)):
+            if self.is_usable_file(file):
+                self.apex_files.append(file.replace(self.repo_root, ''))
+
+
+
+    def is_usable_file(self, file):
+        file = file.replace(self.repo_root, '')
+
+        # skip embedded code report files
+        if '/embedded_code/' in file:
+            return False
+
+        # keep APEX files
+        if file.startswith(self.config.path_apex) and ('/' + self.config.apex_path_files in file or file.endswith('.sql')):
+            return True
+
+        # keep just .sql files
+        if not (file.endswith('.sql')):
+            return False
+
+        # keep just database objects folder
+        if file.startswith(self.config.path_objects):
+            return True
+
+        # keep just patch scripts snapshots
+        if file.startswith(self.config.patch_scripts_snap):
+            return True
+        #
+        return False
 
 
 

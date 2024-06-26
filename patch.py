@@ -351,10 +351,12 @@ class Patch(config.Config):
             #
             if obj.is_object:
                 file_hash = self.all_commits[commit_num].get('files', {}).get(file)
-                if not file_hash:
-                    continue
                 #
-                rollout.append('{} | {} | {}'.format(file, commit_num, file_hash))
+                if self.args.local:
+                    file_hash = util.get_file_hash(file)  # local file hash
+                #
+                if file_hash:
+                    rollout.append('{} | {} | {}'.format(file, commit_num, file_hash))
         #
         util.write_file(self.rollout_file, payload = rollout)
 

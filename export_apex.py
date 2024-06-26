@@ -664,9 +664,7 @@ class Export_APEX(config.Config):
         is_page     = app_id and '/pages/page_' in file
 
         # get current file content
-        old_content = ''
-        with open(file, 'rt', encoding = 'utf-8') as f:
-            old_content = f.read()
+        old_content = util.get_file_content(file)
         new_content = old_content
 
         # replace workspace id if exported from different instance

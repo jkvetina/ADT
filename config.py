@@ -410,8 +410,7 @@ class Config(util.Attributed):
 
         # if key is a file, retrieve content and use it as a key
         if self.connection['key'] != '' and os.path.exists(self.connection['key']):
-            with open(self.connection['key'], 'rt', encoding = 'utf-8') as f:
-                self.connection['key'] = f.read().strip()
+            self.connection['key'] = util.get_file_content(self.connection['key']).strip()
 
 
 
@@ -768,19 +767,17 @@ class Config(util.Attributed):
         self.patch_grants = self.patch_grants.replace('/.sql', schema or self.info['schema'])
         #
         if os.path.exists(self.patch_grants):
-            with open(self.patch_grants, 'rt', encoding = 'utf-8') as f:
-                file_content = f.readlines()
-                for line in file_content:
-                    if line.startswith('--'):
-                        continue
+            for line in util.get_file_lines(self.patch_grants):
+                if line.startswith('--'):
+                    continue
 
-                    # find match on object name
-                    find_name = util.extract(r'\sON\s+(.*)\s+TO\s', line).upper()
-                    #
-                    for object_name in object_names:
-                        if object_name == find_name:
-                            payload.append(line.strip())
-                            break
+                # find match on object name
+                find_name = util.extract(r'\sON\s+(.*)\s+TO\s', line).upper()
+                #
+                for object_name in object_names:
+                    if object_name == find_name:
+                        payload.append(line.strip())
+                        break
         #
         if payload != []:
             payload.append('')
@@ -870,12 +867,13 @@ class Config(util.Attributed):
 
 
 
-    def init_repo(self):
-        util.assert_(self.repo_root, 'MISSING ARGUMENT: REPO')
+    def init_repo(self, repo_root = None):
+        repo_root = self.repo_root
+        util.assert_(repo_root, 'MISSING ARGUMENT: REPO')
 
         # setup and connect to the repo
         try:
-            self.repo       = git.Repo(self.repo_root)
+            self.repo       = git.Repo(repo_root)
             self.repo_url   = self.repo.remotes[0].url
             if self.repo.bare:
                 raise Exception()
@@ -982,10 +980,9 @@ class Config(util.Attributed):
         # get instant client version
         file = os.getenv('ORACLE_HOME') + '/BASIC_README'
         if os.path.exists(file):
-            with open(file, 'rt') as f:
-                for line in f.readlines():
-                    if 'Client Shared Library' in line:
-                        results['Instant Client'] = line.split(' - ')[1].strip()
+            for line in util.get_file_lines(file):
+                if 'Client Shared Library' in line:
+                    results['Instant Client'] = line.split(' - ')[1].strip()
 
         # get versions for Java and SQLcl
         checks = {

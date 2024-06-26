@@ -140,8 +140,7 @@ class Live_Upload(config.Config):
 
     def minify_file(self, file):
         if (file.endswith('.css') or file.endswith('.js')) and not ('.min.' in file):
-            with open(file, 'rt', encoding = 'utf-8') as f:
-                payload = f.read()
+            payload = util.get_file_lines(file)
             #
             if file.endswith('.js'):
                 payload = rcssmin.cssmin(payload, keep_bang_comments = True)

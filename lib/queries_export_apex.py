@@ -44,7 +44,9 @@ END;
 apex_export_start = """
 BEGIN
     FOR c IN (
-        SELECT a.workspace
+        SELECT
+            a.workspace,
+            a.application_id AS app_id
         FROM apex_applications a
         WHERE a.application_id = :app_id
     ) LOOP
@@ -56,7 +58,7 @@ BEGIN
         );
         --
         APEX_SESSION.CREATE_SESSION (
-            p_app_id                    => :app_id,
+            p_app_id                    => c.app_id,
             p_page_id                   => 0,
             p_username                  => c.workspace,
             p_call_post_authentication  => FALSE

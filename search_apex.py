@@ -97,52 +97,50 @@ class Search_APEX(config.Config):
             if not util.get_match(os.path.basename(file), limit_pages) and len(limit_pages) > 0:
                 continue
 
-            # search for object names
-            with open (file, 'rt', encoding = 'utf-8') as f:
-                # prepare list of objects
-                if not self.limit_schema:
-                    objects = []
-                    for obj_code in self.repo_objects.keys():
-                        object_type, object_name = obj_code.upper().split('.')
-                        object_type = object_type.replace(' BODY', '')
-                        #
-                        if not util.get_match(object_type, self.limit_type) and len(self.limit_type) > 0:
-                            continue
-                        if not util.get_match(object_name, self.limit_name) and len(self.limit_name) > 0:
-                            continue
-                        #
-                        if object_type:
-                            objects.append(object_name)
+            # prepare list of objects
+            if not self.limit_schema:
+                objects = []
+                for obj_code in self.repo_objects.keys():
+                    object_type, object_name = obj_code.upper().split('.')
+                    object_type = object_type.replace(' BODY', '')
                     #
-                    objects = '|'.join(sorted(objects, reverse = True))
+                    if not util.get_match(object_type, self.limit_type) and len(self.limit_type) > 0:
+                        continue
+                    if not util.get_match(object_name, self.limit_name) and len(self.limit_name) > 0:
+                        continue
+                    #
+                    if object_type:
+                        objects.append(object_name)
+                #
+                objects = '|'.join(sorted(objects, reverse = True))
 
-                # parse lines in file
-                for line in f.readlines():
-                    if self.limit_schema:
-                        # more precise, if we have schema prefix
-                        tags    = re.findall(self.limit_schema + r'\.([A-Z0-9\$_-]+)', line.upper())
+            # search for object names, parse lines in file
+            for line in util.get_file_lines(file):
+                if self.limit_schema:
+                    # more precise, if we have schema prefix
+                    tags    = re.findall(self.limit_schema + r'\.([A-Z0-9\$_-]+)', line.upper())
+                else:
+                    # less precise, but ok if we have unique object names
+                    tags    = re.findall(r'(' + objects + r')\W|(' + objects + r')$', line.upper())
+                    tags    = list(filter(None, [j for i in tags for j in i]))
+
+                # map found tags to pages
+                for object_name in list(set(tags)):
+                    if '.' in object_name:
+                        object_name = object_name.split('.')[1]
+                    if not util.get_match(object_name, self.limit_name) and len(self.limit_name) > 0:
+                        continue
+                    #
+                    page_id = util.extract_int(r'/page_(\d+)\.sql', file)
+                    if not (object_name in page_tags):
+                        page_tags[object_name] = []
+                    if page_id != None:
+                        if not (page_id in page_tags[object_name]):
+                            page_tags[object_name].append(page_id)
                     else:
-                        # less precise, but ok if we have unique object names
-                        tags    = re.findall(r'(' + objects + r')\W|(' + objects + r')$', line.upper())
-                        tags    = list(filter(None, [j for i in tags for j in i]))
-
-                    # map found tags to pages
-                    for object_name in list(set(tags)):
-                        if '.' in object_name:
-                            object_name = object_name.split('.')[1]
-                        if not util.get_match(object_name, self.limit_name) and len(self.limit_name) > 0:
-                            continue
-                        #
-                        page_id = util.extract_int(r'/page_(\d+)\.sql', file)
-                        if not (object_name in page_tags):
-                            page_tags[object_name] = []
-                        if page_id != None:
-                            if not (page_id in page_tags[object_name]):
-                                page_tags[object_name].append(page_id)
-                        else:
-                            if not object_name in comp_tags:
-                                comp_tags[object_name] = []
-                            comp_tags[object_name].append('Y')
+                        if not object_name in comp_tags:
+                            comp_tags[object_name] = []
+                        comp_tags[object_name].append('Y')
 
         # connect to database to get list of referenced objects
         schema = self.connection.get('schema_apex') or self.connection.get('schema_db')

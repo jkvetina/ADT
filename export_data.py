@@ -212,7 +212,7 @@ class Export_Data(config.Config):
         skip_delete     = ''
 
         # parse CSV file and create WITH table
-        with open(file, mode = 'r', encoding = 'utf-8') as csv_file:
+        with open(file, mode = 'rt', encoding = 'utf-8') as csv_file:
             csv_reader = csv.DictReader(csv_file, delimiter = self.config.csv_delimiter or ';', lineterminator = '\n', quoting = csv.QUOTE_NONNUMERIC)
             for idx, row in enumerate(csv_reader):
                 batch_id = idx // batch_size

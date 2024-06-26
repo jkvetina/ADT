@@ -210,10 +210,9 @@ class Export_DB(config.Config):
             comments    = self.get_object_comments(table_name, object_type)
             #
             if len(comments) > 0 and os.path.exists(object_file):
-                with open(object_file, 'rt', encoding = 'utf-8') as f:
-                    payload = f.read().strip()
-                    if not ('\n--\nCOMMENT ON ' in payload):
-                        util.write_file(object_file, '{}\n{}\n\n'.format(payload, '\n'.join(comments)))
+                payload = util.get_file_content(object_file).strip()
+                if not ('\n--\nCOMMENT ON ' in payload):
+                    util.write_file(object_file, '{}\n{}\n\n'.format(payload, '\n'.join(comments)))
 
 
 

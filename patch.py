@@ -452,15 +452,14 @@ class Patch(config.Config):
 
             # cleanup the script from comments, fix prompts
             payload = []
-            with open(full, 'rt', encoding = 'utf-8') as f:
-                for line in f.readlines():
-                    line = line.strip()
-                    if line.startswith('--') or line == '':
-                        continue
-                    if line.startswith('PROMPT'):
-                        line = line.replace('PROMPT --;', 'PROMPT ---;')
-                    #
-                    payload.append(line)
+            for line in util.get_file_lines(full):
+                line = line.strip()
+                if line.startswith('--') or line == '':
+                    continue
+                if line.startswith('PROMPT'):
+                    line = line.replace('PROMPT --;', 'PROMPT ---;')
+                #
+                payload.append(line)
             payload = '\n'.join(payload)
 
             # execute the script
@@ -1001,34 +1000,32 @@ class Patch(config.Config):
 
     def get_file_references(self, file):
         files = []
-        with open(file, 'rt', encoding = 'utf-8') as f:
-            for line in f.readlines():
-                if line.startswith('@'):
-                    if '"' in line:
-                        file = line.split('"', maxsplit = 2)[1]
-                    else:
-                        file = line.replace('@', '').split(' ')[0]
-                    files.append(file)
+        for line in util.get_file_lines(file):
+            if line.startswith('@'):
+                if '"' in line:
+                    file = line.split('"', maxsplit = 2)[1]
+                else:
+                    file = line.replace('@', '').split(' ')[0]
+                files.append(file)
         return files
 
 
 
     def get_file_commits(self, file):
         commits = []
-        with open(file, 'rt', encoding = 'utf-8') as f:
-            extracting = False
-            for line in f.readlines():
-                if line.startswith('-- COMMITS:'):      # find start of commits
-                    extracting = True
-                #
-                if extracting:
-                    if line.strip() == '--':            # find end of commits
-                        break
+        extracting = False
+        for line in util.get_file_lines(file):
+            if line.startswith('-- COMMITS:'):      # find start of commits
+                extracting = True
+            #
+            if extracting:
+                if line.strip() == '--':            # find end of commits
+                    break
 
-                    # find commit number
-                    search = re.search(r'^[-][-]\s+(\d+)[)]?\s', line)
-                    if search:
-                        commits.append(int(search.group(1)))
+                # find commit number
+                search = re.search(r'^[-][-]\s+(\d+)[)]?\s', line)
+                if search:
+                    commits.append(int(search.group(1)))
         return commits
 
 
@@ -1914,11 +1911,10 @@ class Patch(config.Config):
         # get real file content, not the git
         if (local or self.args.local or self.config.patch_template_dir in target_file or file.startswith(self.config.patch_scripts_snap)):
             if os.path.exists(file):
-                with open(file, 'rt', encoding = 'utf-8') as f:
-                    file_content = f.read()
+                file_content = util.get_file_content(file)
             else:
                 commit_hash, commit_id = self.head_commit['id'], self.head_commit_id
-                file_content    = self.get_file_from_commit(file, commit = commit_hash)
+                file_content = self.get_file_from_commit(file, commit = commit_hash)
 
         # shorten target folder for template files
         if self.config.patch_template_dir in target_file:
@@ -2078,18 +2074,16 @@ class Patch(config.Config):
         mime_type   = mimetypes.guess_type(file)[0]
         file_id     = query.template_apex_file_id
         width       = 200
-        data        = []
 
         # get data from set_env.sql file
         file_header = self.get_root(app_id, 'application/set_environment.sql')  # steal the header
-        with open(file_header, 'rt', encoding = 'utf-8') as f:
-            lines = f.readlines()
-            for i, line in enumerate(lines):
-                if line.strip() == 'begin':
-                    start = i
-                if line.strip() == 'end;':
-                    end = i
-            data = ''.join(lines[start:end]).replace('.import_begin', '.component_begin').splitlines()
+        lines = util.get_file_lines(file_header)
+        for i, line in enumerate(lines):
+            if line.strip() == 'begin':
+                start = i
+            if line.strip() == 'end;':
+                end = i
+        data = ''.join(lines[start:end]).replace('.import_begin', '.component_begin').splitlines()
 
         # encode file
         data.append(query.template_apex_file_init)
@@ -2160,12 +2154,8 @@ class Patch(config.Config):
         if not (file in self.script_stats):
             self.script_stats[file] = []
 
-        # get lines from file
-        lines = []
-        with open(file, 'rt', encoding = 'utf-8') as f:
-            lines = f.readlines()
-
         # find statements
+        lines = util.get_file_lines(file)
         for i, line in enumerate(lines):
             # replace comments with prompts
             if line.startswith('--'):

@@ -177,6 +177,18 @@ def get_hash(payload, encoding = 'utf-8'):
 
 
 
+def get_file_content(file):
+    with open(file, 'rt', encoding = 'utf-8') as f:
+        return f.read()
+
+
+
+def get_file_lines(file):
+    with open(file, 'rt', encoding = 'utf-8') as f:
+        return f.readlines()
+
+
+
 def get_file_hash(file):
     if os.path.exists(file):
         return hashlib.sha1(open(file, 'rb').read()).hexdigest()

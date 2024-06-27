@@ -21,6 +21,8 @@ path_apex               : 'apex/'           # folder with APEX related files
 auto_verbose            : 2                 # turn on verbose mode for recent <= # days
 auto_delete             : True              # automatically delete repo files for nonexisting objects
 
+check_new_versions      : True              # check if there is a new ADT version available
+
 # target folders by object types
 object_types:
     DATA                : ['data/',         .sql]

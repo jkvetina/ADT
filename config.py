@@ -44,6 +44,8 @@ from lib.file import File
 
 class Config(util.Attributed):
 
+    repo_original   = 'https://github.com/jkvetina/ADT'
+
     # some arguments could be set on the OS level
     os_prefix       = 'ADT_'
     os_args         = ['REPO', 'CLIENT', 'PROJECT', 'ENV', 'BRANCH', 'SCHEMA', 'KEY']
@@ -213,36 +215,14 @@ class Config(util.Attributed):
                 if value != None:
                     self.args[arg.lower()] = value
         #
-        self.args   = util.Attributed(self.args)    # for passed attributes
-        self.config = util.Attributed({})           # for user config
-        self.info   = util.Attributed({})           # for info group
-        self.debug  = self.args.get('debug')
-
-        # auto update git changes
-        if __name__ == '__main__' and self.args.get('autoupdate'):
-            try:
-                self.repo  = git.Repo(os.path.dirname(__file__))
-                self.repo.git.pull()
-            except:
-                util.raise_error('ADT UPDATE FAILED',
-                    'UPDATE YOUR ADT REPOSITORY MANUALLY'
-                )
-
-        # show component versions
-        if __name__ == '__main__' and (self.args.get('version') or self.args.get('autoupdate')):
-            self.show_versions()
-            util.beep_success()
-            util.quit()
-
-        # repo attributes
-        self.root           = util.fix_path(os.path.dirname(os.path.realpath(__file__)))
-        self.repo_root      = util.fix_path(self.args.get('repo') or os.path.abspath(os.path.curdir))
-        self.repo           = None      # set through init_repo()
-        self.conn           = None      # database connection object
-
-        # check all repo .sql files for wrong UTF characters
-        if self.args.get('utf'):
-            self.check_utf_errors()
+        self.args       = util.Attributed(self.args)    # for passed attributes
+        self.config     = util.Attributed({})           # for user config
+        self.info       = util.Attributed({})           # for info group
+        self.debug      = self.args.get('debug')
+        self.root       = util.fix_path(os.path.dirname(os.path.realpath(__file__)))
+        self.repo_root  = util.fix_path(self.args.get('repo') or os.path.abspath(os.path.curdir))
+        self.repo       = None      # set through init_repo()
+        self.conn       = None      # database connection object
 
         # set info group from command line arguments
         for arg in self.info_attributes:
@@ -252,6 +232,42 @@ class Config(util.Attributed):
         self.init_config()
         self.info['schema'] = self.args.get('schema', '')   or self.info.get('schema', '')  or self.config.get('default_schema')
         self.info['env']    = self.args.get('env', '')      or self.info.get('env', '')     or self.config.get('default_env')
+
+        # check for updates
+        if self.config.check_new_versions:
+            try:
+                adt_repo = git.Repo(os.path.dirname(__file__))
+            except:
+                util.raise_error('ADT REPO ERROR')
+            #
+            try:
+                remote_commit = git.cmd.Git().ls_remote(self.repo_original, heads = True).split('\t')[0]
+                if str(adt_repo.head.commit) != remote_commit:
+                    util.print_header('ADT UPDATES AVAILABLE')
+                    util.print_help('run the config.py -autoupdate\n')
+            except:
+                pass
+
+        # update & version flows
+        if __name__ == '__main__':
+            # auto update git changes
+            if self.args.get('autoupdate'):
+                try:
+                    adt_repo.git.pull()
+                except:
+                    util.raise_error('ADT UPDATE FAILED',
+                        'UPDATE YOUR ADT REPOSITORY MANUALLY'
+                    )
+
+            # show component versions
+            if (self.args.get('version') or self.args.get('autoupdate')):
+                self.show_versions()
+                util.beep_success()
+                util.quit()
+
+        # check all repo .sql files for wrong UTF characters
+        if self.args.get('utf'):
+            self.check_utf_errors()
 
         # setup beeps
         if self.config.chime_theme:

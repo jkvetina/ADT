@@ -532,7 +532,7 @@ class Patch(config.Config):
         # send notification on success
         if self.patch_status == self.status_success or 1 == 1:
             title       = '{} - Patch {} deployed'.format(self.target_env, self.patch_code)
-            author      = '<at>{}</at>'.format(self.repo_user_mail)
+            author      = '<at>{}</at>'.format(self.get_author(self.repo_user_mail))
             stamp       = datetime.datetime.today().strftime('%Y-%m-%d %H:%M')
             message     = '{}\n{}'.format(author, stamp)
             blocks      = []
@@ -877,12 +877,14 @@ class Patch(config.Config):
                     continue
 
             # filter for current user
-            commit = self.all_commits[commit_id]
-            if self.args.my and self.repo_user_mail != commit['author']:
+            info    = self.all_commits[commit_id]
+            author  = self.get_author(info['author'])
+            #
+            if self.args.my and self.get_author(self.repo_user_mail) != author:
                 continue
 
             # filter for specific user
-            if self.args.by and not (self.args.by.lower() in commit['author'].lower()):
+            if self.args.by and not (self.args.by.lower() in author.lower()):
                 continue
 
             # filter for commits with some files (ignore patch commits)
@@ -891,16 +893,16 @@ class Patch(config.Config):
                 continue
 
             # filter commits based on search words
-            if not self.get_search_match(self.search_message, commit['summary']):
+            if not self.get_search_match(self.search_message, info['summary']):
                 continue
 
             # skip empty commits (typically patch commits)
-            if self.args.files and len(commit['files']) == 0:
+            if self.args.files and len(info['files']) == 0:
                 continue
 
             # skip commits not matching the pattern
             if self.config.patch_commit_pattern:
-                ticket = util.extract(self.config.patch_commit_pattern, commit['summary'])
+                ticket = util.extract(self.config.patch_commit_pattern, info['summary'])
                 self.all_commits[commit_id]['ticket'] = ticket
                 if not ticket:
                     continue
@@ -1011,6 +1013,11 @@ class Patch(config.Config):
                             summary = self.all_commits[commit_num]['summary'].replace(ticket, '').strip()
                             print('      - {}) {} '.format(commit_num, summary))
                     print()
+
+
+
+    def get_author(self, author):
+        return self.config.repo_authors.get(author) or author
 
 
 

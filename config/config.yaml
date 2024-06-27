@@ -146,6 +146,8 @@ patch_map:
 repo_commit_days        : 60                    # maximum age (in days) for commits history
 repo_branch             : ''                    # empty = current branch
 repo_commits_file       : './config/commits/#BRANCH#.yaml'
+repo_authors:
+    personal_address    : company_address       # list your aliases (to convert personal email address)
 
 
 

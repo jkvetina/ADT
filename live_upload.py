@@ -115,6 +115,7 @@ class Live_Upload(config.Config):
                         self.upload_file(file)
                         minified = self.minify_file(file)
                         util.print_now('[OK]', append = True, close = True)
+                    util.beep_success()
                 #
                 util.print_now('.', append = True)
                 time.sleep(self.arg_sleep)

@@ -167,7 +167,7 @@ class Patch(config.Config):
 
         # show commits/tickets for each team mamber and current/offset week
         if (not isinstance(self.args.calendar, bool) or self.args.calendar):
-            self.show_calendar(weeks_offset = self.args.calendar)
+            self.show_calendar(offset = self.args.calendar)
             util.beep_success()
             util.quit()
 
@@ -911,108 +911,136 @@ class Patch(config.Config):
 
 
 
-    def show_calendar(self, weeks_offset = 0):
-        if weeks_offset and isinstance(weeks_offset, bool):
-            weeks_offset = 0
-
-        # find nearest Monday
-        now             = datetime.datetime.today()
-        now             = datetime.datetime(now.year, now.month, now.day)       # truncate time
-        now             = now - datetime.timedelta(days = 7 * weeks_offset)     # offset
-        monday          = now - datetime.timedelta(days = now.weekday())
-        curr_week       = monday.isocalendar()[0:2]
-        saturday        = (now - datetime.timedelta(days = now.weekday() - 5)).strftime('%Y-%m-%d')
-        sunday          = (now - datetime.timedelta(days = now.weekday() - 6)).strftime('%Y-%m-%d')
-
-        # filter commits for requested week
-        commits_daily   = {}
-        commits_tickets = {}
+    def show_calendar(self, offset = 0):
+        if offset and isinstance(offset, bool):
+            offset = 0
         #
-        for commit_num in self.filtered_commits:
-            commit  = self.all_commits[commit_num]
-            ticket  = commit['ticket']
-            author  = commit['author']
-            date    = commit['date'].strftime('%Y-%m-%d')
+        today           = datetime.datetime.today().replace(hour = 0, minute = 0, second = 0, microsecond = 0)
+        first_day       = datetime.datetime.today().replace(day = 28)
+        if offset > 0:
+            first_day   -= datetime.timedelta(days = offset * 30)       # will work fine for past few years
+        first_day       = first_day.replace(day = 1)
+        #
+        first_monday    = first_day - datetime.timedelta(days = first_day.weekday())
+        year_month      = first_day.strftime('%Y-%m')
 
-            # process requested week only
-            if commit['date'].isocalendar()[0:2] != curr_week:
+        # get calendar data
+        self.commits_daily   = {}
+        self.commits_tickets = {}
+        #
+        self.get_calendar_data(year_month)
+
+        # show monthly overview
+        authored = {}
+        for commit_num, info in self.all_commits.items():
+            if info['date'].strftime('%Y-%m') == year_month:
+                author = self.get_author(info['author'])
+                if not (author in authored):
+                    authored[author] = []
+                authored[author].append(commit_num)
+        #
+        util.print_header('MONTHLY OVERVIEW:', year_month)
+        for author in sorted(authored.keys()):
+            if author in self.commits_tickets:
+                util.print_dots('  ' + author, right = len(authored[author]), width = 49)
+        print()
+
+        # for each author with some commits
+        for author in sorted(self.commits_tickets.keys()):
+            count_commits   = len(self.commits_tickets[author])
+            count_tickets   = len(set(self.commits_tickets[author]))
+            #
+            if not count_tickets:
+                continue
+
+            # show header
+            if not self.args.my:
+                print('\n' + '-' * 80)
+            util.print_header('{} COMMITS BY {} ({})'.format(count_commits, author, count_tickets))
+
+            # show monthly calendar
+            for week in range(0, 6):        # max 6 weeks in a month
+                curr_date = first_monday + datetime.timedelta(days = week * 7)
+                days, no_headers = [], []
+                #
+                for day in range(0, 7):     # max 7 days in a week
+                    curr_month  = curr_date.strftime('%Y-%m') == year_month
+                    header      = curr_date.strftime('%Y-%m-%d')
+                    if not curr_month:
+                        header  = ' ' * (day + 1)
+                        no_headers.append(day)      # to get rid of the splitter
+                    #
+                    curr_date += datetime.timedelta(days = 1)
+                    if day >= 5:
+                        continue            # show just 5 days (Mon-Fri)
+                    days.append(header)
+                #
+                if len(''.join(days).strip()) > 0:
+                    # get commits/tickets for each day
+                    author_commits = {}
+                    for i, day in enumerate(days, start = 1):
+                        if not (day in author_commits):
+                            author_commits[day] = []
+                        author_commits[day].extend(self.commits_daily.get(day, {}).get(author, {}).keys() or [''])
+
+                    # calculate number of rows, fix dupes
+                    max_commits = 0
+                    for date in days:
+                        max_commits = max(max_commits, len(author_commits[date]))
+                        author_commits[date] = sorted(set(author_commits[date]))
+
+                    # pivot data
+                    data = []
+                    for line in range(max_commits):
+                        row = {}
+                        for date in days:
+                            #if date == today.strftime('%Y-%m-%d') and not ('^' in author_commits[date]):
+                            #    author_commits[date].append('^')
+                            row[date] = author_commits[date][line] if len(author_commits[date]) - 1 >= line else ''
+                        data.append(row)
+
+                    util.print_table(data, columns = dict(zip(days, [12] * 5)), no_header = no_headers)
+            #
+            print()
+
+
+
+    def get_calendar_data(self, year_month):
+        for commit_num in self.filtered_commits:
+            info = self.all_commits[commit_num]
+            if not ('ticket' in info):
+                continue
+
+            # move weekend work to previous Friday
+            weekday = info['date'].weekday() + 1
+            if weekday == 6:
+                info['date'] -= datetime.timedelta(days = 1)
+            elif weekday == 7:
+                info['date'] -= datetime.timedelta(days = 2)
+
+            # get info info
+            ticket  = info.get('ticket', '')
+            author  = self.get_author(info['author'])
+            date    = info['date'].strftime('%Y-%m-%d')
+
+            # process requested month only
+            if info['date'].strftime('%Y-%m') != year_month:
                 continue
 
             # gather some stats
-            if not (author in commits_tickets):
-                commits_tickets[author] = []
-            commits_tickets[author].append(ticket)
+            if not (author in self.commits_tickets):
+                self.commits_tickets[author] = []
+            self.commits_tickets[author].append(ticket)
 
             # sort commits
-            if not (date in commits_daily):
-                commits_daily[date] = {}
-            if not (author in commits_daily[date]):
-                commits_daily[date][author] = {}
-            if not (ticket in commits_daily[date][author]):
-                commits_daily[date][author][ticket] = []
+            if not (date in self.commits_daily):
+                self.commits_daily[date] = {}
+            if not (author in self.commits_daily[date]):
+                self.commits_daily[date][author] = {}
+            if not (ticket in self.commits_daily[date][author]):
+                self.commits_daily[date][author][ticket] = []
             #
-            commits_daily[date][author][ticket].append(commit_num)
-
-        # prepare week days
-        days = []
-        for i in range(5):
-            day = (monday + datetime.timedelta(days = i)).strftime('%Y-%m-%d')
-            days.append(day)
-
-        # prepare data
-        for author in sorted(commits_tickets.keys()):
-            # get commits/tickets for each day
-            author_commits = {}
-            for i, day in enumerate(days, start = 1):
-                if not (day in author_commits):
-                    author_commits[day] = []
-                author_commits[day].extend(commits_daily.get(day, {}).get(author, {}).keys())
-
-                # calculate weekend work as Friday
-                if i == 5:
-                    author_commits[day].extend(commits_daily.get(saturday, {}).get(author, {}).keys())
-                    author_commits[day].extend(commits_daily.get(sunday,   {}).get(author, {}).keys())
-
-            # calculate number of rows, fix dupes
-            max_commits = 0
-            for date in days:
-                max_commits = max(max_commits, len(author_commits[date]))
-                author_commits[date] = sorted(set(author_commits[date]))
-
-            # pivot data
-            data = []
-            for line in range(max_commits):
-                row = {}
-                for date in days:
-                    row[date] = author_commits[date][line] if len(author_commits[date]) - 1 >= line else ''
-                data.append(row)
-
-            # show weekly overview to user
-            columns         = dict(zip(days, [12] * 5))
-            count_commits   = len(commits_tickets[author])
-            count_tickets   = len(set(commits_tickets[author]))
-            #
-            if count_tickets > 0:
-                util.print_header('{} COMMITS BY {} ({})'.format(count_commits, author, count_tickets))
-                util.print_table(data, columns = columns)
-
-            # show daily overview to user
-            if (self.args.my or self.args.by):
-                for date in days:
-                    if not (date in commits_daily):
-                        continue
-                    #
-                    tickets = commits_daily[date].get(author, {}).keys()
-                    if not len(tickets):
-                        continue
-                    #
-                    print('\n  {}\n  {}'.format(date, len(date) * '-'))
-                    for ticket in sorted(tickets):
-                        print('\n    {} '.format(ticket))
-                        for commit_num in sorted(commits_daily[date][author][ticket]):
-                            summary = self.all_commits[commit_num]['summary'].replace(ticket, '').strip()
-                            print('      - {}) {} '.format(commit_num, summary))
-                    print()
+            self.commits_daily[date][author][ticket].append(commit_num)
 
 
 

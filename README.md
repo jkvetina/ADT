@@ -58,6 +58,7 @@ Any feature requests, bugs are accepted on my [LinkedIn](https://www.linkedin.co
     - ✅ you can use sequences to sort patches created on same day, it checks for clashes
     - ✅ files are properly sorted based on dependencies
     - ✅ statements in patch scripts converted to your templates so they can be rerun
+    - ✅ show calendar overview for commited cards/tasks per developer
 - ✅ it can also __deploy these patches__ to different environments (basically any database you can reach via direct connection on via a REST service)
     - ✅ multiple schemas patching (so far you manually specify order with numeric prefix on each patch file)
     - ✅ show progress, results and save output in customized log files

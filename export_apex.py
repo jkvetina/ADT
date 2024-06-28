@@ -95,7 +95,11 @@ class Export_APEX(config.Config):
         self.arg_apps       = self.args.app     or self.conn.tns.get('app', '')
         #
         if type(self.arg_apps) != list:
-            self.arg_apps = str(self.arg_apps).replace(' ', ',').split(',')
+            self.arg_apps   = str(self.arg_apps).replace(' ', ',').split(',')
+        #
+        self.arg_apps       = list(filter(lambda item: item is not None,  self.arg_apps))   # remove empty elements
+        self.arg_apps       = list(filter(lambda item: item != 'None',    self.arg_apps))   # remove empty elements
+        #
         for (i, app_id) in enumerate(self.arg_apps):
             self.arg_apps[i] = int(app_id)
         #
@@ -260,22 +264,23 @@ class Export_APEX(config.Config):
             'group_id'      : self.arg_group,
             'app_id'        : '',  # '|'.join(str(x) for x in self.arg_apps),
         }
-        self.apex_apps = {}
+        self.apex_apps  = {}
+        groups          = {}
         #
-        groups = {}
         for row in self.conn.fetch_assoc(query.apex_applications, **args):
             # split to groups for screen output
             row.app_group = row.app_group or '-'
-            if row.app_id in self.arg_apps:
+            rec = {
+                'app_id'        : row.app_id,
+                'alias'         : util.get_string(row.app_alias, 8),
+                'name'          : util.get_string(row.app_name, 28),
+                'pages'         : row.pages,
+                'updated_at'    : row.updated_at,
+            }
+            if (row.app_id in self.arg_apps or self.arg_apps == []):
                 if not (row.app_group in groups):
                     groups[row.app_group] = []
-                groups[row.app_group].append({
-                    'app_id'        : row.app_id,
-                    'alias'         : row.app_alias,
-                    #'name'          : row.app_name,
-                    'pages'         : row.pages,
-                    'updated_at'    : row.updated_at,
-                })
+                groups[row.app_group].append(rec)
             #
             self.apex_apps[row.app_id] = row
 

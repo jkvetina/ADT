@@ -789,6 +789,8 @@ class Config(util.Attributed):
 
             # get file object with some details/metadata
             obj = self.repo_files.get(short) or File(file, config = self.config)
+            if not ('object_code' in obj):
+                continue
             if obj['object_code'] in self.all_objects_sorted:
                 index   = self.all_objects_sorted.index(obj['object_code'])
             else:

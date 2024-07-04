@@ -843,7 +843,7 @@ def is_text_file(file):
         ):
         return True
     #
-    if mime_type.startswith('text'):
+    if mime_type and mime_type.startswith('text'):
         return True
     #
     return False

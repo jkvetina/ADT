@@ -6,3 +6,4 @@ requests >= 2
 rcssmin
 rjsmin
 chime
+sshtunnel

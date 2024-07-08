@@ -416,6 +416,7 @@ class Config(util.Attributed):
             **self.connection['db'],
             **self.connection.get('defaults', {}),
             **self.connection.get('wallet', {}),
+            **self.connection.get('ssh', {}),
             **schemas[schema_name]['db'],
             **schemas[schema_name].get('apex', {}),
             **schemas[schema_name].get('export', {}),

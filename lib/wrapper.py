@@ -1,6 +1,7 @@
 # coding: utf-8
 import sys, os, traceback
 import oracledb         # pip3 install oracledb     --upgrade
+import sshtunnel
 #
 from lib import util
 from lib import queries_wrapper as query
@@ -125,7 +126,28 @@ class Oracle:
                 util.raise_error('CONNECTION FAILED', self.get_error_code())
             return
 
-        # classic connect
+        # open SSH tunnel
+        if len(self.tns.get('gateway') or '') > 0:
+            #with sshtunnel.SSHTunnelForwarder (
+            with sshtunnel.open_tunnel (
+                (self.tns['gateway'], self.tns['gateway_port']),
+                ssh_username        = self.tns['ssh_user'],
+                ssh_password        = self.tns['ssh_pwd'],
+                remote_bind_address = (self.tns['remote_bind'], self.tns['remote_port']),
+                local_bind_address  = (self.tns['local_bind'],  self.tns['local_port'])
+            ) as server:
+                server.start()
+                self.tns['host']    = self.tns.get('local_bind') or '127.0.0.1'
+                self.tns['port']    = self.tns.get('local_port') or server.local_bind_port
+                #
+                print('  -> SSH TUNNEL ENABLED\n')
+                self.connect__()
+        else:
+            self.connect__()
+
+
+
+    def connect__(self):
         if not 'dsn' in self.tns:
             if self.tns.get('sid', '') != '':
                 self.tns.dsn = oracledb.makedsn(self.tns.host, self.tns.port, sid = self.tns.sid)
@@ -138,6 +160,8 @@ class Oracle:
                 password    = self.tns.pwd if self.tns.get('pwd!', '') != 'Y' else util.decrypt(self.tns.pwd, self.tns.key),
                 dsn         = self.tns.dsn
             )
+            self.commit()
+            #
         except Exception:
             if self.debug:
                 print(traceback.format_exc())

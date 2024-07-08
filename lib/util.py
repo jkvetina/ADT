@@ -838,9 +838,7 @@ def get_start():
 def is_text_file(file):
     mime_type = mimetypes.guess_type(file)[0]
     #
-    if mime_type in (
-            'application/x-sql',        # text exceptions
-        ):
+    if file.endswith('.sql'):
         return True
     #
     if mime_type and mime_type.startswith('text'):

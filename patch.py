@@ -78,7 +78,7 @@ class Patch(config.Config):
         group.add_argument('-search',       help = 'Search commits summary for provided words',                         nargs = '*')
         group.add_argument('-commit',       help = 'Process just specific commits',                                     nargs = '*',                default = [])
         group.add_argument('-ignore',       help = 'Ignore specific commits',                                           nargs = '*',                default = [])
-        group.add_argument('-full',         help = 'Specify APEX app(s) where to use full export',                      nargs = '*',                default = [])
+        group.add_argument('-full',         help = 'Specify APEX app(s) where to use full export', type = int,          nargs = '*',                default = [])
         group.add_argument('-local',        help = 'Use local files and not files from Git',                            nargs = '?', const = True,  default = False)
         group.add_argument('-head',         help = 'Use file version from head commit',                                 nargs = '?', const = True,  default = False)
         #
@@ -959,6 +959,7 @@ class Patch(config.Config):
             util.print_header('{} COMMITS BY {} ({})'.format(count_commits, author, count_tickets))
 
             # show monthly calendar
+            author_commits = {}
             for week in range(0, 6):        # max 6 weeks in a month
                 curr_date = first_monday + datetime.timedelta(days = week * 7)
                 days, no_headers = [], []
@@ -977,7 +978,6 @@ class Patch(config.Config):
                 #
                 if len(''.join(days).strip()) > 0:
                     # get commits/tickets for each day
-                    author_commits = {}
                     for i, day in enumerate(days, start = 1):
                         if not (day in author_commits):
                             author_commits[day] = []
@@ -1000,8 +1000,10 @@ class Patch(config.Config):
                         data.append(row)
 
                     util.print_table(data, columns = dict(zip(days, [12] * 5)), no_header = no_headers)
-            #
-            print()
+
+            #for date, rows in author_commits.items():
+            #    print(date, ', '.join(rows))
+            #print()
 
 
 

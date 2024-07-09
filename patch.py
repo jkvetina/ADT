@@ -1329,6 +1329,10 @@ class Patch(config.Config):
 
             # create a file in scripts to drop object
             for file in self.relevant_files[schema_with_app]:
+                # dont drop objects in scripts
+                if self.config.patch_scripts_snap in file:
+                    continue
+                #
                 if not (file in self.diffs):
                     object_name     = self.get_object_name(file)
                     object_type     = self.get_object_type(file)
@@ -1436,7 +1440,10 @@ class Patch(config.Config):
             if not app_id and self.config.patch_add_scripts:
                 unknown = self.get_script_unknow_files(scripts_processed)
                 if len(unknown) > 0:
-                    util.print_warning('UNKOWN SCRIPTS:', unknown)
+                    util.print_warning('UNKNOWN SCRIPTS:', unknown)
+                #
+                if len(self.ignored_scripts) > 0:
+                    util.print_warning('IGNORED SCRIPTS:', self.ignored_scripts)
 
             # attach APEX files
             if app_id:

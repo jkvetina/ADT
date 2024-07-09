@@ -248,7 +248,7 @@ tables_global:
         insert: True            # insert new rows
         update: True            # update existitng rows
     where:                      # global where condition, applied if column exist
-        app_id: '= 100'         # where condition, after a column name
+        app_id: '> 0'           # where condition, after a column name
                                 # replace on runtime during export_db! so new arg needed
                                 # or get this from default APEX schema, app
 # setup for specific tables

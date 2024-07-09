@@ -1797,8 +1797,8 @@ class Patch(config.Config):
         found = []
         for file in util.get_files(self.config.patch_scripts_dir + '**/*.sql'):
             short = file.replace(self.config.patch_scripts_dir, '').replace('.sql', '')
-            words = util.replace(short.lower(), r'[^a-z]+', ' ').split()
-            #
+            words = util.replace(os.path.dirname(short.lower()), r'[^a-z]+', ' ').split()
+
             if group in words and (timing in words or ignore_timing) and (before or not (timing_before) in words):
                 env_name = util.extract(r'\.\[([^\]]+)\]\.', file) or ''
                 if env_name and env_name != self.target_env:

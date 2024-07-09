@@ -114,7 +114,21 @@ class Patch(config.Config):
 
         # adjust sequence
         if isinstance(self.args.create, bool) and self.args.create:
-            self.patch_seq      = '0' if '#PATCH_SEQ#' in self.config.patch_folder else ''
+            self.patch_seq = 1      # start sequences at 1
+            #
+            if '#PATCH_SEQ#' in self.config.patch_folder:
+                today       = self.config.patch_folder.split('#PATCH_SEQ#')[0]
+                folders     = util.get_files(self.config.patch_root + today + '*/')
+                #
+                for folder in folders:
+                    folder  = folder.replace(self.config.patch_root + today, '')
+                    seq     = int(folder.split('-')[0])
+                    #
+                    if self.patch_code in folder:   # current patch = keep existing sequence
+                        self.patch_seq = seq
+                        break
+                    #
+                    self.patch_seq = max(self.patch_seq, seq + 1)   # use next available sequence
 
         # prepare internal variables
         self.patch_files        = []

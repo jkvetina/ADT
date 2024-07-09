@@ -1799,6 +1799,14 @@ class Patch(config.Config):
             short = file.replace(self.config.patch_scripts_dir, '').replace('.sql', '')
             words = util.replace(os.path.dirname(short.lower()), r'[^a-z]+', ' ').split()
 
+            # recover patch folder from object type
+            for object_type in self.config.patch_map[group]:
+                type_folder = self.config.object_types[object_type][0].strip('/')
+                if type_folder in words and not (group in words):
+                    words.append(group)
+                    break
+
+            # pass only matching objects
             if group in words and (timing in words or ignore_timing) and (before or not (timing_before) in words):
                 env_name = util.extract(r'\.\[([^\]]+)\]\.', file) or ''
                 if env_name and env_name != self.target_env:

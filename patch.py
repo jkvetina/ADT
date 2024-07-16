@@ -1992,6 +1992,10 @@ class Patch(config.Config):
         if (file_content == None or len(file_content) == 0):
             util.raise_error('FILE IS EMPTY', file)
 
+        # make sure we have a text file
+        if isinstance(file_content, bytes):
+            file_content = file_content.decode('ascii')
+
         # check for merge issues when developer ovelook things
         if '<<<<<<< ' in file_content and '>>>>>>> ' in file_content:
             util.raise_error('UNRESOLVED MERGE ISSUES', file)
@@ -2123,7 +2127,7 @@ class Patch(config.Config):
             commit = self.all_commits[commit]['id']
 
         # run command line and capture the output, text file is expected
-        return util.run_command('git show {}:{}'.format(commit, file), silent = True, text = util.is_text_file(file))
+        return util.run_command('git show {}:{}'.format(commit, file), silent = True, text = False)
 
 
 

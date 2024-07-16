@@ -46,7 +46,7 @@ class Patch(config.Config):
 
 
 
-    def __init__(self, args = None):
+    def define_parser(self):
         self.parser = argparse.ArgumentParser(add_help = False)
 
         # actions and flags
@@ -88,49 +88,32 @@ class Patch(config.Config):
         group.add_argument('-fetch',        help = 'Fetch Git changes before patching',                                 nargs = '?', const = True,  default = False)
         group.add_argument('-implode',      help = 'Merge files in a folder',                                           nargs = '?')
         group.add_argument('-deldiff',      help = 'Delete diff tables',                                                nargs = '?', const = True,  default = False)
-
-        super().__init__(self.parser, args)
-
-        # process arguments and reinitiate config
-        if not (self.args.install or self.args.rebuild or self.args.implode):
-            util.assert_(self.args.target, 'MISSING ARGUMENT: TARGET ENV')
         #
-        self.patch_code         = self.args.patch
-        self.patch_seq          = self.args.create
-        self.search_message     = self.args.search if self.args.search != None else ([self.patch_code] if self.patch_code != None else [])
-        self.info.branch        = self.args.branch or self.config.repo_branch or self.info.branch or str(self.repo.active_branch)
-        self.add_commits        = util.ranged_str(self.args.commit)
-        self.ignore_commits     = util.ranged_str(self.args.ignore)
-        self.full_exports       = self.args.full
-        self.target_env         = self.args.deploy if isinstance(self.args.deploy, str) and len(self.args.deploy) > 0 else self.args.target
-        self.patch_ref          = self.args.get('ref')
-        self.patch_rollback     = 'CONTINUE' if self.args.get('continue') else 'EXIT ROLLBACK'
-        self.patch_dry          = False
-        self.patch_file_moveup  = self.args.moveup
-        #
-        if self.args.target:
+        return self.parser
+
+
+
+    def __init__(self, args = None, parser = None):
+        super().__init__(parser = parser or self.define_parser(), args = args)
+
+        self.info.branch        = self.args.get('branch') or self.config.repo_branch or self.info.branch or str(self.repo.active_branch)
+
+        if self.args.get('target'):
             self.init_config()
-            self.check_env(self.target_env)
-
-        # adjust sequence
-        if isinstance(self.args.create, bool) and self.args.create:
-            self.patch_seq = 1      # start sequences at 1
-            #
-            if '#PATCH_SEQ#' in self.config.patch_folder:
-                today       = self.config.patch_folder.split('#PATCH_SEQ#')[0]
-                folders     = util.get_files(self.config.patch_root + today + '*/')
-                #
-                for folder in folders:
-                    folder  = folder.replace(self.config.patch_root + today, '')
-                    seq     = int(folder.split('-')[0])
-                    #
-                    if self.patch_code in folder:   # current patch = keep existing sequence
-                        self.patch_seq = seq
-                        break
-                    #
-                    self.patch_seq = max(self.patch_seq, seq + 1)   # use next available sequence
 
         # prepare internal variables
+        self.patch_code         = None
+        self.patch_seq          = None
+        self.search_message     = ''
+        self.add_commits        = ''
+        self.ignore_commits     = ''
+        self.full_exports       = None
+        self.target_env         = None
+        self.patch_ref          = None
+        self.patch_rollback     = None
+        self.patch_dry          = None
+        self.patch_file_moveup  = None
+        #
         self.patch_files        = []
         self.patch_files_apex   = []
         self.patch_file         = ''
@@ -149,6 +132,8 @@ class Patch(config.Config):
         self.relevant_comms     = {}
         self.diffs              = {}
         self.hash_commits       = []
+        self.hash_files         = {}
+        self.hash_changed       = {}
         self.head_commit        = None
         self.head_commit_id     = None
         self.first_commit_id    = None
@@ -158,7 +143,7 @@ class Patch(config.Config):
         self.postfix_before     = self.config.patch_postfix_before
         self.postfix_after      = self.config.patch_postfix_after
         self.commits_file       = self.config.repo_commits_file.replace('#BRANCH#', self.info.branch)
-        self.show_commits       = (self.args.commits or self.default_commits) if self.patch_code == None else self.args.commits
+        self.show_commits       = 0
         self.ignored_scripts    = []
         self.patches            = {}
         self.deploy_plan        = []
@@ -168,22 +153,43 @@ class Patch(config.Config):
         self.script_stats       = {}
         self.obj_not_found      = []
 
+        # overrides for current file
+        if __name__ == "__main__":
+            self.patch_code         = self.args.patch
+            self.patch_seq          = self.args.create
+            self.search_message     = self.args.search if self.args.search != None else ([self.patch_code] if self.patch_code != None else [])
+            self.add_commits        = util.ranged_str(self.args.commit)
+            self.ignore_commits     = util.ranged_str(self.args.ignore)
+            self.full_exports       = self.args.full
+            self.target_env         = self.args.deploy if isinstance(self.args.deploy, str) and len(self.args.deploy) > 0 else self.args.target
+            self.patch_ref          = self.args.get('ref')
+            self.patch_rollback     = 'CONTINUE' if self.args.get('continue') else 'EXIT ROLLBACK'
+            self.patch_dry          = False
+            self.patch_file_moveup  = self.args.moveup
+            self.show_commits       = (self.args.get('commits') or self.default_commits) if self.patch_code == None else self.args.get('commits')
+
+            if not (self.args.install or self.args.rebuild or self.args.implode):
+                util.assert_(self.args.target, 'MISSING ARGUMENT: TARGET ENV')
+            #
+            if self.target_env:
+                self.init_config()
+                self.check_env(self.target_env)
+
+        # make sure we have all commits and patch folders ready
+        self.get_all_commits()
+        self.get_patch_folders()
+        self.get_matching_commits()
+
+        # proceed with requested actions
+        if __name__ == "__main__":
+            self.init()
+
+
+
+    def init(self):
         # fetch changes in Git
         if self.args.fetch:
             self.fetch_changes()
-
-        # make sure we have all commits ready
-        self.get_all_commits()
-        self.get_matching_commits()
-
-        # go through patch folders
-        self.get_patch_folders()
-
-        # show commits/tickets for each team mamber and current/offset week
-        if (not isinstance(self.args.calendar, bool) or self.args.calendar):
-            self.show_calendar(offset = self.args.calendar)
-            util.beep_success()
-            util.quit()
 
         # archive old patches and quit
         if self.args.archive != None:
@@ -206,6 +212,24 @@ class Patch(config.Config):
         if self.args.deldiff:
             self.delete_diff_tables()
             util.quit()
+
+        # adjust sequence
+        if isinstance(self.args.create, bool) and self.args.create:
+            self.patch_seq = 1      # start sequences at 1
+            #
+            if '#PATCH_SEQ#' in self.config.patch_folder:
+                today       = self.config.patch_folder.split('#PATCH_SEQ#')[0]
+                folders     = util.get_files(self.config.patch_root + today + '*/')
+                #
+                for folder in folders:
+                    folder  = folder.replace(self.config.patch_root + today, '')
+                    seq     = int(folder.split('-')[0])
+                    #
+                    if self.patch_code in folder:   # current patch = keep existing sequence
+                        self.patch_seq = seq
+                        break
+                    #
+                    self.patch_seq = max(self.patch_seq, seq + 1)   # use next available sequence
 
         # show recent commits and patches
         if not self.args.hash:

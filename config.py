@@ -349,7 +349,7 @@ class Config(util.Attributed):
 
 
     def __del__(self):
-        if self.start_timer:
+        if 'start_timer' in self and self.start_timer:
             print('\nTIMER: {}s\n'.format(int(round(timeit.default_timer() - self.start_timer + 0.5, 0))))
 
 

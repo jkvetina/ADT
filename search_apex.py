@@ -47,7 +47,7 @@ class Search_APEX(config.Config):
         group.add_argument('-type',         help = 'To limit object types',                                             nargs = '*', default = [])
         group.add_argument('-name',         help = 'To limit object name',                                              nargs = '*', default = [])
 
-        super().__init__(self.parser, args)
+        super().__init__(parser = self.parser, args = args)
 
         # setup env and paths
         self.init_config()

@@ -70,7 +70,7 @@ class Export_APEX(config.Config):
         group.add_argument('-group',        help = 'Limit application group',                                       nargs = '?')
         group.add_argument('-app',          help = 'Limit list of application(s)',          type = int,             nargs = '*', default = [])
 
-        super().__init__(self.parser, args)
+        super().__init__(parser = self.parser, args = args)
 
         # setup env and paths
         self.target_root        = self.repo_root    + self.get_path(self.config.path_apex)

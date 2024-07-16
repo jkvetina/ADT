@@ -52,7 +52,7 @@ class Search_Repo(config.Config):
         group = self.parser.add_argument_group('EXTRA ACTIONS')
         group.add_argument('-restore',      help = 'Restore specific version(s) of file',       type = int,             nargs = '*')
 
-        super().__init__(self.parser, args)
+        super().__init__(parser = self.parser, args = args)
 
         # setup env and paths
         self.init_config()

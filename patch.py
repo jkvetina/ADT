@@ -730,8 +730,8 @@ class Patch(config.Config):
                 self.all_commits = dict(util.get_yaml(f, self.commits_file))
 
                 # initate partial refresh, remove just last # of commits
-                if str(self.args.rebuild) != 'True' and self.args.rebuild > 0:
-                    for commit_num in sorted(self.all_commits.keys(), reverse = True)[0:self.args.rebuild]:
+                if str(self.args.get('rebuild', 0)) != 'True' and self.args.get('rebuild', 0) > 0:
+                    for commit_num in sorted(self.all_commits.keys(), reverse = True)[0:self.args.get('rebuild', 0)]:
                         self.all_commits.pop(commit_num)
                     #
                     self.args.rebuild = False
@@ -760,7 +760,7 @@ class Patch(config.Config):
         for commit in self.repo.iter_commits(self.info.branch, max_count = 1, skip = 0, reverse = False):
             commits = commit.count()
         #
-        if self.args.rebuild:
+        if self.args.get('rebuild'):
             all_hashes          = []
             self.all_commits    = {}
             #
@@ -797,13 +797,11 @@ class Patch(config.Config):
             })
 
             # show progress
-            if self.args.rebuild:
+            if self.args.get('rebuild'):
                 progress_done = util.print_progress(progress_done, progress_target, start = start)
-        if self.args.rebuild:
+        if self.args.get('rebuild'):
             util.print_progress_done(start = start)
             print()
-
-        if self.args.rebuild:
             print('DELETED FILES:')
 
         # load last commit number
@@ -837,9 +835,9 @@ class Patch(config.Config):
             #
             self.all_commits[commit_id] = obj
             #
-            if self.args.rebuild:
+            if self.args.get('rebuild'):
                 progress_done = util.print_progress(progress_done, progress_target, start = start)
-        if self.args.rebuild:
+        if self.args.get('rebuild'):
             util.print_progress_done(start = start)
 
         # remove 90 days old commits
@@ -870,7 +868,7 @@ class Patch(config.Config):
         self.get_filtered_commits()
 
         # clean screen on rebuild
-        if self.args.rebuild:
+        if self.args.get('rebuild'):
             print()
             sys.exit()
 
@@ -903,7 +901,7 @@ class Patch(config.Config):
 
             # filter for commits with some files (ignore patch commits)
             count_files = len(self.all_commits[commit_id].get('files', []))
-            if self.args.files and count_files == 0:
+            if self.args.get('files') and count_files == 0:
                 continue
 
             # filter commits based on search words
@@ -911,7 +909,7 @@ class Patch(config.Config):
                 continue
 
             # skip empty commits (typically patch commits)
-            if self.args.files and len(info['files']) == 0:
+            if self.args.get('files') and len(info['files']) == 0:
                 continue
 
             # skip commits not matching the pattern

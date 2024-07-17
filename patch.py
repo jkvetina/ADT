@@ -2013,7 +2013,10 @@ class Patch(config.Config):
             commit = self.all_commits[commit]['id']
 
         # run command line and capture the output, text file is expected
-        return util.run_command('git show {}:{}'.format(commit, file), silent = True, text = False)
+        payload = util.run_command('git show {}:{}'.format(commit, file), silent = True, text = False)
+        payload = self.get_simple_text(payload)
+        #
+        return payload
 
 
 
@@ -2335,10 +2338,15 @@ class Patch(config.Config):
 
 
 
-    def get_table_for_diff(self, payload):
-        if isinstance(payload, bytes):
-            payload = payload.decode('ascii')
+    def get_simple_text(self, payload):
+        if not isinstance(payload, bytes):
+            payload = payload.encode('ascii', 'ignore')
         #
+        return payload.decode('ascii', 'ignore')
+
+
+
+    def get_table_for_diff(self, payload):
         payload = payload.split(';')[0]
         payload = payload.split('\nPARTITION BY')[0]
         payload = payload.split('\n')

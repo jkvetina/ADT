@@ -2336,6 +2336,9 @@ class Patch(config.Config):
 
 
     def get_table_for_diff(self, payload):
+        if isinstance(payload, bytes):
+            payload = payload.decode('ascii')
+        #
         payload = payload.split(';')[0]
         payload = payload.split('\nPARTITION BY')[0]
         payload = payload.split('\n')

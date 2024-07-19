@@ -532,6 +532,8 @@ class Export_DB(config.Config):
                 if 'USING INDEX' in line and self.config['tablespace']['INDEX']:
                     append_semi = ';' if line[-1:] == ';' else ''
                     line = line.rstrip(';') + ' TABLESPACE ' + self.config['tablespace']['INDEX'] + append_semi
+                    if not append_semi and not (';' in line):
+                        line += ','
 
                 lines[i] = line.rstrip()
 
@@ -633,6 +635,11 @@ class Export_DB(config.Config):
             #
             lines = lines.replace(alter, formatted)
         lines = lines.splitlines()
+
+        # cleanup round
+        for (i, line) in enumerate(lines):
+            if line.endswith(',;'):
+                lines[i] = line.rstrip(',;') + ';'
 
         # fix missing semicolon
         last_line = len(lines) - 1

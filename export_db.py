@@ -160,6 +160,9 @@ class Export_DB(config.Config):
 
         # get objects to recompile
         for row in self.conn.fetch_assoc(query.matching_objects, **args):
+            if row.object_type == 'TABLE' and (row.object_name.endswith('$1') or row.object_name.endswith('$2')):
+                continue
+            #
             if not (row.object_type in self.objects):
                 self.objects[row.object_type] = {}
                 self.overview[row.object_type] = 0

@@ -235,6 +235,9 @@ class Export_DB(config.Config):
         recent_type     = ''
         #
         for object_type in sorted(self.objects.keys()):
+            if not (object_type in self.config.object_types):
+                continue
+            #
             for object_name in sorted(self.objects[object_type].keys()):
                 if self.args.verbose:
                     show_type   = object_type if object_type != recent_type else ''
@@ -246,10 +249,12 @@ class Export_DB(config.Config):
                 # export object from database and save in file
                 payload     = self.export_object(object_type, object_name)
                 object_file = self.get_object_file(object_type, object_name)
-                util.write_file(object_file, payload)
                 #
-                if object_type in self.config.object_comments:
-                    self.update_comments(object_name)
+                if object_file:
+                    util.write_file(object_file, payload)
+                    #
+                    if object_type in self.config.object_comments:
+                        self.update_comments(object_name)
 
             # show extra line in between different object types
             if self.args.verbose:

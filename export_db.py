@@ -34,27 +34,33 @@ from lib.file import File
 
 class Export_DB(config.Config):
 
-    def __init__(self, args = None):
-        self.parser = argparse.ArgumentParser(add_help = False)
+    def define_parser(self):
+        parser = argparse.ArgumentParser(add_help = False)
 
         # actions and flags
-        group = self.parser.add_argument_group('MAIN ACTIONS')
+        group = parser.add_argument_group('MAIN ACTIONS')
         group.add_argument('-recent',       help = 'Show objects changed in # days',        type = int,                 nargs = '?')
 
         # limit scope by object type and name (prefix)
-        group = self.parser.add_argument_group('LIMIT SCOPE')
+        group = parser.add_argument_group('LIMIT SCOPE')
         group.add_argument('-type',         help = 'Object type (you can use LIKE syntax)',                             nargs = '*')
         group.add_argument('-name',         help = 'Object name/prefix (you can use LIKE syntax)',                      nargs = '*')
 
         # env details
-        group = self.parser.add_argument_group('SPECIFY ENVIRONMENT DETAILS')
+        group = parser.add_argument_group('SPECIFY ENVIRONMENT DETAILS')
         group.add_argument('-schema',       help = '',                                                                  nargs = '?')
         group.add_argument('-env',          help = 'Source environment (for overrides)',                                nargs = '?')
         group.add_argument('-key',          help = 'Key or key location for passwords',                                 nargs = '?')
         #
-        group = self.parser.add_argument_group('ADDITIONAL ACTIONS')
+        group = parser.add_argument_group('ADDITIONAL ACTIONS')
         group.add_argument('-delete',       help = 'Delete existing folders before export',                             nargs = '?', const = True,  default = False)
+        #
+        return parser
 
+
+
+    def __init__(self, parser = None, args = None):
+        self.parser = parser or self.define_parser()
         super().__init__(parser = self.parser, args = args)
 
         # setup env and paths

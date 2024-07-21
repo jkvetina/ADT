@@ -34,11 +34,11 @@ from lib import queries_export_apex as query
 
 class Live_Upload(config.Config):
 
-    def __init__(self, args = None):
-        self.parser = argparse.ArgumentParser(add_help = False)
+    def define_parser(self):
+        parser = argparse.ArgumentParser(add_help = False)
 
         # actions and flags
-        group = self.parser.add_argument_group('MAIN ACTIONS')
+        group = parser.add_argument_group('MAIN ACTIONS')
         group.add_argument('-app',          help = 'To override APEX application',          type = int,             nargs = '?')
         group.add_argument('-folder',       help = 'To override static files location',                             nargs = '?')
         group.add_argument('-workspace',    help = 'Upload to workspace (not app) files',                           nargs = '?', const = True, default = False)
@@ -46,11 +46,17 @@ class Live_Upload(config.Config):
         group.add_argument('-show',         help = 'Show files in folder at start',                                 nargs = '?', const = True, default = False)
 
         # env details
-        group = self.parser.add_argument_group('SPECIFY ENVIRONMENT DETAILS')
+        group = parser.add_argument_group('SPECIFY ENVIRONMENT DETAILS')
         group.add_argument('-schema',       help = '',                                                              nargs = '?')
         group.add_argument('-env',          help = 'Source environment (for overrides)',                            nargs = '?')
         group.add_argument('-key',          help = 'Key or key location for passwords',                             nargs = '?')
+        #
+        return parser
 
+
+
+    def __init__(self, parser = None, args = None):
+        self.parser = parser or self.define_parser()
         super().__init__(parser = self.parser, args = args)
 
         # setup env and paths

@@ -139,10 +139,10 @@ class Config(util.Attributed):
 
 
     def define_parser(self):
-        self.parser = argparse.ArgumentParser(add_help = False)
+        parser = argparse.ArgumentParser(add_help = False)
 
         # actions and flags
-        group = self.parser.add_argument_group('MAIN ACTIONS')
+        group = parser.add_argument_group('MAIN ACTIONS')
         group.add_argument('-show',         help = 'Show connection details',                   type = util.is_boolean, nargs = '?', const = True, default = False)
         group.add_argument('-create',       help = 'Create or update connection',               type = util.is_boolean, nargs = '?', const = True, default = False)
         group.add_argument('-opy',          help = 'Import connection from OPY file',                                   nargs = '?')
@@ -150,7 +150,7 @@ class Config(util.Attributed):
         group.add_argument('-version',      help = 'Show versions of used subprograms',         type = util.is_boolean, nargs = '?', const = True, default = False)
         group.add_argument('-utf',          help = 'Check repo files for UTF issues',                                   nargs = '?', const = True, default = False)
         #
-        group = self.parser.add_argument_group('SPECIFY ENVIRONMENT DETAILS')
+        group = parser.add_argument_group('SPECIFY ENVIRONMENT DETAILS')
         group.add_argument('-env',          help = 'Environment name like DEV, UAT, LAB1...',                           nargs = '?')
         group.add_argument('-schema',       help = 'Schema/connection name (for multiple schemas)',                     nargs = '?')
         group.add_argument('-repo',         help = 'Path to your project repo',                                         nargs = '?')
@@ -158,14 +158,14 @@ class Config(util.Attributed):
         group.add_argument('-decrypt',      help = 'Store passwords decypted',                  type = util.is_boolean, nargs = '?', const = True, default = False)
         group.add_argument('-key',          help = 'Key or key location for passwords',                                 nargs = '?')
         #
-        group = self.parser.add_argument_group('LIMIT SCOPE')
+        group = parser.add_argument_group('LIMIT SCOPE')
         group.add_argument('-prefix',       help = 'Export objects with listed prefix(es)',                             nargs = '?')
         group.add_argument('-ignore',       help = 'Ignore objects with listed prefix(es)',                             nargs = '?')
         group.add_argument('-subfolder',    help = 'Subfolder for exported objects (for multiple schemas)',             nargs = '?')
         group.add_argument('-workspace',    help = 'Limit to specific APEX workspace',                                  nargs = '?')
         group.add_argument('-app',          help = 'APEX app(s) to export as default',                                  nargs = '?')
         #
-        group = self.parser.add_argument_group('PROVIDE CONNECTION DETAILS')
+        group = parser.add_argument_group('PROVIDE CONNECTION DETAILS')
         group.add_argument('-user',         help = 'User name',                                                         nargs = '?')
         group.add_argument('-pwd',          help = 'User password',                                                     nargs = '?')
         group.add_argument('-hostname',     help = 'Hostname',                                                          nargs = '?')
@@ -177,15 +177,16 @@ class Config(util.Attributed):
         group.add_argument('-thick',        help = 'Thick client path or \'Y\' for auto resolve',                       nargs = '?')
         group.add_argument('-default',      help = 'Mark current DB/APEX schema as default',    type = util.is_boolean, nargs = '?', const = True, default = False)
         #
-        group = self.parser.add_argument_group('ADDITIONAL ACTIONS')
+        group = parser.add_argument_group('ADDITIONAL ACTIONS')
         group.add_argument('-autoupdate',   help = 'Automatically install missing modules',                             nargs = '?', const = True, default = False)
         #
-        return self.parser
+        return parser
 
 
 
     def __init__(self, parser = None, args = None):
-        super().__init__(parser = parser or self.define_parser(), args = args)
+        self.parser = parser or self.define_parser()
+        super().__init__(parser = self.parser, args = args)
 
         # identify program relations
         self.program        = os.path.basename(sys.argv[0]).split('.')[0]

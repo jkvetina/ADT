@@ -34,19 +34,26 @@ from lib.file import File
 
 class Search_APEX(config.Config):
 
-    def __init__(self, args = None):
-        self.parser = argparse.ArgumentParser(add_help = False)
-        #
-        group = self.parser.add_argument_group('MAIN ACTIONS')
+    def define_parser(self):
+        parser = argparse.ArgumentParser(add_help = False)
+
+        # actions and flags
+        group = parser.add_argument_group('MAIN ACTIONS')
         group.add_argument('-patch',        help = 'Patch code (name for the patch files)',                             nargs = '?')
         group.add_argument('-schema',       help = 'Schema prefix')
         #
-        group = self.parser.add_argument_group('LIMIT SCOPE')
+        group = parser.add_argument_group('LIMIT SCOPE')
         group.add_argument('-app',          help = 'Limit the the scope to specific app',       type = int)
         group.add_argument('-page',         help = 'To limit APEX pages',                       type = int,             nargs = '*', default = [])
         group.add_argument('-type',         help = 'To limit object types',                                             nargs = '*', default = [])
         group.add_argument('-name',         help = 'To limit object name',                                              nargs = '*', default = [])
+        #
+        return parser
 
+
+
+    def __init__(self, parser = None, args = None):
+        self.parser = parser or self.define_parser()
         super().__init__(parser = self.parser, args = args)
 
         # setup env and paths

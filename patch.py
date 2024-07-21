@@ -47,10 +47,10 @@ class Patch(config.Config):
 
 
     def define_parser(self):
-        self.parser = argparse.ArgumentParser(add_help = False)
+        parser = argparse.ArgumentParser(add_help = False)
 
         # actions and flags
-        group = self.parser.add_argument_group('MAIN ACTIONS')
+        group = parser.add_argument_group('MAIN ACTIONS')
         group.add_argument('-patch',        help = 'Patch code (name for the patch files)',                             nargs = '?')
         group.add_argument('-ref',          help = 'Patch reference (the number from screen)',  type = int,             nargs = '?')
         group.add_argument('-create',       help = 'To create patch with or without sequence',  type = util.is_boolstr, nargs = '?', const = True,  default = False)
@@ -58,19 +58,19 @@ class Patch(config.Config):
         group.add_argument('-force',        help = 'Force (re)deployment',                                              nargs = '?', const = True,  default = False)
         group.add_argument('-continue',     help = 'Rollback or continue on DB error',                                  nargs = '?', const = True,  default = False)
         #
-        group = self.parser.add_argument_group('SUPPORTING ACTIONS')
+        group = parser.add_argument_group('SUPPORTING ACTIONS')
         group.add_argument('-archive',      help = 'To archive patches with specific ref #',    type = int,             nargs = '*')
         group.add_argument('-install',      help = 'Create install file',                                               nargs = '?', const = True,  default = False)
         group.add_argument('-moveup',       help = 'Move driving patch files higher',                                   nargs = '?', const = True,  default = False)
         group.add_argument('-refresh',      help = 'Refresh used objects and APEX components',                          nargs = '?', const = True,  default = False)
         group.add_argument('-rebuild',      help = 'Rebuild temp files',                        type = util.is_boolint, nargs = '?', const = True,  default = False)
         #
-        group = self.parser.add_argument_group('SPECIFY ENVIRONMENT DETAILS')
+        group = parser.add_argument_group('SPECIFY ENVIRONMENT DETAILS')
         group.add_argument('-target',       help = 'Target environment',                                                nargs = '?')
         group.add_argument('-branch',       help = 'To override active branch',                                         nargs = '?')
         group.add_argument('-key',          help = 'Key or key location for passwords',                                 nargs = '?')
         #
-        group = self.parser.add_argument_group('LIMIT SCOPE')
+        group = parser.add_argument_group('LIMIT SCOPE')
         group.add_argument('-commits',      help = 'To show number of recent commits',          type = int,             nargs = '?',                default = 0)
         group.add_argument('-my',           help = 'Show only my commits',                                              nargs = '?', const = True,  default = False)
         group.add_argument('-by',           help = 'Show commits by specific author',           nargs = '?')
@@ -82,18 +82,19 @@ class Patch(config.Config):
         group.add_argument('-local',        help = 'Use local files and not files from Git',                            nargs = '?', const = True,  default = False)
         group.add_argument('-head',         help = 'Use file version from head commit',                                 nargs = '?', const = True,  default = False)
         #
-        group = self.parser.add_argument_group('ADDITIONAL ACTIONS')
+        group = parser.add_argument_group('ADDITIONAL ACTIONS')
         group.add_argument('-hash',         help = 'Store file hashes on patch -create',        type = util.is_boolint, nargs = '?', const = True,  default = False)
         group.add_argument('-fetch',        help = 'Fetch Git changes before patching',                                 nargs = '?', const = True,  default = False)
         group.add_argument('-implode',      help = 'Merge files in a folder',                                           nargs = '?')
         group.add_argument('-deldiff',      help = 'Delete diff tables',                                                nargs = '?', const = True,  default = False)
         #
-        return self.parser
+        return parser
 
 
 
-    def __init__(self, args = None, parser = None):
-        super().__init__(parser = parser or self.define_parser(), args = args)
+    def __init__(self, parser = None, args = None):
+        self.parser = parser or self.define_parser()
+        super().__init__(parser = self.parser, args = args)
 
         self.info.branch        = self.args.get('branch') or self.config.repo_branch or self.info.branch or str(self.repo.active_branch)
 

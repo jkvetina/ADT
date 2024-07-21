@@ -34,11 +34,11 @@ from lib import queries_export_apex as query
 
 class Export_APEX(config.Config):
 
-    def __init__(self, args = None, conn = None, silent = False):
-        self.parser = argparse.ArgumentParser(add_help = False)
+    def define_parser(self):
+        parser = argparse.ArgumentParser(add_help = False)
 
         # actions and flags
-        group = self.parser.add_argument_group('MAIN ACTIONS')
+        group = parser.add_argument_group('MAIN ACTIONS')
         group.add_argument('-recent',       help = 'Show components changed in # days',     type = util.is_boolstr, nargs = '?')
         group.add_argument('-by',           help = 'Export components changed by developer',                        nargs = '?')
         group.add_argument('-full',         help = 'Export full application export',                                nargs = '?', const = True, default = False)
@@ -51,7 +51,7 @@ class Export_APEX(config.Config):
         group.add_argument('-all',          help = 'Export everything',                                             nargs = '?', const = True, default = False)
         group.add_argument('-fetch',        help = 'Fetch Git changes before patching',                             nargs = '?', const = True, default = False)
         #
-        group = self.parser.add_argument_group('NEGATING ACTIONS')
+        group = parser.add_argument_group('NEGATING ACTIONS')
         group.add_argument('-nofull',       help = 'Skip full export',                                              nargs = '?', const = True, default = False)
         group.add_argument('-nosplit',      help = 'Skip splitted export',                                          nargs = '?', const = True, default = False)
         group.add_argument('-noembedded',   help = 'Skip Embedded Code report',                                     nargs = '?', const = True, default = False)
@@ -60,16 +60,22 @@ class Export_APEX(config.Config):
         group.add_argument('-nofiles_ws',   help = 'Skip workspace files',                                          nargs = '?', const = True, default = False)
 
         # env details
-        group = self.parser.add_argument_group('SPECIFY ENVIRONMENT DETAILS')
+        group = parser.add_argument_group('SPECIFY ENVIRONMENT DETAILS')
         group.add_argument('-schema',       help = '',                                                              nargs = '?')
         group.add_argument('-env',          help = 'Source environment (for overrides)',                            nargs = '?')
         group.add_argument('-key',          help = 'Key or key location for passwords',                             nargs = '?')
         #
-        group = self.parser.add_argument_group('LIMIT SCOPE')
+        group = parser.add_argument_group('LIMIT SCOPE')
         group.add_argument('-ws',           help = 'Limit APEX workspace',                                          nargs = '?')
         group.add_argument('-group',        help = 'Limit application group',                                       nargs = '?')
         group.add_argument('-app',          help = 'Limit list of application(s)',          type = int,             nargs = '*', default = [])
+        #
+        return parser
 
+
+
+    def __init__(self, parser = None, args = None, conn = None, silent = False):
+        self.parser = parser or self.define_parser()
         super().__init__(parser = self.parser, args = args)
 
         # setup env and paths

@@ -1,8 +1,8 @@
 # coding: utf-8
 import sys, os, argparse, datetime
 #
-from config  import Config
-from patch  import Patch
+from config     import Config
+from patch      import Patch
 import lib.util as util
 
 #
@@ -34,22 +34,23 @@ import lib.util as util
 class Calendar(Patch, Config):
 
     def define_parser(self):
-        self.parser = argparse.ArgumentParser(add_help = False)
+        parser = argparse.ArgumentParser(add_help = False)
 
         # actions and flags
-        group = self.parser.add_argument_group('MAIN ACTIONS')
+        group = parser.add_argument_group('MAIN ACTIONS')
         group.add_argument('-calendar',     help = 'Show commits/tickets in a calendar',        type = util.is_boolint, nargs = '?', const = True,  default = False)
         #
-        group = self.parser.add_argument_group('LIMIT SCOPE')
+        group = parser.add_argument_group('LIMIT SCOPE')
         group.add_argument('-my',           help = 'Show only my commits',                                              nargs = '?', const = True,  default = False)
-        group.add_argument('-by',           help = 'Show commits by specific author',           nargs = '?')
+        group.add_argument('-by',           help = 'Show commits by specific author',                                   nargs = '?')
         #
-        return self.parser
+        return parser
 
 
 
-    def __init__(self, args = None, parser = None):
-        super().__init__(parser = parser or self.define_parser(), args = args)
+    def __init__(self, parser = None, args = None):
+        self.parser = parser or self.define_parser()
+        super().__init__(parser = self.parser, args = args)
 
         # show commits/tickets for each team mamber and current/offset week
         self.show_calendar(offset = self.args.calendar)

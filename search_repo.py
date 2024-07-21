@@ -33,25 +33,32 @@ from lib.file import File
 
 class Search_Repo(config.Config):
 
-    def __init__(self, args = None):
-        self.parser = argparse.ArgumentParser(add_help = False)
-        #
-        group = self.parser.add_argument_group('MAIN ACTIONS')
+    def define_parser(self):
+        parser = argparse.ArgumentParser(add_help = False)
+
+        # actions and flags
+        group = parser.add_argument_group('MAIN ACTIONS')
         group.add_argument('-commit',       help = 'Search for specific commit number(s)',      type = int,             nargs = '*', default = [])
         group.add_argument('-hash',         help = 'Search for specific commit hash(es)',                               nargs = '*', default = [])
         group.add_argument('-summary',      help = 'Search summary for provided word(s)',                               nargs = '*', default = [])
         group.add_argument('-file',         help = 'Search for specific file name',                                     nargs = '*', default = [])
         #
-        group = self.parser.add_argument_group('LIMIT SCOPE')
+        group = parser.add_argument_group('LIMIT SCOPE')
         group.add_argument('-recent',       help = 'Limit scope to # of recent days',           type = int,             nargs = '?')
         group.add_argument('-branch',       help = 'Limit scope to specific branch',                                    nargs = '?')
         group.add_argument('-type',         help = 'Object type (you can use LIKE syntax)',                             nargs = '?')
         group.add_argument('-name',         help = 'Object name/prefix (you can use LIKE syntax)',                      nargs = '?')
         group.add_argument('-my',           help = 'Show only my commits',                                              nargs = '?', const = True,  default = False)
         #
-        group = self.parser.add_argument_group('EXTRA ACTIONS')
+        group = parser.add_argument_group('EXTRA ACTIONS')
         group.add_argument('-restore',      help = 'Restore specific version(s) of file',       type = int,             nargs = '*')
+        #
+        return parser
 
+
+
+    def __init__(self, parser = None, args = None):
+        self.parser = parser or self.define_parser()
         super().__init__(parser = self.parser, args = args)
 
         # setup env and paths

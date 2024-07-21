@@ -102,18 +102,6 @@ class Patch(config.Config):
             self.init_config()
 
         # prepare internal variables
-        self.patch_code         = None
-        self.patch_seq          = None
-        self.search_message     = ''
-        self.add_commits        = ''
-        self.ignore_commits     = ''
-        self.full_exports       = None
-        self.target_env         = None
-        self.patch_ref          = None
-        self.patch_rollback     = None
-        self.patch_dry          = None
-        self.patch_file_moveup  = None
-        #
         self.patch_files        = []
         self.patch_files_apex   = []
         self.patch_file         = ''
@@ -149,25 +137,25 @@ class Patch(config.Config):
         self.deploy_plan        = []
         self.deploy_schemas     = {}
         self.deploy_conn        = {}
-        self.logs_prefix        = self.config.patch_deploy_logs.replace('{$TARGET_ENV}', self.target_env or '')
         self.script_stats       = {}
         self.obj_not_found      = []
+        #
+        self.patch_code         = self.args.get('patch')
+        self.patch_seq          = self.args.get('create')
+        self.search_message     = self.args.get('search') if self.args.get('search') != None else ([self.patch_code] if self.patch_code != None else [])
+        self.add_commits        = util.ranged_str(self.args.get('commit') or [])
+        self.ignore_commits     = util.ranged_str(self.args.get('ignore') or [])
+        self.full_exports       = self.args.get('full')
+        self.target_env         = self.args.get('deploy') if isinstance(self.args.get('deploy'), str) and len(self.args.get('deploy')) > 0 else self.args.get('target')
+        self.patch_ref          = self.args.get('ref')
+        self.patch_rollback     = 'CONTINUE' if self.args.get('continue') else 'EXIT ROLLBACK'
+        self.patch_dry          = False
+        self.patch_file_moveup  = self.args.get('moveup')
+        self.show_commits       = (self.args.get('commits') or self.default_commits) if self.patch_code == None else self.args.get('commits')
+        self.logs_prefix        = self.config.patch_deploy_logs.replace('{$TARGET_ENV}', self.target_env or '')
 
         # overrides for current file
         if __name__ == "__main__":
-            self.patch_code         = self.args.patch
-            self.patch_seq          = self.args.create
-            self.search_message     = self.args.search if self.args.search != None else ([self.patch_code] if self.patch_code != None else [])
-            self.add_commits        = util.ranged_str(self.args.commit)
-            self.ignore_commits     = util.ranged_str(self.args.ignore)
-            self.full_exports       = self.args.full
-            self.target_env         = self.args.deploy if isinstance(self.args.deploy, str) and len(self.args.deploy) > 0 else self.args.target
-            self.patch_ref          = self.args.get('ref')
-            self.patch_rollback     = 'CONTINUE' if self.args.get('continue') else 'EXIT ROLLBACK'
-            self.patch_dry          = False
-            self.patch_file_moveup  = self.args.moveup
-            self.show_commits       = (self.args.get('commits') or self.default_commits) if self.patch_code == None else self.args.get('commits')
-
             if not (self.args.install or self.args.rebuild or self.args.implode):
                 util.assert_(self.args.target, 'MISSING ARGUMENT: TARGET ENV')
             #
@@ -716,22 +704,30 @@ class Patch(config.Config):
                     continue
 
             # find deployment date and result from logs
-            log_folder  = '{}/{}/'.format(folder, self.logs_prefix)
+            log_folder  = '{}/{}/'.format(folder, self.config.patch_deploy_logs.replace('{$TARGET_ENV}', '*'))
             buckets     = {}    # use buckets to identify the most recent results
             #
             for file in util.get_files(log_folder + '*.log'):
+                env         = file.replace(log_folder.split('*')[0], '').split('/')[0]
                 base        = os.path.splitext(os.path.basename(file))[0].split(' ')
                 schema      = base.pop(0)
                 result      = base.pop(-1).replace('[', '').replace(']', '')
                 deployed    = util.replace(' '.join(base).replace('_', ' '), r'( \d\d)[-](\d\d)$', '\\1:\\2')  # fix time
                 #
-                if not (deployed in buckets):
-                    buckets[deployed] = result
+                if not (env in buckets):
+                    buckets[env] = {}
+                if not (deployed in buckets[env]):
+                    buckets[env][deployed] = result
                 else:
-                    buckets[deployed] = result if result == self.status_error else min(buckets[deployed], result)
+                    buckets[env][deployed] = result if result == self.status_error else min(buckets[env][deployed], result)
             #
-            info['deployed']    = max(buckets.keys())       if buckets != {} else ''
-            info['result']      = buckets[info['deployed']] if buckets != {} else ''
+            for env in buckets.keys():
+                info['deployed|' + env] = max(buckets[env].keys())              if buckets != {} else ''
+                info['result|' + env]   = buckets[env][info['deployed|' + env]] if buckets != {} else ''
+                #
+                if env == self.target_env:
+                    info['deployed']    = max(buckets[env].keys())       if buckets != {} else ''
+                    info['result']      = buckets[env][info['deployed']] if buckets != {} else ''
 
             # get referenced commits and files from main/driving patch files
             for file in util.get_files(folder + '/*.sql'):

@@ -277,9 +277,10 @@ class Patch(config.Config):
         if self.args.hash:
             self.generate_hash_file()
             self.show_matching_commits()
+            sys.exit()
             #
-            if self.args.create:
-                self.create_patch()
+            #if self.args.create:
+            #    self.create_patch()
             #
         elif self.patch_code:
             # create patch for requested name and seq
@@ -366,42 +367,47 @@ class Patch(config.Config):
         #
         prev_commit = max(hashes)
 
-        # generate hash file for files changed in between these two commits
-        self.rollout_file = self.config.patch_hashes + 'rollout.{}.log'.format(target_commit_num)
-        #
-        util.print_header('GENERATING HASH FILE:', '{} -> {}'.format(prev_commit, target_commit_num))
-        self.create_patch_hashfile(prev_commit = prev_commit, curr_commit = target_commit_num)
-        print('  - {}'.format(self.rollout_file))
-        print()
-
-
-
-    def create_patch_hashfile(self, prev_commit, curr_commit):
         # get last file modification
-        files = self.get_hash_files(prev_commit, curr_commit)
+        self.get_hash_files(prev_commit = prev_commit, curr_commit = target_commit_num)
+
+        # get previous hashes
+        hash_previous = {}
+        for file in util.get_files(self.config.patch_hashes + 'rollout.*.log'):
+            for line in util.get_file_lines(file):
+                hash_file, _, prev_hash = line.split(' | ')
+                hash_previous[hash_file] = prev_hash.strip()
 
         # create rollout log
         rollout = []
-        for file in sorted(files.keys()):
-            commit_num  = files[file]
+        for file in sorted(self.hash_files.keys()):
+            commit_num  = self.hash_files[file]
             obj         = File(file, config = self.config)
             #
             if (obj.is_object or obj.is_apex):
-                file_hash = self.all_commits[commit_num].get('files', {}).get(file)
+                file_hash = self.all_commits.get(commit_num, {}).get('files', {}).get(file)
+                prev_hash = hash_previous.get(file) or ''
                 #
                 if self.args.local:
                     file_hash = util.get_file_hash(file)  # local file hash
                 #
-                if file_hash:
+                if file_hash and file_hash != prev_hash:
                     rollout.append('{} | {} | {}'.format(file, commit_num, file_hash))
-        #
-        util.write_file(self.rollout_file, payload = rollout)
+                    self.hash_changed[file] = file_hash
+                    #print(file, file_hash, prev_hash or '?')
+
+        # generate hash file for files changed in between these two commits
+        if self.args.create:
+            util.print_header('GENERATING HASH FILE:', '{} -> {}'.format(prev_commit, target_commit_num))
+            #
+            self.rollout_file = self.config.patch_hashes + 'rollout.{}.log'.format(target_commit_num)
+            util.write_file(self.rollout_file, payload = rollout)
+            #
+            print('  - {}'.format(self.rollout_file))
+            print()
 
 
 
     def get_hash_files(self, prev_commit, curr_commit):
-        files = {}
-
         # build list of all files
         if self.args.local:
             # process object files
@@ -409,15 +415,16 @@ class Patch(config.Config):
                 if self.is_usable_file(file):
                     commit_num = self.get_file_commit(file)[1]
                     if commit_num:
-                        files[file] = commit_num
+                        self.hash_files[file] = commit_num
 
             # process APEX files
             for file in self.apex_files:
                 commit_num  = self.get_file_commit(file)[1]
-                files[file] = commit_num
+                self.hash_files[file] = commit_num
             #
-            return files
+            return self.hash_files
 
+        # build list based on commits
         for commit_num in sorted(self.filtered_commits):
             if commit_num <= prev_commit and prev_commit != 1:
                 continue
@@ -431,9 +438,7 @@ class Patch(config.Config):
             # build list of changed files
             for file in self.all_commits[commit_num].get('files', {}).keys():
                 if self.is_usable_file(file):
-                    files[file] = commit_num
-        #
-        return files
+                    self.hash_files[file] = commit_num
 
 
 
@@ -1087,16 +1092,19 @@ class Patch(config.Config):
 
 
     def show_matching_commits(self):
-        # pivot commits
-        commits_map = {}
-        for ref in sorted(self.patches.keys()):
-            for commit in self.patches[ref]['commits']:
-                commits_map[commit] = ref
+        picked = self.hash_commits if self.args.hash else self.relevant_commits
+
+        # show files where hash changed
+        if not picked and len(self.hash_changed) > 0:
+            util.print_header('HASH ON {} FILES CHANGED:'.format(len(self.hash_changed)))
+            for file in self.hash_changed:
+                print('  - {}'.format(file))
+            print()
+            return
 
         # show relevant recent commits
         header  = 'REQUESTED' if (self.args.hash or self.add_commits != [] or self.ignore_commits != []) else 'RELEVANT'
         data    = []
-        picked  = self.hash_commits if self.args.hash else self.relevant_commits
         #
         for commit_id in sorted(picked, reverse = True):
             info = self.all_commits[commit_id]

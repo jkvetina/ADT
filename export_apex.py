@@ -426,7 +426,7 @@ class Export_APEX(config.Config):
             for id, info in data_grouped[group].items():
                 name = info['name']
                 if group == 'PAGE':
-                    page_id, name = name.split('.')
+                    page_id, name = name.split('.', maxsplit = 1)
                     name = str('{:>' + str(page_width) + '}) {}').format(page_id, name.strip())
                 elif len(info['pages']) > 0:
                     name += ' {}'.format(str(info['pages']))

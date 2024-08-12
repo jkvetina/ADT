@@ -744,6 +744,27 @@ END;
 
 
 
+describe_schedule = """
+SELECT
+    REPLACE(REPLACE(REPLACE(
+        'BEGIN' || CHR(10) ||
+        '    DBMS_SCHEDULER.CREATE_SCHEDULE (' || CHR(10) ||
+        '        schedule_name   => ''{schedule_name}'',' || CHR(10) ||
+        '        repeat_interval => ''{interval}'',' || CHR(10) ||
+        '        comments        => ''{comments}''' || CHR(10) ||
+        '    );' || CHR(10) ||
+        'END;' || CHR(10) ||
+        '',
+        '{schedule_name}',  t.schedule_name),
+        '{interval}',       t.repeat_interval),
+        '{comments}',       t.comments)
+    AS q
+FROM user_scheduler_schedules t
+WHERE t.schedule_name = :object_name
+"""
+
+
+
 # get all compatible columns to export table to CSV
 csv_columns = """
 SELECT

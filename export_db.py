@@ -924,10 +924,9 @@ class Export_DB(config.Config):
         q = query.describe_object
 
         # adjust object name
-        if object_type == 'JOB':
-            q = query.describe_job
-        elif object_type == 'MVIEW LOG':
-            q = query.describe_mview_log
+        specific_query = 'describe_' + object_type.lower().replace(' ', '_')
+        if hasattr(query, specific_query):
+            q = getattr(query, specific_query)
 
         # get object from database
         try:

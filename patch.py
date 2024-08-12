@@ -296,7 +296,7 @@ class Patch(config.Config):
             all_deployed    = False
             last_commit     = max(self.last_patch['commits']) if self.last_patch.get('commits') else None
             #
-            if last_commit in self.relevant_commits and self.last_patch['result'] == self.status_success and self.last_patch['deployed']:
+            if last_commit in self.relevant_commits and self.last_patch.get('result') == self.status_success and self.last_patch.get('deployed'):
                 all_deployed = True
 
             # offer/hint next available sequence
@@ -329,8 +329,8 @@ class Patch(config.Config):
                     'created'       : info['created'],
                     'files'         : len(info['files']),
                     'commits'       : len(info['commits']),
-                    'deployed'      : info['deployed'],
-                    'result'        : info['result'],
+                    'deployed'      : info.get('deployed'),
+                    'result'        : info.get('result'),
                 })
 
         # show recent patches
@@ -1084,7 +1084,7 @@ class Patch(config.Config):
         for ref in sorted(self.patches, reverse = True):
             info = self.patches[ref]
             if commit_id in info['commits']:
-                return info['deployed']
+                return info.get('deployed')
 
 
 

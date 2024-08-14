@@ -1885,7 +1885,7 @@ class Patch(config.Config):
 
         # make sure we have a text file
         if isinstance(file_content, bytes):
-            file_content = file_content.decode('ascii')
+            file_content = file_content.decode('ascii', 'ignore')
 
         # check for merge issues when developer ovelook things
         if '<<<<<<< ' in file_content and '>>>>>>> ' in file_content:

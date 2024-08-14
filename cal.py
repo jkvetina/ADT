@@ -39,6 +39,7 @@ class Calendar(Patch, Config):
         # actions and flags
         group = parser.add_argument_group('MAIN ACTIONS')
         group.add_argument('-calendar',     help = 'Show commits/tickets in a calendar',        type = util.is_boolint, nargs = '?', const = True,  default = False)
+        group.add_argument('-list',         help = 'Show commits as a list for a report',       type = util.is_boolint, nargs = '?', const = True,  default = False)
         #
         group = parser.add_argument_group('LIMIT SCOPE')
         group.add_argument('-my',           help = 'Show only my commits',                                              nargs = '?', const = True,  default = False)
@@ -146,11 +147,25 @@ class Calendar(Patch, Config):
                             row[date] = author_commits[date][line] if len(author_commits[date]) - 1 >= line else ''
                         data.append(row)
 
-                    util.print_table(data, columns = dict(zip(days, [12] * 5)), no_header = no_headers)
+                    if self.args.calendar:
+                        util.print_table(data, columns = dict(zip(days, [12] * 5)), no_header = no_headers)
+                        print()
 
-            #for date, rows in author_commits.items():
-            #    print(date, ', '.join(rows))
-            print()
+            # show as list
+            if self.args.list:
+                print()
+                for week in range(0, 6):        # max 6 weeks in a month
+                    curr_date = first_monday + datetime.timedelta(days = week * 7)
+                    #
+                    for day in range(0, 7):     # max 7 days in a week
+                        curr_month  = curr_date.strftime('%Y-%m') == year_month
+                        date        = curr_date.strftime('%Y-%m-%d')
+                        curr_date   += datetime.timedelta(days = 1)
+                        #
+                        if curr_month:
+                            print(date, ', '.join(author_commits.get(date, [])))
+                    print()
+                print()
 
 
 

@@ -789,7 +789,14 @@ def assert_(condition, message, *extras):
 
 
 def run_command(command, stop = True, silent = False, capture_output = True, text = True):
-    result = subprocess.run(command, shell = True, capture_output = capture_output, text = text, encoding = 'utf-8')
+    try:
+        result = subprocess.run(command, shell = True, capture_output = capture_output, text = text, encoding = 'utf-8')
+    except:
+        try:
+            result = subprocess.run(command, shell = True, capture_output = capture_output, text = text)
+        except:
+            raise_error('CAPTURE ERROR', [command])
+    #
     if result.returncode != 0 and not silent:
         # get all lines below error line
         lines = []

@@ -619,6 +619,9 @@ class Config(util.Attributed):
 
 
     def get_root(self, app_id, folders = '', remove_root = False):
+        if not app_id:
+            util.raise_error('APEX EXPORT NOT FOUND')
+        #
         transl = {
             '{$APP_ID}'     : app_id,
             '{$APP_ALIAS}'  : self.apex_apps[app_id]['app_alias'],

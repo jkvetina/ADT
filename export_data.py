@@ -226,7 +226,11 @@ class Export_Data(config.Config):
                 cols = []
                 for col_name, col_value in row.items():
                     if not isinstance(col_value, (int, float)):
-                        col_value = '\'{}\''.format(col_value.replace('\'', '\'\''))
+                        if len(col_value) == 0:
+                            col_value = 'NULL'
+                        else:
+                            col_value = '\'{}\''.format(col_value.replace('\'', '\'\''))
+                    #
                     cols.append('{} AS {}'.format(col_value, col_name))
                 #
                 if not(batch_id in csv_select):
@@ -281,8 +285,6 @@ class Export_Data(config.Config):
             )
 
             # some fixes
-            stmt = stmt.replace('\'\' AS ', 'NULL AS ')
-            stmt = stmt.replace('.0 AS ', ' AS ')
             stmt = stmt.replace('\n    )\n;\n', '\n    );\n')
             #
             payload += stmt + '--\nCOMMIT;\n'

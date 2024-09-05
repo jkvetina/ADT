@@ -1362,7 +1362,7 @@ class Patch(config.Config):
                 for file in files_to_process:
                     unprocessed.append(file)
                 #
-                util.raise_error('NOT ALL FILES PROCESSED', *unprocessed)
+                util.print_warning('NOT ALL FILES PROCESSED', unprocessed)
 
             # create APEX specific snapshot files
             if app_id:
@@ -1881,7 +1881,7 @@ class Patch(config.Config):
 
         # check for empty file
         if (file_content == None or len(file_content) == 0):
-            util.raise_error('FILE IS EMPTY', file)
+            util.print_warning('FILE IS EMPTY', [file])
 
         # make sure we have a text file
         if isinstance(file_content, bytes):

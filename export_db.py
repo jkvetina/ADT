@@ -374,13 +374,8 @@ class Export_DB(config.Config):
         for (i, line) in enumerate(lines):
             lines[i] = line.rstrip()    # remove trailing spaces
 
-            # remove package body from specification
-            if i > 0 and line.startswith('CREATE OR REPLACE') and 'PACKAGE BODY' in line and i > 0:
-                lines = '\n'.join(lines[0:i]).rstrip().splitlines()
-                break
-
-            # remove package body from specification
-            if i > 0 and line.startswith('CREATE OR REPLACE') and 'TYPE BODY' in line and i > 0:
+            # remove package/type body from specification
+            if i > 0 and line.startswith('CREATE OR REPLACE') and ' BODY' in line and i > 0:
                 lines = '\n'.join(lines[0:i]).rstrip().splitlines()
                 break
 

@@ -379,6 +379,11 @@ class Export_DB(config.Config):
                 lines = '\n'.join(lines[0:i]).rstrip().splitlines()
                 break
 
+            # remove package body from specification
+            if i > 0 and line.startswith('CREATE OR REPLACE') and 'TYPE BODY' in line and i > 0:
+                lines = '\n'.join(lines[0:i]).rstrip().splitlines()
+                break
+
         # remove editions
         lines[0] = lines[0].replace(' EDITIONABLE', '')
         lines[0] = lines[0].replace(' NONEDITIONABLE', '')

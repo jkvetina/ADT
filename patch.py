@@ -1210,6 +1210,8 @@ class Patch(config.Config):
         for schema_with_app in sorted(self.relevant_files.keys()):
             schema, app_id = self.get_schema_split(schema_with_app)
             #
+            util.print_header('PROCESSING SCHEMA {}{}:'.format(schema, 'APP {}'.format(app_id) if app_id else ''), len(self.relevant_files[schema_with_app]))
+            #
             if not self.patch_file_moveup:
                 self.patch_file     = '{}/{}.sql'.format(self.patch_folder, schema_with_app)
             self.patch_spool_log    = './{}.log'.format(schema_with_app)  # must start with ./ and ends with .log for proper function

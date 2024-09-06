@@ -84,6 +84,7 @@ class Patch(config.Config):
         #
         group = parser.add_argument_group('ADDITIONAL ACTIONS')
         group.add_argument('-hash',         help = 'Store file hashes on patch -create',        type = util.is_boolint, nargs = '?', const = True,  default = False)
+        group.add_argument('-locked',       help = 'Lock hash file, use it as the source',                              nargs = '?', const = True,  default = False)
         group.add_argument('-fetch',        help = 'Fetch Git changes before patching',                                 nargs = '?', const = True,  default = False)
         group.add_argument('-implode',      help = 'Merge files in a folder',                                           nargs = '?')
         group.add_argument('-deldiff',      help = 'Delete diff tables',                                                nargs = '?', const = True,  default = False)
@@ -367,7 +368,10 @@ class Patch(config.Config):
         hash_commits    = {}
         #
         for file in hash_files:
-            if file == self.rollout_file:   # skip current file
+            if not self.args.locked and file == self.rollout_file:  # skip current file
+                continue
+            #
+            if self.args.locked and file != self.rollout_file:
                 continue
             #
             for line in util.get_file_lines(file):
@@ -375,37 +379,43 @@ class Patch(config.Config):
                 if line and '|' in line:
                     hash_file, hash_commit, prev_hash = line.split('|')
                     hash_previous[hash_file] = prev_hash.strip()
-                    hash_commits[hash_file]  = hash_commit.strip()
+                    hash_commits[hash_file]  = int(hash_commit.strip())
 
         # get last file modification
         self.get_hash_files(prev_commit = 1, curr_commit = 1)
 
         # create rollout log
         rollout = []
-        for file in sorted(self.hash_files.keys()):
-            commit_num  = self.hash_files[file]
-            obj         = File(file, config = self.config)
-            #
-            if (obj.is_object or obj.is_apex):
-                file_hash = self.all_commits.get(commit_num, {}).get('files', {}).get(file)
-                prev_hash = hash_previous.get(file) or ''
+        if not self.args.locked:
+            for file in sorted(self.hash_files.keys()):
+                commit_num  = self.hash_files[file]
+                obj         = File(file, config = self.config)
                 #
-                if self.args.local:
-                    file_hash = util.get_file_hash(file)  # local file hash
-                #
-                if file_hash and file_hash != prev_hash:
-                    rollout.append('{} | {} | {}'.format(file, commit_num, file_hash))
-                    self.hash_changed[file] = file_hash
+                if (obj.is_object or obj.is_apex):
+                    file_hash = self.all_commits.get(commit_num, {}).get('files', {}).get(file)
+                    prev_hash = hash_previous.get(file) or ''
+                    #
+                    if self.args.local:
+                        file_hash = util.get_file_hash(file)  # local file hash
+                    #
+                    if file_hash and file_hash != prev_hash:
+                        rollout.append('{} | {} | {}'.format(file, commit_num, file_hash))
+                        self.hash_changed[file] = file_hash
 
-                    # store commits for overview
-                    if not (commit_num in self.hash_commits):
-                        self.hash_commits.append(commit_num)
+                        # store commits for overview
+                        if not (commit_num in self.hash_commits):
+                            self.hash_commits.append(commit_num)
+        else:
+            #self.hash_files = hash_files
+            for file, commit_num in hash_commits.items():
+                if not commit_num in self.hash_commits:
+                    self.hash_commits.append(commit_num)
 
         # override commits
         self.filtered_commits = self.hash_commits
 
         # generate hash file for files changed in between these two commits
-        if self.args.create:
+        if not self.args.locked and self.args.create:
             util.print_header('GENERATING HASH FILE:', '{}'.format(target_commit_num))
             #
             util.write_file(self.rollout_file, payload = rollout)

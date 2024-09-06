@@ -266,10 +266,10 @@ class Patch(config.Config):
         if self.args.hash:
             self.generate_hash_file()
             self.show_matching_commits()
-            sys.exit()
-            #
-            #if self.args.create:
-            #    self.create_patch()
+
+            # also create the patch against previous hash file
+            if self.args.create:
+                self.create_patch()
             #
         elif self.patch_code:
             # create patch for requested name and seq
@@ -346,25 +346,39 @@ class Patch(config.Config):
             target_commit_num = self.args.hash
         else:
             target_commit_num = max(self.relevant_commits or [self.head_commit_id])
+        #
+        self.rollout_file   = self.config.patch_hashes + 'rollout.{}.log'.format(target_commit_num)
+        hash_files          = util.get_files(self.config.patch_hashes + 'rollout.*.log')
 
         # get last known rollout log before target commit
+        util.print_header('LOADING HASH FILES:')
+        #
         hashes = [1]
-        for file in util.get_files(self.config.patch_hashes + 'rollout.*.log'):
+        for file in hash_files:
             commit_num = util.extract_int(r'rollout.(\d+).log', file)
             if commit_num < target_commit_num:
                 hashes.append(commit_num)
-        #
-        prev_commit = max(hashes)
-
-        # get last file modification
-        self.get_hash_files(prev_commit = prev_commit, curr_commit = target_commit_num)
+                #
+                print('  - {}'.format(file))
+        print()
 
         # get previous hashes
-        hash_previous = {}
-        for file in util.get_files(self.config.patch_hashes + 'rollout.*.log'):
+        hash_previous   = {}
+        hash_commits    = {}
+        #
+        for file in hash_files:
+            if file == self.rollout_file:   # skip current file
+                continue
+            #
             for line in util.get_file_lines(file):
-                hash_file, _, prev_hash = line.split(' | ')
-                hash_previous[hash_file] = prev_hash.strip()
+                line = util.replace(line.strip(), r'\s+\|\s+', '|')
+                if line and '|' in line:
+                    hash_file, hash_commit, prev_hash = line.split('|')
+                    hash_previous[hash_file] = prev_hash.strip()
+                    hash_commits[hash_file]  = hash_commit.strip()
+
+        # get last file modification
+        self.get_hash_files(prev_commit = 1, curr_commit = 1)
 
         # create rollout log
         rollout = []
@@ -382,17 +396,31 @@ class Patch(config.Config):
                 if file_hash and file_hash != prev_hash:
                     rollout.append('{} | {} | {}'.format(file, commit_num, file_hash))
                     self.hash_changed[file] = file_hash
-                    #print(file, file_hash, prev_hash or '?')
+
+                    # store commits for overview
+                    if not (commit_num in self.hash_commits):
+                        self.hash_commits.append(commit_num)
+
+        # override commits
+        self.filtered_commits = self.hash_commits
 
         # generate hash file for files changed in between these two commits
         if self.args.create:
-            util.print_header('GENERATING HASH FILE:', '{} -> {}'.format(prev_commit, target_commit_num))
+            util.print_header('GENERATING HASH FILE:', '{}'.format(target_commit_num))
             #
-            self.rollout_file = self.config.patch_hashes + 'rollout.{}.log'.format(target_commit_num)
             util.write_file(self.rollout_file, payload = rollout)
             #
             print('  - {}'.format(self.rollout_file))
             print()
+        #
+        if len(rollout) > 0:
+            util.print_header('CHANGED FILES:', len(rollout))
+            for info in rollout:
+                file_name, commit_num, file_hash = info.split(' | ')
+                print('  - {:<58} | {:>5} | {:>5}'.format(file_name, hash_commits.get(file_name, ''), commit_num))
+            print()
+        #
+        self.get_matching_commits()
 
 
 
@@ -419,10 +447,6 @@ class Patch(config.Config):
                 continue
             if commit_num > curr_commit and curr_commit != 1:
                 continue
-
-            # store commits for overview
-            if not (commit_num in self.hash_commits):
-                self.hash_commits.append(commit_num)
 
             # build list of changed files
             for file in self.all_commits[commit_num].get('files', {}).keys():
@@ -1012,6 +1036,14 @@ class Patch(config.Config):
 
 
     def get_matching_commits(self):
+        # reset commits
+        self.relevant_files     = {}
+        self.relevant_count     = {}
+        self.relevant_comms     = {}
+        self.relevant_commits   = []
+        self.first_commit_id    = None
+        self.last_commit_id     = None
+
         # add or remove specific commits from the queue
         for commit_id in sorted(self.filtered_commits, reverse = True):
             commit = self.all_commits[commit_id]
@@ -1042,6 +1074,10 @@ class Patch(config.Config):
                     self.relevant_comms[schema] = {}
                 #
                 if not (file in self.relevant_files[schema]):
+                    # filter out files which are not changed based on the hash files
+                    if self.args.hash and len(self.hash_files) > 0 and not (file in self.hash_files):
+                        continue
+                    #
                     self.relevant_files[schema].append(file)
                     self.relevant_comms[schema][file] = []
 

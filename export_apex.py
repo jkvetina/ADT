@@ -139,7 +139,7 @@ class Export_APEX(config.Config):
         self.load_timers()
         #
         if len(self.apex_apps) == 0:
-            util.raise_error('NO APEX APPS FOUND')
+            util.print_warning('NO APEX APPS FOUND')
 
         # for each requested app
         for app_id in sorted(self.apex_apps.keys()):

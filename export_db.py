@@ -388,8 +388,9 @@ class Export_DB(config.Config):
 
         # simplify end of objects
         last_line = len(lines) - 1
-        if lines[last_line].upper().startswith('END ' + object_name.upper() + ';'):
-            lines[last_line] = lines[last_line][0:3] + ';'
+        if self.config['cleanup_db']['package_ends']:
+            if lines[last_line].upper().startswith('END ' + object_name.upper() + ';'):
+                lines[last_line] = lines[last_line][0:3] + ';'
 
         # if object ends with comment, push ";" to the next line
         if '--' in lines[last_line] and last_line > 0:

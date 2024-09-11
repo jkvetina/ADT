@@ -70,6 +70,8 @@ tablespace:
 # cleanup modificators
 cleanup_view:
     keep_force          : True
+cleanup_db:
+    package_ends        : False
 
 # grants, resp. privileges
 grants_recd             : '/received/#SCHEMA_NAME#.sql'     # received grants, under GRANT folder

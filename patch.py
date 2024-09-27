@@ -819,13 +819,13 @@ class Patch(config.Config):
         for commit in self.repo.iter_commits(self.info.branch, max_count = 1, skip = 0, reverse = False):
             commits = commit.count()
         #
+        print('    BRANCH |', self.info.branch)
+        print('   COMMITS |', commits)
+        #
         if self.args.get('rebuild'):
             all_hashes          = []
             self.all_commits    = {}
             #
-            print()
-            print('    BRANCH |', self.info.branch)
-            print('   COMMITS |', commits)
             print()
             print('REBUILDING:   // time to get a coffee')
 

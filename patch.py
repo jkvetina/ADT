@@ -972,7 +972,7 @@ class Patch(config.Config):
                 continue
 
             # skip commits not matching the pattern
-            if self.config.patch_commit_pattern:
+            if self.config.patch_commit_pattern and self.args.get('search') == None:
                 ticket = util.extract(self.config.patch_commit_pattern, info['summary'])
                 self.all_commits[commit_id]['ticket'] = ticket
                 if not ticket:

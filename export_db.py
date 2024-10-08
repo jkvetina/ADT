@@ -379,9 +379,14 @@ class Export_DB(config.Config):
                 lines = '\n'.join(lines[0:i]).rstrip().splitlines()
                 break
 
-        # remove editions
-        lines[0] = lines[0].replace(' EDITIONABLE', '')
-        lines[0] = lines[0].replace(' NONEDITIONABLE', '')
+        # remove or force specific editions
+        if not self.config['editionable_keep']:
+            new_edition = ''
+            if len(self.config['editionable_force']) > 0 and object_type in self.config['editionable_types']:
+                new_edition = ' ' + self.config['editionable_force']
+            #
+            lines[0] = lines[0].replace(' EDITIONABLE',     new_edition)
+            lines[0] = lines[0].replace(' NONEDITIONABLE',  new_edition)
 
         # simplify object name
         lines[0] = self.unquote_object_name(lines[0], remove_schema = self.remove_schema)

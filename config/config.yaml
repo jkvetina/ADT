@@ -76,6 +76,20 @@ cleanup_view:
 cleanup_db:
     package_ends        : False
 
+# force editions
+editionable_keep        : False
+editionable_force       : ''      # NONEDITIONABLE = turn off the editions
+editionable_types:
+    - FUNCTION
+    - PACKAGE
+    - PACKAGE BODY
+    - PROCEDURE
+    - SYNONYM
+    - TRIGGER
+    - TYPE
+    - TYPE BODY
+    - VIEW
+
 # grants, resp. privileges
 grants_recd             : '/received/#SCHEMA_NAME#.sql'     # received grants, under GRANT folder
 grants_privs            : '/#SCHEMA_NAME#_schema.sql'       # grants used to create schema

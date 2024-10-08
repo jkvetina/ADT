@@ -25,23 +25,26 @@ check_new_versions      : True              # check if there is a new ADT versio
 
 # target folders by object types
 object_types:
-    DATA                : ['data/',         .sql]
-    FUNCTION            : ['functions/',    .sql]
-    GRANT               : ['grants/',       .sql]
-    INDEX               : ['indexes/',      .sql]
-    JOB                 : ['jobs/',         .sql]
-    MATERIALIZED VIEW   : ['mviews/',       .sql]
-    MVIEW LOG           : ['mview_logs/',   .sql]
-    PACKAGE             : ['packages/',     .spec.sql]      # stick to .sql for now
-    PACKAGE BODY        : ['packages/',     .sql]           # stick to .sql for now
-    PROCEDURE           : ['procedures/',   .sql]
-    SEQUENCE            : ['sequences/',    .sql]
-    SYNONYM             : ['synonyms/',     .sql]
-    TABLE               : ['tables/',       .sql]
-    TRIGGER             : ['triggers/',     .sql]
-    TYPE                : ['types/',        .sql]
-    TYPE BODY           : ['types/',        .body.sql]
-    VIEW                : ['views/',        .sql]
+    DATA                : ['data/',             .sql]
+    FUNCTION            : ['functions/',        .sql]
+    GRANT               : ['grants/',           .sql]
+    INDEX               : ['indexes/',          .sql]
+    JOB                 : ['jobs/',             .sql]
+    SCHEDULE            : ['job_schedules/',    .sql]
+    PROGRAM             : ['job_programs/',     .sql]
+    CHAIN               : ['job_chains/',       .sql]
+    MATERIALIZED VIEW   : ['mviews/',           .sql]
+    MVIEW LOG           : ['mview_logs/',       .sql]
+    PACKAGE             : ['packages/',         .spec.sql]      # stick to .sql for now
+    PACKAGE BODY        : ['packages/',         .sql]           # stick to .sql for now
+    PROCEDURE           : ['procedures/',       .sql]
+    SEQUENCE            : ['sequences/',        .sql]
+    SYNONYM             : ['synonyms/',         .sql]
+    TABLE               : ['tables/',           .sql]
+    TRIGGER             : ['triggers/',         .sql]
+    TYPE                : ['types/',            .sql]
+    TYPE BODY           : ['types/',            .body.sql]
+    VIEW                : ['views/',            .sql]
 
 # objects which cant be recreated nor dropped (because you would lose data)
 immutables:

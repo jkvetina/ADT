@@ -2477,7 +2477,12 @@ class Patch(config.Config):
             return ''
 
         # compare tables
-        result  = str(self.conn.fetch_clob_result(query.generate_table_diff, source_table = source_table, target_table = target_table))
+        result = ''
+        try:
+            result = str(self.conn.fetch_clob_result(query.generate_table_diff, source_table = source_table, target_table = target_table))
+        except:
+            pass
+
         lines   = []
         for line in result.splitlines():
             line = line.strip()

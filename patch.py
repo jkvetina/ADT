@@ -1085,7 +1085,7 @@ class Patch(config.Config):
                 #
                 if not (file in self.relevant_files[schema]):
                     # filter out files which are not changed based on the hash files
-                    if self.args.hash and len(self.hash_files) > 0 and not (file in self.hash_files):
+                    if self.args.get('hash') and len(self.hash_files) > 0 and not (file in self.hash_files):
                         continue
                     #
                     self.relevant_files[schema].append(file)

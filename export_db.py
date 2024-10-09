@@ -888,7 +888,10 @@ class Export_DB(config.Config):
             lines[i] = line
 
         # fix priority and status
-        data            = self.conn.fetch_assoc(query.describe_job_details, job_name = object_name)
+        data = self.conn.fetch_assoc(query.describe_job_details, job_name = object_name)
+        if len(data) == 0:
+            return []
+        #
         job_priority    = data[0].job_priority
         job_enabled     = '--' if data[0].enabled == 'FALSE' else ''
 
@@ -940,7 +943,9 @@ class Export_DB(config.Config):
         # get object from database
         try:
             result = self.conn.fetch(q, **args)
-            return str(result[0][0])
+            if len(result) > 0:
+                return str(result[0][0])
+            return ''
         except:
             util.raise_error('EXPORT_FAILED', object_type, object_name)
         #

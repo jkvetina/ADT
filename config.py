@@ -416,6 +416,9 @@ class Config(util.Attributed):
 
         # check schema
         if (schema_name == '' or not (schema_name in schemas.keys())):
+            if self.debug:
+                print('SCHEMAS:  ', schemas)
+                print('REQUESTED:', schema_name)
             util.raise_error('UNKNOWN SCHEMA', schema_name)
 
         # merge with specific schema and adjust few things
@@ -438,6 +441,10 @@ class Config(util.Attributed):
         # if key is a file, retrieve content and use it as a key
         if self.connection['key'] != '' and os.path.exists(self.connection['key']):
             self.connection['key'] = util.get_file_content(self.connection['key']).strip()
+
+        if self.debug:
+            print('CONNECTION:')
+            util.print_args(self.connection)
 
 
 

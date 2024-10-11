@@ -50,6 +50,7 @@ class Export_APEX(config.Config):
         group.add_argument('-only',         help = 'Proceed with passed actions only',                              nargs = '?', const = True, default = False)
         group.add_argument('-all',          help = 'Export everything',                                             nargs = '?', const = True, default = False)
         group.add_argument('-fetch',        help = 'Fetch Git changes before patching',                             nargs = '?', const = True, default = False)
+        group.add_argument('-reveal',       help = 'Reveal APEX workspaces and/or apps',                            nargs = '?', const = True, default = False)
         #
         group = parser.add_argument_group('NEGATING ACTIONS')
         group.add_argument('-nofull',       help = 'Skip full export',                                              nargs = '?', const = True, default = False)
@@ -133,7 +134,18 @@ class Export_APEX(config.Config):
             return
         self.parse_actions()
 
+        # reveal workspaces and apps for specific workspace and group (if provided)
+        if self.args.reveal:
+            if self.args.ws:
+                self.conn.execute(query.apex_security_context_raw, workspace = self.args.ws)
+            #
+            self.get_workspaces()
+            self.get_applications()
+            return
+
         # show matching apps every time
+        self.conn.execute(query.apex_security_context_raw, workspace = self.arg_workspace)
+        #
         self.get_applications()
         self.get_workspace_developers()
         self.load_timers()
@@ -262,12 +274,25 @@ class Export_APEX(config.Config):
 
 
 
+    def get_workspaces(self):
+        args = {
+            'workspace'     : self.arg_workspace,
+        }
+        rows = []
+        for row in self.conn.fetch_assoc(query.apex_workspaces, **args):
+            rows.append(row)
+        #
+        util.print_header('WORKSPACES:')
+        util.print_table(rows)
+
+
+
     def get_applications(self):
         # get list of applications
         args = {
             'owner'         : self.info.schema,
-            'workspace'     : self.arg_workspace,
-            'group_id'      : self.arg_group,
+            'workspace'     : self.arg_workspace    if not self.args.reveal else self.args.ws,
+            'group_id'      : self.arg_group        if not self.args.reveal else self.args.group,
             'app_id'        : '',  # '|'.join(str(x) for x in self.arg_apps),
         }
         self.apex_apps  = {}
@@ -283,7 +308,7 @@ class Export_APEX(config.Config):
                 'pages'         : row.pages,
                 'updated_at'    : row.updated_at,
             }
-            if (row.app_id in self.arg_apps or self.arg_apps == []):
+            if (row.app_id in self.arg_apps or self.arg_apps == [] or (self.args.reveal and row.workspace == self.args.ws)):
                 if not (row.app_group in groups):
                     groups[row.app_group] = []
                 groups[row.app_group].append(rec)

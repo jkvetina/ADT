@@ -23,6 +23,21 @@ ORDER BY
     a.application_id
 """
 
+apex_workspaces = """
+SELECT
+    t.workspace,
+    t.workspace_id,
+    t.schemas,
+    t.applications,
+    t.apex_developers   AS developers
+    --
+FROM apex_workspaces t
+WHERE 1 = 1
+    AND (t.workspace    = :workspace    OR :workspace IS NULL)
+ORDER BY
+    t.workspace
+"""
+
 # setup APEX security context to access APEX views
 apex_security_context = """
 BEGIN
@@ -38,6 +53,17 @@ BEGIN
             p_security_group_id => APEX_UTIL.FIND_SECURITY_GROUP_ID(p_workspace => c.workspace)
         );
     END LOOP;
+END;
+"""
+
+apex_security_context_raw = """
+BEGIN
+    APEX_UTIL.SET_WORKSPACE (
+        p_workspace => :workspace
+    );
+    APEX_UTIL.SET_SECURITY_GROUP_ID (
+        p_security_group_id => APEX_UTIL.FIND_SECURITY_GROUP_ID(p_workspace => :workspace)
+    );
 END;
 """
 

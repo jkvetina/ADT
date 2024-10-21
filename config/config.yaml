@@ -31,8 +31,8 @@ object_types:
     INDEX               : ['indexes/',          .sql]
     JOB                 : ['jobs/',             .sql]
     SCHEDULE            : ['job_schedules/',    .sql]
-    PROGRAM             : ['job_programs/',     .sql]
-    CHAIN               : ['job_chains/',       .sql]
+    #PROGRAM             : ['job_programs/',     .sql]
+    #CHAIN               : ['job_chains/',       .sql]
     MATERIALIZED VIEW   : ['mviews/',           .sql]
     MVIEW LOG           : ['mview_logs/',       .sql]
     PACKAGE             : ['packages/',         .spec.sql]      # stick to .sql for now

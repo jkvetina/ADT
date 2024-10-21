@@ -450,14 +450,14 @@ class Export_DB(config.Config):
                         extras = self.unquote_object_name(extras, remove_schema = self.remove_schema)
 
                     # remove identity/sequences clutter
-                    extras      = extras.replace(' MINVALUE 1', '')
-                    extras      = extras.replace(' MAXVALUE 9999999999999999999999999999', '')
-                    extras      = extras.replace(' INCREMENT BY 1', '')
+                    extras      = util.replace(extras, r'( MAXVALUE 9{27,}) ', ' ')
+                    extras      = extras.replace(' MINVALUE 1 ', ' ')
+                    extras      = extras.replace(' INCREMENT BY 1 ', ' ')
                     extras      = extras.replace(' NOORDER', '')
                     extras      = extras.replace(' NOCYCLE', '')
                     extras      = extras.replace(' NOKEEP',  '')
                     extras      = extras.replace(' NOSCALE', '')
-                    extras      = extras.replace(' CACHE 20', '')
+                    extras      = extras.replace(' CACHE 20 ', ' ')
                     extras      = util.replace(extras, r'([\s]{2,})', ' ')
                     #
                     if util.extract_int(r' START WITH (\d+) ', extras) == 1:
@@ -836,10 +836,9 @@ class Export_DB(config.Config):
 
 
     def clean_sequence(self, lines, object_name = '', config = {}):
+        lines[0] = util.replace(lines[0], r'( MAXVALUE 9{27,}) ', ' ')
         lines[0] = lines[0].replace(' CACHE 20 ', ' ')
-        lines[0] = lines[0].replace(' MAXVALUE 9999999999999999999999999999', '')
-        lines[0] = lines[0].replace(' MAXVALUE 999999999999999999999999999', '')
-        lines[0] = lines[0].replace(' INCREMENT BY 1', '')
+        lines[0] = lines[0].replace(' INCREMENT BY 1 ', ' ')
         lines[0] = lines[0].replace(' NOORDER', '')
         lines[0] = lines[0].replace(' NOCYCLE', '')
         lines[0] = lines[0].replace(' NOKEEP', '')

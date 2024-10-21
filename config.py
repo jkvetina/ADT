@@ -55,6 +55,7 @@ class Config(util.Attributed):
         #'{$ROOT}config/{$INFO_CLIENT}/connections.yaml',
         #'{$ROOT}config/{$INFO_CLIENT}/connections_{$INFO_PROJECT}.yaml',
         '{$INFO_REPO}config/connections.yaml',                                      # repo
+        '{$ROOT}connections/{$CURRENT_FOLDER}.yaml',
     ]
 
     # default location for new connections
@@ -385,12 +386,15 @@ class Config(util.Attributed):
 
     def init_connection(self, env_name = '', schema_name = ''):
         # use default values from environment, empty schema can be changed below
-        env_name    = env_name      or self.info.env
-        schema_name = schema_name   or self.info.schema or ''
+        env_name        = env_name      or self.info.env
+        schema_name     = schema_name   or self.info.schema or ''
+        current_folder  = self.repo_root.strip('/').split('/')[-1]
 
         # gather connection details to a single dictionary
         self.connection, schemas = {}, {}
         for file in self.replace_tags(list(self.connection_files)):     # copy so we dont change the original
+            file = file.replace('{$CURRENT_FOLDER}', current_folder)
+            #
             if ('{$' in file or not os.path.exists(file)):              # skip files with tags
                 continue
             #
@@ -401,6 +405,8 @@ class Config(util.Attributed):
                     schemas_src = conn_src.pop('schemas')
                 self.connection = {**self.connection, **conn_src}
                 schemas         = {**schemas, **schemas_src}
+                #
+                break  # exit the loop when file found
 
         # check environment
         if len(self.connection.keys()) == 0:

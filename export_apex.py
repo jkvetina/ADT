@@ -300,7 +300,7 @@ class Export_APEX(config.Config):
         #
         for row in self.conn.fetch_assoc(query.apex_applications, **args):
             # split to groups for screen output
-            row.app_group = row.app_group or '-'
+            row.app_group = (row.app_group or '-')
             rec = {
                 'app_id'        : row.app_id,
                 'alias'         : util.get_string(row.app_alias, 8),

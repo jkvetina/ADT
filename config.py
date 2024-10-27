@@ -802,10 +802,11 @@ class Config(util.Attributed):
 
 
     def sort_files_by_deps(self, files):
-        out_files = []
+        out_files   = []
+        todo        = []
+        indexes     = []
 
         # sort files by dependencies
-        todo, indexes = [], []
         for file in files:
             # if file is on different path, get object from the original file
             short = file.replace(self.repo_root, '')
@@ -816,6 +817,7 @@ class Config(util.Attributed):
             obj = self.repo_files.get(short) or File(file, config = self.config)
             if not ('object_code' in obj):
                 continue
+            #
             if obj['object_code'] in self.all_objects_sorted:
                 index   = self.all_objects_sorted.index(obj['object_code'])
             else:

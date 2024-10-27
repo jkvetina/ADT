@@ -165,6 +165,53 @@ templates['ALTER | RENAME CONSTRAINT'] = templates['ALTER | DROP CONSTRAINT']
 
 
 
+# drop all objects in implode script
+template_objects_drop_line = "SELECT '{object_type}', '{object_name}' FROM DUAL UNION ALL"
+template_objects_drop = """
+DECLARE
+    in_execute      CONSTANT CHAR := 'Y';    -- Y/NULL
+BEGIN
+    FOR c IN (
+        WITH t (object_type, object_name) AS (
+{object_lines}
+            SELECT '', '' FROM DUAL
+        )
+        SELECT
+            'DROP ' || RPAD(o.object_type, x.max_length) || ' ' || o.object_name AS q
+        FROM user_objects o
+        CROSS JOIN (
+            SELECT
+                MAX(LENGTH(t.object_type)) AS max_length
+            FROM t
+        ) x
+        JOIN t
+            ON t.object_type    = o.object_type
+            AND t.object_name   = o.object_name
+        ORDER BY
+            REPLACE(o.object_type, ' BODY', ''),
+            CASE WHEN o.object_type LIKE '%BODY' THEN 1 ELSE 0 END,
+            o.object_name
+    ) LOOP
+        DBMS_OUTPUT.PUT_LINE(c.q || ';');
+        --
+        IF in_execute = 'Y' THEN
+            BEGIN
+                EXECUTE IMMEDIATE c.q;
+            EXCEPTION
+            WHEN OTHERS THEN
+                NULL;
+            END;
+        END IF;
+    END LOOP;
+    --
+    -- KEEP IN MIND THAT AFTER OBJECTS DROP YOU NEED TO REDO THE GRANTS ...
+    --
+END;
+/
+"""
+
+
+
 # generate diff in between two tables
 generate_table_diff = """
 DECLARE

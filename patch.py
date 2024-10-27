@@ -2549,11 +2549,33 @@ class Patch(config.Config):
         if os.path.exists(folder):
             util.print_header('IMPLODE FOLDER')
             #
-            payload = ''
-            for file in util.get_files(folder + '/*.*'):
+            files   = util.get_files(folder + '/*.*')
+            payload = '--\n'
+
+            # generate DROP statements for objects
+            # generate as SELECT statement to drop only existing objects
+            # and to be able to verify what will be drop before it is dropped
+            lines = []
+            for file in files:
                 print('  - {}'.format(file))
-                payload += open(file, 'rt', encoding = 'utf-8').read() + '\n'
+                payload += '-- {}\n'.format(file)
+                #
+                obj = File(file, config = self.config)
+                lines.append(
+                    util.replace(util.replace(
+                        query.template_objects_drop_line,
+                        '{object_type}', obj['object_type']),
+                        '{object_name}', obj['object_name'])
+                )
+            #
+            payload += '--\n'
+            payload += util.replace(query.template_objects_drop, '{object_lines}', '\n'.join(sorted(lines))) + '\n'
             print()
+
+            # merge content from all files into a single file
+            # files need to be sorted by object dependencies
+            for file in self.sort_files_by_deps(files):
+                payload += open(file, 'rt', encoding = 'utf-8').read() + '\n'
             #
             merged_file = folder.replace('\\', '/').rstrip('/') + '.sql'
             util.write_file(merged_file, payload)

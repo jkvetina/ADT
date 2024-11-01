@@ -177,7 +177,9 @@ BEGIN
             SELECT '', '' FROM DUAL
         )
         SELECT
-            'DROP ' || RPAD(o.object_type, x.max_length) || ' ' || o.object_name AS q
+            'DROP ' || RPAD(o.object_type, x.max_length) || ' ' || o.object_name ||
+            CASE WHEN o.object_type LIKE 'TYPE%' THEN ' FORCE' END
+            AS q
         FROM user_objects o
         CROSS JOIN (
             SELECT

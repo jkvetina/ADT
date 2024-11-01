@@ -117,6 +117,10 @@ class Search_Repo(config.Config):
             if not found_all:
                 continue
 
+            # fix lowercase arguments
+            self.args.name = self.args.name.upper() if self.args.name != None else None
+            self.args.type = self.args.type.upper() if self.args.type != None else None
+
             # show commit details
             found_files     = []
             deleted_files   = []

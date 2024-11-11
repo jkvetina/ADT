@@ -115,6 +115,15 @@ def parse_table(payload):
 
 
 def get_files(glob_pattern, reverse = False, recursive = True):
+    # return list of folders
+    out = []
+    if glob_pattern.endswith('/'):
+        for folder in glob.glob(glob_pattern + '*'):
+            if os.path.isdir(folder):
+                out.append(folder + '/')
+        return out
+
+    # search for files even in subfolders (if requested)
     files = list(glob.glob(glob_pattern, recursive = recursive))
     if '/**/*' in glob_pattern and recursive:
         glob_pattern = glob_pattern.replace('/**/*', '/*')
@@ -132,7 +141,6 @@ def get_files(glob_pattern, reverse = False, recursive = True):
         if not (ext in filenames[base]):            # also deduplicate
             filenames[base].append(ext)
     #
-    out = []
     for base in sorted(filenames.keys(), reverse = reverse):
         for ext in sorted(filenames[base], reverse = reverse):
             out.append(base + ext)

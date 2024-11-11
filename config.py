@@ -637,9 +637,9 @@ class Config(util.Attributed):
         #
         transl = {
             '{$APP_ID}'     : app_id,
-            '{$APP_ALIAS}'  : self.apex_apps[app_id]['app_alias'],
-            '{$APP_NAME}'   : self.apex_apps[app_id]['app_name'],
-            '{$APP_GROUP}'  : self.apex_apps[app_id]['app_group'],
+            '{$APP_ALIAS}'  : self.apex_apps[app_id].get('app_alias')   or '',
+            '{$APP_NAME}'   : self.apex_apps[app_id].get('app_name')    or '',
+            '{$APP_GROUP}'  : self.apex_apps[app_id].get('app_group')   or '',
         }
         app_folder  = '/{}/'.format(util.replace(self.config.apex_path_app, transl))
         path        = self.repo_root + self.config.path_apex + app_folder + folders

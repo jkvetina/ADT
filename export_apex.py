@@ -308,7 +308,7 @@ class Export_APEX(config.Config):
                 'pages'         : row.pages,
                 'updated_at'    : row.updated_at,
             }
-            if (row.app_id in self.arg_apps or self.arg_apps == [] or (self.args.reveal and row.workspace == self.args.ws)):
+            if (row.app_id in self.arg_apps or self.arg_apps == [] or (self.args.reveal and row.workspace == (args['workspace'] or row.workspace))):
                 if not (row.app_group in groups):
                     groups[row.app_group] = []
                 groups[row.app_group].append(rec)

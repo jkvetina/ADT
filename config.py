@@ -590,15 +590,17 @@ class Config(util.Attributed):
         connections = {}
 
         # load connections file to check if target env exist
-        file = self.replace_tags(self.connection_default)
-        if os.path.exists(file):
-            with open(file, 'rt', encoding = 'utf-8') as f:
-                data = util.get_yaml(f, file)
-                for env, arguments in data:
-                    connections[env] = arguments
+        current_folder  = self.repo_root.strip('/').split('/')[-1]
+        for file in self.replace_tags(list(self.connection_files)):     # copy so we dont change the original
+            file = file.replace('{$CURRENT_FOLDER}', current_folder)
+            if os.path.exists(file):
+                with open(file, 'rt', encoding = 'utf-8') as f:
+                    data = util.get_yaml(f, file)
+                    for env, arguments in data:
+                        connections[env] = arguments
         #
         if not (env_name in connections):
-            util.raise_error('UNKNOWN ENVIRONMENT', env_name)
+            util.raise_error('UNKNOWN ENVIRONMENT', env_name, sorted(connections.keys()))
 
 
 

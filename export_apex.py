@@ -136,8 +136,7 @@ class Export_APEX(config.Config):
 
         # reveal workspaces and apps for specific workspace and group (if provided)
         if self.args.reveal:
-            if self.args.ws:
-                self.conn.execute(query.apex_security_context_raw, workspace = self.args.ws)
+            self.conn.execute(query.apex_security_context_raw, workspace = self.args.ws or self.arg_workspace)
             #
             self.get_workspaces()
             self.get_applications()
@@ -169,6 +168,11 @@ class Export_APEX(config.Config):
 
             util.print_header('APP {}/{}, EXPORTING:'.format(app_id, self.apex_apps[app_id]['app_alias']))
             self.conn.execute(query.apex_export_start, app_id = app_id)
+
+            if self.debug:
+                data = self.conn.fetch_assoc('SELECT attribute, value FROM session_context WHERE namespace = \'APEX$SESSION\' ORDER BY 1')
+                util.print_header('SESSION_CONTEXT')
+                util.print_table(data)
 
             # get default authentication scheme
             self.auth_scheme_id     = 0
@@ -291,8 +295,8 @@ class Export_APEX(config.Config):
         # get list of applications
         args = {
             'owner'         : self.info.schema,
-            'workspace'     : self.arg_workspace    if not self.args.reveal else self.args.ws,
-            'group_id'      : self.arg_group        if not self.args.reveal else self.args.group,
+            'workspace'     : self.args.ws      or self.arg_workspace,
+            'group_id'      : self.args.group   or self.arg_group,
             'app_id'        : '',  # '|'.join(str(x) for x in self.arg_apps),
         }
         self.apex_apps  = {}

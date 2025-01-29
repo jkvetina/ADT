@@ -2547,10 +2547,31 @@ class Patch(config.Config):
 
 
     def implode_folder(self, folder):
-        if os.path.exists(folder):
-            util.print_header('IMPLODE FOLDER')
+        folder  = folder.replace('%', '*')
+        payload = ''
+
+        # find ans stitch very specific files
+        if '*.' in folder:
+            for file in util.get_files(folder.replace('\\', '/').rstrip('/')):
+                print('  - {}'.format(file))
+                payload += open(file, 'rt', encoding = 'utf-8').read().rstrip() + '\n'
             #
-            files   = util.get_files(folder + '/*.*')
+            merged_file = folder.replace('*', '')
+            util.write_file(merged_file, payload)
+            return
+
+        # implode all folders
+        folder = folder.replace('\\', '/').rstrip('/') + '/'
+        if folder.endswith(self.config.path_objects):
+            for folder in util.get_files(folder):
+                self.implode_folder(folder)
+            return
+
+        # implode specific folder or subfolder
+        files = util.get_files(folder + '*.sql')
+        #
+        if len(files) > 0:
+            util.print_header('IMPLODE FOLDER', folder)
             payload = '--\n'
 
             # generate DROP statements for objects

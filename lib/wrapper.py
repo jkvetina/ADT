@@ -57,9 +57,20 @@ class Oracle:
         if not self.debug:
             self.debug = debug
 
+        # fix for proxy users
+        import re
+        if '[' in self.tns.get('schema', ''):
+            self.tns['schema'] = re.sub(r'(.*)\[(.*)', r'"\1"[\2', self.tns['schema'])
+        if '[' in self.tns.get('schema_db', ''):
+            self.tns['schema_db'] = re.sub(r'(.*)\[(.*)', r'"\1"[\2', self.tns['schema_db'])
+        if '[' in self.tns.get('schema_apex', ''):
+            self.tns['schema_apex'] = re.sub(r'(.*)\[(.*)', r'"\1"[\2', self.tns['schema_apex'])
+        if '[' in self.tns.get('user', ''):
+            self.tns['user'] = re.sub(r'(.*)\[(.*)', r'"\1"[\2', self.tns['user'])
+
         # auto connect
         if not self.silent:
-            schema  = self.tns.get('schema', '') or self.tns.get('user', '')
+            schema  = self.tns.get('proxy', '') or self.tns.get('schema', '') or self.tns.get('user', '')
             env     = self.tns.get('env', '')
             util.print_header('CONNECTING TO {}, {}:'.format(schema, env))
         #
@@ -112,7 +123,7 @@ class Oracle:
             #
             try:
                 self.conn = oracledb.connect(
-                    user            = self.tns.user,
+                    user            = self.tns.get('proxy', '') or self.tns.user,
                     password        = self.tns.pwd if self.tns.get('pwd!', '') != 'Y' else util.decrypt(self.tns.pwd, self.tns.key),
                     dsn             = self.tns.service,
                     config_dir      = self.tns.wallet,
@@ -156,7 +167,7 @@ class Oracle:
         #
         try:
             self.conn = oracledb.connect(
-                user        = self.tns.user,
+                user        = self.tns.get('proxy', '') or self.tns.user,
                 password    = self.tns.pwd if self.tns.get('pwd!', '') != 'Y' else util.decrypt(self.tns.pwd, self.tns.key),
                 dsn         = self.tns.dsn
             )

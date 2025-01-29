@@ -165,9 +165,10 @@ class Patch(config.Config):
                 self.check_env(self.target_env)
 
         # make sure we have all commits and patch folders ready
-        self.get_all_commits()
-        self.get_patch_folders()
-        self.get_matching_commits()
+        if not (self.args.install or self.args.implode):
+            self.get_all_commits()
+            self.get_patch_folders()
+            self.get_matching_commits()
 
         # proceed with requested actions
         if __name__ == "__main__":
@@ -2577,7 +2578,7 @@ class Patch(config.Config):
             for file in self.sort_files_by_deps(files):
                 payload += open(file, 'rt', encoding = 'utf-8').read() + '\n'
             #
-            merged_file = folder.replace('\\', '/').rstrip('/') + '.sql'
+            merged_file = folder.rstrip('/') + '.sql'
             util.write_file(merged_file, payload)
 
 

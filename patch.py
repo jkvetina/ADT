@@ -1325,11 +1325,7 @@ class Patch(config.Config):
                                 if not self.conn:
                                     self.conn = self.db_connect(ping_sqlcl = False, silent = True)
                                 #
-                                alter_payload = ''
-                                for alter in self.get_table_diff(file, object_name, commit_num - 1, commit_num):
-                                    if alter:
-                                        alter_payload += '{};\n'.format(alter)
-                                #
+                                alter_payload = self.get_table_diff(file, object_name, commit_num - 1, commit_num)
                                 if alter_payload:
                                     alter_file = self.config.patch_scripts_dir + 'tables_after/' + os.path.basename(file).replace('.sql', '.{}.sql'.format(commit_num))
                                     #if not os.path.exists(alter_file):
@@ -2484,8 +2480,8 @@ class Patch(config.Config):
         except:
             pass
 
-        lines   = []
-        for line in result.splitlines():
+        lines = []
+        for i, line in enumerate(result.splitlines()):
             line = line.strip()
             line = util.replace(line, r'("[^"]+"\.)', '')  # remove schema
             #
@@ -2493,12 +2489,17 @@ class Patch(config.Config):
                 line = line.replace(object_name, object_name.replace('"', '').lower())
             #
             lines.append(line)
+            if line.startswith('ALTER') and i > 0:
+                lines[i - 1] += ';'
+        #
+        if len(lines) > 0:
+            lines[len(lines) - 1] += ';'
 
         # remove tables
         self.conn.drop_object('TABLE', source_table)
         self.conn.drop_object('TABLE', target_table)
         #
-        return lines
+        return '\n'.join(lines)
 
 
 

@@ -1332,8 +1332,8 @@ class Patch(config.Config):
                                 #
                                 if alter_payload:
                                     alter_file = self.config.patch_scripts_dir + 'tables_after/' + os.path.basename(file).replace('.sql', '.{}.sql'.format(commit_num))
-                                    if not os.path.exists(alter_file):
-                                        util.write_file(alter_file, alter_payload)
+                                    #if not os.path.exists(alter_file):
+                                    util.write_file(alter_file, alter_payload)
                                     self.alter_files[alter_file] = alter_payload
                                     #
                                     if 'TABLE' in self.config.immutables:

@@ -287,7 +287,7 @@ class Config(util.Attributed):
         # create temp folder
         self.config.sqlcl_root = os.path.abspath(self.config.sqlcl_root)
         if not os.path.exists(self.config.sqlcl_root):
-            os.makedirs(self.config.sqlcl_root)
+            os.makedirs(self.config.sqlcl_root, exist_ok = True)
 
         # structure for dependencies
         self.patch_grants       = self.repo_root + self.config.path_objects + self.config.patch_grants

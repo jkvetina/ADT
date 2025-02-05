@@ -236,13 +236,13 @@ class Oracle:
         if 'wallet' in self.tns:
             request_conn = 'connect -cloudconfig "{}.zip" {}/"{}"@{}\n'.format(*[
                 self.tns.wallet.rstrip('.zip'),
-                self.tns.user,
+                self.tns.get('proxy') or self.tns.user,
                 self.tns.pwd if self.tns.get('pwd!', '') != 'Y' else util.decrypt(self.tns.pwd, self.tns.key),
                 self.tns.service
             ])
         else:
             request_conn = 'connect {}/"{}"@{}:{}/{}\n'.format(*[
-                self.tns.user,
+                self.tns.get('proxy') or self.tns.user,
                 self.tns.pwd if self.tns.get('pwd!', '') != 'Y' else util.decrypt(self.tns.pwd, self.tns.key),
                 self.tns.host,
                 self.tns.port,

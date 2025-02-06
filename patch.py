@@ -2397,6 +2397,7 @@ class Patch(config.Config):
 
 
     def get_table_for_diff(self, payload):
+        payload = payload.replace('IF NOT EXISTS', '')
         payload = payload.split(';')[0]
         payload = payload.split('\nPARTITION BY')[0]
         payload = payload.split('\n')

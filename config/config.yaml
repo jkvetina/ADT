@@ -76,6 +76,9 @@ cleanup_view:
 cleanup_db:
     package_ends        : False
 
+# on 23ai we can reduce number of errors on existing objects (tables, indexes)
+add_if_not_exists       : True
+
 # force editions
 editionable_keep        : False
 editionable_force       : ''      # NONEDITIONABLE = turn off the editions

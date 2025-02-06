@@ -388,6 +388,13 @@ class Export_DB(config.Config):
             lines[0] = lines[0].replace(' EDITIONABLE',     new_edition)
             lines[0] = lines[0].replace(' NONEDITIONABLE',  new_edition)
 
+        # adjust tables and indexes on 23ai
+        if self.config['add_if_not_exists'] and object_type in ('TABLE', 'INDEX'):
+            lines[0] = lines[0].replace (
+                'CREATE ' + object_type,
+                'CREATE ' + object_type + ' IF NOT EXISTS'
+            )
+
         # simplify object name
         lines[0] = self.unquote_object_name(lines[0], remove_schema = self.remove_schema)
 

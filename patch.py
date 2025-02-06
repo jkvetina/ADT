@@ -165,7 +165,7 @@ class Patch(config.Config):
                 self.check_env(self.target_env)
 
         # make sure we have all commits and patch folders ready
-        if not (self.args.install or self.args.implode):
+        if not (self.args.get('install') or self.args.get('implode')):
             self.get_all_commits()
             self.get_patch_folders()
             self.get_matching_commits()
@@ -1881,7 +1881,7 @@ class Patch(config.Config):
 
 
     def create_patch_file(self, payload, app_id):
-        payload = '\n'.join([line for line in payload if line != None])
+        payload = 'PROMPT -- ' + self.patch_file + '\n'.join([line for line in payload if line != None])
 
         # save in schema patch file
         if not self.patch_dry:

@@ -277,7 +277,7 @@ class Export_APEX(config.Config):
                 self.actions[arg_name] = True
                 continue
         #
-        if (self.args.recent == 0 or self.args.split or self.args.all):
+        if (self.args.recent == 0 or not self.args.split or not self.args.all):
             self.actions['recent'] = False
 
 

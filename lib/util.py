@@ -262,6 +262,12 @@ def remove_cloud_junk(root = ''):
     # remove another file often broken by iCLoud sync
     delete_file('.git/refs/remotes/origin/HEAD 2')
 
+    # remove Dropbox issues
+    for file in glob.glob(root + '/**/*.*', recursive = True):
+        if 'conflicted copy' in file:
+            os.remove(file)
+            continue
+
     # remove duplicated files
     for file in glob.glob(root + '/**/*.*', recursive = True):
         number = extract(r'(\s+[0-9]+\.)[^\.]+$', file)

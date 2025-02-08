@@ -43,6 +43,7 @@ class Export_APEX(config.Config):
         group.add_argument('-by',           help = 'Export components changed by developer',                        nargs = '?')
         group.add_argument('-full',         help = 'Export full application export',                                nargs = '?', const = True, default = False)
         group.add_argument('-split',        help = 'Export splitted export (components)',                           nargs = '?', const = True, default = False)
+        group.add_argument('-readable',     help = 'Export readable export',                                        nargs = '?', const = True, default = False)
         group.add_argument('-embedded',     help = 'Export Embedded Code report',                                   nargs = '?', const = True, default = False)
         group.add_argument('-rest',         help = 'Export REST services',                                          nargs = '?', const = True, default = False)
         group.add_argument('-files',        help = 'Export application files in binary form',                       nargs = '?', const = True, default = False)
@@ -55,6 +56,7 @@ class Export_APEX(config.Config):
         group = parser.add_argument_group('NEGATING ACTIONS')
         group.add_argument('-nofull',       help = 'Skip full export',                                              nargs = '?', const = True, default = False)
         group.add_argument('-nosplit',      help = 'Skip splitted export',                                          nargs = '?', const = True, default = False)
+        group.add_argument('-noreadable',   help = 'Skip readable export',                                          nargs = '?', const = True, default = False)
         group.add_argument('-noembedded',   help = 'Skip Embedded Code report',                                     nargs = '?', const = True, default = False)
         group.add_argument('-norest',       help = 'Skip REST services',                                            nargs = '?', const = True, default = False)
         group.add_argument('-nofiles',      help = 'Skip application files',                                        nargs = '?', const = True, default = False)
@@ -125,6 +127,7 @@ class Export_APEX(config.Config):
             'recent'    : False,
             'full'      : False,
             'split'     : False,
+            'readable'  : False,
             'embedded'  : False,
             'rest'      : False,
             'files'     : False,
@@ -192,6 +195,7 @@ class Export_APEX(config.Config):
                 {'action' : 'recent',       'header' : '  CHANGED COMPONENTS' },
                 {'action' : 'full',         'header' : '  FULL APP EXPORT' },
                 {'action' : 'split',        'header' : '  SPLIT COMPONENTS' },
+                {'action' : 'readable',     'header' : '  READABLE COMPONENTS' },
                 {'action' : 'embedded',     'header' : '  EMBEDDED CODE REPORT' },
                 {'action' : 'rest',         'header' : '  REST SERVICES' },
                 {'action' : 'files',        'header' : '  APPLICATION FILES' },
@@ -494,12 +498,35 @@ class Export_APEX(config.Config):
 
 
 
+    def export_readable(self, app_id):
+        self.conn.execute(query.apex_export_readable, app_id = app_id, originals = 'Y' if self.config.apex_keep_original_id else 'N')
+        self.fetch_exported_files()
+
+
+
+    def export_embedded(self, app_id):
+        self.conn.execute(query.apex_export_embedded, app_id = app_id, originals = 'Y' if self.config.apex_keep_original_id else 'N')
+        self.fetch_exported_files()
+
+
+
     def cleanup_split(self, app_id):
         # cleanup target directory before moving new files there
         target_dir = self.get_root(app_id, 'application/')
         if os.path.exists(target_dir):
             util.delete_folder(target_dir)
+        #
+        # split must be executed first
+        #
 
+
+
+    def cleanup_readable(self, app_id):
+        pass
+
+
+
+    def cleanup_embedded(self, app_id):
         # move to proper folder
         source_dir = '{}f{}/embedded_code/'.format(self.config.sqlcl_root, app_id)
         target_dir = self.get_root(app_id, 'embedded_code/')

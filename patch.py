@@ -133,6 +133,7 @@ class Patch(config.Config):
         self.postfix_after      = self.config.patch_postfix_after
         self.commits_file       = self.config.repo_commits_file.replace('#BRANCH#', self.info.branch)
         self.show_commits       = 0
+        self.patch_recent       = 0
         self.ignored_scripts    = []
         self.patches            = {}
         self.deploy_plan        = []
@@ -783,6 +784,17 @@ class Patch(config.Config):
 
 
     def get_all_commits(self):
+        # show commits just since the last patch
+        patch_folder = self.patch_folder.replace('-False-', '-1-').split('/')[-1:][0]
+        patch_folder = util.replace(patch_folder, r'\d+-\d+-', '-')  # remove date and patch seq
+        #
+        for commit_id in sorted(self.all_commits.keys()):
+            patch_found = self.all_commits[commit_id].get('patch')
+            if patch_found:
+                patch_found = util.replace(patch_found, r'\d+-\d+-', '-')  # remove date and patch seq
+                if patch_found and patch_found == patch_folder:
+                    self.patch_recent = commit_id
+
         # read stored values
         all_hashes = []
         if os.path.exists(self.commits_file):
@@ -843,10 +855,17 @@ class Patch(config.Config):
 
             # calculate file hash right away
             committed_files = {}
+            patch_code = ''
+            #
             for file in sorted(commit.stats.files.keys()):
                 if self.is_usable_file(file):
                     file_payload            = self.get_file_from_commit(file, commit = commit_hash)
                     committed_files[file]   = util.get_hash(file_payload)
+
+                # keep patch driving files so we can identify patch commit
+                if file.startswith('patch/'):
+                    if util.extract('^[^/]+/([^/]+)/[^/]+.sql$', file):
+                        patch_code = util.extract('^[^/]+/([^/]+)/[^/]+.sql$', file)
             #
             new_commits.append({                        # number
                 'id'        : commit_hash,              # hash
@@ -855,6 +874,10 @@ class Patch(config.Config):
                 'date'      : commit.authored_datetime,
                 'files'     : committed_files,          # database + APEX files and their hashes
             })
+
+            # mark patch in commits file
+            if patch_code != '':
+                new_commits[len(new_commits) - 1]['patch'] = patch_code
 
             # show progress
             if self.args.get('rebuild'):
@@ -923,6 +946,18 @@ class Patch(config.Config):
                 if not (file in self.all_files):
                     self.all_files[file] = []
                 self.all_files[file].append(commit_id)
+
+        # show commits just since the last patch
+        curr_patch = self.get_patch_folder()
+        curr_patch = curr_patch.replace('-False-', '-0-').replace('-True-', '-0-').split('/')[-1:][0]
+        curr_patch = util.replace(curr_patch, r'\d+-\d+-', '-')  # remove date and patch seq
+        #
+        for commit_id in sorted(self.all_commits.keys()):
+            patch_found = self.all_commits[commit_id].get('patch')
+            if patch_found:
+                patch_found = util.replace(patch_found, r'\d+-\d+-', '-')  # remove date and patch seq
+                if patch_found and patch_found == curr_patch:
+                    self.patch_recent = commit_id
 
         # filter commits here, so we do it just once
         self.get_filtered_commits()
@@ -1059,6 +1094,10 @@ class Patch(config.Config):
         for commit_id in sorted(self.filtered_commits, reverse = True):
             commit = self.all_commits[commit_id]
 
+            # skip previous patches
+            if commit_id < self.patch_recent:
+                continue
+
             # store relevant commit
             self.relevant_commits.append(commit_id)
 
@@ -1159,7 +1198,7 @@ class Patch(config.Config):
                 'deployed'      : self.get_commit_deploy_status(commit_id),
             })
         #
-        util.print_header('{} COMMITS FOR "{}":'.format(header, ' '.join(self.search_message or [])))
+        util.print_header('{} COMMITS FOR "{}"{}:'.format(header, ' '.join(self.search_message or []), (' SINCE RECENT PATCH ' + str(self.patch_recent)) if self.patch_recent else ''))
         util.print_table(data)
 
 
@@ -1881,7 +1920,7 @@ class Patch(config.Config):
 
 
     def create_patch_file(self, payload, app_id):
-        payload = 'PROMPT -- ' + self.patch_file + '\n'.join([line for line in payload if line != None])
+        payload = 'PROMPT -- {}\n{}'.format(self.patch_file, '\n'.join([line for line in payload if line != None]))
 
         # save in schema patch file
         if not self.patch_dry:

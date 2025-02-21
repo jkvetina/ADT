@@ -215,7 +215,7 @@ class Export_Data(config.Config):
         # flags to disable parts of the query
         skip_insert     = ''
         skip_update     = ''
-        skip_delete     = ''
+        skip_delete     = '--'      # do not delete rows as default
 
         # parse CSV file and create WITH table
         with open(file, mode = 'rt', encoding = 'utf-8') as csv_file:
@@ -280,7 +280,7 @@ class Export_Data(config.Config):
                 all_values              = all_values,
                 skip_insert             = skip_insert,
                 skip_update             = skip_update,
-                skip_delete             = skip_delete if (batch_id == 0) else False,
+                skip_delete             = skip_delete,      # if (batch_id == 0) else False,
                 where_filter            = where_filter
             )
 

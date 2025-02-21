@@ -1095,7 +1095,7 @@ class Patch(config.Config):
             commit = self.all_commits[commit_id]
 
             # skip previous patches
-            if commit_id < self.patch_recent:
+            if commit_id < self.patch_recent and not (str(commit_id) in self.args.get('commit')):
                 continue
 
             # store relevant commit

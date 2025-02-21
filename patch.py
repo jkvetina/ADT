@@ -1500,11 +1500,12 @@ class Patch(config.Config):
 
                     # attach starting file
                     file = self.get_root(app_id, 'application/set_environment.sql')
-                    payload.extend(self.attach_file(file, header = 'APEX COMPONENTS START', category = 'STATIC', app_id = app_id))
-                    payload.append(
-                        # replace existing components
-                        'BEGIN wwv_flow_imp.g_mode := \'REPLACE\'; END;\n/\n'
-                    )
+                    if len(file) > 0:
+                        payload.extend(self.attach_file(file, header = 'APEX COMPONENTS START', category = 'STATIC', app_id = app_id))
+                        payload.append(
+                            # replace existing components
+                            'BEGIN wwv_flow_imp.g_mode := \'REPLACE\'; END;\n/\n'
+                        )
 
                 # go through files
                 apex_pages = []
@@ -1548,7 +1549,8 @@ class Patch(config.Config):
             if app_id and not (app_id in self.full_exports):
                 if not (app_id in self.full_exports):
                     file = self.get_root(app_id, 'application/end_environment.sql')
-                    payload.extend(self.attach_file(file, header = 'APEX END', category = 'STATIC', app_id = app_id))
+                    if len(file) > 0:
+                        payload.extend(self.attach_file(file, header = 'APEX END', category = 'STATIC', app_id = app_id))
 
             # add grants made on referenced objects
             grants = self.get_grants_made(schema = schema)
@@ -1848,6 +1850,9 @@ class Patch(config.Config):
 
 
     def attach_file(self, file, header = '', category = '', app_id = None):
+        if len(file) == 0:
+            return
+        #        
         file_source = file.replace(self.repo_root, '')
         attach_type = ''
         if category != '':
@@ -1920,7 +1925,8 @@ class Patch(config.Config):
 
 
     def create_patch_file(self, payload, app_id):
-        payload = 'PROMPT -- {}\n{}'.format(self.patch_file, '\n'.join([line for line in payload if line != None]))
+        file = '/'.join(self.patch_file.split('/')[-2:])
+        payload = 'PROMPT -- {}\n{}'.format(file, '\n'.join([line for line in payload if line != None]))
 
         # save in schema patch file
         if not self.patch_dry:
@@ -1936,6 +1942,8 @@ class Patch(config.Config):
 
     def create_file_snapshot(self, file, file_content = None, app_id = None, local = False, replace_tags = False):
         file = file.replace(self.repo_root, '')
+        if len(file) == 0:
+            return
 
         # create folders and copy files
         target_file = '{}/{}'.format(self.patch_folder, file).replace('//', '/')

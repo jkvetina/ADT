@@ -706,7 +706,7 @@ class Export_DB(config.Config):
         else:
             # add tablespace just when it is different
             index_tblsp = (self.objects.get('INDEX', {}).get(object_name, {}).get('tablespace_name') or '').replace('"', '').lower()
-            if index_tblsp and index_tblsp != table_tblsp:
+            if index_tblsp and table_tblsp and index_tblsp != table_tblsp:
                 lines[last_line] = lines[last_line].rstrip(';')
                 lines[last_line] += '\n    TABLESPACE ' + index_tblsp
         #

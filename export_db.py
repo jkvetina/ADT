@@ -788,7 +788,10 @@ class Export_DB(config.Config):
             first   = line.split(' ')[0]
             #
             if not (first in ('CREATE', 'BUILD', 'REFRESH',)):
-                line = ''
+                if 'USING TRUSTED CONSTRAINTS' in line:
+                    line = 'WITH ROWID USING TRUSTED CONSTRAINTS'
+                else:
+                    line = ''
             lines[i] = line
 
         # final cleanup

@@ -667,6 +667,8 @@ class Export_DB(config.Config):
             if line.endswith(',;'):
                 lines[i] = line.rstrip(',;') + ';'
 
+            lines[i] = line.replace('DEFAULT coalesce(,', 'DEFAULT COALESCE(')
+
         # fix missing semicolon
         last_line = len(lines) - 1
         lines[last_line] = lines[last_line].rstrip(';').rstrip() + ';'

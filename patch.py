@@ -1852,7 +1852,7 @@ class Patch(config.Config):
     def attach_file(self, file, header = '', category = '', app_id = None):
         if len(file) == 0:
             return
-        #        
+        #
         file_source = file.replace(self.repo_root, '')
         attach_type = ''
         if category != '':
@@ -2122,6 +2122,7 @@ class Patch(config.Config):
         mime_type   = mimetypes.guess_type(file)[0]
         file_id     = query.template_apex_file_id
         width       = 200
+        start, end  = 0, 0
 
         # get data from set_env.sql file
         file_header = self.get_root(app_id, 'application/set_environment.sql')  # steal the header

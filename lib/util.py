@@ -200,8 +200,11 @@ def get_file_lines(file):
         with open(file, 'rt', encoding = 'utf-8') as f:
             return f.readlines()
     except:
-        with io.open(file, encoding = 'utf-8', errors = 'ignore') as f:
-            return f.readlines()
+        try:
+            with io.open(file, encoding = 'utf-8', errors = 'ignore') as f:
+                return f.readlines()
+        except:
+            return ''
 
 
 

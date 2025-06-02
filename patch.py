@@ -788,12 +788,13 @@ class Patch(config.Config):
         patch_folder = self.patch_folder.replace('-False-', '-1-').split('/')[-1:][0]
         patch_folder = util.replace(patch_folder, r'\d+-\d+-', '-')  # remove date and patch seq
         #
-        for commit_id in sorted(self.all_commits.keys()):
-            patch_found = self.all_commits[commit_id].get('patch')
-            if patch_found:
-                patch_found = util.replace(patch_found, r'\d+-\d+-', '-')  # remove date and patch seq
-                if patch_found and patch_found == patch_folder:
-                    self.patch_recent = commit_id
+        if not self.args.force:
+            for commit_id in sorted(self.all_commits.keys()):
+                patch_found = self.all_commits[commit_id].get('patch')
+                if patch_found:
+                    patch_found = util.replace(patch_found, r'\d+-\d+-', '-')  # remove date and patch seq
+                    if patch_found and patch_found == patch_folder:
+                        self.patch_recent = commit_id
 
         # read stored values
         all_hashes = []
@@ -952,12 +953,13 @@ class Patch(config.Config):
         curr_patch = curr_patch.replace('-False-', '-0-').replace('-True-', '-0-').split('/')[-1:][0]
         curr_patch = util.replace(curr_patch, r'\d+-\d+-', '-')  # remove date and patch seq
         #
-        for commit_id in sorted(self.all_commits.keys()):
-            patch_found = self.all_commits[commit_id].get('patch')
-            if patch_found:
-                patch_found = util.replace(patch_found, r'\d+-\d+-', '-')  # remove date and patch seq
-                if patch_found and patch_found == curr_patch:
-                    self.patch_recent = commit_id
+        if not self.args.force:
+            for commit_id in sorted(self.all_commits.keys()):
+                patch_found = self.all_commits[commit_id].get('patch')
+                if patch_found:
+                    patch_found = util.replace(patch_found, r'\d+-\d+-', '-')  # remove date and patch seq
+                    if patch_found and patch_found == curr_patch:
+                        self.patch_recent = commit_id
 
         # filter commits here, so we do it just once
         self.get_filtered_commits()
@@ -1807,9 +1809,10 @@ class Patch(config.Config):
                 # check if file is in previous patches (and not changed since)
                 found_flag = False
                 for commit_id in sorted(self.relevant_commits, reverse = True):
-                    commit = self.all_commits[commit_id]
-                    #
-                    if file in commit.get('files', []):
+                    if commit_id in self.add_commits:
+                        found_flag = False
+                        #continue  # always treat specific/requested commits as not processed/added
+                    elif file in self.all_commits[commit_id].get('files', []):
                         found_flag = True
                         break
                 #

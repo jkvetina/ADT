@@ -268,6 +268,9 @@ class Export_Data(config.Config):
         all_cols    = 't.' + ',\n        t.'.join(columns)
         all_values  = 's.' + ',\n        s.'.join(columns)
 
+        if skip_delete:
+            where_filter = ('\n' + skip_delete).join(where_filter.splitlines())
+
         # proceeed in batches
         payload = ''
         for batch_id, data in csv_select.items():

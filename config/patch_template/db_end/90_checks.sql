@@ -1,7 +1,7 @@
 -- show invalid objects
 PROMPT "INVALID OBJECTS:"
-COLUMN object_type FORMAT A10
-COLUMN object_name FORMAT A30
+COLUMN object_type FORMAT A20
+COLUMN object_name FORMAT A40
 --
 SELECT
     o.object_type,
@@ -44,10 +44,10 @@ ORDER BY 1, 2;
 
 -- check recent errors
 PROMPT "RECENT ERRORS:"
-COLUMN object_type FORMAT A10
-COLUMN object_name FORMAT A30
-COLUMN line FORMAT A5
-COLUMN text FORMAT A30
+COLUMN object_type FORMAT A20
+COLUMN object_name FORMAT A40
+COLUMN line FORMAT A6
+COLUMN text FORMAT A80
 --
 SELECT
     e.type AS object_type,

@@ -2113,8 +2113,11 @@ class Patch(config.Config):
             commit = self.all_commits[commit]['id']
 
         # run command line and capture the output, text file is expected
-        payload = util.run_command('git show {}:{}'.format(commit, file), silent = True, text = False)
-        payload = self.get_simple_text(payload)
+        try:
+            payload = util.run_command('git show {}:{}'.format(commit, file), silent = True, text = False)
+            payload = self.get_simple_text(payload)
+        except:
+            pass
         #
         return payload
 

@@ -175,13 +175,15 @@ def create_zip(name, root):
 
 
 def get_hash(payload, encoding = 'utf-8'):
-    if isinstance(payload, str):
-        payload = payload.encode(encoding or 'utf-8')
-    #
-    hash = hashlib.sha1(payload).hexdigest()
-    if hash == 'da39a3ee5e6b4b0d3255bfef95601890afd80709':
+    hash = ''
+    try:
+        if isinstance(payload, str):
+            payload = payload.encode(encoding or 'utf-8')
+        #
+        hash = hashlib.sha1(payload).hexdigest()
+        return hash if hash != 'da39a3ee5e6b4b0d3255bfef95601890afd80709' else ''
+    except:
         return ''
-    return hash
 
 
 

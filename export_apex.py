@@ -52,6 +52,7 @@ class Export_APEX(config.Config):
         group.add_argument('-all',          help = 'Export everything',                                             nargs = '?', const = True, default = False)
         group.add_argument('-fetch',        help = 'Fetch Git changes before patching',                             nargs = '?', const = True, default = False)
         group.add_argument('-reveal',       help = 'Reveal APEX workspaces and/or apps',                            nargs = '?', const = True, default = False)
+        group.add_argument('-release',      help = 'To export as specific release',                                 nargs = '?')
         #
         group = parser.add_argument_group('NEGATING ACTIONS')
         group.add_argument('-nofull',       help = 'Skip full export',                                              nargs = '?', const = True, default = False)
@@ -417,7 +418,11 @@ class Export_APEX(config.Config):
         # get files from collection
         data = self.conn.fetch_assoc(query.apex_export_fetch_files)
         for file in data:
-            util.write_file(self.config.sqlcl_root + file.file_name, payload = str(file.clob_content))
+            payload = str(file.clob_content)
+            if self.args.release and file.file_name.endswith('.sql'):
+                payload = util.replace(payload, r"p_release=>'\d+.\d+.\d+'", replacement = "p_release=>'" + self.args.release + "'")
+            #
+            util.write_file(self.config.sqlcl_root + file.file_name, payload = payload)
 
 
 

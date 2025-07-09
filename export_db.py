@@ -98,8 +98,8 @@ class Export_DB(config.Config):
         for file in util.get_files(self.config.path_objects + self.config.object_types['TABLE'][0] + '*$2.sql'):
             util.delete_file(file)
 
-        # turn on verbose mode for recent <= # days
-        if self.args.recent != None and self.args.recent <= self.config.auto_verbose and self.args.recent:
+        # turn on verbose mode for any recent days
+        if (self.args.recent and self.args.recent > 0) or (self.config.auto_verbose and self.config.auto_verbose > 0) or self.args.type or self.args.name:
             self.args.verbose = True
 
         # detect deleted objects

@@ -107,6 +107,7 @@ BEGIN
         p_application_id        => :app_id,
         p_split                 => FALSE,
         p_with_date             => FALSE,
+        p_with_translations     => TRUE,
         p_with_original_ids     => (:originals = 'Y'),
         p_with_comments         => FALSE
     );

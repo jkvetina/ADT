@@ -565,6 +565,8 @@ class Export_DB(config.Config):
 
         # remove partitions from table
         partition_idx = None
+        partition_found = False
+        #
         for (i, line) in enumerate(lines):
             line = line.strip()
             if line.startswith('PARTITION BY '):    # keep
@@ -576,6 +578,18 @@ class Export_DB(config.Config):
             # ignore specific partitions
             if (line.startswith('PARTITION') or line.startswith('(PARTITION')):
                 lines[i] = ''
+
+                # keep just first VALUE partition
+                if 'VALUES' in line:
+                    part_name   = self.unquote_object_name(util.extract(r'("[^"]+")', line))
+                    part_value  = util.extract(r'VALUES\(([^\)]+)', line.lstrip('('))
+                    #
+                    if not partition_found:
+                        line = '    PARTITION ' + part_name + ' VALUES(' + part_value + ')'
+                        lines[partition_idx] = lines[partition_idx].replace('!P!', line)
+                        partition_found = True
+                    continue
+
                 # except the one with maxvalue or if we have just one partition
                 if ('(MAXVALUE)' in line or (line.startswith('(') and line.endswith(');'))):
                     line = self.unquote_object_name(line)

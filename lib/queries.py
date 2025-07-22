@@ -912,7 +912,9 @@ WHERE 1 = 1
     AND g.object_like       IS NULL
     AND (
         m.column_name       NOT IN (
-            'UPDATED_BY', 'UPDATED_AT', 'CHANGED_BY', 'CHANGED_AT', 'CREATED_BY', 'CREATED_AT'
+            'UPDATED_BY', 'UPDATED_ON', 'UPDATED_AT',
+            'CHANGED_BY', 'CHANGED_ON', 'CHANGED_AT',
+            'CREATED_BY', 'CREATED_ON', 'CREATED_AT'
         )
         OR m.comments       IS NOT NULL
     )

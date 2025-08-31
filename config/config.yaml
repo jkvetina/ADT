@@ -64,6 +64,11 @@ object_comments:
     - VIEW
     - MATERIALIZED VIEW
 
+# object types with column comments
+object_col_comments:
+    - TABLE
+    - MATERIALIZED VIEW
+
 # override tablespaces
 tablespace:
     TABLE       : ''

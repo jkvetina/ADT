@@ -1039,7 +1039,7 @@ class Export_DB(config.Config):
                 lines.append('--')
                 lines.append('COMMENT ON TABLE {} IS \'{}\';'.format(object_name.lower(), comment))
             #
-            if object_name in self.comments_col:
+            if object_name in self.comments_col and object_type in self.config.object_col_comments:
                 lines.append('--')
                 for column_name in self.comments[object_name].keys():
                     if column_name:

@@ -493,13 +493,39 @@ class Export_APEX(config.Config):
 
 
     def export_full(self, app_id):
-        self.conn.execute(query.apex_export_full, app_id = app_id, originals = 'Y' if self.config.apex_keep_original_id else 'N')
+        args = {
+            'originals'                 : 'Y' if self.config.apex_keep_original_id else 'N',
+            'with_comments'             : 'Y' if self.config.apex_comments else 'N',
+            'with_date'                 : 'Y' if self.config.apex_with_date else 'N',
+            'with_ir_public_reports'    : 'Y' if self.config.apex_with_ir_public_reports else 'N',
+            'with_ir_private_reports'   : 'Y' if self.config.apex_with_ir_private_reports else 'N',
+            'with_ir_notifications'     : 'Y' if self.config.apex_with_ir_notifications else 'N',
+            'with_translations'         : 'Y' if self.config.apex_with_translations else 'N',
+            'with_no_subscriptions'     : 'Y' if self.config.apex_with_no_subscriptions else 'N',
+            #'with_supporting_objects'   : self.config.apex_with_supporting_objects,
+            'with_acl_assignments'      : 'Y' if self.config.apex_with_acl_assignments else 'N',
+            'with_audit_info'           : self.config.apex_with_audit_info
+        }
+        self.conn.execute(query.apex_export_full, app_id = app_id, **args)
         self.fetch_exported_files()
 
 
 
     def export_split(self, app_id):
-        self.conn.execute(query.apex_export_split, app_id = app_id, originals = 'Y' if self.config.apex_keep_original_id else 'N')
+        args = {
+            'originals'                 : 'Y' if self.config.apex_keep_original_id else 'N',
+            'with_comments'             : 'Y' if self.config.apex_comments else 'N',
+            'with_date'                 : 'Y' if self.config.apex_with_date else 'N',
+            'with_ir_public_reports'    : 'Y' if self.config.apex_with_ir_public_reports else 'N',
+            'with_ir_private_reports'   : 'Y' if self.config.apex_with_ir_private_reports else 'N',
+            'with_ir_notifications'     : 'Y' if self.config.apex_with_ir_notifications else 'N',
+            'with_translations'         : 'Y' if self.config.apex_with_translations else 'N',
+            'with_no_subscriptions'     : 'Y' if self.config.apex_with_no_subscriptions else 'N',
+            #'with_supporting_objects'   : self.config.apex_with_supporting_objects,
+            'with_acl_assignments'      : 'Y' if self.config.apex_with_acl_assignments else 'N',
+            'with_audit_info'           : self.config.apex_with_audit_info
+        }
+        self.conn.execute(query.apex_export_split, app_id = app_id, **args)
         self.fetch_exported_files()
 
 

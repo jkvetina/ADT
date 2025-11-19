@@ -104,12 +104,20 @@ DECLARE
     l_files         apex_t_export_files;
 BEGIN
     l_files := APEX_EXPORT.GET_APPLICATION (
-        p_application_id        => :app_id,
-        p_split                 => FALSE,
-        p_with_date             => FALSE,
-        p_with_translations     => TRUE,
-        p_with_original_ids     => (:originals = 'Y'),
-        p_with_comments         => FALSE
+        p_application_id            => :app_id,
+        p_split                     => FALSE,
+        p_with_date                 => (:with_date = 'Y'),
+        p_with_ir_public_reports    => (:with_ir_public_reports = 'Y'),
+        p_with_ir_private_reports   => (:with_ir_private_reports = 'Y'),
+        p_with_ir_notifications     => (:with_ir_notifications = 'Y'),
+        p_with_translations         => (:with_translations = 'Y'),
+        p_with_original_ids         => (:originals = 'Y'),
+        p_with_no_subscriptions     => (:with_no_subscriptions = 'Y'),
+        p_with_comments             => (:with_comments = 'Y'),
+        --p_with_supporting_objects   => :with_supporting_objects,
+        p_with_acl_assignments      => (:with_acl_assignments = 'Y'),
+        p_with_audit_info           => :with_audit_info,
+        p_with_runtime_instances    => NULL
     );
     --
     FOR i IN l_files.FIRST .. l_files.LAST LOOP
@@ -128,13 +136,21 @@ DECLARE
     l_files         apex_t_export_files;
 BEGIN
     l_files := APEX_EXPORT.GET_APPLICATION (
-        p_application_id        => :app_id,
-        p_split                 => TRUE,
-        p_type                  => 'APPLICATION_SOURCE',
-        p_with_date             => FALSE,
-        p_with_translations     => TRUE,
-        p_with_original_ids     => (:originals = 'Y'),
-        p_with_comments         => FALSE
+        p_application_id            => :app_id,
+        p_split                     => TRUE,
+        p_type                      => 'APPLICATION_SOURCE',
+        p_with_date                 => (:with_date = 'Y'),
+        p_with_ir_public_reports    => (:with_ir_public_reports = 'Y'),
+        p_with_ir_private_reports   => (:with_ir_private_reports = 'Y'),
+        p_with_ir_notifications     => (:with_ir_notifications = 'Y'),
+        p_with_translations         => (:with_translations = 'Y'),
+        p_with_original_ids         => (:originals = 'Y'),
+        p_with_no_subscriptions     => (:with_no_subscriptions = 'Y'),
+        p_with_comments             => (:with_comments = 'Y'),
+        --p_with_supporting_objects   => :with_supporting_objects,
+        p_with_acl_assignments      => (:with_acl_assignments = 'Y'),
+        p_with_audit_info           => :with_audit_info,
+        p_with_runtime_instances    => NULL
     );
     --
     FOR i IN l_files.FIRST .. l_files.LAST LOOP
@@ -279,6 +295,7 @@ WHERE a.application_id = :app_id
 """
 
 # export APEX files in as a binary
+# @TODO: apex_export.get_workspace_files(
 apex_files = """
 SELECT
     f.filename,

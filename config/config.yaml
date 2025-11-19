@@ -170,7 +170,7 @@ patch_map:
 #
 # GIT REPOSITORY
 #
-repo_commit_days        : 60                    # maximum age (in days) for commits history
+repo_commit_days        : 360                   # maximum age (in days) for commits history
 repo_branch             : ''                    # empty = current branch
 repo_commits_file       : './config/commits/#BRANCH#.yaml'
 repo_authors:
@@ -218,7 +218,6 @@ apex_path_rest          : 'workspace/rest/'
 apex_workspace_dir      : 'workspace/'
 apex_snapshots          : 'snapshots/'
 #
-apex_keep_original_id   : False                 # keep original ids
 apex_show_recent        : 1                     # show changes made in past # days
 apex_export_full        : False                 # full export
 apex_export_split       : False                 # export individual components
@@ -231,7 +230,18 @@ apex_export_files       : False                 # export application & workspace
 apex_export_files_ws    : False                 # export application & workspace files
 apex_delete_orig_files  : True                  # delete original (encoded) files
 #
-apex_comments           : True                  # add component names as comments
+apex_keep_original_id           : False         # keep original ids
+apex_comments                   : True          # add component names as comments
+apex_with_date                  : False
+apex_with_ir_public_reports     : False
+apex_with_ir_private_reports    : False
+apex_with_ir_notifications      : False
+apex_with_translations          : True
+apex_with_no_subscriptions      : False
+apex_with_supporting_objects    : False
+apex_with_acl_assignments       : True
+apex_with_audit_info            : ''            # NAMES_AND_DATES, DATES_ONLY, NULL
+#
 apex_timestamps         : '20240101000000'      # convert page timestamp to a specific value
 apex_authors            : 'DEV'                 # convert page author to a specific value for non developers
 apex_keep_developers    : True                  # keep page author if it is a developer

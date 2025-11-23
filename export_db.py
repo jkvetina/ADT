@@ -127,6 +127,10 @@ class Export_DB(config.Config):
         deleted_files   = []
         if self.args.verbose:
             for file, obj in self.repo_files.items():
+                expecting = self.repo_root + '/'.join(os.path.dirname(file).replace('\\', '/').split('/')[0:-1])
+                if not (expecting in self.target_root):
+                    continue
+                #
                 if obj.is_object and obj.object_type and not (obj.object_type in ('GRANT',)):
                     obj_code = obj['object_code'].replace('DATA.', 'TABLE.')
                     if not (obj_code in self.dependencies):

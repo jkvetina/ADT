@@ -330,8 +330,13 @@ class Export_APEX(config.Config):
             util.print_header('APEX APPLICATIONS:', group if group != '-' else '')
             util.print_table(rows)
 
-        # store in file for later use
+        # append apps to file
         payload = {}
+        if os.path.exists(self.apex_apps_file):
+            with open(self.apex_apps_file, 'rt', encoding = 'utf-8') as f:
+                payload = dict(util.get_yaml(f, self.apex_apps_file))
+
+        # store in file for later use
         for app_id, row in self.apex_apps.items():
             payload[app_id] = dict(row)
         #

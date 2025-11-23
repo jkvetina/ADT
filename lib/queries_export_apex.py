@@ -1,6 +1,7 @@
 # get applications from the same schema
 apex_applications = """
 SELECT
+    a.owner,
     a.workspace,
     a.workspace_id,
     a.application_group     AS app_group,
@@ -235,9 +236,7 @@ BEGIN
         p_split                 => TRUE,
         p_type                  => 'APPLICATION_SOURCE,READABLE_YAML',
         p_with_date             => FALSE,
-        p_with_translations     => TRUE,
-        p_with_original_ids     => (:originals = 'Y'),
-        p_with_comments         => FALSE,
+
         p_components            => APEX_STRING.SPLIT(:components, ',')
     );
     --

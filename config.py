@@ -410,14 +410,14 @@ class Config(util.Attributed):
 
         # check environment
         if len(self.connection.keys()) == 0:
-            util.raise_error('UNKNOWN ENVIRONMENT NAME', env_name)
+            util.raise_error('UNKNOWN ENVIRONMENT NAME', env_name, list(self.connection.keys()))
 
         #  get schema marked as default
         if schema_name == '':
             schema_name = self.connection['defaults'].get('schema_apex' if self.program == 'export_apex' else 'schema_db', '')
 
         # find first schema on list
-        if schema_name == '' and len(schemas.keys()) > 0:
+        if (schema_name == '' or schema_name == '%') and len(schemas.keys()) > 0:
             schema_name = list(schemas.keys())[0]
 
         # always connect to the first schema, switch to the other schemas later
@@ -442,6 +442,7 @@ class Config(util.Attributed):
         self.connection['schema']   = schema_name
         self.connection['key']      = self.args.get('key') or ''
         self.connection['lang']     = self.connection.get('lang') or '.AL32UTF8'
+        self.connection['schemas']  = list(schemas.keys())
         self.info.schema            = schema_name
 
         # if key is a file, retrieve content and use it as a key

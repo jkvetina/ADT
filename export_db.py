@@ -65,20 +65,33 @@ class Export_DB(config.Config):
 
         # setup env and paths
         self.init_config()
+        self.path_objects_og = self.config.path_objects
+
+        # connect to each requested schema
+        for schema_name in self.connection['schema_db'].split(','):
+            self.process_schema(schema_name)
+
+
+
+    def process_schema(self, schema_name):
+        self.init_connection(schema_name = schema_name)
+        #
         self.conn           = self.db_connect(ping_sqlcl = False)
         self.remove_schema  = self.conn.tns.schema
-        #
-        self.target_root    = self.repo_root + self.get_path(self.config.path_objects)
+        self.objects_prefix = self.connection.get('prefix', '')
+        self.objects_ignore = self.connection.get('ignore', '')
         self.objects        = {}
         self.objects_total  = 0
         self.overview       = {}
         self.comments       = {}
         self.comments_col   = {}
         self.comments_type  = {}
-        #
-        self.objects_prefix = self.connection.get('prefix',     '')
-        self.objects_ignore = self.connection.get('ignore',     '')
-        self.objects_folder = self.connection.get('subfolder',  '')
+
+        # adjust target folder for multi schema approach
+        self.target_root    = self.repo_root + self.get_path(self.config.path_objects)
+        if self.conn.tns.subfolder:
+            self.config.path_objects = self.path_objects_og + self.conn.tns.subfolder + '/'
+            self.target_root = self.repo_root + self.get_path(self.config.path_objects)
 
         # store object dependencies for several purposes
         self.get_dependencies(prefix = self.objects_prefix, ignore = self.objects_ignore)
@@ -93,9 +106,9 @@ class Export_DB(config.Config):
         self.show_overview()
 
         # delete lost diff tables
-        for file in util.get_files(self.config.path_objects + self.config.object_types['TABLE'][0] + '*$1.sql'):
+        for file in util.get_files(self.target_root + self.config.object_types['TABLE'][0] + '*$1.sql'):
             util.delete_file(file)
-        for file in util.get_files(self.config.path_objects + self.config.object_types['TABLE'][0] + '*$2.sql'):
+        for file in util.get_files(self.target_root + self.config.object_types['TABLE'][0] + '*$2.sql'):
             util.delete_file(file)
 
         # turn on verbose mode for any recent days
@@ -135,7 +148,7 @@ class Export_DB(config.Config):
                     util.delete_file(file)
 
         # export grants
-        self.grants_made_file   = '{}{}{}{}'.format(self.config.path_objects, self.config.object_types['GRANT'][0], self.remove_schema, self.config.object_types['GRANT'][1])
+        self.grants_made_file   = '{}{}{}{}'.format(self.target_root, self.config.object_types['GRANT'][0], self.remove_schema, self.config.object_types['GRANT'][1])
         self.grants_recd_file   = (os.path.dirname(self.grants_made_file) + self.config.grants_recd)
         self.grants_privs_file  = (os.path.dirname(self.grants_made_file) + self.config.grants_privs).replace('#SCHEMA_NAME#', self.remove_schema)
         self.grants_dirs_file   = (os.path.dirname(self.grants_made_file) + self.config.grants_directories).replace('#SCHEMA_NAME#', self.remove_schema)
@@ -972,6 +985,7 @@ class Export_DB(config.Config):
                 return str(result[0][0])
             return ''
         except:
+            print(q, args)
             util.raise_error('EXPORT_FAILED', object_type, object_name)
         #
         return ''

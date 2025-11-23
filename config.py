@@ -420,12 +420,12 @@ class Config(util.Attributed):
         if schema_name == '' and len(schemas.keys()) > 0:
             schema_name = list(schemas.keys())[0]
 
+        # always connect to the first schema, switch to the other schemas later
+        schema_name = schema_name.split(',')[0]
+
         # check schema
         if (schema_name == '' or not (schema_name in schemas.keys())):
-            if self.debug:
-                print('SCHEMAS:  ', schemas)
-                print('REQUESTED:', schema_name)
-            util.raise_error('UNKNOWN SCHEMA', schema_name)
+            util.raise_error('UNKNOWN SCHEMA', schema_name, list(schemas.keys()))
 
         # merge with specific schema and adjust few things
         # flatten the config structure
@@ -636,11 +636,11 @@ class Config(util.Attributed):
     def get_root(self, app_id, folders = '', remove_root = False):
         if not app_id:
             util.raise_error('APEX EXPORT NOT FOUND')
-        
+
         # exit if we dont know the app
         if not (app_id in self.apex_apps):
             return ''
-        
+
         # replace tags in path with attributes from requested app
         transl = {
             '{$APP_ID}'     : app_id,

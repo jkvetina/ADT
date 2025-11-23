@@ -418,7 +418,21 @@ class Oracle:
 
     def execute(self, query, **binds):
         self.curs = self.conn.cursor()
-        return self.curs.execute(query.strip(), **self.get_binds(query, binds))
+        try:
+            r = self.curs.execute(query.strip(), **self.get_binds(query, binds))
+            return r
+        except oracledb.DatabaseError as e:
+            if self.debug:
+                print('#' * 80)
+                print(self.debug_query(query, **binds))
+                print()
+            #
+            print('#' * 80)
+            print('CALLSTACK:')
+            for row in util.get_callstack():
+                print('  @{} {}'.format(row[0], row[1]))
+            #
+            util.raise_error('QUERY_ERROR', str(e).splitlines()[0])
 
 
 

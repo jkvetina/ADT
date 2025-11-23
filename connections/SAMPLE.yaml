@@ -1,0 +1,26 @@
+# if this filename is in ADT/connections folder, the name must match your project folder
+DEV:                                          # your environment name, must match ADT_ENV env variable, you can have multiple environments listed here
+    db:
+        hostname    :
+        lang        :
+        port        : 1521
+        service     : INSTANCE_NAME_high      # for OCI...
+        sid         :
+        thick       : ''                      # 'Y' of path to your thick driver
+    defaults:
+        schema_apex : YOUR_SCHEMA_NAME        # your schema used/exposed in APEX (not the APEX schema)
+        schema_db   : YOUR_SCHEMA_NAME        # your DB schema
+    schemas:
+        YOUR_SCHEMA_NAME:                     # your schema name
+            db:
+                pwd     : ''                  # your password
+                pwd!    :                     # 'Y' if you want your pwd encypted with ADP_PASSWORD env variable
+                user    : YOUR_SCHEMA_NAME
+            export:
+                ignore      : 'ABC%,DEF%'     # ignore objects starting with ABC and DEF
+                prefix      : ''              # you can do the same thing here, only objects matching will be exported
+                subfolder   :                 # subfolder name when you want to export multiple schemas
+    wallet:                                   # wallet for OCI connections, delete for on premise connections
+        wallet      : /Users/../Documents/ADT/wallets/Wallet_INSTANCE_NAME
+        wallet_pwd  : ''                      # wallet pwd
+        wallet_pwd! :                         # 'Y' if you want your pwd encypted with ADP_PASSWORD env variable

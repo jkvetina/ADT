@@ -67,9 +67,16 @@ class Export_DB(config.Config):
         self.init_config()
         self.path_objects_og = self.config.path_objects
 
+        # if any schema is not passed, use the default
+        schemas = self.args.schema + ','
+        if not schemas:
+            schemas = (self.connection['schema_db'] + ',')
+
         # connect to each requested schema
-        for schema_name in self.connection['schema_db'].split(','):
-            self.process_schema(schema_name)
+        for schema_name in schemas.split(','):
+            schema_name = schema_name.strip()
+            if schema_name:
+                self.process_schema(schema_name)
 
 
 

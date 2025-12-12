@@ -219,8 +219,8 @@ class Oracle:
         except Exception:
             version_db    = self.fetch_value(query.query_version_db_old)
         #
-        self.versions['DATABASE']   = '.'.join(version_db.split('.')[0:2])
-        self.versions['APEX']       = '.'.join(version_apex.split('.')[0:2])
+        self.versions['DATABASE']   = version_db
+        self.versions['APEX']       = version_apex
         #
         if self.thick:
             version = util.extract(r'(\d+_\d+)$', self.thick).replace('_', '.')

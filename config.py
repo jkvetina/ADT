@@ -399,6 +399,9 @@ class Config(util.Attributed):
                 continue
             #
             with open(file, 'rt', encoding = 'utf-8') as f:
+                if self.debug:
+                    print('CONNECTION_FILE:\n  -', file)
+                #
                 conn_src        = dict(util.get_yaml(f, file)).get(env_name, {})
                 schemas_src     = {}
                 if 'schemas' in conn_src:

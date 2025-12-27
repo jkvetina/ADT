@@ -268,6 +268,11 @@ def delete_file(source_file):
 def remove_cloud_junk(root = ''):
     root = root or os.path.abspath(os.path.curdir)
 
+    # check only project repo, not good to run this on home folder...
+    # are we in a git root?
+    if not os.path.exists(root + '/.git/HEAD'):
+        return
+
     # remove another file often broken by iCLoud sync
     delete_file('.git/refs/remotes/origin/HEAD 2')
 

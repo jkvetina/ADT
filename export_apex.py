@@ -224,18 +224,8 @@ class Export_APEX(config.Config):
                         continue
 
                     # execute in a thread so we can show progress in main process
-                    with ThreadPool(processes = 1) as pool:
-                        result = pool.apply_async(getattr(self, export_fn), [app_id])
-                        while True:
-                            try:
-                                if result.ready():
-                                    break
-                                #
-                                progress_done = util.print_progress(progress_done, progress_target, extra = row['header'], start = start, sleep = 1)
-                                #
-                            except KeyboardInterrupt:
-                                print('\n')
-                                return
+                    if self.debug:
+                        getattr(self, export_fn)(app_id)
 
                         # cleanup files
                         cleanup_fn = 'cleanup_' + action
@@ -245,9 +235,31 @@ class Export_APEX(config.Config):
                         # move files from temp folders right away after each block
                         self.move_files(app_id)
 
-                        # finish the progress
-                        if progress_done != -1:
-                            util.print_progress_done(extra = row['header'], start = start)
+                    else:
+                        with ThreadPool(processes = 1) as pool:
+                            result = pool.apply_async(getattr(self, export_fn), [app_id])
+                            while True:
+                                try:
+                                    if result.ready():
+                                        break
+                                    #
+                                    progress_done = util.print_progress(progress_done, progress_target, extra = row['header'], start = start, sleep = 1)
+                                    #
+                                except KeyboardInterrupt:
+                                    print('\n')
+                                    return
+
+                            # cleanup files
+                            cleanup_fn = 'cleanup_' + action
+                            if hasattr(self.__class__, cleanup_fn) and callable(getattr(self, cleanup_fn)):
+                                getattr(self, 'cleanup_' + action)(app_id)
+
+                            # move files from temp folders right away after each block
+                            self.move_files(app_id)
+
+                            # finish the progress
+                            if progress_done != -1:
+                                util.print_progress_done(extra = row['header'], start = start)
 
                     # update timers
                     timer = util.get_start() - start

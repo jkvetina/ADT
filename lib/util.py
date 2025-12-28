@@ -1,4 +1,4 @@
-import sys, os, re, glob, traceback, inspect, io, subprocess, datetime, time, timeit, shutil, hashlib, mimetypes
+import sys, os, re, glob, traceback, inspect, io, subprocess, datetime, time, timeit, shutil, hashlib, mimetypes, pathlib
 import secrets, base64
 import yaml         # pip3 install pyyaml       --upgrade
 import chime        # pip3 install chime        --upgrade
@@ -273,36 +273,40 @@ def remove_cloud_junk(root = ''):
     if not os.path.exists(root + '/.git/HEAD'):
         return
 
-    # remove another file often broken by iCLoud sync
+    # remove another file often broken by iCloud sync
     delete_file('.git/refs/remotes/origin/HEAD 2')
 
-    # remove Dropbox issues
-    for file in glob.glob(root + '/**/*.*', recursive = True):
-        if 'conflicted copy' in file:
-            os.remove(file)
-            continue
-
-    # remove duplicated files
-    for file in glob.glob(root + '/**/*.*', recursive = True):
-        number = extract(r'(\s+[0-9]+\.)[^\.]+$', file)
-        if number and os.path.exists(file.replace(number, '.')):
-            os.remove(file)
-            continue
-        #
-        number = extract(r'(\s+[0-9]+[/])', file)
-        if number and os.path.exists(file.replace(number, '/')):
-            os.remove(file)
-            continue
+    # remove files produced by Dropbox sync issues
+    r = pathlib.Path(root)
+    for file in r.rglob("*conflicted copy 20*"):
+        if file.is_file():
+            print(file)
+            delete_file(file)
 
     # remove empty folders
     for path, _, _ in os.walk(root, topdown = False):
-        if '/.git/' in path:
+        if '/.git/' in path:    # skip Git folders
             continue
+        #
         if len(os.listdir(path)) == 0:
             try:
                 os.rmdir(path)
             except:
                 pass
+
+    return
+
+    # remove duplicated files
+    for file in glob.glob(root + '/**/*.*', recursive = True):
+        number = extract(r'(\s+[0-9]+\.)[^\.]+$', file)
+        if number and os.path.exists(file.replace(number, '.')):
+            delete_file(file)
+            continue
+        #
+        number = extract(r'(\s+[0-9]+[/])', file)
+        if number and os.path.exists(file.replace(number, '/')):
+            delete_file(file)
+            continue
 
 
 

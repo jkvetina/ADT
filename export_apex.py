@@ -1,5 +1,5 @@
 # coding: utf-8
-import sys, os, re, argparse, datetime, codecs
+import sys, os, re, argparse, datetime
 from multiprocessing.pool import ThreadPool
 #
 import config
@@ -576,7 +576,7 @@ class Export_APEX(config.Config):
             for source_file in util.get_files(source_dir + '**/*.*'):
                 # remove first 10 lines
                 try:
-                    with codecs.open(source_file, 'r', encoding = 'utf-8', errors = 'ignore') as f:
+                    with open(source_file, 'r', encoding = 'utf-8', errors = 'ignore') as f:
                         old_content = f.readlines()
                     util.write_file(source_file, ''.join(old_content[10:]))
                 except:

@@ -280,7 +280,6 @@ def remove_cloud_junk(root = ''):
     r = pathlib.Path(root)
     for file in r.rglob("*conflicted copy 20*"):
         if file.is_file():
-            print(file)
             delete_file(file)
 
     # remove empty folders

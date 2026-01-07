@@ -840,7 +840,8 @@ def run_command(command, stop = True, silent = False, capture_output = True, tex
         #
         print('\n#\n# REQUEST FAILED:\n#\n{}\n'.format('\n'.join(lines)))
         if stop:
-            raise_error('COMMAND_ERROR: {} {}'.format(result.returncode, result.stderr.strip()))
+            print('COMMAND_ERROR: {} {}'.format(result.returncode, result.stderr.strip()))
+            #raise_error('COMMAND_ERROR: {} {}'.format(result.returncode, result.stderr.strip()))
     return (result.stdout or '')
 
 

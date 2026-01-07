@@ -1,5 +1,5 @@
 # coding: utf-8
-import sys, os, re, argparse, datetime
+import sys, os, re, argparse, datetime, subprocess
 #
 import config
 from lib import util
@@ -42,6 +42,8 @@ class Search_Repo(config.Config):
         group.add_argument('-hash',         help = 'Search for specific commit hash(es)',                               nargs = '*', default = [])
         group.add_argument('-summary',      help = 'Search summary for provided word(s)',                               nargs = '*', default = [])
         group.add_argument('-file',         help = 'Search for specific file name',                                     nargs = '*', default = [])
+        group.add_argument('-stage',        help = 'Stage restored files as commits',                                   nargs = '?', const = True,  default = False)
+        group.add_argument('-reset',        help = 'Deleted staged files and unpushed commits',                         nargs = '?', const = True,  default = False)
         #
         group = parser.add_argument_group('LIMIT SCOPE')
         group.add_argument('-recent',       help = 'Limit scope to # of recent days',           type = int,             nargs = '?')
@@ -94,7 +96,7 @@ class Search_Repo(config.Config):
                 self.all_files[file].append(commit_id)
 
         # go from newest to oldest
-        for commit_num in sorted(self.all_commits.keys(), reverse = True):
+        for commit_num in sorted(self.all_commits.keys(), reverse = False):
             commit_obj = self.all_commits[commit_num]
             if self.old_date and self.old_date >= commit_obj['date'].date():    # limit searching by date
                 break
@@ -183,9 +185,15 @@ class Search_Repo(config.Config):
         # restore matching files to requested (or all) past versions
         if self.args.restore != None:
             util.print_header('RESTORED FILES:')
-            #
+
+            # remove all staged files and unpushed commits
+            if self.args.stage and self.args.reset:
+                subprocess.run(['git', 'fetch'], check = True)
+                subprocess.run(['git', 'reset', '--hard', 'origin/DAILY'], check = True)
+
+            # process commits by file names
             for file in sorted(self.relevant_files.keys()):
-                versions = list(sorted(self.args.restore or self.all_files[file], reverse = True))
+                versions = list(sorted(self.args.restore or self.all_files[file], reverse = False))
                 #
                 print('  - {}'.format(file.replace(self.repo_root, '')))
 
@@ -196,7 +204,16 @@ class Search_Repo(config.Config):
                         ver_file    = '{}.{}{}'.format(base, ver, ext)
                         payload     = self.get_file_from_commit(file, commit = ver)
                         #
+                        if self.args.stage:
+                            ver_file = file     # keep original name, so we see changes
+                        #
                         util.write_file(ver_file, payload)
+
+                    # commit file (but not push, so we can explore changes and revert)
+                    if self.args.stage:
+                        message = '{}) {} > {}'.format(ver, ver_file, self.all_commits[ver]['summary'])
+                        subprocess.run(['git', 'add', ver_file],            check = True, stdout = subprocess.DEVNULL, stderr = subprocess.DEVNULL)
+                        subprocess.run(['git', 'commit', '-m', message],    check = True, stdout = subprocess.DEVNULL, stderr = subprocess.DEVNULL)
             #
             print()
 

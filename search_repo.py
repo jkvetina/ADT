@@ -38,22 +38,22 @@ class Search_Repo(config.Config):
 
         # actions and flags
         group = parser.add_argument_group('MAIN ACTIONS')
-        group.add_argument('-commit',       help = 'Search for specific commit number(s)',      type = int,             nargs = '*', default = [])
-        group.add_argument('-hash',         help = 'Search for specific commit hash(es)',                               nargs = '*', default = [])
-        group.add_argument('-summary',      help = 'Search summary for provided word(s)',                               nargs = '*', default = [])
         group.add_argument('-file',         help = 'Search for specific file name',                                     nargs = '*', default = [])
-        group.add_argument('-stage',        help = 'Stage restored files as commits',                                   nargs = '?', const = True,  default = False)
-        group.add_argument('-reset',        help = 'Deleted staged files and unpushed commits',                         nargs = '?', const = True,  default = False)
+        group.add_argument('-name',         help = 'Object name/prefix (you can use LIKE syntax)',                      nargs = '?')
         #
         group = parser.add_argument_group('LIMIT SCOPE')
+        group.add_argument('-type',         help = 'Object type (you can use LIKE syntax)',                             nargs = '?')
+        group.add_argument('-summary',      help = 'Search summary for provided word(s)',                               nargs = '*', default = [])
+        group.add_argument('-commits',      help = 'Search for specific commits range',                                 nargs = '*', default = [])
+        group.add_argument('-hash',         help = 'Search for specific commit hash(es)',                               nargs = '*', default = [])
         group.add_argument('-recent',       help = 'Limit scope to # of recent days',           type = int,             nargs = '?')
         group.add_argument('-branch',       help = 'Limit scope to specific branch',                                    nargs = '?')
-        group.add_argument('-type',         help = 'Object type (you can use LIKE syntax)',                             nargs = '?')
-        group.add_argument('-name',         help = 'Object name/prefix (you can use LIKE syntax)',                      nargs = '?')
         group.add_argument('-my',           help = 'Show only my commits',                                              nargs = '?', const = True,  default = False)
         #
         group = parser.add_argument_group('EXTRA ACTIONS')
-        group.add_argument('-restore',      help = 'Restore specific version(s) of file',       type = int,             nargs = '*')
+        group.add_argument('-restore',      help = 'Restore specific version(s) of file',                               nargs = '?', const = True,  default = False)
+        group.add_argument('-stage',        help = 'Stage restored files as commits',                                   nargs = '?', const = True,  default = False)
+        group.add_argument('-reset',        help = 'Deleted staged files and unpushed commits',                         nargs = '?', const = True,  default = False)
         #
         return parser
 
@@ -95,15 +95,20 @@ class Search_Repo(config.Config):
                     self.all_files[file] = []
                 self.all_files[file].append(commit_id)
 
+        # restore matching files to requested (or all) past versions
+        relevant_commits = util.ranged_str(self.args.commits) or ['0+']
+
         # go from newest to oldest
         for commit_num in sorted(self.all_commits.keys(), reverse = False):
-            commit_obj = self.all_commits[commit_num]
-            if self.old_date and self.old_date >= commit_obj['date'].date():    # limit searching by date
-                break
 
             # search for specific commits
-            if self.args.commit and not (commit_num in self.args.commit):
+            if not self.get_search_full(commit_num, relevant_commits):
                 continue
+
+            # limit searching by date
+            commit_obj = self.all_commits[commit_num]
+            if self.old_date and self.old_date >= commit_obj['date'].date():
+                break
 
             # limit just to my commits
             if self.args.my and self.repo_user_mail != commit_obj['author']:
@@ -182,8 +187,7 @@ class Search_Repo(config.Config):
                             print('  {:>16} | {}{}'.format(obj_type if i == 0 else '', obj_name, flag))
                 print()
 
-        # restore matching files to requested (or all) past versions
-        if self.args.restore != None:
+        if self.args.restore:
             util.print_header('RESTORED FILES:')
 
             # remove all staged files and unpushed commits
@@ -193,7 +197,7 @@ class Search_Repo(config.Config):
 
             # process commits by file names
             for file in sorted(self.relevant_files.keys()):
-                versions = list(sorted(self.args.restore or self.all_files[file], reverse = False))
+                versions = list(sorted(self.all_files[file], reverse = False))
                 #
                 print('  - {}'.format(file.replace(self.repo_root, '')))
 
@@ -209,11 +213,11 @@ class Search_Repo(config.Config):
                         #
                         util.write_file(ver_file, payload)
 
-                    # commit file (but not push, so we can explore changes and revert)
-                    if self.args.stage:
-                        message = '{}) {} > {}'.format(ver, ver_file, self.all_commits[ver]['summary'])
-                        subprocess.run(['git', 'add', ver_file],            check = True, stdout = subprocess.DEVNULL, stderr = subprocess.DEVNULL)
-                        subprocess.run(['git', 'commit', '-m', message],    check = True, stdout = subprocess.DEVNULL, stderr = subprocess.DEVNULL)
+                        # commit file (but not push, so we can explore changes and revert)
+                        if self.args.stage:
+                            message = '{}) {} > {}'.format(ver, ver_file, self.all_commits[ver]['summary'])
+                            subprocess.run(['git', 'add', ver_file],            check = True, stdout = subprocess.DEVNULL, stderr = subprocess.DEVNULL)
+                            subprocess.run(['git', 'commit', '-m', message],    check = True, stdout = subprocess.DEVNULL, stderr = subprocess.DEVNULL)
             #
             print()
 
@@ -226,6 +230,19 @@ class Search_Repo(config.Config):
 
         # run command line and capture the output, text file is expected
         return util.run_command('git show {}:{}'.format(commit, file))
+
+
+
+    def get_search_full(self, value, where):
+        for where_value in where:
+            if str(where_value).endswith('+'):
+                if int(where_value.replace('+', '')) <= int(value):
+                    return True
+        #
+        all_values  = '|{}|'.format('|'.join(where))
+        search_for  = '|{}|'.format(value)
+        #
+        return (search_for in all_values)
 
 
 

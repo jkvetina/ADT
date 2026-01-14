@@ -1980,7 +1980,11 @@ class Patch(config.Config):
 
         # make sure we have a text file
         if isinstance(file_content, bytes):
-            file_content = file_content.decode('ascii', 'ignore')
+            try:
+                file_content = file_content.decode('utf-8')
+            except UnicodeDecodeError as e:
+                file_content = file_content.decode('utf-8', errors = 'replace')
+                #util.raise_error('INVALID UTF-8 FILE', file)
 
         # check for merge issues when developer ovelook things
         if '<<<<<<< ' in file_content and '>>>>>>> ' in file_content:
@@ -2443,10 +2447,9 @@ class Patch(config.Config):
 
 
     def get_simple_text(self, payload):
-        if not isinstance(payload, bytes):
-            payload = payload.encode('ascii', 'ignore')
-        #
-        return payload.decode('ascii', 'ignore')
+        if isinstance(payload, bytes):
+            return payload.decode('utf-8', errors = 'replace')
+        return payload
 
 
 

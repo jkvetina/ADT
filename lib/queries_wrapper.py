@@ -1,7 +1,7 @@
-query_version_apex = r"""
+query_version_apex = """
 SELECT
     a.version_no AS version
-FROM apex_release a;
+FROM apex_release a
 """
 
 query_version_db = """

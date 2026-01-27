@@ -160,7 +160,7 @@ class Oracle:
 
     def connect__(self):
         if not 'dsn' in self.tns:
-            if self.tns.get('sid', '') != '':
+            if self.tns.get('sid', '') and self.tns.get('sid', '') != '':
                 self.tns.dsn = oracledb.makedsn(self.tns.host, self.tns.port, sid = self.tns.sid)
             else:
                 self.tns.dsn = oracledb.makedsn(self.tns.host, self.tns.port, service_name = self.tns.service)
@@ -175,6 +175,7 @@ class Oracle:
             #
         except Exception:
             if self.debug:
+                print('TNS:', self.tns)
                 print(traceback.format_exc())
                 print(sys.exc_info()[2])
             util.raise_error('CONNECTION FAILED', self.get_error_code())

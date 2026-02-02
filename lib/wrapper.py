@@ -1,7 +1,7 @@
 # coding: utf-8
 import sys, os, traceback, zipfile
 import oracledb         # pip3 install oracledb     --upgrade
-import sshtunnel
+#import sshtunnel
 #
 from lib import util
 from lib import queries_wrapper as query
@@ -154,7 +154,9 @@ class Oracle:
                 ssh_username        = self.tns['ssh_user'],
                 ssh_password        = self.tns['ssh_pwd'],
                 remote_bind_address = (self.tns['remote_bind'], self.tns['remote_port']),
-                local_bind_address  = (self.tns['local_bind'],  self.tns['local_port'])
+                local_bind_address  = (self.tns['local_bind'],  self.tns['local_port']),
+                debug_level         = 10,
+                threaded            = False
             ) as server:
                 server.start()
                 self.tns['host']    = self.tns.get('local_bind') or '127.0.0.1'

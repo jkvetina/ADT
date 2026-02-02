@@ -1,5 +1,5 @@
 # coding: utf-8
-import sys, os, traceback
+import sys, os, traceback, zipfile
 import oracledb         # pip3 install oracledb     --upgrade
 import sshtunnel
 #
@@ -117,7 +117,16 @@ class Oracle:
         # use wallet to connect
         if 'wallet' in self.tns and len(self.tns.wallet) > 0:
             self.tns.wallet = self.tns.wallet.replace('~/', os.path.expanduser('~') + '/')
-            self.tns.wallet = os.path.abspath(self.tns.wallet).rstrip('.zip')
+            self.tns.wallet = os.path.abspath(self.tns.wallet)
+
+            # if we have just the zip file, extract it
+            zip_folder = self.tns.wallet.rstrip('.zip')
+            if '.zip' in self.tns.wallet or not os.path.exists(self.tns.wallet):
+                with zipfile.ZipFile(zip_folder + '.zip', 'r') as zip_ref:
+                    zip_ref.extractall(zip_folder)
+                self.tns.wallet = zip_folder
+
+            # check wallet
             if not os.path.exists(self.tns.wallet):
                 util.raise_error('INVALID WALLET', self.tns.wallet)
             #

@@ -715,6 +715,14 @@ class Config(util.Attributed):
         file_base   = object_name.lower() + self.config.object_types[object_type][1]
         dir_base    = '{}{}{}'.format(self.repo_root, self.config.path_objects, folder)
         file        = '{}/{}'.format(dir_base, file_base)
+
+        # case-insensitive search first — os.path.exists is case-insensitive on macOS
+        # so we must use os.listdir to find the actual on-disk casing
+        file_base_lower = file_base.lower()
+        if os.path.exists(dir_base):
+            for existing in os.listdir(dir_base):
+                if existing.lower() == file_base_lower:
+                    return '{}/{}'.format(dir_base, existing)
         #
         if not os.path.exists(file):
             for subfile in util.get_files('{}**/{}'.format(dir_base, file_base)):

@@ -283,6 +283,14 @@ class Export_DB(config.Config):
                 object_file = self.get_object_file(object_type, object_name)
                 #
                 if object_file:
+                    # if existing file uses different casing, use its name variant on the first line
+                    file_name = os.path.basename(object_file)[:len(object_name)]
+                    if file_name != object_name.lower():
+                        lines = payload.splitlines(keepends = True)
+                        if lines:
+                            lines[0] = re.sub(re.escape(object_name), file_name, lines[0], count = 1, flags = re.IGNORECASE)
+                            payload = ''.join(lines)
+                    #
                     util.write_file(object_file, payload)
                     #
                     if object_type in self.config.object_comments:

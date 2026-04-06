@@ -790,6 +790,7 @@ LEFT JOIN (
     ON u.constraint_name    = c.constraint_name
 WHERE t.table_name          = UPPER(:table_name)
     AND t.column_id         > 0   -- ignore virtual and hidden columns
+    AND t.virtual_column    = 'NO'
     AND t.data_type         NOT IN ('BLOB', 'CLOB', 'XMLTYPE', 'JSON')
 GROUP BY
     t.column_name,

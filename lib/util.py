@@ -9,6 +9,8 @@ from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 
+newline = '\n'      # default line ending; set to '\r\n' via file_crlf in config.yaml
+
 
 
 class Attributed(dict):
@@ -226,7 +228,7 @@ def write_file(file, payload, mode = 'wt', yaml = False, fix = False, check_hash
     if check_hash and not yaml and os.path.exists(file):
         old_hash = get_file_hash(file)
     #
-    with open(file, mode, encoding = 'utf-8', newline = '\n') as w:
+    with open(file, mode, encoding = 'utf-8', newline = newline) as w:
         if yaml:
             store_yaml(w, payload = payload, fix = fix)
             return

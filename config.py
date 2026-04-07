@@ -239,6 +239,8 @@ class Config(util.Attributed):
 
         # load config first
         self.init_config()
+        if self.config.get('file_crlf'):
+            util.newline = '\r\n'
         self.info['schema'] = self.args.get('schema', '')   or self.info.get('schema', '')  or self.config.get('default_schema')
         self.info['env']    = self.args.get('env', '')      or self.info.get('env', '')     or self.config.get('default_env')
 

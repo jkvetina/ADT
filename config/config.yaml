@@ -23,6 +23,8 @@ auto_delete             : True              # automatically delete repo files fo
 
 check_new_versions      : True              # check if there is a new ADT version available
 
+file_crlf               : False             # use CRLF line endings (set to True on Windows)
+
 # target folders by object types
 object_types:
     DATA                : ['data/',             .sql]

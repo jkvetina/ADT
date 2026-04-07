@@ -119,8 +119,8 @@ class Export_Data(config.Config):
         if not os.path.exists(os.path.dirname(file)):
             os.makedirs(os.path.dirname(file))
         #
-        csv_file    = open(file, 'wt', encoding = 'utf-8', newline = '\n')
-        writer      = csv.writer(csv_file, delimiter = self.config.csv_delimiter or ';', lineterminator = '\n', quoting = csv.QUOTE_NONNUMERIC)
+        csv_file    = open(file, 'wt', encoding = 'utf-8', newline = util.newline)
+        writer      = csv.writer(csv_file, delimiter = self.config.csv_delimiter or ';', lineterminator = util.newline, quoting = csv.QUOTE_NONNUMERIC)
         #
         columns         = self.tables_cols[table_name]
         where_filter    = ''

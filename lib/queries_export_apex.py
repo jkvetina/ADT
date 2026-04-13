@@ -84,12 +84,17 @@ BEGIN
             p_security_group_id => APEX_UTIL.FIND_SECURITY_GROUP_ID(p_workspace => c.workspace)
         );
         --
-        APEX_SESSION.CREATE_SESSION (
-            p_app_id                    => c.app_id,
-            p_page_id                   => 0,
-            p_username                  => c.workspace,
-            p_call_post_authentication  => FALSE
-        );
+        BEGIN
+            APEX_SESSION.CREATE_SESSION (
+                p_app_id                    => c.app_id,
+                p_page_id                   => 0,
+                p_username                  => c.workspace,
+                p_call_post_authentication  => FALSE
+            );
+        EXCEPTION
+        WHEN OTHERS THEN
+            NULL;  -- session creation may fail for some apps, workspace context is sufficient
+        END;
         --
         APEX_COLLECTION.CREATE_COLLECTION (
             p_collection_name       => 'ADT_APEX_EXPORT',

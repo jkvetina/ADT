@@ -229,7 +229,9 @@ class Search_Repo(config.Config):
             commit = self.all_commits[commit]['id']
 
         # run command line and capture the output, text file is expected
-        return util.run_command('git show {}:{}'.format(commit, file))
+        # -- quote the path: shell=True splits an unquoted path on spaces,
+        # which git then can't find, and silently returns nothing (no error)
+        return util.run_command('git show "{}:{}"'.format(commit, file))
 
 
 

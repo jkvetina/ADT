@@ -58,7 +58,7 @@ class Export_APEX(config.Config):
         group.add_argument('-by',           help = 'Export components changed by developer',                        nargs = '?')
         group.add_argument('-full',         help = 'Export full application export',                                nargs = '?', const = True, default = False)
         group.add_argument('-split',        help = 'Export splitted export (components)',                           nargs = '?', const = True, default = False)
-        group.add_argument('-readable',     help = 'Export readable export',                                        nargs = '?', const = True, default = False)
+        group.add_argument('-readable',     help = 'Export readable export (YAML, or APEXlang on APEX 26.1+)',     nargs = '?', const = True, default = False)
         group.add_argument('-embedded',     help = 'Export Embedded Code report',                                   nargs = '?', const = True, default = False)
         group.add_argument('-rest',         help = 'Export REST services',                                          nargs = '?', const = True, default = False)
         group.add_argument('-files',        help = 'Export application files in binary form',                       nargs = '?', const = True, default = False)
@@ -105,6 +105,7 @@ class Export_APEX(config.Config):
         #
         self.init_config()
         self.conn = conn or self.db_connect(ping_sqlcl = False, silent = silent)
+        self.apex_release = self.get_apex_release()
 
         # make sure we have the temp folder ready
         if not os.path.exists(self.config.sqlcl_root):
@@ -144,6 +145,11 @@ class Export_APEX(config.Config):
         if __name__ != "__main__":  # dont continue if this class is called from other module
             return
         self.parse_actions()
+
+        # cant tell YAML from APEXlang without a known APEX release, so skip rather than guess
+        if self.actions['readable'] and self.apex_release is None:
+            util.print_warning('APEX VERSION UNKNOWN, SKIPPING READABLE EXPORT')
+            self.actions['readable'] = False
 
         # reveal workspaces and apps for specific workspace and group (if provided)
         if self.args.reveal:
@@ -302,6 +308,16 @@ class Export_APEX(config.Config):
 
 
 
+    def get_apex_release(self):
+        # returns (major, minor) tuple, or None if the APEX release couldn't be determined
+        version = (self.conn.versions.get('APEX') or '').strip()
+        try:
+            return tuple(int(x) for x in version.split('.')[:2])
+        except ValueError:
+            return None
+
+
+
     def get_workspaces(self):
         args = {
             'workspace'     : self.arg_workspace,
@@ -440,12 +456,15 @@ class Export_APEX(config.Config):
     def fetch_exported_files(self):
         # get files from collection
         data = self.conn.fetch_assoc(query.apex_export_fetch_files)
+        written = []
         for file in data:
             payload = str(file.clob_content)
             if self.args.release and file.file_name.endswith('.sql'):
                 payload = util.replace(payload, r"p_release=>'\d+.\d+.\d+'", replacement = "p_release=>'" + self.args.release + "'")
             #
             util.write_file(self.config.sqlcl_root + file.file_name, payload = payload)
+            written.append(file.file_name)
+        return written
 
 
 
@@ -529,6 +548,7 @@ class Export_APEX(config.Config):
             'with_acl_assignments'      : 'Y' if self.config.apex_with_acl_assignments else 'N',
             'with_audit_info'           : self.config.apex_with_audit_info
         }
+        self.conn.execute(query.apex_export_start, app_id = app_id)
         self.conn.execute(query.apex_export_full, app_id = app_id, **args)
         self.fetch_exported_files()
 
@@ -548,18 +568,59 @@ class Export_APEX(config.Config):
             'with_acl_assignments'      : 'Y' if self.config.apex_with_acl_assignments else 'N',
             'with_audit_info'           : self.config.apex_with_audit_info
         }
+        self.conn.execute(query.apex_export_start, app_id = app_id)
         self.conn.execute(query.apex_export_split, app_id = app_id, **args)
         self.fetch_exported_files()
 
 
 
     def export_readable(self, app_id):
-        self.conn.execute(query.apex_export_readable, app_id = app_id, originals = 'Y' if self.config.apex_keep_original_id else 'N')
-        self.fetch_exported_files()
+        originals = 'Y' if self.config.apex_keep_original_id else 'N'
+        #
+        self.conn.execute(query.apex_export_start, app_id = app_id)
+        # APEX 26.1+ replaces the old YAML dump with the re-installable, LLM-readable APEXlang (.apx) format
+        if self.apex_release and self.apex_release >= (26, 1):
+            self.conn.execute(query.apex_export_apexlang, app_id = app_id, originals = originals)
+            written = self.fetch_exported_files()
+            self.move_apexlang(app_id, written)
+        else:
+            self.conn.execute(query.apex_export_readable, app_id = app_id, originals = originals)
+            self.fetch_exported_files()
+
+
+
+    def move_apexlang(self, app_id, files):
+        # unlike other export types, APEXLANG file names come back with no per-app "f{app_id}/" prefix,
+        # so move_files() would never find them under its app-scoped source_dir; route them explicitly.
+        # left untouched/unrenamed (native APEXlang package layout) so it stays re-installable.
+        target_dir = self.get_root(app_id, 'apexlang/')
+        if os.path.exists(target_dir):
+            util.delete_folder(target_dir)
+        #
+        for name in files:
+            # guard against stale full/split members leaking in from a shared, not-yet-truncated
+            # collection: those always carry the per-app "f{app_id}/" or "f{app_id}." prefix, which
+            # genuine APEXlang output never has (see comment above) - so this can't false-positive on
+            # legitimate non-.apx APEXlang assets like static-file icons/theme css
+            if name.startswith('f{}/'.format(app_id)) or name.startswith('f{}.'.format(app_id)):
+                continue
+            source_file = self.config.sqlcl_root + name
+            target_file = target_dir + name
+            if os.path.exists(source_file):
+                util.move_file(source_file, target_file)
+
+        # remove now-empty leftover folders (files have no "f{app_id}/" prefix, so nothing else cleans these up)
+        for path, _, _ in os.walk(self.config.sqlcl_root, topdown = False):
+            if path.rstrip('/') != self.config.sqlcl_root.rstrip('/') and not os.listdir(path):
+                try:
+                    os.rmdir(path)
+                except OSError:
+                    pass
 
 
 
     def export_embedded(self, app_id):
+        self.conn.execute(query.apex_export_start, app_id = app_id)
         self.conn.execute(query.apex_export_embedded, app_id = app_id, originals = 'Y' if self.config.apex_keep_original_id else 'N')
         self.fetch_exported_files()
 
@@ -621,23 +682,46 @@ class Export_APEX(config.Config):
         content     = []
         modules     = []
         first       = []
-        append      = False
+        trailer     = []
+        state       = 'preamble'  # preamble -> modules -> trailer -> done
 
-        # split one file into dedicated files for each module
-        for (i, line) in enumerate(lines):
-            module_started = ('ORDS.DEFINE_MODULE' in line)
-            if not append and not module_started:
-                first.append(line)
-            #
-            if module_started:
+        # split one file into dedicated files for each module, and pull the
+        # trailing workspace-level roles/privileges into their own bucket --
+        # they belong to the whole workspace (a privilege can name several
+        # modules), not to whichever module happens to be exported last
+        for line in lines:
+            stripped = line.strip()
+
+            if state == 'done':
+                continue
+
+            # the export always ends in exactly one COMMIT; stop here on the
+            # statement itself, not on a lookahead to the next line -- a
+            # blank line often separates it from the closing END; that follows
+            if stripped == 'COMMIT;':
                 if len(content):
                     modules.append(content)
+                    content = []
+                state = 'done'
+                continue
+
+            if 'ORDS.DEFINE_MODULE' in line:
+                if state == 'modules' and len(content):
+                    modules.append(content)
                 content = []
-                append  = True
-            if line.strip().startswith('COMMIT;') and lines[i + 1].startswith('END;'):
-                append  = False
-            if append:
+                state    = 'modules'
+            elif state == 'modules' and (stripped.startswith('ORDS.CREATE_ROLE') or stripped.startswith('ORDS.DEFINE_PRIVILEGE')):
+                if len(content):
+                    modules.append(content)
+                    content = []
+                state = 'trailer'
+
+            if state == 'preamble':
+                first.append(line)
+            elif state == 'modules':
                 content.append(line.rstrip())
+            elif state == 'trailer':
+                trailer.append(line.rstrip())
         if len(content):
             modules.append(content)
 
@@ -656,21 +740,22 @@ class Export_APEX(config.Config):
                 payload = 'BEGIN\n{}\nEND;\n/\n'.format('\n'.join(list(filter(None, content))))
                 util.write_file(file, payload)
 
-        # schema definition
+        # schema definition -- carries ENABLE_SCHEMA plus the workspace-level
+        # role/privilege trailer (both schema-scoped, not tied to one module).
+        # keep the preamble's own DECLARE/BEGIN verbatim instead of adding
+        # another BEGIN on top: the raw export already opens exactly one
+        # executable block after its DECLARE section.
         if len(modules) > 0:
             file    = self.target_rest + '/__enable_schema.sql'
             content = []
             #
             for line in first:
-                if line.startswith('BEGIN'):
-                    continue
                 if line.startswith('-- Schema:'):
                     line = line.split(' Date:')[0]  # strip date
-                if line.startswith('END;'):
-                    break
                 content.append(line.rstrip())
+            content.extend(trailer)
             #
-            payload = 'BEGIN\n{}\nEND;\n/\n'.format('\n'.join(list(filter(None, content))))
+            payload = '{}\nCOMMIT;\nEND;\n/\n'.format('\n'.join(list(filter(None, content))))
             util.write_file(file, payload)
 
 

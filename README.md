@@ -45,6 +45,7 @@ Any feature requests, bugs are accepted on my [LinkedIn](https://www.linkedin.co
 - ✅ it can __export APEX application(s)__
     - ✅ you can request specific components based on page or date
     - ✅ also in YAML/JSON formats
+    - ✅ readable export auto-detects APEX version — YAML below 26.1, APEXlang (.apx, re-installable & LLM-readable) on 26.1+
     - ✅ possible with embedded code reports
     - ✅ including application and workspace files
     - ✅ option to deploy exported files to specified environment

@@ -101,6 +101,24 @@ class Deploy(config.Config):
             if not os.path.exists(full):
                 util.raise_error('FILE MISSING', full)
 
+            # skip files that already succeeded in an earlier attempt against this
+            # same patch -- safe because create_patch_files() refuses to recreate
+            # (and thus silently regenerate the content of) a patch that already has
+            # deploy logs; -force disregards this, same as it disregards the
+            # whole-patch "already deployed" guard in check_folder()
+            prior = None if self.args.force else self.get_prior_result(file)
+            if prior != None and prior['status'] == 'SUCCESS':
+                results = {
+                    'order'     : order + 1,
+                    'file'      : file,
+                    'output'    : 0,
+                    'status'    : 'SKIPPED',
+                    'timer'     : 0,
+                }
+                util.print_table([results], columns = map, right_align = ['order', 'output', 'timer'], no_header = True)
+                print('    already SUCCESS at {} -- not re-executed (use -force to override)'.format(prior['timestamp']))
+                continue
+
             # cleanup the script from comments, fix prompts
             payload = []
             with open(full, 'rt', encoding = 'utf-8') as f:
@@ -124,6 +142,14 @@ class Deploy(config.Config):
                 if line.startswith('-- SUCCESS'):   # this is in patch.py
                     success = True
                     break
+
+            # a trailing "-- SUCCESS" prompt is echoed client-side by SQL*Plus/SQLcl
+            # even when the session never connected (PROMPT doesn't need a live
+            # session) or when an earlier statement failed without aborting the
+            # script -- scan the whole output for SQL*Plus/Oracle error signatures
+            # and let any of them override a false "success"
+            if success and re.search(r'(?m)^(SP2-\d{4}:|ORA-\d{5}:|Error starting at line)', output):
+                success = False
 
             # prep results for the template
             results = {
@@ -150,6 +176,29 @@ class Deploy(config.Config):
             # show progress
             util.print_table([results], columns = map, right_align = ['order', 'output', 'timer'], no_header = True)
         print()
+
+
+
+    def get_prior_result(self, file):
+        # find the latest renamed log from an earlier attempt against this same
+        # (already-created) patch folder, for this exact file
+        base    = file.replace('.sql', '')
+        matches = util.get_files('{}{} *.log'.format(self.log_folder, base))
+        if len(matches) == 0:
+            return None
+
+        # renamed logs are named "<base> <timestamp> [<STATUS>].log" -- the
+        # today_deploy timestamp format sorts correctly as a plain string
+        latest      = sorted(matches)[-1]
+        name        = os.path.splitext(os.path.basename(latest))[0]
+        status      = name.split('[')[-1].replace(']', '')
+        timestamp   = name[len(base):].split('[')[0].strip()
+        #
+        return {
+            'file'      : latest,
+            'status'    : status,
+            'timestamp' : timestamp,
+        }
 
 
 
@@ -197,8 +246,12 @@ class Deploy(config.Config):
         ref = self.patch_ref or list(self.patches.keys())[list(self.patches.values()).index(self.patch_found[0])]
         #
         if self.available_ref[ref]['result'] == 'SUCCESS' and not self.args.force:
-            util.raise_error('PATCH ALREADY DEPLOYED',
-                'use -force flag if you want to redeploy patch anyway')
+            # no longer a hard stop -- every file in this patch already succeeded, so
+            # the per-file skip logic in deploy_patch() will make this run a safe no-op;
+            # -force still means "disregard everything and redeploy from scratch"
+            util.print_warning('PATCH ALREADY DEPLOYED',
+                ['every file already succeeded -- this run will skip them all',
+                 'use -force if you actually want to redeploy from scratch'])
 
         # check if there is a newer patch deployed than requested one
         found_newer = False
@@ -264,8 +317,12 @@ class Deploy(config.Config):
             count_files     = list(set(count_files))
             count_commits   = list(set(count_commits))
 
-            # find more details from log names
-            for file in util.get_files(self.logs_prefix.format(patch, self.target_env) + '/*.log'):
+            # find more details from log names -- NOTE: by this point self.logs_prefix
+            # has already been resolved (e.g. to 'logs_PROD') by the base Config's own
+            # tag-substitution pass, so it no longer has a placeholder for `patch` to
+            # land in; .format() here silently no-ops instead of raising, which is why
+            # this used to find zero logs for every patch regardless of real history
+            for file in util.get_files('{}/{}/*.log'.format(patch, self.logs_prefix)):
                 info        = os.path.splitext(os.path.basename(file))[0].split(' ')
                 schema      = info.pop(0)
                 result      = info.pop(-1).replace('[', '').replace(']', '')

@@ -402,7 +402,6 @@ FROM (
         ON t.job_name           LIKE g.object_like ESCAPE '\\'
     WHERE 1 = 1
         AND g.object_like       IS NULL
-        AND t.job_creator       NOT IN ('APEX_PUBLIC_USER', 'SYS')
 ) t
 ORDER BY
     CASE t.object_type
@@ -420,6 +419,12 @@ ORDER BY
     3 NULLS FIRST,
     4 NULLS FIRST
 """
+
+# object types covered by object_dependencies, keep in sync with the query above
+object_dependencies_types = (
+    'SEQUENCE', 'TABLE', 'INDEX', 'PACKAGE', 'PACKAGE BODY', 'PROCEDURE', 'FUNCTION', 'TRIGGER',
+    'VIEW', 'MATERIALIZED VIEW', 'SYNONYM', 'TYPE', 'TYPE BODY', 'JOB',
+)
 
 # used in APEX searching
 referenced_objects = """

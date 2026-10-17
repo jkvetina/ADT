@@ -23,7 +23,7 @@ auto_delete             : True              # automatically delete repo files fo
 
 check_new_versions      : True              # check if there is a new ADT version available
 
-file_crlf               : False             # use CRLF line endings (set to True on Windows)
+file_crlf               : True             # use CRLF line endings (set to True on Windows)
 
 # target folders by object types
 object_types:
@@ -40,6 +40,7 @@ object_types:
     PACKAGE             : ['packages/',         .spec.sql]      # stick to .sql for now
     PACKAGE BODY        : ['packages/',         .sql]           # stick to .sql for now
     PROCEDURE           : ['procedures/',       .sql]
+    REST                : ['workspace/rest/',   .sql]
     SEQUENCE            : ['sequences/',        .sql]
     SYNONYM             : ['synonyms/',         .sql]
     TABLE               : ['tables/',           .sql]
@@ -84,7 +85,7 @@ cleanup_db:
     package_ends        : False
 
 # on 23ai we can reduce number of errors on existing objects (tables, indexes)
-add_if_not_exists       : True
+add_if_not_exists       : False
 
 # force editions
 editionable_keep        : False
@@ -166,6 +167,8 @@ patch_map:
         - GRANT
     jobs:
         - JOB
+    rest:               # REST modules have no DB-level dependency on/from
+        - REST          # anything else in the patch -- safe to run last
 
 
 

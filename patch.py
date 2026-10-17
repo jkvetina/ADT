@@ -1,5 +1,6 @@
 # coding: utf-8
 import sys, os, re, argparse, datetime, base64, mimetypes
+import git
 #
 import config
 from lib            import queries_patch as query
@@ -843,6 +844,10 @@ class Patch(config.Config):
             print()
             print('REBUILDING:   // time to get a coffee')
 
+        # commits older than this are dropped further below anyway, so there's
+        # no point walking (and diffing) past this point during a rebuild
+        old_date = datetime.datetime.now().date() - datetime.timedelta(days = self.config.repo_commit_days)
+
         # loop throught all commits from newest to oldest, add missing commits
         progress_target = commits
         progress_done   = 0
@@ -853,12 +858,23 @@ class Patch(config.Config):
             commit_hash = str(commit)
             if commit_hash in all_hashes:       # last known commit reached
                 break
+            if commit.authored_datetime.date() < old_date:      # outside retention window
+                break
+
+            # diff against the commit's own parent once, and reuse it for both
+            # the changed-file list (instead of the pricier commit.stats, which
+            # also tallies line-level insert/delete counts we never use) and
+            # the deleted-file list (instead of a second diff call further down)
+            parent      = commit.parents[0] if commit.parents else None
+            diffs       = parent.diff(commit) if parent else commit.diff(git.NULL_TREE)
+            changed     = sorted(set(filter(None, [diff.b_path or diff.a_path for diff in diffs])))
+            deleted     = [diff.a_path for diff in diffs if diff.deleted_file]
 
             # calculate file hash right away
             committed_files = {}
             patch_code = ''
             #
-            for file in sorted(commit.stats.files.keys()):
+            for file in changed:
                 if self.is_usable_file(file):
                     file_payload            = self.get_file_from_commit(file, commit = commit_hash)
                     committed_files[file]   = util.get_hash(file_payload)
@@ -874,6 +890,7 @@ class Patch(config.Config):
                 'author'    : commit.author.email,
                 'date'      : commit.authored_datetime,
                 'files'     : committed_files,          # database + APEX files and their hashes
+                'deleted'   : deleted,                  # files deleted by this commit
             })
 
             # mark patch in commits file
@@ -899,23 +916,16 @@ class Patch(config.Config):
         commit_id       = self.head_commit_id or 0
         #
         for obj in reversed(new_commits):
-            obj['deleted'] = []
-            #
             commit_id += 1
             if commit_id > 1:
-                # store list of deleted files
-                prev_commit_id  = self.all_commits[commit_id - 1]['id']
-                curr_commit_id  = obj['id']
-                #
+                # confirm the cache is still consistent with this commit's actual
+                # history (a rebase/amend/force-push moves commit hashes around);
+                # 'deleted' itself was already computed above, off the real parent
+                prev_commit_id = self.all_commits[commit_id - 1]['id']
                 try:
-                    diffs = self.repo.commit(prev_commit_id).diff(curr_commit_id)
+                    self.repo.commit(prev_commit_id).tree     # force resolution; repo.commit() alone is lazy and never fails
                 except:
                     util.raise_error('REBUILD NEEDED')
-                #
-                for diff in diffs:
-                    rows = str(diff).splitlines()
-                    if 'file deleted in rhs' in rows[-1]:
-                        obj['deleted'].append(rows[0])
             #
             self.all_commits[commit_id] = obj
             #
@@ -924,8 +934,8 @@ class Patch(config.Config):
         if self.args.get('rebuild'):
             util.print_progress_done(start = start)
 
-        # remove 90 days old commits
-        old_date = datetime.datetime.now().date() - datetime.timedelta(days = self.config.repo_commit_days)
+        # remove commits outside the retention window (also catches previously
+        # cached commits that have aged out since the last run)
         for commit_id, obj in dict(self.all_commits).items():
             if obj['date'].date() < old_date:
                 self.all_commits.pop(commit_id)
@@ -1237,6 +1247,16 @@ class Patch(config.Config):
         if not os.path.exists(self.patch_folder):
             os.makedirs(self.patch_folder)
         elif not self.patch_dry:
+            # refuse to recreate a patch that already has deploy logs -- silently
+            # wiping the folder would destroy the record of what already ran,
+            # right when a partially-failed retry needs it most
+            existing_logs = util.get_files(self.patch_folder + '/logs_*/*.log')
+            if len(existing_logs) > 0:
+                util.raise_error('PATCH ALREADY HAS DEPLOY LOGS',
+                    'folder: {}'.format(self.patch_folder.replace(self.repo_root + self.config.patch_root, '')),
+                    'recreating it now would silently wipe the record of what already ran',
+                    'delete the patch folder manually first if you really want to start over')
+
             # delete everything in patch folder
             util.delete_folder(self.patch_folder)
 
@@ -1965,6 +1985,13 @@ class Patch(config.Config):
         # shorten target folder for template files
         if self.config.patch_template_dir in target_file:
             target_file     = target_file.replace(self.config.patch_template_dir, self.config.patch_template_snap)
+            if app_id:
+                # per-app templates (apex_init/apex_end) get a distinct snapshot per app_id,
+                # otherwise apps processed later in the same patchset overwrite earlier apps'
+                # {$APEX_APP_ID} substitution and every app ends up @-including the same file
+                dir_part, base_name = os.path.split(target_file)
+                name, ext = os.path.splitext(base_name)
+                target_file = '{}/{}.{}{}'.format(dir_part, name, app_id, ext)
 
         # shorten target folder for script files
         if self.config.patch_scripts_dir in target_file:
@@ -2118,12 +2145,15 @@ class Patch(config.Config):
         if isinstance(commit, int) and commit in self.all_commits:
             commit = self.all_commits[commit]['id']
 
-        # run command line and capture the output, text file is expected
+        # read the blob directly from git's object store instead of shelling
+        # out to "git show" -- this runs once per changed file per commit
+        # during commit-cache rebuilds, so a subprocess per call is costly
+        payload = None
         try:
-            payload = util.run_command('git show {}:{}'.format(commit, file), silent = True, text = False)
+            payload = self.repo.commit(commit).tree[file].data_stream.read()
             payload = self.get_simple_text(payload)
         except:
-            pass
+            payload = ''
         #
         return payload
 

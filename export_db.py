@@ -440,20 +440,28 @@ class Export_DB(config.Config):
         # simplify object name
         lines[0] = self.unquote_object_name(lines[0], remove_schema = self.remove_schema)
 
-        # simplify end of objects
+        is_wrapped = (
+            lines[0].rstrip().lower().endswith(' wrapped')
+            or (len(lines) > 1 and lines[1].strip().lower() == 'wrapped')
+        )
+
         last_line = len(lines) - 1
-        if self.config['cleanup_db']['package_ends']:
-            if lines[last_line].upper().startswith('END ' + object_name.upper() + ';'):
-                lines[last_line] = lines[last_line][0:3] + ';'
+        if not is_wrapped:
+            # simplify end of objects
+            last_line = len(lines) - 1
+            if self.config['cleanup_db']['package_ends']:
+                if lines[last_line].upper().startswith('END ' + object_name.upper() + ';'):
+                    lines[last_line] = lines[last_line][0:3] + ';'
 
-        # if object ends with comment, push ";" to the next line
-        if '--' in lines[last_line] and last_line > 0:
-            lines.append(';')
-            last_line += 1
+            # if object ends with comment, push ";" to the next line
+            if '--' in lines[last_line] and last_line > 0:
+                lines.append(';')
+                last_line += 1
 
-        # fix terminator
-        if not lines[last_line].rstrip().endswith(';'):
-            lines[last_line] += ';'
+            # fix terminator
+            if not lines[last_line].rstrip().endswith(';'):
+                lines[last_line] += ';'
+                
         if not (object_type in ['TABLE', 'INDEX']):
             lines.append('/')
         #
